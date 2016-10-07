@@ -162,7 +162,7 @@
         "artifactsBaseUrl": "",
         "description": "URL to acquire other templates"
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sharepoint-three-vm"
+      "defaultValue": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/master/SharePoint-2013"
     },
     "spPublicIPNewOrExisting": {
       "type": "string",

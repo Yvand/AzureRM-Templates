@@ -1,0 +1,1006 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccountNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The prefix for the name of the Storage Account, would result in <prefix>spstorage and <prefix>sqlstorage"
+      },
+      "defaultValue": "spplaarm"
+    },
+    "spStorageAccountType": {
+      "type": "string",
+      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Standard_ZRS", "Standard_RAGRS", "Premium_LRS" ],
+      "metadata": {
+        "description": "The Storage Account performance and replication type for SharePoint Servers. Premium recommended"
+      },
+      "defaultValue": "Premium_LRS"
+    },
+    "sqlStorageAccountType": {
+      "type": "string",
+      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Standard_ZRS", "Standard_RAGRS", "Premium_LRS" ],
+      "metadata": {
+        "description": "The Storage Account performance and replication type for SQL Servers. Premium recommended"
+      },
+      "defaultValue": "Premium_LRS"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the key vault used for storing the Username and Password combinations"
+      },
+      "defaultValue": "placontosovault"
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine(s)"
+      },
+      "defaultValue": "plaadmin"
+    },
+    "adminPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The adminUserName password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "vmNicPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "NIC Prefix to use for all VM Network Interfaces, would result in <prefix>-<servername><servernumber>, I.E. planic-plaweb1"
+      },
+      "defaultValue": "sppla"
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix to use for server names, would result in <prefix><type><servernumber>, I.E. plaweb1"
+      },
+      "defaultValue": "PLA"
+    },
+    "vNetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of an existing Virtual Network in the selected Resource Group"
+      },
+      "defaultValue": "PLAVNet"
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Subnet in the specified Virtual Network"
+      },
+      "defaultValue": "PLASubnet"
+    },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Fully Qualified Domain Name. I.E contoso.com"
+      },
+      "defaultValue": "contoso.com"
+    },
+    "domainAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain Admin for the specified domain"
+      },
+      "defaultValue": "contoso\\plaadmin"
+    },
+    "domainAdminPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The domainAdminUserName password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spSetupUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Setup account"
+      },
+      "defaultValue": "contoso\\spsetup"
+    },
+    "spSetupUserPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Setup account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spFarmAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Farm account"
+      },
+      "defaultValue": "contoso\\spfarm"
+    },
+    "spFarmAccountPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Farm Account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spWebAppAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Web Application Pool account"
+      },
+      "defaultValue": "contoso\\spweb"
+    },
+    "spWebAppAccountPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Web Application Pool Account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spServiceAppAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Service Application Pool account"
+      },
+      "defaultValue": "contoso\\spservice"
+    },
+    "spServiceAppAccountPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Service Application Pool Account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spContentAccessAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Default Search Content Access account"
+      },
+      "defaultValue": "contoso\\spcontent"
+    },
+    "spContentAccessAccountPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Default Search Content Access Account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spSuperReaderAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Super Reader Account"
+      },
+      "defaultValue": "contoso\\spsupreader"
+    },
+    "spSuperUserAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Super User Account"
+      },
+      "defaultValue": "contoso\\spsupuser"
+    },
+    "sqlServiceUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The SQL Service account"
+      },
+      "defaultValue": "contoso\\sqlservice"
+    },
+    "sqlServiceUserPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SQL Service account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spFarmPassphraseKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Farm Passphrase secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spWebRootUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "The root web application URL"
+      },
+      "defaultValue": "https://intranet.contoso.com"
+    },
+    "spMySiteUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "The My Site Host Header Site Collection URL"
+      },
+      "defaultValue": "https://intranet-my.contoso.com"
+    },
+    "sqlLoadBalancerStaticIP": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the new SQL Internal Load Balancer"
+      },
+      "defaultValue": "10.1.0.6"
+    },
+    "wfeLoadBalancerStaticIP": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the new SQL Internal Load Balancer"
+      },
+      "defaultValue": "10.1.0.5"
+    },
+    "numberWfe": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Web Front End Servers, must have at least 1 WFE"
+      },
+      "defaultValue": 2,
+      "minValue": 1
+    },
+    "numberApp": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Application Servers, must have at least on Application Server"
+      },
+      "defaultValue": 2,
+      "minValue": 1
+    },
+    "numberDCache": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Distributed Cache Servers"
+      },
+      "defaultValue": 1,
+      "minValue": 1
+    },
+    "numberSearchIndex": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Search Index Servers"
+      },
+      "defaultValue": "2"
+    },
+    "numberSearchCrawl": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Search Crawl Servers"
+      },
+      "defaultValue": "2"
+    },
+    "sqlDataSizeTB": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Terrabytes for the SQL Data Disk (Depends on SQL Server VM Size, max 32)"
+      },
+      "defaultValue" : 16,
+      "maxValue": 32
+    },
+    "sqlLogSizeTB": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Terrabytes for the SQL Log Disk (Depends on SQL Server VM Size, max 32)"
+      },
+      "defaultValue": 1,
+      "maxValue": 3
+    },
+    "baseUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Template Base URL",
+        "artifactsBaseUrl": ""
+      },
+      "defaultValue": ""
+    },
+    "baseUrlSASToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Template SAS Token for Base URL"
+      }
+    }
+  },
+  "variables": {
+    "sizeOfSPDiskInGB": "100",
+    "sqlDiskSizeInGB" : "1023",
+    "location": "[resourceGroup().location]",
+    "subnetName": "[parameters('subnetName')]",
+    "vmStorageAccountContainerName": "vhds",
+    "virtualNetworkName": "[parameters('vNetName')]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "apiVersion": "2015-06-15",
+    "assetLocations": {
+      "DscAssets": "[parameters('baseUrl')]",
+      "CreateStorageAccountJSON": "[concat(parameters('baseUrl'), '/infra-storageaccounts.json',parameters('baseUrlSASToken'))]",
+      "CreateNICJSON": "[concat(parameters('baseUrl'), '/infra-allnics.json',parameters('baseUrlSASToken'))]",
+      "CreateLoadBalancersJSON": "[concat(parameters('baseUrl'), '/infra-loadbalancers.json',parameters('baseUrlSASToken'))]",
+      "CreateAvailabilitySetJSON": "[concat(parameters('baseUrl'), '/infra-availabilitysets.json',parameters('baseUrlSASToken'))]",
+      "CreateSharePointServersJSON": "[concat(parameters('baseUrl'), '/infra-sharepointservers.json',parameters('baseUrlSASToken'))]",
+      "CreateSQLServersJSON": "[concat(parameters('baseUrl'), '/infra-sqlservers.json',parameters('baseUrlSASToken'))]",
+      "CreateSQLWitnessJSON": "[concat(parameters('baseUrl'), '/infra-sqlwitness.json',parameters('baseUrlSASToken'))]",
+      "ConfigureSharePointServersDSC": "[concat(parameters('baseUrl'), '/ConfigureSharePointAppServer.ps1.zip',parameters('baseUrlSASToken'))]",
+      "PrepareSQLWitnessDSC": "[concat(parameters('baseUrl'), '/PrepareSQLWitnessVM.ps1.zip',parameters('baseUrlSASToken'))]",
+      "ConfigureAlwaysOnJSON": "[concat(parameters('baseUrl'), '/config-sqlservers.json',parameters('baseUrlSASToken'))]",
+      "ConfigureSQLReplicaDSC": "[concat(parameters('baseUrl'), '/ConfigureSQLReplica.ps1.zip',parameters('baseUrlSASToken'))]",
+      "ConfigureSQLAOClusterDSC": "[concat(parameters('baseUrl'), '/ConfigureSQLAOCluster.ps1.zip',parameters('baseUrlSASToken'))]",
+      "ConfigureSharePointFarmJSON": "[concat(parameters('baseUrl'), '/config-sharepointfarm.json',parameters('baseUrlSASToken'))]",
+      "ConfigureSharePointAppServerDSC": "[concat(parameters('baseUrl'), '/ConfigureSharePointAppServer.ps1.zip',parameters('baseUrlSASToken'))]",
+      "ConfigureSharePointDCacheServerDSC": "[concat(parameters('baseUrl'), '/ConfigureSharePointDCacheServer.ps1.zip',parameters('baseUrlSASToken'))]",
+      "ConfigureSharePointSCServerDSC": "[concat(parameters('baseUrl'), '/ConfigureSharePointSCServer.ps1.zip',parameters('baseUrlSASToken'))]",
+      "ConfigureSharePointSIServerDSC": "[concat(parameters('baseUrl'), '/ConfigureSharePointSIServer.ps1.zip',parameters('baseUrlSASToken'))]",
+      "ConfigureSharePointWFEServerDSC": "[concat(parameters('baseUrl'), '/ConfigureSharePointWFEServer.ps1.zip',parameters('baseUrlSASToken'))]"
+    },
+    "keyVaultResourceID": "[concat(resourceGroup().Id, '/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
+    "availabilitySets": {
+      "spWebAvailabilitySetName": "spplaWebAvailabilitySet",
+      "spAppAvailabilitySetName": "spplaAppAvailabilitySet",
+      "spDCacheAvailabilitySetName": "spplaDCacheAvailabilitySet",
+      "spSearchIndexAvailabilitySetName": "spplaSearchIndexAvailabilitySet",
+      "spSearchCrawlAvailabilitySetName": "spplaSearchCrawlAvailabilitySet",
+      "spSqlAvailabilitySetName": "spplaSqlAvailabilitySet"
+    },
+    "loadBalancers": {
+      "spLoadBalancerName": "[concat(parameters('vmNamePrefix'),'wfelb')]",
+      "sqlAOListenerLoadBalancerName": "[concat(parameters('vmNamePrefix'),'sqlaolb')]"
+    },
+    "storageAccountNames": {
+      "spStorageAccountName": "[concat(parameters('storageAccountNamePrefix'),'spstorage')]",
+      "sqlStorageAccountName": "[concat(parameters('storageAccountNamePrefix'),'sqlstorage')]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "createStorageAccounts",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').CreateStorageAccountJSON]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageAccountNamePrefix": {
+            "value": "[parameters('storageAccountNamePrefix')]"
+          },
+          "spStorageAccountType": {
+            "value": "[parameters('spStorageAccountType')]"
+          },
+          "sqlStorageAccountType": {
+            "value": "[parameters('sqlStorageAccountType')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "createLoadBalancers",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').CreateLoadBalancersJSON]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmNamePrefix": {
+            "value": "[parameters('vmNamePrefix')]"
+          },
+          "subnetRef": {
+            "value": "[variables('subnetRef')]"
+          },
+          "sqlLoadBalancerStaticIP": {
+            "value": "[parameters('sqlLoadBalancerStaticIP')]"
+          },
+          "wfeLoadBalancerStaticIP": {
+            "value": "[parameters('wfeLoadBalancerStaticIP')]"
+          },
+          "spLoadBalancerName": {
+            "value": "[variables('loadBalancers').spLoadBalancerName]"
+          },
+          "sqlAOListenerLoadBalancerName": {
+            "value": "[variables('loadBalancers').sqlAOListenerLoadBalancerName]"
+          }
+
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "createAllNetworkInterfaces",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/createLoadBalancers"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').CreateNICJSON]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "numberApp": {
+            "value": "[parameters('numberApp')]"
+          },
+          "numberDCache": {
+            "value": "[parameters('numberDCache')]"
+          },
+          "numberSearchIndex": {
+            "value": "[parameters('numberSearchIndex')]"
+          },
+          "numberSearchCrawl": {
+            "value": "[parameters('numberSearchCrawl')]"
+          },
+          "numberWfe": {
+            "value": "[parameters('numberWfe')]"
+          },
+          "subnetRef": {
+            "value": "[variables('subnetRef')]"
+          },
+          "vmNamePrefix": {
+            "value": "[parameters('vmNamePrefix')]"
+          },
+          "vmNicPrefix": {
+            "value": "[parameters('vmNicPrefix')]"
+          },
+          "spLoadBalancerName": {
+            "value": "[variables('loadBalancers').spLoadBalancerName]"
+          },
+          "sqlAOListenerLoadBalancerName": {
+            "value": "[variables('loadBalancers').sqlAOListenerLoadBalancerName]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "createAvailabilitySets",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').CreateAvailabilitySetJSON]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "spWebAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spWebAvailabilitySetName]"
+          },
+          "spAppAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spAppAvailabilitySetName]"
+          },
+          "spDCacheAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spDCacheAvailabilitySetName]"
+          },
+          "spSearchIndexAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spSearchIndexAvailabilitySetName]"
+          },
+          "spSearchCrawlAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spSearchCrawlAvailabilitySetName]"
+          },
+          "spSqlAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spSqlAvailabilitySetName]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "createSQLWitnessVM",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/createStorageAccounts",
+        "Microsoft.Resources/deployments/createAllNetworkInterfaces",
+        "Microsoft.Resources/deployments/createAvailabilitySets"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').CreateSQLWitnessJSON]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageAccountName": {
+            "value": "[variables('storageAccountNames').sqlStorageAccountName]"
+          },
+          "witnessVMSize": {
+            "value": "Standard_DS1"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('adminPasswordKeyName')]"
+            }
+          },
+          "vmNicPrefix": {
+            "value": "[parameters('vmNicPrefix')]"
+          },
+          "vmNamePrefix": {
+            "value": "[parameters('vmNamePrefix')]"
+          },
+          "subnetRef": {
+            "value": "[variables('subnetRef')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "domainAdminUsername": {
+            "value": "[parameters('domainAdminUsername')]"
+          },
+          "domainAdminPassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('domainAdminPasswordKeyName')]"
+            }
+          },
+          "spSetupUsername": {
+            "value": "[parameters('spSetupUsername')]"
+          },
+          "sqlServiceUsername": {
+            "value": "[parameters('sqlServiceUsername')]"
+          },
+          "PrepareSQLWitnessDSCPath": {
+            "value": "[variables('assetLocations').PrepareSQLWitnessDSC]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "[concat('createSQLServerVMs-',copyIndex(1))]",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/createStorageAccounts",
+        "Microsoft.Resources/deployments/createAllNetworkInterfaces",
+        "Microsoft.Resources/deployments/createAvailabilitySets"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').CreateSQLServersJSON]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageAccountName": {
+            "value": "[variables('storageAccountNames').sqlStorageAccountName]"
+          },
+          "serverVMSize": {
+            "value": "Standard_DS4_v2"
+          },
+          "numDataDisks": {
+            "value": "[parameters('sqlDataSizeTB')]"
+          },
+          "numLogDisks": {
+            "value": "[parameters('sqlLogSizeTB')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('adminPasswordKeyName')]"
+            }
+          },
+          "vmNic": {
+            "value": "[concat(parameters('vmNicPrefix'),'-',parameters('vmNamePrefix'),'SQL',copyIndex(1),'-nic')]"
+          },
+          "vmName": {
+            "value": "[concat(parameters('vmNamePrefix'),'SQL',copyIndex(1))]"
+          },
+          "subnetRef": {
+            "value": "[variables('subnetRef')]"
+          },
+          "spSqlAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spSqlAvailabilitySetName]"
+          },
+          "sizeOfDiskInGB": {
+            "value": 1023
+          }
+        }
+      },
+      "copy": {
+        "count": 2,
+        "name": "CreateSQLServerLoop"
+      }
+
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "configureSQLAlwaysOnCluster",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "CreateSQLServerLoop",
+        "Microsoft.Resources/deployments/createSQLWitnessVM"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').ConfigureAlwaysOnJSON]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmNamePrefix": {
+            "value": "[parameters('vmNamePrefix')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "domainAdminUsername": {
+            "value": "[parameters('domainAdminUsername')]"
+          },
+          "domainAdminPassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('domainAdminPasswordKeyName')]"
+            }
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('adminPasswordKeyName')]"
+            }
+          },
+          "sqlServiceUsername": {
+            "value": "[parameters('sqlServiceUsername')]"
+          },
+          "sqlServiceUsernamePassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('sqlServiceUserPasswordKeyName')]"
+            }
+          },
+          "spSetupUsername": {
+            "value": "[parameters('spSetupUsername')]"
+          },
+          "sqlAOEndPointName": {
+            "value": "[concat(parameters('vmNamePrefix'),'-aoendpoint')]"
+          },
+          "sqlAOAvailabilityGroupName": {
+            "value": "[concat(parameters('vmNamePrefix'),'-aoag')]"
+          },
+          "sqlAOListenerName": {
+            "value": "[concat(parameters('vmNamePrefix'),'-aolistener')]"
+          },
+          "sqlLBName": {
+            "value": "[concat(parameters('vmNamePrefix'),'sqlaolb')]"
+          },
+          "sqlLBIPAddress": {
+            "value": "[parameters('sqlLoadBalancerStaticIP')]"
+          },
+          "sqlPort": {
+            "value": "1433"
+          },
+          "numDataDisks": {
+            "value": "[parameters('sqlDataSizeTB')]"
+          },
+          "numLogDisks": {
+            "value": "[parameters('sqlLogSizeTB')]"
+          },
+          "ConfigureSQLReplicaDSCPath": {
+            "value": "[variables('assetLocations').ConfigureSQLReplicaDSC]"
+          },
+          "ConfigureSQLAOClusterDSCPath": {
+            "value": "[variables('assetLocations').ConfigureSQLAOClusterDSC]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "createSharePointServerVMs",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/createStorageAccounts",
+        "Microsoft.Resources/deployments/createAllNetworkInterfaces",
+        "Microsoft.Resources/deployments/createAvailabilitySets"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').CreateSharePointServersJSON]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageAccountName": {
+            "value": "[variables('storageAccountNames').spStorageAccountName]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('adminPasswordKeyName')]"
+            }
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "domainAdminUsername": {
+            "value": "[parameters('domainAdminUsername')]"
+          },
+          "domainAdminPassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('domainAdminPasswordKeyName')]"
+            }
+          },
+          "spSetupUsername": {
+            "value": "[parameters('spSetupUsername')]"
+          },
+          "vmNicPrefix": {
+            "value": "[parameters('vmNicPrefix')]"
+          },
+          "vmNamePrefix": {
+            "value": "[parameters('vmNamePrefix')]"
+          },
+          "numberWfe": {
+            "value": "[parameters('numberWfe')]"
+          },
+          "numberApp": {
+            "value": "[parameters('numberApp')]"
+          },
+          "numberDCache": {
+            "value": "[parameters('numberDCache')]"
+          },
+          "numberSearchIndex": {
+            "value": "[parameters('numberSearchIndex')]"
+          },
+          "numberSearchCrawl": {
+            "value": "[parameters('numberSearchCrawl')]"
+          },
+          "sizeWfeVm": {
+            "value": "Standard_DS3_v2"
+          },
+          "sizeAppVm": {
+            "value": "Standard_DS4_v2"
+          },
+          "sizeDCacheVm": {
+            "value": "Standard_DS3_v2"
+          },
+          "sizeSearchIndexVm": {
+            "value": "Standard_DS4_v2"
+          },
+          "sizeSearchCrawlVm": {
+            "value": "Standard_DS4_v2"
+          },
+          "sizeWfeDataDisk": {
+            "value": "100"
+          },
+          "sizeAppDataDisk": {
+            "value": "100"
+          },
+          "sizeDCacheDataDisk": {
+            "value": "100"
+          },
+          "sizeSearchIndexDataDisk": {
+            "value": "1023"
+          },
+          "sizeSearchCrawlDataDisk": {
+            "value": "1023"
+          },
+          "spWebAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spWebAvailabilitySetName]"
+          },
+          "spAppAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spAppAvailabilitySetName]"
+          },
+          "spDCacheAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spDCacheAvailabilitySetName]"
+          },
+          "spSearchIndexAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spSearchIndexAvailabilitySetName]"
+          },
+          "spSearchCrawlAvailabilitySetName": {
+            "value": "[variables('availabilitySets').spSearchCrawlAvailabilitySetName]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "configureSharePointFarm",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/createSharePointServerVMs",
+        "Microsoft.Resources/deployments/configureSQLAlwaysOnCluster"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').ConfigureSharePointFarmJSON]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('adminPasswordKeyName')]"
+            }
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "domainAdminUsername": {
+            "value": "[parameters('domainAdminUsername')]"
+          },
+          "domainAdminPassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('domainAdminPasswordKeyName')]"
+            }
+          },
+          "spSetupUsername": {
+            "value": "[parameters('spSetupUsername')]"
+          },
+          "spSetupUsernamePassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('spSetupUserPasswordKeyName')]"
+            }
+          },
+          "spFarmUsername": {
+            "value": "[parameters('spFarmAccount')]"
+          },
+          "spFarmUsernamePassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('spFarmAccountPasswordKeyName')]"
+            }
+          },
+          "spServiceUsername": {
+            "value": "[parameters('spServiceAppAccount')]"
+          },
+          "spServiceUsernamePassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('spServiceAppAccountPasswordKeyName')]"
+            }
+          },
+          "spWebUsername": {
+            "value": "[parameters('spWebAppAccount')]"
+          },
+          "spWebUsernamePassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('spWebAppAccountPasswordKeyName')]"
+            }
+          },
+          "spContentUsername": {
+            "value": "[parameters('spContentAccessAccount')]"
+          },
+          "spContentUsernamePassword": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('spContentAccessAccountPasswordKeyName')]"
+            }
+          },
+          "spSuperReaderUsername": {
+            "value": "[parameters('spSuperReaderAccount')]"
+          },
+          "spSuperUserUsername": {
+            "value": "[parameters('spSuperUserAccount')]"
+          },
+          "spPassPhrase": {
+            "reference": {
+              "keyVault": {
+                "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+              },
+              "secretName": "[parameters('spFarmPassphraseKeyName')]"
+            }
+          },
+          "vmNamePrefix": {
+            "value": "[parameters('vmNamePrefix')]"
+          },
+          "spWebAppUrl": {
+            "value": "[parameters('spWebRootUrl')]"
+          },
+          "spMySiteUrl": {
+            "value": "[parameters('spMySiteUrl')]"
+          },
+          "spDatabaseServer": {
+            "value": "[variables('loadBalancers').sqlAOListenerLoadBalancerName]"
+          },
+          "numberWfe": {
+            "value": "[parameters('numberWfe')]"
+          },
+          "numberApp": {
+            "value": "[parameters('numberApp')]"
+          },
+          "numberDCache": {
+            "value": "[parameters('numberDCache')]"
+          },
+          "numberSearchIndex": {
+            "value": "[parameters('numberSearchIndex')]"
+          },
+          "numberSearchCrawl": {
+            "value": "[parameters('numberSearchCrawl')]"
+          },
+          "sizeWfeVm": {
+            "value": "Standard_DS2"
+          },
+          "sizeAppVm": {
+            "value": "Standard_DS2"
+          },
+          "sizeDCacheVm": {
+            "value": "Standard_DS2"
+          },
+          "sizeSearchIndexVm": {
+            "value": "Standard_DS2"
+          },
+          "sizeSearchCrawlVm": {
+            "value": "Standard_DS2"
+          },
+          "sizeWfeDataDisk": {
+            "value": "100"
+          },
+          "sizeAppDataDisk": {
+            "value": "100"
+          },
+          "sizeDCacheDataDisk": {
+            "value": "100"
+          },
+          "sizeSearchIndexDataDisk": {
+            "value": "100"
+          },
+          "sizeSearchCrawlDataDisk": {
+            "value": "100"
+          },
+          "ConfigureSharePointAppServerDSCPath": {
+            "value": "[variables('assetLocations').ConfigureSharePointAppServerDSC]"
+          },
+          "ConfigureSharePointDCacheServerDSCPath": {
+            "value": "[variables('assetLocations').ConfigureSharePointDCacheServerDSC]"
+          },
+          "ConfigureSharePointSCServerDSCPath": {
+            "value": "[variables('assetLocations').ConfigureSharePointSCServerDSC]"
+          },
+          "ConfigureSharePointSIServerDSCPath": {
+            "value": "[variables('assetLocations').ConfigureSharePointSIServerDSC]"
+          },
+          "ConfigureSharePointWFEServerDSCPath": {
+            "value": "[variables('assetLocations').ConfigureSharePointWFEServerDSC]"
+          }
+        }
+      }
+    }
+  ]
+}
