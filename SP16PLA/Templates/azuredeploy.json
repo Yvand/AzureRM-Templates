@@ -2,35 +2,12 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccountNamePrefix": {
+    "adminPasswordKeyName": {
       "type": "string",
       "metadata": {
-        "description": "The prefix for the name of the Storage Account, would result in <prefix>spstorage and <prefix>sqlstorage"
+        "description": "The adminUserName password secret key name"
       },
-      "defaultValue": "spplaarm"
-    },
-    "spStorageAccountType": {
-      "type": "string",
-      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Standard_ZRS", "Standard_RAGRS", "Premium_LRS" ],
-      "metadata": {
-        "description": "The Storage Account performance and replication type for SharePoint Servers. Premium recommended"
-      },
-      "defaultValue": "Premium_LRS"
-    },
-    "sqlStorageAccountType": {
-      "type": "string",
-      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Standard_ZRS", "Standard_RAGRS", "Premium_LRS" ],
-      "metadata": {
-        "description": "The Storage Account performance and replication type for SQL Servers. Premium recommended"
-      },
-      "defaultValue": "Premium_LRS"
-    },
-    "keyVaultName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the key vault used for storing the Username and Password combinations"
-      },
-      "defaultValue": "placontosovault"
+      "defaultValue": "spsetup"
     },
     "adminUsername": {
       "type": "string",
@@ -39,54 +16,19 @@
       },
       "defaultValue": "plaadmin"
     },
-    "adminPasswordKeyName": {
+    "baseUrl": {
       "type": "string",
       "metadata": {
-        "description": "The adminUserName password secret key name"
+        "description": "Template Base URL",
+        "artifactsBaseUrl": ""
       },
-      "defaultValue": "spsetup"
+      "defaultValue": ""
     },
-    "vmNicPrefix": {
-      "type": "string",
+    "baseUrlSASToken": {
+      "type": "securestring",
       "metadata": {
-        "description": "NIC Prefix to use for all VM Network Interfaces, would result in <prefix>-<servername><servernumber>, I.E. planic-plaweb1"
-      },
-      "defaultValue": "sppla"
-    },
-    "vmNamePrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Prefix to use for server names, would result in <prefix><type><servernumber>, I.E. plaweb1"
-      },
-      "defaultValue": "PLA"
-    },
-    "vNetName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of an existing Virtual Network in the selected Resource Group"
-      },
-      "defaultValue": "PLAVNet"
-    },
-    "subnetName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Subnet in the specified Virtual Network"
-      },
-      "defaultValue": "PLASubnet"
-    },
-    "domainName": {
-      "type": "string",
-      "metadata": {
-        "description": "Fully Qualified Domain Name. I.E contoso.com"
-      },
-      "defaultValue": "contoso.com"
-    },
-    "domainAdminUsername": {
-      "type": "string",
-      "metadata": {
-        "description": "Domain Admin for the specified domain"
-      },
-      "defaultValue": "contoso\\plaadmin"
+        "description": "Template SAS Token for Base URL"
+      }
     },
     "domainAdminPasswordKeyName": {
       "type": "string",
@@ -95,146 +37,26 @@
       },
       "defaultValue": "spsetup"
     },
-    "spSetupUsername": {
+    "domainAdminUsername": {
       "type": "string",
       "metadata": {
-        "description": "The SharePoint Setup account"
+        "description": "Domain Admin for the specified domain"
       },
-      "defaultValue": "contoso\\spsetup"
+      "defaultValue": "contoso\\plaadmin"
     },
-    "spSetupUserPasswordKeyName": {
+    "domainName": {
       "type": "string",
       "metadata": {
-        "description": "The SharePoint Setup account password secret key name"
+        "description": "Fully Qualified Domain Name. I.E contoso.com"
       },
-      "defaultValue": "spsetup"
+      "defaultValue": "contoso.com"
     },
-    "spFarmAccount": {
+    "keyVaultName": {
       "type": "string",
       "metadata": {
-        "description": "The SharePoint Farm account"
+        "description": "The name of the key vault used for storing the Username and Password combinations"
       },
-      "defaultValue": "contoso\\spfarm"
-    },
-    "spFarmAccountPasswordKeyName": {
-      "type": "string",
-      "metadata": {
-        "description": "The SharePoint Farm Account password secret key name"
-      },
-      "defaultValue": "spsetup"
-    },
-    "spWebAppAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "The SharePoint Web Application Pool account"
-      },
-      "defaultValue": "contoso\\spweb"
-    },
-    "spWebAppAccountPasswordKeyName": {
-      "type": "string",
-      "metadata": {
-        "description": "The SharePoint Web Application Pool Account password secret key name"
-      },
-      "defaultValue": "spsetup"
-    },
-    "spServiceAppAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "The SharePoint Service Application Pool account"
-      },
-      "defaultValue": "contoso\\spservice"
-    },
-    "spServiceAppAccountPasswordKeyName": {
-      "type": "string",
-      "metadata": {
-        "description": "The SharePoint Service Application Pool Account password secret key name"
-      },
-      "defaultValue": "spsetup"
-    },
-    "spContentAccessAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "The SharePoint Default Search Content Access account"
-      },
-      "defaultValue": "contoso\\spcontent"
-    },
-    "spContentAccessAccountPasswordKeyName": {
-      "type": "string",
-      "metadata": {
-        "description": "The SharePoint Default Search Content Access Account password secret key name"
-      },
-      "defaultValue": "spsetup"
-    },
-    "spSuperReaderAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "The SharePoint Super Reader Account"
-      },
-      "defaultValue": "contoso\\spsupreader"
-    },
-    "spSuperUserAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "The SharePoint Super User Account"
-      },
-      "defaultValue": "contoso\\spsupuser"
-    },
-    "sqlServiceUsername": {
-      "type": "string",
-      "metadata": {
-        "description": "The SQL Service account"
-      },
-      "defaultValue": "contoso\\sqlservice"
-    },
-    "sqlServiceUserPasswordKeyName": {
-      "type": "string",
-      "metadata": {
-        "description": "The SQL Service account password secret key name"
-      },
-      "defaultValue": "spsetup"
-    },
-    "spFarmPassphraseKeyName": {
-      "type": "string",
-      "metadata": {
-        "description": "The Farm Passphrase secret key name"
-      },
-      "defaultValue": "spsetup"
-    },
-    "spWebRootUrl": {
-      "type": "string",
-      "metadata": {
-        "description": "The root web application URL"
-      },
-      "defaultValue": "https://intranet.contoso.com"
-    },
-    "spMySiteUrl": {
-      "type": "string",
-      "metadata": {
-        "description": "The My Site Host Header Site Collection URL"
-      },
-      "defaultValue": "https://intranet-my.contoso.com"
-    },
-    "sqlLoadBalancerStaticIP": {
-      "type": "string",
-      "metadata": {
-        "description": "The IP address of the new SQL Internal Load Balancer"
-      },
-      "defaultValue": "10.1.0.6"
-    },
-    "wfeLoadBalancerStaticIP": {
-      "type": "string",
-      "metadata": {
-        "description": "The IP address of the new SQL Internal Load Balancer"
-      },
-      "defaultValue": "10.1.0.5"
-    },
-    "numberWfe": {
-      "type": "int",
-      "metadata": {
-        "description": "Number of Web Front End Servers, must have at least 1 WFE"
-      },
-      "defaultValue": 2,
-      "minValue": 1
+      "defaultValue": "placontosovault"
     },
     "numberApp": {
       "type": "int",
@@ -252,13 +74,6 @@
       "defaultValue": 1,
       "minValue": 1
     },
-    "numberSearchIndex": {
-      "type": "int",
-      "metadata": {
-        "description": "Number of Search Index Servers"
-      },
-      "defaultValue": "2"
-    },
     "numberSearchCrawl": {
       "type": "int",
       "metadata": {
@@ -266,13 +81,148 @@
       },
       "defaultValue": "2"
     },
+    "numberSearchIndex": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Search Index Servers"
+      },
+      "defaultValue": "2"
+    },
+    "numberWfe": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Web Front End Servers, must have at least 1 WFE"
+      },
+      "defaultValue": 2,
+      "minValue": 1
+    },
+    "spContentAccessAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Default Search Content Access account"
+      },
+      "defaultValue": "contoso\\spcontent"
+    },
+    "spContentAccessAccountPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Default Search Content Access Account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spFarmAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Farm account"
+      },
+      "defaultValue": "contoso\\spfarm"
+    },
+    "spFarmAccountPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Farm Account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spFarmPassphraseKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Farm Passphrase secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spMySiteUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "The My Site Host Header Site Collection URL"
+      },
+      "defaultValue": "https://intranet-my.contoso.com"
+    },
+    "spServiceAppAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Service Application Pool account"
+      },
+      "defaultValue": "contoso\\spservice"
+    },
+    "spServiceAppAccountPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Service Application Pool Account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spSetupUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Setup account"
+      },
+      "defaultValue": "contoso\\spsetup"
+    },
+    "spSetupUserPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Setup account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spStorageAccountType": {
+      "type": "string",
+      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Standard_ZRS", "Standard_RAGRS", "Premium_LRS" ],
+      "metadata": {
+        "description": "The Storage Account performance and replication type for SharePoint Servers. Premium recommended"
+      },
+      "defaultValue": "Standard_LRS"
+    },
+    "spSuperReaderAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Super Reader Account"
+      },
+      "defaultValue": "contoso\\spsupreader"
+    },
+    "spSuperUserAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Super User Account"
+      },
+      "defaultValue": "contoso\\spsupuser"
+    },
+    "spWebAppAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Web Application Pool account"
+      },
+      "defaultValue": "contoso\\spweb"
+    },
+    "spWebAppAccountPasswordKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SharePoint Web Application Pool Account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "spWebRootUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "The root web application URL"
+      },
+      "defaultValue": "https://intranet.contoso.com"
+    },
     "sqlDataSizeTB": {
       "type": "int",
       "metadata": {
         "description": "Number of Terrabytes for the SQL Data Disk (Depends on SQL Server VM Size, max 32)"
       },
-      "defaultValue" : 16,
+      "defaultValue": 16,
       "maxValue": 32
+    },
+    "sqlLoadBalancerStaticIP": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the new SQL Internal Load Balancer"
+      },
+      "defaultValue": "10.1.0.6"
     },
     "sqlLogSizeTB": {
       "type": "int",
@@ -282,30 +232,102 @@
       "defaultValue": 1,
       "maxValue": 3
     },
-    "baseUrl": {
+    "sqlServiceUsername": {
       "type": "string",
       "metadata": {
-        "description": "Template Base URL",
-        "artifactsBaseUrl": ""
+        "description": "The SQL Service account"
       },
-      "defaultValue": ""
+      "defaultValue": "contoso\\sqlservice"
     },
-    "baseUrlSASToken": {
-      "type": "securestring",
+    "sqlServiceUserPasswordKeyName": {
+      "type": "string",
       "metadata": {
-        "description": "Template SAS Token for Base URL"
+        "description": "The SQL Service account password secret key name"
+      },
+      "defaultValue": "spsetup"
+    },
+    "sqlStorageAccountType": {
+      "type": "string",
+      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Standard_ZRS", "Standard_RAGRS", "Premium_LRS" ],
+      "metadata": {
+        "description": "The Storage Account performance and replication type for SQL Servers. Premium recommended"
+      },
+      "defaultValue": "Standard_LRS"
+    },
+    "storageAccountNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The prefix for the name of the Storage Account, would result in <prefix>spstorage and <prefix>sqlstorage"
+      },
+      "defaultValue": "sp16pla"
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Subnet in the specified Virtual Network"
+      },
+      "defaultValue": "PLASubnet"
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix to use for server names, would result in <prefix><type><servernumber>, I.E. plaweb1"
+      },
+      "defaultValue": "PLA"
+    },
+    "vmNicPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "NIC Prefix to use for all VM Network Interfaces, would result in <prefix>-<servername><servernumber>, I.E. planic-plaweb1"
+      },
+      "defaultValue": "sppla"
+    },
+    "vNetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of an existing Virtual Network in the selected Resource Group"
+      },
+      "defaultValue": "PLAVNet"
+    },
+    "wfeLoadBalancerStaticIP": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the new SQL Internal Load Balancer"
+      },
+      "defaultValue": "10.1.0.5"
+    },
+    "sppublicIPAddressName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of existing public IP resource for Sharepoint"
+      }
+    },
+    "spDNSPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The DNS Prefix for the SharePoint Public IP Address"
+      }
+    },
+    "spPublicIPRGName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource Group containing existing public IP for Sharepoint"
+      }
+    },
+    "spPublicIPNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Indicates whether the Sharepoint farm's IP is new or existing"
       }
     }
   },
   "variables": {
-    "sizeOfSPDiskInGB": "100",
-    "sqlDiskSizeInGB" : "1023",
-    "location": "[resourceGroup().location]",
-    "subnetName": "[parameters('subnetName')]",
-    "vmStorageAccountContainerName": "vhds",
-    "virtualNetworkName": "[parameters('vNetName')]",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "apiVersion": "2015-06-15",
     "assetLocations": {
       "DscAssets": "[parameters('baseUrl')]",
@@ -326,9 +348,10 @@
       "ConfigureSharePointDCacheServerDSC": "[concat(parameters('baseUrl'), '/ConfigureSharePointDCacheServer.ps1.zip',parameters('baseUrlSASToken'))]",
       "ConfigureSharePointSCServerDSC": "[concat(parameters('baseUrl'), '/ConfigureSharePointSCServer.ps1.zip',parameters('baseUrlSASToken'))]",
       "ConfigureSharePointSIServerDSC": "[concat(parameters('baseUrl'), '/ConfigureSharePointSIServer.ps1.zip',parameters('baseUrlSASToken'))]",
-      "ConfigureSharePointWFEServerDSC": "[concat(parameters('baseUrl'), '/ConfigureSharePointWFEServer.ps1.zip',parameters('baseUrlSASToken'))]"
+      "ConfigureSharePointWFEServerDSC": "[concat(parameters('baseUrl'), '/ConfigureSharePointWFEServer.ps1.zip',parameters('baseUrlSASToken'))]",
+      "CreateSharePointIP": "[concat(parameters('baseUrl'), '/infra-sppublicip-',parameters('spPublicIPNewOrExisting'),'.json',parameters('baseUrlSASToken'))]",
+      "CreatePublicIPs": "[concat(parameters('baseUrl'), '/infra-publicips.json',parameters('baseUrlSASToken'))]"
     },
-    "keyVaultResourceID": "[concat(resourceGroup().Id, '/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
     "availabilitySets": {
       "spWebAvailabilitySetName": "spplaWebAvailabilitySet",
       "spAppAvailabilitySetName": "spplaAppAvailabilitySet",
@@ -337,14 +360,30 @@
       "spSearchCrawlAvailabilitySetName": "spplaSearchCrawlAvailabilitySet",
       "spSqlAvailabilitySetName": "spplaSqlAvailabilitySet"
     },
+    "keyVaultResourceID": "[concat(resourceGroup().Id, '/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
     "loadBalancers": {
       "spLoadBalancerName": "[concat(parameters('vmNamePrefix'),'wfelb')]",
       "sqlAOListenerLoadBalancerName": "[concat(parameters('vmNamePrefix'),'sqlaolb')]"
     },
+    "location": "[resourceGroup().location]",
+    "sizeOfSPDiskInGB": "100",
+    "sqlDiskSizeInGB": "1023",
     "storageAccountNames": {
       "spStorageAccountName": "[concat(parameters('storageAccountNamePrefix'),'spstorage')]",
       "sqlStorageAccountName": "[concat(parameters('storageAccountNamePrefix'),'sqlstorage')]"
-    }
+    },
+    "subnetName": "[parameters('subnetName')]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "virtualNetworkName": "[parameters('vNetName')]",
+    "vmStorageAccountContainerName": "vhds",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+
+    "publicips": {
+      "adpublicIPAddressName": "adpublicIP",
+      "publicIPAddressType": "Dynamic",
+      "sqlpublicIPAddressName": "sqlpublicIP"
+    },
+    "SettingUpSharepointIPUrl": "[concat(parameters('baseUrl'),'/publicip-',parameters('spPublicIPNewOrExisting'),'.json')]"
   },
   "resources": [
     {
@@ -371,9 +410,113 @@
       }
     },
     {
+      "name": "createSharepointIP",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').CreateSharePointIP]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "publicIpAddressName": {
+            "value": "[parameters('sppublicIPAddressName')]"
+          },
+          "publicIPAddressType": {
+            "value": "[variables('publicips').publicIPAddressType]"
+          },
+          "dnsPrefix": {
+            "value": "[parameters('spDNSPrefix')]"
+          },
+          "publicIpRGName": {
+            "value": "[parameters('spPublicIPRGName')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "createPublicIPs",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').CreatePublicIPs]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adpublicIPAddressName": {
+            "value": "[variables('publicips').adpublicIPAddressName]"
+          },
+          "sqlpublicIPAddressName": {
+            "value": "[variables('publicips').sqlpublicIPAddressName]"
+          },
+          "publicIPAddressType": {
+            "value": "[variables('publicips').publicIPAddressType]"
+          }
+        }
+      }
+    },
+    /*{
+      "name": "createLoadBalancers",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/createSharepointIP",
+        "Microsoft.Resources/deployments/createPublicIPs"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('assetLocations').CreateLoadBalancersJSON]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "spLBName": {
+            "value": "[variables('spLBName')]"
+          },
+          "sqllbName": {
+            "value": "[variables('sqlLBName')]"
+          },
+          "LBFE": {
+            "value": "[variables('LBFE')]"
+          },
+          "LBBE": {
+            "value": "[variables('LBBE')]"
+          },
+          "RDPNAT": {
+            "value": "[variables('RDPNAT')]"
+          },
+          "spWebNAT": {
+            "value": "[variables('spWebNAT')]"
+          },
+          "spCANAT": {
+            "value": "[variables('spCANAT')]"
+          },
+          "adlbName": {
+            "value": "[variables('adLBName')]"
+          },
+          "spPublicIPResourceId": {
+            "value": "[variables(concat('SpPublicIP',parameters('spPublicIPNewOrExisting')))]"
+          },
+          "adPublicIpResourceId": {
+            "value": "[variables('adPublicIpResourceId')]"
+          },
+          "sqlPublicIpResourceId": {
+            "value": "[variables('sqlPublicIpResourceId')]"
+          }
+        }
+      }
+    },*/
+    {
       "type": "Microsoft.Resources/deployments",
       "name": "createLoadBalancers",
       "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/createSharepointIP",
+        "Microsoft.Resources/deployments/createPublicIPs"
+      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {

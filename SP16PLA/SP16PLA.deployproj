@@ -50,10 +50,15 @@
     <None Include="Templates\infra-allnics.json" />
     <None Include="Templates\infra-availabilitysets.json" />
     <None Include="Templates\infra-loadbalancers.json" />
+    <None Include="Templates\infra-publicips.json" />
     <None Include="Templates\infra-sharepointservers.json" />
     <None Include="Templates\infra-sqlservers.json" />
     <None Include="Templates\infra-sqlwitness.json" />
     <None Include="Templates\infra-storageaccounts.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Templates\infra-sppublicip-existing.json" />
+    <Content Include="Templates\infra-sppublicip-new.json" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
 </Project>
