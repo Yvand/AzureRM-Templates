@@ -370,6 +370,19 @@
       "spCANAT": "spCentralAdmin",
       "LBFE": "LBFE"
     },
+    "adSubnetName": "adSubnet",
+    "networkInterfaces": {
+      "vmNamePrefix": "[concat(parameters('vmNamePrefix'),'wfelb')]",
+      "vmNicPrefix": "parameters('vmNicPrefix')",
+      "adSubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('adSubnetName'))]",
+      "sqlSubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('sqlSubnetName'))]",
+      "spSubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('spSubnetName'))]",
+      "RDPNAT": "RDP",
+      "spHTTPNAT": "spHttp",
+      "spHTTPSNAT": "spHttps",
+      "spCANAT": "spCentralAdmin",
+      "LBFE": "LBFE"
+    },
     "location": "[resourceGroup().location]",
     "sizeOfSPDiskInGB": "100",
     "sqlDiskSizeInGB": "1023",
@@ -377,35 +390,17 @@
       "spStorageAccountName": "[concat(parameters('storageAccountNamePrefix'),'spstorage')]",
       "sqlStorageAccountName": "[concat(parameters('storageAccountNamePrefix'),'sqlstorage')]"
     },
-    "subnetName": "[parameters('subnetName')]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-    "virtualNetworkName": "[parameters('vNetName')]",
+    //"TODELETEsubnetName": "[parameters('subnetName')]",
+    //"TODELETEsubnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "vmStorageAccountContainerName": "vhds",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    //"TODELETEvnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vNetName'))]",
 
     "publicips": {
       "adpublicIPAddressName": "adpublicIP",
       "publicIPAddressType": "Dynamic",
       "sqlpublicIPAddressName": "sqlpublicIP"
     },
-    "SettingUpSharepointIPUrl": "[concat(parameters('baseUrl'),'/publicip-',parameters('spPublicIPNewOrExisting'),'.json')]",
-
-    "networkInterfaces": {
-      "vmNamePrefix": "adpublicIP",
-      "vmNicPrefix": "Dynamic",
-      "adSubnetRef": "sqlpublicIP",
-      "sqlSubnetRef": "sqlpublicIP",
-      "spSubnetRef": "sqlpublicIP",
-      "adNicIPAddress": "sqlpublicIP",
-      "adLBResourceId": "sqlpublicIP",
-      "sqlLBResourceId": "sqlpublicIP",
-      "spLBResourceId": "sqlpublicIP",
-      "LBBE": "sqlpublicIP",
-      "RDPNAT": "sqlpublicIP",
-      "spHTTPNAT": "sqlpublicIP",
-      "spHTTPSNAT": "sqlpublicIP",
-      "spCANAT": "sqlpublicIP"
-    }
+    "SettingUpSharepointIPUrl": "[concat(parameters('baseUrl'),'/publicip-',parameters('spPublicIPNewOrExisting'),'.json')]"
   },
   "resources": [
     {
@@ -533,7 +528,48 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-         
+          "vmNamePrefix": {
+            "value": "[variables('loadBalancers').vmNamePrefix]"
+          },
+          "vmNicPrefix": {
+            "value": "[variables('loadBalancers').vmNicPrefix]"
+          },
+          "adSubnetRef": {
+            "value": "[variables('loadBalancers').adSubnetRef]"
+          },
+          "sqlSubnetRef": {
+            "value": "[variables('loadBalancers').sqlSubnetRef]"
+          },
+          "spSubnetRef": {
+            "value": "[variables('loadBalancers').spSubnetRef]"
+          },
+          "adNicIPAddress": {
+            "value": "[variables('loadBalancers').spPublicIPResourceId]"
+          },
+          "adLBResourceId": {
+            "value": "[variables('loadBalancers').spPublicIPResourceId]"
+          },
+          "sqlLBResourceId": {
+            "value": "[variables('loadBalancers').spPublicIPResourceId]"
+          },
+          "spLBResourceId": {
+            "value": "[variables('loadBalancers').spPublicIPResourceId]"
+          },
+          "LBBE": {
+            "value": "[variables('loadBalancers').LBFE]"
+          },
+          "RDPNAT": {
+            "value": "[variables('loadBalancers').RDPNAT]"
+          },
+          "spHTTPNAT": {
+            "value": "[variables('loadBalancers').spHTTPNAT]"
+          },
+          "spHTTPSNAT": {
+            "value": "[variables('loadBalancers').spHTTPSNAT]"
+          },
+          "spCANAT": {
+            "value": "[variables('loadBalancers').spCANAT]"
+          }
         }
       }
     },
