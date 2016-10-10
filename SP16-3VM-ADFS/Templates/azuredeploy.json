@@ -49,7 +49,7 @@
       "metadata": {
         "description": "Fully Qualified Domain Name. I.E contoso.com"
       },
-      "defaultValue": "contoso.com"
+      "defaultValue": "contoso.local"
     },
     "keyVaultName": {
       "type": "string",
@@ -58,7 +58,7 @@
       },
       "defaultValue": "placontosovault"
     },
-    "numberApp": {
+    "TODELETEnumberApp": {
       "type": "int",
       "metadata": {
         "description": "Number of Application Servers, must have at least on Application Server"
@@ -66,7 +66,7 @@
       "defaultValue": 2,
       "minValue": 1
     },
-    "numberDCache": {
+    "TODELETEnumberDCache": {
       "type": "int",
       "metadata": {
         "description": "Number of Distributed Cache Servers"
@@ -74,21 +74,21 @@
       "defaultValue": 1,
       "minValue": 1
     },
-    "numberSearchCrawl": {
+    "TODELETEnumberSearchCrawl": {
       "type": "int",
       "metadata": {
         "description": "Number of Search Crawl Servers"
       },
       "defaultValue": "2"
     },
-    "numberSearchIndex": {
+    "TODELETEnumberSearchIndex": {
       "type": "int",
       "metadata": {
         "description": "Number of Search Index Servers"
       },
       "defaultValue": "2"
     },
-    "numberWfe": {
+    "TODELETEnumberWfe": {
       "type": "int",
       "metadata": {
         "description": "Number of Web Front End Servers, must have at least 1 WFE"
@@ -363,7 +363,12 @@
     "keyVaultResourceID": "[concat(resourceGroup().Id, '/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
     "loadBalancers": {
       "spLoadBalancerName": "[concat(parameters('vmNamePrefix'),'wfelb')]",
-      "sqlAOListenerLoadBalancerName": "[concat(parameters('vmNamePrefix'),'sqlaolb')]"
+      "spPublicIPResourceId": "[variables(concat('SpPublicIP',parameters('spPublicIPNewOrExisting')))]",
+      "RDPNAT": "RDP",
+      "spHTTPNAT": "spHttp",
+      "spHTTPSNAT": "spHttps",
+      "spCANAT": "spCentralAdmin",
+      "LBFE": "LBFE"
     },
     "location": "[resourceGroup().location]",
     "sizeOfSPDiskInGB": "100",
@@ -383,7 +388,24 @@
       "publicIPAddressType": "Dynamic",
       "sqlpublicIPAddressName": "sqlpublicIP"
     },
-    "SettingUpSharepointIPUrl": "[concat(parameters('baseUrl'),'/publicip-',parameters('spPublicIPNewOrExisting'),'.json')]"
+    "SettingUpSharepointIPUrl": "[concat(parameters('baseUrl'),'/publicip-',parameters('spPublicIPNewOrExisting'),'.json')]",
+
+    "networkInterfaces": {
+      "vmNamePrefix": "adpublicIP",
+      "vmNicPrefix": "Dynamic",
+      "adSubnetRef": "sqlpublicIP",
+      "sqlSubnetRef": "sqlpublicIP",
+      "spSubnetRef": "sqlpublicIP",
+      "adNicIPAddress": "sqlpublicIP",
+      "adLBResourceId": "sqlpublicIP",
+      "sqlLBResourceId": "sqlpublicIP",
+      "spLBResourceId": "sqlpublicIP",
+      "LBBE": "sqlpublicIP",
+      "RDPNAT": "sqlpublicIP",
+      "spHTTPNAT": "sqlpublicIP",
+      "spHTTPSNAT": "sqlpublicIP",
+      "spCANAT": "sqlpublicIP"
+    }
   },
   "resources": [
     {
@@ -458,57 +480,6 @@
         }
       }
     },
-    /*{
-      "name": "createLoadBalancers",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/createSharepointIP",
-        "Microsoft.Resources/deployments/createPublicIPs"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('assetLocations').CreateLoadBalancersJSON]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "spLBName": {
-            "value": "[variables('spLBName')]"
-          },
-          "sqllbName": {
-            "value": "[variables('sqlLBName')]"
-          },
-          "LBFE": {
-            "value": "[variables('LBFE')]"
-          },
-          "LBBE": {
-            "value": "[variables('LBBE')]"
-          },
-          "RDPNAT": {
-            "value": "[variables('RDPNAT')]"
-          },
-          "spWebNAT": {
-            "value": "[variables('spWebNAT')]"
-          },
-          "spCANAT": {
-            "value": "[variables('spCANAT')]"
-          },
-          "adlbName": {
-            "value": "[variables('adLBName')]"
-          },
-          "spPublicIPResourceId": {
-            "value": "[variables(concat('SpPublicIP',parameters('spPublicIPNewOrExisting')))]"
-          },
-          "adPublicIpResourceId": {
-            "value": "[variables('adPublicIpResourceId')]"
-          },
-          "sqlPublicIpResourceId": {
-            "value": "[variables('sqlPublicIpResourceId')]"
-          }
-        }
-      }
-    },*/
     {
       "type": "Microsoft.Resources/deployments",
       "name": "createLoadBalancers",
@@ -524,25 +495,27 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "vmNamePrefix": {
-            "value": "[parameters('vmNamePrefix')]"
-          },
-          "subnetRef": {
-            "value": "[variables('subnetRef')]"
-          },
-          "sqlLoadBalancerStaticIP": {
-            "value": "[parameters('sqlLoadBalancerStaticIP')]"
-          },
-          "wfeLoadBalancerStaticIP": {
-            "value": "[parameters('wfeLoadBalancerStaticIP')]"
-          },
           "spLoadBalancerName": {
             "value": "[variables('loadBalancers').spLoadBalancerName]"
           },
-          "sqlAOListenerLoadBalancerName": {
-            "value": "[variables('loadBalancers').sqlAOListenerLoadBalancerName]"
+          "spPublicIPResourceId": {
+            "value": "[variables('loadBalancers').spPublicIPResourceId]"
+          },
+          "RDPNAT": {
+            "value": "[variables('loadBalancers').RDPNAT]"
+          },
+          "spHTTPNAT": {
+            "value": "[variables('loadBalancers').spHTTPNAT]"
+          },
+          "spHTTPSNAT": {
+            "value": "[variables('loadBalancers').spHTTPSNAT]"
+          },
+          "spCANAT": {
+            "value": "[variables('loadBalancers').spCANAT]"
+          },
+          "LBFE": {
+            "value": "[variables('loadBalancers').LBFE]"
           }
-
         }
       }
     },
@@ -560,36 +533,7 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "numberApp": {
-            "value": "[parameters('numberApp')]"
-          },
-          "numberDCache": {
-            "value": "[parameters('numberDCache')]"
-          },
-          "numberSearchIndex": {
-            "value": "[parameters('numberSearchIndex')]"
-          },
-          "numberSearchCrawl": {
-            "value": "[parameters('numberSearchCrawl')]"
-          },
-          "numberWfe": {
-            "value": "[parameters('numberWfe')]"
-          },
-          "subnetRef": {
-            "value": "[variables('subnetRef')]"
-          },
-          "vmNamePrefix": {
-            "value": "[parameters('vmNamePrefix')]"
-          },
-          "vmNicPrefix": {
-            "value": "[parameters('vmNicPrefix')]"
-          },
-          "spLoadBalancerName": {
-            "value": "[variables('loadBalancers').spLoadBalancerName]"
-          },
-          "sqlAOListenerLoadBalancerName": {
-            "value": "[variables('loadBalancers').sqlAOListenerLoadBalancerName]"
-          }
+         
         }
       }
     },

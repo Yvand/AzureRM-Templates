@@ -1,0 +1,162 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmNamePrefix": {
+      "type": "string"
+    },
+    "vmNicPrefix": {
+      "type": "string"
+    },
+    "adSubnetRef": {
+      "type": "string"
+    },
+    "sqlSubnetRef": {
+      "type": "string"
+    },
+    "spSubnetRef": {
+      "type": "string"
+    },
+    "adNicIPAddress": {
+      "type": "string"
+    },
+    "adLBResourceId": {
+      "type": "string"
+    },
+    "sqlLBResourceId": {
+      "type": "string"
+    },
+    "spLBResourceId": {
+      "type": "string"
+    },
+    "LBBE": {
+      "type": "string"
+    },
+    "RDPNAT": {
+      "type": "string"
+    },
+    "spHTTPNAT": {
+      "type": "string"
+    },
+    "spHTTPSNAT": {
+      "type": "string"
+    },
+    "spCANAT": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+
+    "adBEAddressPoolID": "[concat(parameters('adLBResourceId'),'/backendAddressPools/',parameters('LBBE'))]",
+    "adRDPNATRuleID": "[concat(parameters('adLBResourceId'),'/inboundNatRules/',parameters('RDPNAT'))]",
+
+    "sqlBEAddressPoolID": "[concat(parameters('sqlLBResourceId'),'/backendAddressPools/',parameters('LBBE'))]",
+    "sqlRDPNATRuleID": "[concat(parameters('sqlLBResourceId'),'/inboundNatRules/',parameters('RDPNAT'))]",
+
+    "spBEAddressPoolID": "[concat(parameters('splbResourceId'),'/backendAddressPools/',parameters('LBBE'))]",
+    "spRDPNATRuleID": "[concat(parameters('spLBResourceId'),'/inboundNatRules/',parameters('RDPNAT'))]",
+    "spHTTPNATRuleID": "[concat(parameters('spLBResourceId'),'/inboundNatRules/',parameters('spHTTPNAT'))]",
+    "spHTTPSNATRuleID": "[concat(parameters('spLBResourceId'),'/inboundNatRules/',parameters('spHTTPSNAT'))]",
+    "spCANATRuleID": "[concat(parameters('spLBResourceId'),'/inboundNatRules/',parameters('spCANAT'))]"
+  },
+  "resources": [
+    {
+      "name": "[concat(parameters('vmNicPrefix'),'-',parameters('vmNamePrefix'),'AD','-nic')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[variables('location')]",
+      "apiVersion": "2015-06-15",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('adNicIPAddress')]",
+              "subnet": {
+                "id": "[parameters('adSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('adBEAddressPoolID')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[variables('adRDPNATRuleID')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat(parameters('vmNicPrefix'),'-',parameters('vmNamePrefix'),'SQL','-nic')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[variables('location')]",
+      "apiVersion": "2015-06-15",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('sqlSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('sqlBEAddressPoolID')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[variables('sqlRDPNATRuleID')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat(parameters('vmNicPrefix'),'-',parameters('vmNamePrefix'),'SP','-nic')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[variables('location')]",
+      "apiVersion": "2015-06-15",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('spSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('spBEAddressPoolID')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[variables('spRDPNATRuleID')]"
+                },
+                {
+                  "id": "[variables('spHTTPNATRuleID')]"
+                },
+                {
+                  "id": "[variables('spHTTPSNATRuleID')]"
+                },
+                {
+                  "id": "[variables('spCANATRuleID')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
