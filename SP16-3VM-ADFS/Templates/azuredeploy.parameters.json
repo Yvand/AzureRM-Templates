@@ -6,10 +6,10 @@
       "value": "sppla"
     },
     "spStorageAccountType": {
-      "value": "Premium_LRS"
+      "value": "Standard_LRS"
     },
     "sqlStorageAccountType": {
-      "value": "Premium_LRS"
+      "value": "Standard_LRS"
     },
     "keyVaultName": {
       "value": "placontosovault"
@@ -98,26 +98,20 @@
     "wfeLoadBalancerStaticIP": {
       "value": "10.1.0.5"
     },
-    "numberWfe": {
-      "value": 2
-    },
-    "numberApp": {
-      "value": 2
-    },
-    "numberDCache": {
-      "value": 1
-    },
-    "numberSearchIndex": {
-      "value": 2
-    },
-    "numberSearchCrawl": {
-      "value": 2
-    },
     "sqlDataSizeTB": {
       "value": 5
     },
     "sqlLogSizeTB": {
       "value": 1
+    },
+    "sppublicIPAddressName": {
+      "value": "sppublicipname"
+    },
+    "spDNSPrefix": {
+      "value": "spdnsprefix"
+    },
+    "spPublicIPRGName": {
+      "value": "sppubliciprg"
     }
   }
 }

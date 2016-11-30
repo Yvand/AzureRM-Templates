@@ -4,10 +4,10 @@
 
 Param(
     [string] $ResourceGroupLocation = 'West Europe',
-    [string] [Parameter(Mandatory=$true)] $ResourceGroupName = 'SPPLA_Arm_Test',
+    [string] $ResourceGroupName = 'SP16_Arm_Test',
     [switch] $UploadArtifacts = $true,
     [switch] $GenerateDSC = $false,
-    [string] [Parameter(Mandatory=$true)] $ArtefactStorageAccountName = 'plaarmdiag',
+    [string] $ArtefactStorageAccountName = 'ydsp16storegadiag',
     [string] $ArtefactStorageContainerName = 'stageartifacts',
     [string] $TemplateFolder = '..\Templates',
     [string] $TemplateFile = '..\Templates\azuredeploy.json',
@@ -38,6 +38,8 @@ if ($azurecontext -eq $null) {
 if ($azurecontext -eq $null){ 
     return
 }
+
+Write-Host "YOPYOP: " $azurecontext.Account.ToString()
 
 $OptionalParameters = New-Object -TypeName Hashtable
 
@@ -96,6 +98,21 @@ if ($UploadArtifacts) {
     #    Remove-Item -Path $ArchiveFile -ErrorAction SilentlyContinue
     #    [System.IO.Compression.ZipFile]::CreateFromDirectory($DSCSourceFolder, $ArchiveFile)
     #}
+
+	# Create a storage account name if none was provided
+    if($ArtefactStorageAccountName -eq "") {
+        $subscriptionId = ((Get-AzureRmContext).Subscription.SubscriptionId).Replace('-', '').substring(0, 19)
+        $ArtefactStorageAccountName = "stage$subscriptionId"
+    }
+
+    $StorageAccount = (Get-AzureRmStorageAccount | Where-Object{$_.StorageAccountName -eq $ArtefactStorageAccountName})
+
+    # Create the storage account if it doesn't already exist
+    if($StorageAccount -eq $null){
+        $StorageResourceGroupName = "ARM_Deploy_Staging"
+        New-AzureRmResourceGroup -Location "$ResourceGroupLocation" -Name $StorageResourceGroupName -Force
+        $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $ArtefactStorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$ResourceGroupLocation"
+    }
 
     $StorageAccountContext = (Get-AzureRmStorageAccount | Where-Object{$_.StorageAccountName -eq $ArtefactStorageAccountName}).Context
 

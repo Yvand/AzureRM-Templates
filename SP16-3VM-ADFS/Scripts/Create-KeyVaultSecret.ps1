@@ -6,7 +6,7 @@ Param(
     [string] $ResourceGroupName = 'SPPLA_Arm_Test',
     [string] $VaultName = "plavault",
     [string] $SecretKey = "spsetup",
-    [string] $SecretValue = "pass@word1"
+    [string] $SecretValue = "pass@word11"
 )
 
 $vault = Get-AzureRmKeyVault -VaultName $VaultName

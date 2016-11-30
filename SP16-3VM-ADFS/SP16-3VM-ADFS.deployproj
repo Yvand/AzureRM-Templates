@@ -28,6 +28,7 @@
     <None Include="Deployment.targets">
       <Visible>False</Visible>
     </None>
+    <Content Include="Deploy-AzureResourceGroup.ps1" />
     <None Include="DSCConfiguration\ConfigureSharePointAppServer.ps1" />
     <None Include="DSCConfiguration\ConfigureSharePointDCacheServer.ps1" />
     <None Include="DSCConfiguration\ConfigureSharePointSCServer.ps1" />
@@ -39,7 +40,6 @@
     <None Include="Scripts\Create-AzureDSCPackages.ps1" />
     <None Include="Scripts\Create-KeyVault.ps1" />
     <None Include="Scripts\Create-KeyVaultSecret.ps1" />
-    <None Include="Scripts\Deploy-AzureResourceGroup.ps1" />
     <None Include="Scripts\Get-DscReferenceModules.ps1" />
     <None Include="Scripts\Remove-PLAVMs.ps1" />
     <None Include="Scripts\Stop-AzureResourceGroupVMs.ps1" />

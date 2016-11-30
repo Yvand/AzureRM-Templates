@@ -27,7 +27,7 @@
   "variables": {
     "location": "[resourceGroup().location]",
     "spBackEndPoolName": "[concat(parameters('spLoadBalancerName'),'BEAP')]",
-    "spFrontEndIPConfigName": "[concat(parameters('spLoadBalancerName'),'FEIP')]",
+    "spFrontEndIPConfigName": "[concat(parameters('spLoadBalancerName'),'FEIP')]"
   },
   "resources": [
     {
