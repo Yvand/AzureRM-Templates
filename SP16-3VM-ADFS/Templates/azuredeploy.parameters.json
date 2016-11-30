@@ -112,6 +112,9 @@
     },
     "spPublicIPRGName": {
       "value": "sppubliciprg"
+    },
+    "spPublicIPNewOrExisting": {
+      "value": "new"
     }
   }
 }
