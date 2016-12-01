@@ -1,0 +1,171 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmNamePrefix": {
+      "type": "string"
+    },
+    "domainName": {
+      "type": "string"
+    },
+    "domainAdminUsername": {
+      "type": "string"
+    },
+    "domainAdminPassword": {
+      "type": "securestring"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "sqlServiceUsername": {
+      "type": "string"
+    },
+    "sqlServiceUsernamePassword": {
+      "type": "securestring"
+    },
+    "spSetupUsername": {
+      "type": "string"
+    },
+    "sqlAOEndPointName": {
+      "type": "string"
+    },
+    "sqlAOAvailabilityGroupName": {
+      "type": "string"
+    },
+    "sqlAOListenerName": {
+      "type": "string"
+    },
+    "sqlLBName": {
+      "type": "string"
+    },
+    "sqlLBIPAddress": {
+      "type": "string"
+    },
+    "sqlPort": {
+      "type": "string"
+    },
+    "numDataDisks": {
+      "type": "int" 
+    },
+    "numLogDisks": {
+      "type": "int"
+    },
+    "ConfigureSQLReplicaDSCPath": {
+      "type": "string"
+    },
+    "ConfigureSQLAOClusterDSCPath": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "apiVersion": "2015-06-15",
+    "fileSharePath": "[concat(trim('\\\\ '),parameters('vmNamePrefix'),'SQLW\\SQLWitnessShare')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNamePrefix'),'SQL2/ConfigureSQLReplica')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.18",
+        "autoUpgradeMinorVersion": false,
+        "settings": {
+          "modulesURL": "[parameters('ConfigureSQLReplicaDSCPath')]",
+          "wmfVersion": "5.0",
+          "configurationFunction": "ConfigureSQLReplica.ps1\\ConfigureSQLReplica",
+          "properties": {
+            "CredSSPDelegates": "[concat('*.',parameters('domainName'))]",
+            "DomainName": "[parameters('domainName')]",
+            "DomainAdminCredential": {
+              "userName": "[parameters('domainAdminUsername')]",
+              "password": "privateSettingsRef:domainAdminPassword"
+            },
+            "AdminCredential": {
+              "userName": "[concat(parameters('adminUsername'))]",
+              "password": "privateSettingsRef:adminPassword"
+            },
+            "SQLServiceCredential": {
+              "userName": "[parameters('sqlServiceUsername')]",
+              "password": "privateSettingsRef:sqlAccountPassword"
+            },
+            "SPSetupUsername": "[parameters('spSetupUsername')]",
+            "SQLPort": "[parameters('sqlPort')]",
+            "NumberOfDataDisks": "[parameters('numDataDisks')]",
+            "NumberOfLogDisks": "[parameters('numLogDisks')]"
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "domainAdminPassword": "[parameters('domainAdminPassword')]",
+            "adminPassword": "[parameters('adminPassword')]",
+            "sqlAccountPassword": "[parameters('sqlServiceUsernamePassword')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNamePrefix'),'SQL1/ConfigureSQLAOCluster')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('vmNamePrefix'),'SQL2/extensions/ConfigureSQLReplica')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.18",
+        "autoUpgradeMinorVersion": false,
+        "settings": {
+          "modulesURL": "[parameters('ConfigureSQLAOClusterDSCPath')]",
+          "wmfVersion": "5.0",
+          "configurationFunction": "ConfigureSQLAOCluster.ps1\\ConfigureSQLAOCluster",
+          "properties": {
+            "CredSSPDelegates": "[concat('*.',parameters('domainName'))]",
+            "DomainName": "[parameters('domainName')]",
+            "DomainAdminCredential": {
+              "userName": "[parameters('domainAdminUsername')]",
+              "password": "privateSettingsRef:domainAdminPassword"
+            },
+            "AdminCredential": {
+              "userName": "[concat(parameters('adminUsername'))]",
+              "password": "privateSettingsRef:adminPassword"
+            },
+            "SQLServiceCredential": {
+              "userName": "[parameters('sqlServiceUsername')]",
+              "password": "privateSettingsRef:adminPassword"
+            },
+            "SPSetupUsername": "[parameters('spSetupUsername')]",
+            "SQLClusterName": "[concat(parameters('vmNamePrefix'),'CLUSTER')]",
+            "FSWSharePath": "[variables('fileSharePath')]",
+            "SQLPrimaryReplica": "[concat(parameters('vmNamePrefix'),'SQL1')]",
+            "SQLSecondaryReplica": "[concat(parameters('vmNamePrefix'),'SQL2')]",
+            "SQLAOEndPointName": "[parameters('sqlAOEndPointName')]",
+            "SQLAOAvailabilityGroupName": "[parameters('sqlAOAvailabilityGroupName')]",
+            "SQLAOListenerName": "[parameters('sqlAOListenerName')]",
+            "SQLLBName": "[parameters('sqlLBName')]",
+            "SQLLBIPAddress": "[parameters('sqlLBIPAddress')]",
+            "SQLPort": "[parameters('sqlPort')]",
+            "NumberOfDataDisks": "[parameters('numDataDisks')]",
+            "NumberOfLogDisks": "[parameters('numLogDisks')]",
+            "DNSServerName": "adVM"
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "domainAdminPassword": "[parameters('domainAdminPassword')]",
+            "adminPassword": "[parameters('adminPassword')]",
+            "sqlServicePassword": "[parameters('sqlServiceUsernamePassword')]"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,450 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccountName": {
+      "type": "string"
+    },
+    "serverVMSize": {
+      "type": "string"
+    },
+    "numDataDisks": {
+      "type": "int"
+    },
+    "numLogDisks": {
+      "type": "int"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "vmNic": {
+      "type": "string"
+    },
+    "vmName": {
+      "type": "string"
+    },
+    "subnetRef": {
+      "type": "string"
+    },
+    "spSqlAvailabilitySetName": {
+      "type": "string"
+    },
+    "sizeOfDiskInGB": {
+      "type": "int"
+    }
+  },
+  "variables": {
+    "sqllStorageAccountName": "[parameters('storageAccountName')]",
+    "totalDisks": "[add(parameters('numDataDisks'), parameters('numLogDisks'))]",
+    "sizeOfDiskInGB": "1023",
+    "dataDiskVhdName": "-datadisk",
+    "location": "[resourceGroup().location]",
+    "sqlImagePublisher": "MicrosoftSQLServer",
+    "sqlImageOffer": "SQL2014SP1-WS2012R2",
+    "sqlImageSKU": "Enterprise",
+    "windowsImagePublisher": "MicrosoftWindowsServer",
+    "windowsImageOffer": "WindowsServer",
+    "windowsImageSKU": "2012-R2-Datacenter",
+    "OSDiskName": "osdisk",
+    "storageContainerName": "vhds",
+    "vmSize": "[parameters('serverVMSize')]",
+    "apiVersion": "2015-06-15",
+    "localMachine": "\\",
+    "dataDiskSize": 1023,
+    "logDiskSize": 128,
+    "diskCaching": "ReadWrite",
+    "storageLocation": "[concat('http://', variables('sqllStorageAccountName'),'.blob.core.windows.net/',variables('storageContainerName'),'/', parameters('vmName'),variables('dataDiskVhdName'))]",
+    "diskArray": [
+      {
+        "name": "datadisk1",
+        "lun": 0,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '1.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk2",
+        "lun": 1,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '2.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk3",
+        "lun": 2,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '3.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk4",
+        "lun": 3,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '4.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk5",
+        "lun": 4,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '5.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk6",
+        "lun": 5,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '6.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk7",
+        "lun": 6,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '7.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk8",
+        "lun": 7,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '8.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk9",
+        "lun": 8,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '9.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk10",
+        "lun": 9,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '10.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk11",
+        "lun": 10,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '11.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk12",
+        "lun": 11,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '12.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk13",
+        "lun": 12,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '13.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk14",
+        "lun": 13,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '14.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk15",
+        "lun": 14,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '15.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk16",
+        "lun": 15,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '16.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk17",
+        "lun": 16,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '17.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk18",
+        "lun": 17,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '18.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk19",
+        "lun": 18,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '19.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk20",
+        "lun": 19,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '20.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk21",
+        "lun": 20,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '21.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk22",
+        "lun": 21,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '22.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk23",
+        "lun": 22,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '23.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk24",
+        "lun": 23,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '24.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk25",
+        "lun": 24,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '25.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk26",
+        "lun": 25,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '26.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk27",
+        "lun": 26,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '27.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk28",
+        "lun": 27,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '28.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk29",
+        "lun": 28,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '29.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk30",
+        "lun": 29,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '30.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk31",
+        "lun": 30,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '31.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk32",
+        "lun": 31,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '32.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      },
+      {
+        "name": "datadisk33",
+        "lun": 32,
+        "vhd": {
+          "uri": "[concat(variables('storageLocation'), '33.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "[variables('diskCaching')]",
+        "diskSizeGB": "[parameters('sizeOfDiskInGB')]"
+      }
+    ]
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('serverVMSize')]"
+        },
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',parameters('spSqlAvailabilitySetName'))]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true,
+            "enableAutomaticUpdates": true
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('sqlImagePublisher')]",
+            "offer": "[variables('sqlImageOffer')]",
+            "sku": "[variables('sqlImageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('vmName'),'-',variables('OSDiskName'))]",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('storageContainerName'),'/',parameters('vmName'),'-',variables('OSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": "[take(variables('diskArray'),variables('totalDisks'))]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('vmNic'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "false"
+          }
+        }
+      },
+      "tags": {
+        "author": "sppla"
+      }
+    }
+  ]
+}

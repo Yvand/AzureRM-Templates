@@ -1,0 +1,123 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccountNamePrefix": {
+      "value": "sppla"
+    },
+    "spStorageAccountType": {
+      "value": "Premium_LRS"
+    },
+    "sqlStorageAccountType": {
+      "value": "Premium_LRS"
+    },
+    "keyVaultName": {
+      "value": "placontosovault"
+    },
+    "adminUsername": {
+      "value": "plaadmin"
+    },
+    "adminPasswordKeyName": {
+      "value": "spsetup"
+    },
+    "vmNicPrefix": {
+      "value": "sppla"
+    },
+    "vmNamePrefix": {
+      "value": "PLA"
+    },
+    "vNetName": {
+      "value": "PLAVNet"
+    },
+    "subnetName": {
+      "value": "PLASubnet"
+    },
+    "domainName": {
+      "value": "contoso.com"
+    },
+    "domainAdminUsername": {
+      "value": "contoso\\plaadmin"
+    },
+    "domainAdminPasswordKeyName": {
+      "value": "spsetup"
+    },
+    "spSetupUsername": {
+      "value": "contoso\\spsetup"
+    },
+    "spSetupUserPasswordKeyName": {
+      "value": "spsetup"
+    },
+    "spFarmAccount": {
+      "value": "contoso\\spfarm"
+    },
+    "spFarmAccountPasswordKeyName": {
+      "value": "spsetup"
+    },
+    "spWebAppAccount": {
+      "value": "contoso\\spweb"
+    },
+    "spWebAppAccountPasswordKeyName": {
+      "value": "spsetup"
+    },
+    "spServiceAppAccount": {
+      "value": "contoso\\spservice"
+    },
+    "spServiceAppAccountPasswordKeyName": {
+      "value": "spsetup"
+    },
+    "spContentAccessAccount": {
+      "value": "contoso\\spcontent"
+    },
+    "spContentAccessAccountPasswordKeyName": {
+      "value": "spsetup"
+    },
+    "spSuperReaderAccount": {
+      "value": "contoso\\spsupreader"
+    },
+    "spSuperUserAccount": {
+      "value": "contoso\\spsupuser"
+    },
+    "sqlServiceUsername": {
+      "value": "contoso\\sqlservice"
+    },
+    "sqlServiceUserPasswordKeyName": {
+      "value": "spsetup"
+    },
+    "spFarmPassphraseKeyName": {
+      "value": "spsetup"
+    },
+    "spWebRootUrl": {
+      "value": "https://intranet.contoso.com"
+    },
+    "spMySiteUrl": {
+      "value": "https://intranet-my.contoso.com"
+    },
+    "sqlLoadBalancerStaticIP": {
+      "value": "10.1.0.6"
+    },
+    "wfeLoadBalancerStaticIP": {
+      "value": "10.1.0.5"
+    },
+    "numberWfe": {
+      "value": 2
+    },
+    "numberApp": {
+      "value": 2
+    },
+    "numberDCache": {
+      "value": 1
+    },
+    "numberSearchIndex": {
+      "value": 2
+    },
+    "numberSearchCrawl": {
+      "value": 2
+    },
+    "sqlDataSizeTB": {
+      "value": 5
+    },
+    "sqlLogSizeTB": {
+      "value": 1
+    }
+  }
+}

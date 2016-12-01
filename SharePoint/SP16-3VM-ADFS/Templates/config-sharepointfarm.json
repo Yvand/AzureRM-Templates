@@ -1,0 +1,519 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "domainName": {
+      "type": "string"
+    },
+    "domainAdminUsername": {
+      "type": "string"
+    },
+    "domainAdminPassword": {
+      "type": "securestring"
+    },
+    "spSetupUsername": {
+      "type": "string"
+    },
+    "spSetupUsernamePassword": {
+      "type": "securestring"
+    },
+    "spFarmUsername": {
+      "type": "string"
+    },
+    "spFarmUsernamePassword": {
+      "type": "securestring"
+    },
+    "spServiceUsername": {
+      "type": "string"
+    },
+    "spServiceUsernamePassword": {
+      "type": "securestring"
+    },
+    "spWebUsername": {
+      "type": "string"
+    },
+    "spWebUsernamePassword": {
+      "type": "securestring"
+    },
+    "spContentUsername": {
+      "type": "string"
+    },
+    "spContentUsernamePassword": {
+      "type": "securestring"
+    },
+    "spSuperReaderUsername": {
+      "type": "string"
+    },
+    "spSuperUserUsername": {
+      "type": "string"
+    },
+    "spPassPhrase": {
+      "type": "securestring"
+    },
+    "vmNamePrefix": {
+      "type": "string"
+    },
+    "spWebAppUrl": {
+      "type": "string"
+    },
+    "spMySiteUrl": {
+      "type": "string"
+    },
+    "spDatabaseServer": {
+      "type": "string"
+    },
+    "numberWfe": {
+      "type": "int"
+    },
+    "numberApp": {
+      "type": "int"
+    },
+    "numberDCache": {
+      "type": "int"
+    },
+    "numberSearchIndex": {
+      "type": "int"
+    },
+    "numberSearchCrawl": {
+      "type": "int"
+    },
+    "sizeWfeVm": {
+      "type": "string"
+    },
+    "sizeAppVm": {
+      "type": "string"
+    },
+    "sizeDCacheVm": {
+      "type": "string"
+    },
+    "sizeSearchIndexVm": {
+      "type": "string"
+    },
+    "sizeSearchCrawlVm": {
+      "type": "string"
+    },
+    "sizeWfeDataDisk": {
+      "type": "string"
+    },
+    "sizeAppDataDisk": {
+      "type": "string"
+    },
+    "sizeDCacheDataDisk": {
+      "type": "string"
+    },
+    "sizeSearchIndexDataDisk": {
+      "type": "string"
+    },
+    "sizeSearchCrawlDataDisk": {
+      "type": "string"
+    },
+    "ConfigureSharePointAppServerDSCPath": {
+      "type": "string"
+    },
+    "ConfigureSharePointDCacheServerDSCPath": {
+      "type": "string"
+    },
+    "ConfigureSharePointSCServerDSCPath": {
+      "type": "string"
+    },
+    "ConfigureSharePointSIServerDSCPath": {
+      "type": "string"
+    },
+    "ConfigureSharePointWFEServerDSCPath": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "apiVersion": "2015-06-15",
+    "AppServerDSC": "[parameters('ConfigureSharePointAppServerDSCPath')]",
+    "WebServerDSC": "[parameters('ConfigureSharePointWFEServerDSCPath')]",
+    "SIServerDSC": "[parameters('ConfigureSharePointSIServerDSCPath')]",
+    "SCServerDSC": "[parameters('ConfigureSharePointSCServerDSCPath')]",
+    "DCacheServerDSC": "[parameters('ConfigureSharePointDCacheServerDSCPath')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNamePrefix'),'APP',copyIndex(1),'/ConfigAppServer')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.18",
+        "autoUpgradeMinorVersion": false,
+        "settings": {
+          "modulesURL": "[variables('AppServerDSC')]",
+          "wmfVersion": "5.0",
+          "configurationFunction": "ConfigureSharePointAppServer.ps1\\ConfigureSharePointAppServer",
+          "properties": {
+            "CredSSPDelegates": "[concat('*.',parameters('domainName'))]",
+            "DomainName": "[parameters('domainName')]",
+            "DomainAdminCredential": {
+              "userName": "[parameters('domainAdminUsername')]",
+              "password": "privateSettingsRef:domainAdminPassword"
+            },
+            "SPSetupCredential": {
+              "userName": "[parameters('spSetupUsername')]",
+              "password": "privateSettingsRef:spSetupPassword"
+            },
+            "SPFarmCredential": {
+              "userName": "[parameters('spFarmUsername')]",
+              "password": "privateSettingsRef:spFarmPassword"
+            },
+            "SPServicesCredential": {
+              "userName": "[parameters('spServiceUsername')]",
+              "password": "privateSettingsRef:spServicePassword"
+            },
+            "SPWebCredential": {
+              "userName": "[parameters('spWebUsername')]",
+              "password": "privateSettingsRef:spWebPassword"
+            },
+            "SPContentCredential": {
+              "userName": "[parameters('spContentUsername')]",
+              "password": "privateSettingsRef:spContentPassword"
+            },
+            "SPPassPhrase": {
+              "userName": "Passphrase",
+              "password": "privateSettingsRef:spPassphrase"
+            },
+            "SPSuperReaderUsername": "[parameters('spSuperReaderUsername')]",
+            "SPSuperUserUsername": "[parameters('spSuperUserUsername')]",
+            "SPPrefix": "[parameters('vmNamePrefix')]",
+            "SPWebAppUrl": "[parameters('spWebAppUrl')]",
+            "SPMySiteUrl": "[parameters('spMySiteUrl')]",
+            "DatabaseServer": "[parameters('spDatabaseServer')]",
+            "NumWeb": "[parameters('numberWfe')]",
+            "NumApp": "[parameters('numberApp')]",
+            "NumSI": "[parameters('numberSearchIndex')]",
+            "NumSC": "[parameters('numberSearchCrawl')]",
+            "NumDCache": "[parameters('numberDCache')]"
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "domainAdminPassword": "[parameters('domainAdminPassword')]",
+            "spSetupPassword": "[parameters('spSetupUsernamePassword')]",
+            "spFarmPassword": "[parameters('spFarmUsernamePassword')]",
+            "spServicePassword": "[parameters('spServiceUsernamePassword')]",
+            "spWebPassword": "[parameters('spWebUsernamePassword')]",
+            "spContentPassword": "[parameters('spContentUsernamePassword')]",
+            "spPassphrase": "[parameters('spPassPhrase')]"
+          }
+        }
+      },
+      "copy": {
+        "count": "[parameters('numberApp')]",
+        "name": "spAppConfig"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNamePrefix'),'WEB',copyIndex(1),'/ConfigWebServer')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.18",
+        "autoUpgradeMinorVersion": false,
+        "settings": {
+          "modulesURL": "[variables('WebServerDSC')]",
+          "wmfVersion": "5.0",
+          "configurationFunction": "ConfigureSharePointWFEServer.ps1\\ConfigureSharePointWFEServer",
+          "properties": {
+            "CredSSPDelegates": "[concat('*.',parameters('domainName'))]",
+            "DomainName": "[parameters('domainName')]",
+            "DomainAdminCredential": {
+              "userName": "[parameters('domainAdminUsername')]",
+              "password": "privateSettingsRef:domainAdminPassword"
+            },
+            "SPSetupCredential": {
+              "userName": "[parameters('spSetupUsername')]",
+              "password": "privateSettingsRef:spSetupPassword"
+            },
+            "SPFarmCredential": {
+              "userName": "[parameters('spFarmUsername')]",
+              "password": "privateSettingsRef:spFarmPassword"
+            },
+            "SPServicesCredential": {
+              "userName": "[parameters('spServiceUsername')]",
+              "password": "privateSettingsRef:spServicePassword"
+            },
+            "SPWebCredential": {
+              "userName": "[parameters('spWebUsername')]",
+              "password": "privateSettingsRef:spWebPassword"
+            },
+            "SPContentCredential": {
+              "userName": "[parameters('spContentUsername')]",
+              "password": "privateSettingsRef:spContentPassword"
+            },
+            "SPPassPhrase": {
+              "userName": "Passphrase",
+              "password": "privateSettingsRef:spPassphrase"
+            },
+            "SPSuperReaderUsername": "[parameters('spSuperReaderUsername')]",
+            "SPSuperUserUsername": "[parameters('spSuperUserUsername')]",
+            "SPPrefix": "[parameters('vmNamePrefix')]",
+            "SPWebAppUrl": "[parameters('spWebAppUrl')]",
+            "SPMySiteUrl": "[parameters('spMySiteUrl')]",
+            "DatabaseServer": "[parameters('spDatabaseServer')]",
+            "NumWeb": "[parameters('numberWfe')]",
+            "NumApp": "[parameters('numberApp')]",
+            "NumSI": "[parameters('numberSearchIndex')]",
+            "NumSC": "[parameters('numberSearchCrawl')]",
+            "NumDCache": "[parameters('numberDCache')]"
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "domainAdminPassword": "[parameters('domainAdminPassword')]",
+            "spSetupPassword": "[parameters('spSetupUsernamePassword')]",
+            "spFarmPassword": "[parameters('spFarmUsernamePassword')]",
+            "spServicePassword": "[parameters('spServiceUsernamePassword')]",
+            "spWebPassword": "[parameters('spWebUsernamePassword')]",
+            "spContentPassword": "[parameters('spContentUsernamePassword')]",
+            "spPassphrase": "[parameters('spPassPhrase')]"
+          }
+        }
+      },
+      "copy": {
+        "count": "[parameters('numberWfe')]",
+        "name": "spWfeConfig"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNamePrefix'),'SI',copyIndex(1),'/ConfigSearchIndexServer')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.18",
+        "autoUpgradeMinorVersion": false,
+        "settings": {
+          "modulesURL": "[variables('SIServerDSC')]",
+          "wmfVersion": "5.0",
+          "configurationFunction": "ConfigureSharePointSIServer.ps1\\ConfigureSharePointSIServer",
+          "properties": {
+            "CredSSPDelegates": "[concat('*.',parameters('domainName'))]",
+            "DomainName": "[parameters('domainName')]",
+            "DomainAdminCredential": {
+              "userName": "[parameters('domainAdminUsername')]",
+              "password": "privateSettingsRef:domainAdminPassword"
+            },
+            "SPSetupCredential": {
+              "userName": "[parameters('spSetupUsername')]",
+              "password": "privateSettingsRef:spSetupPassword"
+            },
+            "SPFarmCredential": {
+              "userName": "[parameters('spFarmUsername')]",
+              "password": "privateSettingsRef:spFarmPassword"
+            },
+            "SPServicesCredential": {
+              "userName": "[parameters('spServiceUsername')]",
+              "password": "privateSettingsRef:spServicePassword"
+            },
+            "SPWebCredential": {
+              "userName": "[parameters('spWebUsername')]",
+              "password": "privateSettingsRef:spWebPassword"
+            },
+            "SPContentCredential": {
+              "userName": "[parameters('spContentUsername')]",
+              "password": "privateSettingsRef:spContentPassword"
+            },
+            "SPPassPhrase": {
+              "userName": "Passphrase",
+              "password": "privateSettingsRef:spPassphrase"
+            },
+            "SPSuperReaderUsername": "[parameters('spSuperReaderUsername')]",
+            "SPSuperUserUsername": "[parameters('spSuperUserUsername')]",
+            "SPPrefix": "[parameters('vmNamePrefix')]",
+            "SPWebAppUrl": "[parameters('spWebAppUrl')]",
+            "SPMySiteUrl": "[parameters('spMySiteUrl')]",
+            "DatabaseServer": "[parameters('spDatabaseServer')]",
+            "NumWeb": "[parameters('numberWfe')]",
+            "NumApp": "[parameters('numberApp')]",
+            "NumSI": "[parameters('numberSearchIndex')]",
+            "NumSC": "[parameters('numberSearchCrawl')]",
+            "NumDCache": "[parameters('numberDCache')]"
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "domainAdminPassword": "[parameters('domainAdminPassword')]",
+            "spSetupPassword": "[parameters('spSetupUsernamePassword')]",
+            "spFarmPassword": "[parameters('spFarmUsernamePassword')]",
+            "spServicePassword": "[parameters('spServiceUsernamePassword')]",
+            "spWebPassword": "[parameters('spWebUsernamePassword')]",
+            "spContentPassword": "[parameters('spContentUsernamePassword')]",
+            "spPassphrase": "[parameters('spPassPhrase')]"
+          }
+        }
+      },
+      "copy": {
+        "count": "[parameters('numberSearchIndex')]",
+        "name": "spSIConfig"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNamePrefix'),'SC',copyIndex(1),'/ConfigSearchCrawlServer')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.18",
+        "autoUpgradeMinorVersion": false,
+        "settings": {
+          "modulesURL": "[variables('SCServerDSC')]",
+          "wmfVersion": "5.0",
+          "configurationFunction": "ConfigureSharePointSCServer.ps1\\ConfigureSharePointSCServer",
+          "properties": {
+            "CredSSPDelegates": "[concat('*.',parameters('domainName'))]",
+            "DomainName": "[parameters('domainName')]",
+            "DomainAdminCredential": {
+              "userName": "[parameters('domainAdminUsername')]",
+              "password": "privateSettingsRef:domainAdminPassword"
+            },
+            "SPSetupCredential": {
+              "userName": "[parameters('spSetupUsername')]",
+              "password": "privateSettingsRef:spSetupPassword"
+            },
+            "SPFarmCredential": {
+              "userName": "[parameters('spFarmUsername')]",
+              "password": "privateSettingsRef:spFarmPassword"
+            },
+            "SPServicesCredential": {
+              "userName": "[parameters('spServiceUsername')]",
+              "password": "privateSettingsRef:spServicePassword"
+            },
+            "SPWebCredential": {
+              "userName": "[parameters('spWebUsername')]",
+              "password": "privateSettingsRef:spWebPassword"
+            },
+            "SPContentCredential": {
+              "userName": "[parameters('spContentUsername')]",
+              "password": "privateSettingsRef:spContentPassword"
+            },
+            "SPPassPhrase": {
+              "userName": "Passphrase",
+              "password": "privateSettingsRef:spPassphrase"
+            },
+            "SPSuperReaderUsername": "[parameters('spSuperReaderUsername')]",
+            "SPSuperUserUsername": "[parameters('spSuperUserUsername')]",
+            "SPPrefix": "[parameters('vmNamePrefix')]",
+            "SPWebAppUrl": "[parameters('spWebAppUrl')]",
+            "SPMySiteUrl": "[parameters('spMySiteUrl')]",
+            "DatabaseServer": "[parameters('spDatabaseServer')]",
+            "NumWeb": "[parameters('numberWfe')]",
+            "NumApp": "[parameters('numberApp')]",
+            "NumSI": "[parameters('numberSearchIndex')]",
+            "NumSC": "[parameters('numberSearchCrawl')]",
+            "NumDCache": "[parameters('numberDCache')]"
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "domainAdminPassword": "[parameters('domainAdminPassword')]",
+            "spSetupPassword": "[parameters('spSetupUsernamePassword')]",
+            "spFarmPassword": "[parameters('spFarmUsernamePassword')]",
+            "spServicePassword": "[parameters('spServiceUsernamePassword')]",
+            "spWebPassword": "[parameters('spWebUsernamePassword')]",
+            "spContentPassword": "[parameters('spContentUsernamePassword')]",
+            "spPassphrase": "[parameters('spPassPhrase')]"
+          }
+        }
+      },
+      "copy": {
+        "count": "[parameters('numberSearchCrawl')]",
+        "name": "spSCConfig"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNamePrefix'),'DCACHE',copyIndex(1),'/ConfigDCacheServer')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.18",
+        "autoUpgradeMinorVersion": false,
+        "settings": {
+          "modulesURL": "[variables('DCacheServerDSC')]",
+          "wmfVersion": "5.0",
+          "configurationFunction": "ConfigureSharePointDCacheServer.ps1\\ConfigureSharePointDCacheServer",
+          "properties": {
+            "CredSSPDelegates": "[concat('*.',parameters('domainName'))]",
+            "DomainName": "[parameters('domainName')]",
+            "DomainAdminCredential": {
+              "userName": "[parameters('domainAdminUsername')]",
+              "password": "privateSettingsRef:domainAdminPassword"
+            },
+            "SPSetupCredential": {
+              "userName": "[parameters('spSetupUsername')]",
+              "password": "privateSettingsRef:spSetupPassword"
+            },
+            "SPFarmCredential": {
+              "userName": "[parameters('spFarmUsername')]",
+              "password": "privateSettingsRef:spFarmPassword"
+            },
+            "SPServicesCredential": {
+              "userName": "[parameters('spServiceUsername')]",
+              "password": "privateSettingsRef:spServicePassword"
+            },
+            "SPWebCredential": {
+              "userName": "[parameters('spWebUsername')]",
+              "password": "privateSettingsRef:spWebPassword"
+            },
+            "SPContentCredential": {
+              "userName": "[parameters('spContentUsername')]",
+              "password": "privateSettingsRef:spContentPassword"
+            },
+            "SPPassPhrase": {
+              "userName": "Passphrase",
+              "password": "privateSettingsRef:spPassphrase"
+            },
+            "SPSuperReaderUsername": "[parameters('spSuperReaderUsername')]",
+            "SPSuperUserUsername": "[parameters('spSuperUserUsername')]",
+            "SPPrefix": "[parameters('vmNamePrefix')]",
+            "SPWebAppUrl": "[parameters('spWebAppUrl')]",
+            "SPMySiteUrl": "[parameters('spMySiteUrl')]",
+            "DatabaseServer": "[parameters('spDatabaseServer')]",
+            "NumWeb": "[parameters('numberWfe')]",
+            "NumApp": "[parameters('numberApp')]",
+            "NumSI": "[parameters('numberSearchIndex')]",
+            "NumSC": "[parameters('numberSearchCrawl')]",
+            "NumDCache": "[parameters('numberDCache')]"
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "domainAdminPassword": "[parameters('domainAdminPassword')]",
+            "spSetupPassword": "[parameters('spSetupUsernamePassword')]",
+            "spFarmPassword": "[parameters('spFarmUsernamePassword')]",
+            "spServicePassword": "[parameters('spServiceUsernamePassword')]",
+            "spWebPassword": "[parameters('spWebUsernamePassword')]",
+            "spContentPassword": "[parameters('spContentUsernamePassword')]",
+            "spPassphrase": "[parameters('spPassPhrase')]"
+          }
+        }
+      },
+      "copy": {
+        "count": "[parameters('numberDCache')]",
+        "name": "spDCacheConfig"
+      }
+    }
+
+  ]
+}

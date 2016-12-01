@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|AnyCPU">
+      <Configuration>Debug</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|AnyCPU">
+      <Configuration>Release</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>f99efa96-bb11-41fc-81c8-b02d2c405277</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworkIdentifier>Deployment</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>1.0</TargetFrameworkVersion>
+    <PrepareForBuildDependsOn>
+    </PrepareForBuildDependsOn>
+  </PropertyGroup>
+  <Import Condition=" Exists('Deployment.targets') " Project="Deployment.targets" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+  <!-- vertag<:>start tokens<:>maj.min -->
+  <Import Condition=" Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Deployment\1.1\DeploymentProject.targets') " Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Deployment\1.1\DeploymentProject.targets" />
+  <!-- vertag<:>end -->
+  <ItemGroup>
+    <Content Include="azuredeploy.json" />
+    <Content Include="azuredeploy.parameters.json" />
+    <None Include="Deployment.targets">
+      <Visible>False</Visible>
+    </None>
+    <Content Include="Deploy-AzureResourceGroup.ps1" />
+    <None Include="DSCConfiguration\ConfigureSharePointAppServer.ps1" />
+    <None Include="DSCConfiguration\ConfigureSharePointDCacheServer.ps1" />
+    <None Include="DSCConfiguration\ConfigureSharePointSCServer.ps1" />
+    <None Include="DSCConfiguration\ConfigureSharePointSIServer.ps1" />
+    <None Include="DSCConfiguration\ConfigureSharePointWFEServer.ps1" />
+    <None Include="DSCConfiguration\ConfigureSQLAOCluster.ps1" />
+    <None Include="DSCConfiguration\ConfigureSQLReplica.ps1" />
+    <None Include="DSCConfiguration\PrepareSQLWitnessVM.ps1" />
+    <None Include="DSC\ConfigureSharePointAppServer.ps1.zip" />
+    <None Include="DSC\ConfigureSharePointDCacheServer.ps1.zip" />
+    <None Include="DSC\ConfigureSharePointSCServer.ps1.zip" />
+    <None Include="DSC\ConfigureSharePointSIServer.ps1.zip" />
+    <None Include="DSC\ConfigureSharePointWFEServer.ps1.zip" />
+    <None Include="DSC\ConfigureSQLAOCluster.ps1.zip" />
+    <None Include="DSC\ConfigureSQLReplica.ps1.zip" />
+    <None Include="DSC\PrepareSQLWitnessVM.ps1.zip" />
+    <None Include="Scripts\Create-AzureDSCPackages.ps1" />
+    <None Include="Scripts\Create-KeyVault.ps1" />
+    <None Include="Scripts\Create-KeyVaultSecret.ps1" />
+    <None Include="Scripts\Deploy-AzureResourceGroup.ps1" />
+    <None Include="Scripts\Get-DscReferenceModules.ps1" />
+    <None Include="Scripts\Remove-PLAVMs.ps1" />
+    <None Include="Scripts\Stop-AzureResourceGroupVMs.ps1" />
+    <None Include="Templates\azuredeploy.json" />
+    <None Include="Templates\azuredeploy.parameters.json" />
+    <None Include="Templates\config-sharepointfarm.json" />
+    <None Include="Templates\config-sqlservers.json" />
+    <None Include="Templates\infra-allnics.json" />
+    <None Include="Templates\infra-availabilitysets.json" />
+    <None Include="Templates\infra-loadbalancers.json" />
+    <None Include="Templates\infra-sharepointservers.json" />
+    <None Include="Templates\infra-sqlservers.json" />
+    <None Include="Templates\infra-sqlwitness.json" />
+    <None Include="Templates\infra-storageaccounts.json" />
+  </ItemGroup>
+  <Target Name="GetReferenceAssemblyPaths" />
+</Project>

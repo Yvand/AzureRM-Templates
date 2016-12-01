@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "SharePoint-2013", "SharePoint-2013\SharePoint-2013.deployproj", "{CFD27F57-23BF-4A9D-A2A2-CCE68E70AB9B}"
+EndProject
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "SP16-3VM-ADFS", "SP16-3VM-ADFS\SP16-3VM-ADFS.deployproj", "{860E790B-CB8C-4424-8BD6-7A3CE3CC08B7}"
+EndProject
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "SP16-PLA", "SP16-PLA\SP16-PLA.deployproj", "{F99EFA96-BB11-41FC-81C8-B02D2C405277}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CFD27F57-23BF-4A9D-A2A2-CCE68E70AB9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFD27F57-23BF-4A9D-A2A2-CCE68E70AB9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFD27F57-23BF-4A9D-A2A2-CCE68E70AB9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFD27F57-23BF-4A9D-A2A2-CCE68E70AB9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{860E790B-CB8C-4424-8BD6-7A3CE3CC08B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{860E790B-CB8C-4424-8BD6-7A3CE3CC08B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{860E790B-CB8C-4424-8BD6-7A3CE3CC08B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{860E790B-CB8C-4424-8BD6-7A3CE3CC08B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F99EFA96-BB11-41FC-81C8-B02D2C405277}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F99EFA96-BB11-41FC-81C8-B02D2C405277}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F99EFA96-BB11-41FC-81C8-B02D2C405277}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F99EFA96-BB11-41FC-81C8-B02D2C405277}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
