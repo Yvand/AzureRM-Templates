@@ -1,2 +1,2 @@
 # AzureRM-Templates
-IaaS templates for ARM
+Templates for ARM
