@@ -15,13 +15,13 @@ if ($azurecontext -eq $null){
 ### Define variables
 {
 $resourceGroupLocation = 'westeurope'
-$resourceGroupName = 'samplesite-paas'
-$resourceDeploymentName = 'samplesite-paas-deployment'
+$resourceGroupName = 'iaas-simple3vms'
+$resourceDeploymentName = 'iaas-simple3vms-deployment'
 $templateFileName = 'azuredeploy.json'
 $templatePath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $templateFileName))
-$templatePath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\PaaS\SampleWebSite", $templateFileName))
+$templatePath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\IaaS\3VMs", $templateFileName))
 $password = "Passdemerde!"
-$securePassword = $password| ConvertTo-SecureString -AsPlainText
+$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 }
 
 ### Create Resource Group
