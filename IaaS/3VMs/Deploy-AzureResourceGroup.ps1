@@ -20,7 +20,7 @@ $resourceDeploymentName = 'iaas-simple3vms-deployment'
 $templateFileName = 'azuredeploy.json'
 $templatePath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $templateFileName))
 $templatePath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\IaaS\3VMs", $templateFileName))
-$password = "Passdemerde!"
+$password = "****"
 $securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 }
 

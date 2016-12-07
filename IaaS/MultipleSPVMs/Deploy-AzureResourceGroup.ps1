@@ -20,7 +20,7 @@ $resourceDeploymentName = 'yd-multiplespvms-deployment'
 $templateFileName = 'azuredeploy.json'
 $templatePath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $templateFileName))
 $templatePath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\IaaS\MultipleSPVMs", $templateFileName))
-$password = "Passdemerde!"
+$password = "****"
 $securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 }
 
