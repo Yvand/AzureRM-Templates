@@ -4,7 +4,7 @@
   "parameters": {
     "templatePrefix": {
       "type": "string",
-      "defaultValue": "yd3vms",
+      "defaultValue": "ydmultspvms",
       "minLength": 1
     },
     "storageAccountType": {
@@ -39,7 +39,11 @@
       "defaultValue": "yd3vms-sql",
       "minLength": 1
     },
-    "vmSPName": {
+    "vmSPCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "vmSPNamePrefix": {
       "type": "string",
       "defaultValue": "SP",
       "minLength": 1
@@ -84,12 +88,13 @@
       "vmPublicIPName": "vmSQL-PublicIP"
     },
     "vmSP": {
-      "vmOSDiskName": "vm-SPOSDisk",
+      "vmOSDiskNamePrefix": "vm-SPOSDisk",
       "vmVmSize": "Standard_A6",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet3Name)]",
-      "vmNicName": "[concat(parameters('vmSPName'), '-', 'nic-0')]",
+      "vmNicNamePrefix": "[parameters('vmSPNamePrefix')]",
       "vmPublicIPName": "vmSP-PublicIP"
-    }
+    },
+    "availabilitySetSPName": "as-vmSP"
   },
   "resources": [
     {
@@ -345,16 +350,20 @@
       }
     },
     {
-      "name": "[variables('vmSP').vmNicName]",
+      "name": "[concat(variables('vmSP').vmNicNamePrefix, '-', copyIndex(), '-nic-0')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
+      "copy": {
+        "count": "[parameters('vmSPCount')]",
+        "name": "nicSPCopy"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetPrivate').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
       ],
       "tags": {
-        "displayName": "[variables('vmSP').vmNicName]"
+        "displayName": "[concat(variables('vmSP').vmNicNamePrefix, '-', copyIndex(), '-nic-0')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -364,9 +373,6 @@
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[variables('vmSP').vmSubnetRef]"
-              },
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
               }
             }
           }
@@ -374,23 +380,31 @@
       }
     },
     {
-      "name": "[parameters('vmSPName')]",
+      "name": "[concat(parameters('vmSPNamePrefix'), '-', copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
+      "copy": {
+        "count": "[parameters('vmSPCount')]",
+        "name": "vmSPCopy"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
+        "nicSPCopy",
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetSPName'))]"
       ],
       "tags": {
-        "displayName": "[parameters('vmSPName')]"
+        "displayName": "[concat(parameters('vmSPNamePrefix'), '-', copyIndex())]"
       },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSP').vmVmSize]"
         },
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetSPName'))]"
+        },
         "osProfile": {
-          "computerName": "[parameters('vmSPName')]",
+          "computerName": "[concat(parameters('vmSPNamePrefix'), '-', copyIndex())]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -402,9 +416,9 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('vmSP').vmOSDiskName]",
+            "name": "[concat(variables('vmSP').vmOSDiskNamePrefix, copyIndex())]",
             "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName, '.vhd')]"
+              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', concat(variables('vmSP').vmOSDiskNamePrefix, copyIndex()), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -413,10 +427,24 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmSP').vmNicNamePrefix, '-', copyIndex(), '-nic-0'))]"
             }
           ]
         }
+      }
+    },
+    {
+      "name": "[variables('availabilitySetSPName')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "[variables('availabilitySetSPName')]"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 2,
+        "platformFaultDomainCount": 2
       }
     }
   ],
