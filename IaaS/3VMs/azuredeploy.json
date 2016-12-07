@@ -10,11 +10,22 @@
       "type": "string",
       "defaultValue": "iaas3vms",
       "minLength": 1
+    },
+    "vNetPrivateName": {
+      "type": "string",
+      "defaultValue": "iaas3vmsVnet"
     }
-
   },
   "variables": {
-
+    "vNetPrivate": {
+      "vNetPrivatePrefix": "10.0.0.0/16",
+      "vNetPrivateSubnet1Name": "Subnet-1",
+      "vNetPrivateSubnet1Prefix": "10.0.1.0/24",
+      "vNetPrivateSubnet2Name": "Subnet-2",
+      "vNetPrivateSubnet2Prefix": "10.0.2.0/24",
+      "vNetPrivateSubnet3Name": "Subnet-3",
+      "vNetPrivateSubnet3Prefix": "10.0.3.0/24"
+    }
   },
   "resources": [
     {
@@ -33,8 +44,44 @@
       "properties": {
         "accountType": "[parameters('storageAccountType')[copyIndex()]]"
       }
+    },
+    {
+      "name": "[parameters('vNetPrivateName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "[parameters('vNetPrivateName')]"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNetPrivate').vNetPrivatePrefix]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vNetPrivate').vNetPrivateSubnet1Name]",
+            "properties": {
+              "addressPrefix": "[variables('vNetPrivate').vNetPrivateSubnet1Prefix]"
+            }
+          },
+          {
+            "name": "[variables('vNetPrivate').vNetPrivateSubnet2Name]",
+            "properties": {
+              "addressPrefix": "[variables('vNetPrivate').vNetPrivateSubnet2Prefix]"
+            }
+          },
+          {
+            "name": "[variables('vNetPrivate').vNetPrivateSubnet3Name]",
+            "properties": {
+              "addressPrefix": "[variables('vNetPrivate').vNetPrivateSubnet3Prefix]"
+            }
+          }
+        ]
+      }
     }
-
   ],
   "outputs": {
   }
