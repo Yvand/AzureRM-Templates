@@ -35,7 +35,7 @@ New-AzureRmResourceGroup `
 ### Deploy Resources
 {
 $additionalParameters = New-Object -TypeName HashTable
-$additionalParameters['paramSecurePasswordName'] = $securePassword
+$additionalParameters['AdminPassword'] = $securePassword
 
 New-AzureRmResourceGroupDeployment `
     -Name $resourceDeploymentName `
