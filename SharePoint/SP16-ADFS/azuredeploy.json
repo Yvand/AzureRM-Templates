@@ -13,7 +13,7 @@
     },
     "domainName": {
       "type": "string",
-      "defaultValue": "yvand",
+      "defaultValue": "contoso.local",
       "minLength": 1
     },
     "adminUserName": {
@@ -56,7 +56,7 @@
     },
     "dscCreateADForestUpdateTagVersion": {
       "type": "string",
-      "defaultValue": "8.0",
+      "defaultValue": "2.1",
       "metadata": {
         "description": "This value must be changed from a previous deployment to ensure the extension will run"
       }
@@ -82,7 +82,8 @@
       "vmsStorageAccountContainerName": "vhds"
     },
     "vmDC": {
-      "vmOSDiskName": "vm-DCOSDisk",
+      "vmOSDiskName": "vm-DC-OSDisk",
+      "vmDataDiskName": "vm-DC-DataDisk",
       "vmVmSize": "Standard_D1_v2",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet1Name)]",
       "vmNicName": "[concat(parameters('vmDCName'), '-', 'nic-0')]",
@@ -245,7 +246,19 @@
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          }
+          },
+          "dataDisks": [
+            {
+              "vhd": {
+                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmDataDiskName, '.vhd')]"
+              },
+              "name": "[variables('vmDC').vmDataDiskName]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": "100",
+              "lun": 0
+            }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
