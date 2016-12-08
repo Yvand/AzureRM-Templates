@@ -4,12 +4,17 @@
   "parameters": {
     "templatePrefix": {
       "type": "string",
-      "defaultValue": "ydmultspvms",
+      "defaultValue": "yd3vms",
       "minLength": 1
     },
     "storageAccountType": {
       "type": "array",
       "defaultValue": [ "Standard_LRS" ]
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "yvand",
+      "minLength": 1
     },
     "adminUserName": {
       "type": "string",
@@ -39,11 +44,7 @@
       "defaultValue": "yd3vms-sql",
       "minLength": 1
     },
-    "vmSPCount": {
-      "type": "int",
-      "defaultValue": 2
-    },
-    "vmSPNamePrefix": {
+    "vmSPName": {
       "type": "string",
       "defaultValue": "SP",
       "minLength": 1
@@ -53,19 +54,12 @@
       "defaultValue": "yd3vms-sp",
       "minLength": 1
     },
-    "_artifactsLocation": {
+    "dscCreateADForestUpdateTagVersion": {
       "type": "string",
+      "defaultValue": "8.0",
       "metadata": {
-        "description": "The location of resources, such as templates and DSC modules, that the template depends on"
-      },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain"
-    },
-    "_artifactsLocationSasToken": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Auto-generated token to access _artifactsLocation"
-      },
-      "defaultValue": ""
+        "description": "This value must be changed from a previous deployment to ensure the extension will run"
+      }
     }
   },
   "variables": {
@@ -92,7 +86,8 @@
       "vmVmSize": "Standard_D1_v2",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet1Name)]",
       "vmNicName": "[concat(parameters('vmDCName'), '-', 'nic-0')]",
-      "vmPublicIPName": "vmDC-PublicIP"
+      "vmPublicIPName": "vmDC-PublicIP",
+      "nicPrivateIPAddress": "10.0.1.10"
     },
     "vmSQL": {
       "vmOSDiskName": "vm-SQLOSDisk",
@@ -102,16 +97,16 @@
       "vmPublicIPName": "vmSQL-PublicIP"
     },
     "vmSP": {
-      "vmOSDiskNamePrefix": "vm-SPOSDisk",
+      "vmOSDiskName": "vm-SPOSDisk",
       "vmVmSize": "Standard_A6",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet3Name)]",
-      "vmNicNamePrefix": "[parameters('vmSPNamePrefix')]",
+      "vmNicName": "[concat(parameters('vmSPName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmSP-PublicIP"
     },
-    "availabilitySetSPName": "as-vmSP",
     "dscCreateADForest": {
-      "modulesUrl": "https://github.com/Azure/azure-quickstart-templates/raw/master/active-directory-new-domain/DSC/CreateADPDC.ps1.zip",
-      "modulesFunction": ""
+      "url": "https://github.com/Azure/azure-quickstart-templates/raw/master/active-directory-new-domain/DSC/CreateADPDC.ps1.zip",
+      "script": "CreateADPDC.ps1",
+      "function": "CreateADPDC"
     }
   },
   "resources": [
@@ -202,7 +197,8 @@
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('vmDC').nicPrivateIPAddress]",
               "subnet": {
                 "id": "[variables('vmDC').vmSubnetRef]"
               },
@@ -249,49 +245,7 @@
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          },
-          "resources": [
-            {
-              "name": "CreateADForest",
-              "type": "extensions",
-              "location": "[resourceGroup().location]",
-              "apiVersion": "2015-06-15",
-              "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]"
-              ],
-              "tags": {
-                "displayName": "CreateADForest"
-              },
-              "properties": {
-                "publisher": "Microsoft.Powershell",
-                "type": "DSC",
-                "typeHandlerVersion": "2.9",
-                "autoUpgradeMinorVersion": true,
-                "forceUpdateTag": "[parameters('vmDC-DSCExtensionUpdateTagVersion')]",
-                "settings": {
-                  "configuration": {
-                    "modulesUrl": "[variables('dscCreateADForest').modulesUrl]",
-                    "configurationFunction": "[variables('dscCreateADForest').modulesFunction]",
-                    "configurationArguments": {
-                      "nodeName": "[parameters('vmDCName')]"
-                    },
-                    "Properties": {
-                      "DomainName": "[parameters('domainName')]",
-                      "AdminCreds": {
-                        "UserName": "[parameters('adminUsername')]",
-                        "Password": "PrivateSettingsRef:AdminPassword"
-                      }
-                    }
-                  }
-                },
-                "protectedSettings": {
-                  "Items": {
-                    "AdminPassword": "[parameters('adminPassword')]"
-                  }
-                }
-              }
-            }
-          ]
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -300,7 +254,48 @@
             }
           ]
         }
-      }
+      },
+      "resources": [
+        {
+          "name": "dscCreateADForest",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]"
+          ],
+          "tags": {
+            "displayName": "dscCreateADForest"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "forceUpdateTag": "[parameters('dscCreateADForestUpdateTagVersion')]",
+            "settings": {
+              "wmfVersion": "latest",
+              "configuration": {
+                "url": "[variables('dscCreateADForest').url]",
+                "script": "[variables('dscCreateADForest').script]",
+                "function": "[variables('dscCreateADForest').function]"
+              },
+              "configurationArguments": {
+                "DomainName": "[parameters('domainName')]",
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                }
+              },
+              "privacy": {
+                "dataCollection": "enable"
+              }
+            },
+            "protectedSettings": {
+            }
+          }
+        }
+      ]
     },
     {
       "name": "[variables('vmSQL').vmPublicIPName]",
@@ -410,20 +405,16 @@
       }
     },
     {
-      "name": "[concat(variables('vmSP').vmNicNamePrefix, '-', copyIndex(), '-nic-0')]",
+      "name": "[variables('vmSP').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
-      "copy": {
-        "count": "[parameters('vmSPCount')]",
-        "name": "nicSPCopy"
-      },
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetPrivate').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
       ],
       "tags": {
-        "displayName": "[concat(variables('vmSP').vmNicNamePrefix, '-', copyIndex(), '-nic-0')]"
+        "displayName": "[variables('vmSP').vmNicName]"
       },
       "properties": {
         "ipConfigurations": [
@@ -433,6 +424,9 @@
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[variables('vmSP').vmSubnetRef]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
               }
             }
           }
@@ -440,31 +434,23 @@
       }
     },
     {
-      "name": "[concat(parameters('vmSPNamePrefix'), '-', copyIndex())]",
+      "name": "[parameters('vmSPName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
-      "copy": {
-        "count": "[parameters('vmSPCount')]",
-        "name": "vmSPCopy"
-      },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
-        "nicSPCopy",
-        "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetSPName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
       ],
       "tags": {
-        "displayName": "[concat(parameters('vmSPNamePrefix'), '-', copyIndex())]"
+        "displayName": "[parameters('vmSPName')]"
       },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSP').vmVmSize]"
         },
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetSPName'))]"
-        },
         "osProfile": {
-          "computerName": "[concat(parameters('vmSPNamePrefix'), '-', copyIndex())]",
+          "computerName": "[parameters('vmSPName')]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -476,9 +462,9 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmSP').vmOSDiskNamePrefix, copyIndex())]",
+            "name": "[variables('vmSP').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', concat(variables('vmSP').vmOSDiskNamePrefix, copyIndex()), '.vhd')]"
+              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName, '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -487,24 +473,10 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmSP').vmNicNamePrefix, '-', copyIndex(), '-nic-0'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
             }
           ]
         }
-      }
-    },
-    {
-      "name": "[variables('availabilitySetSPName')]",
-      "type": "Microsoft.Compute/availabilitySets",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
-      "tags": {
-        "displayName": "[variables('availabilitySetSPName')]"
-      },
-      "properties": {
-        "platformUpdateDomainCount": 2,
-        "platformFaultDomainCount": 2
       }
     }
   ],
