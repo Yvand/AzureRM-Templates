@@ -4,7 +4,7 @@
   "parameters": {
     "templatePrefix": {
       "type": "string",
-      "defaultValue": "yd3vms",
+      "defaultValue": "ydsp16adfs",
       "minLength": 1
     },
     "storageAccountType": {
@@ -98,6 +98,9 @@
       "nicPrivateIPAddress": "10.0.1.10"
     },
     "vmSQL": {
+      "vmImagePublisher": "MicrosoftSQLServer",
+      "vmImageOffer": "SQL2016SP1-WS2016",
+      "vmSKU": "Standard",
       "vmOSDiskName": "vm-SQLOSDisk",
       "vmDataDiskName": "vm-SQL-DataDisk-Data",
       "vmLogsDiskName": "vm-DC-DataDisk-Logs",
@@ -118,10 +121,10 @@
       "script": "CreateADPDC.ps1",
       "function": "CreateADPDC"
     },
-    "dscProvisionSQL": {
+    "dscPrepareSQLVM": {
       "url": "https://github.com/Azure/azure-quickstart-templates/raw/master/active-directory-new-domain/DSC/CreateADPDC.ps1.zip",
-      "script": "PrepareSqlServer.ps1",
-      "function": "PrepareSqlServer"
+      "script": "PrepareSQLVM.ps1",
+      "function": "PrepareSQLVM"
     }
   },
   "resources": [
@@ -392,9 +395,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('vmsCommonSettings').vmsImagePublisher]",
-            "offer": "[variables('vmsCommonSettings').vmsImageOffer]",
-            "sku": "[variables('vmsCommonSettings').vmsWindowsOSVersion]",
+            "publisher": "[variables('vmSQL').vmImagePublisher]",
+            "offer": "[variables('vmSQL').vmImageOffer]",
+            "sku": "[variables('vmSQL').vmSKU]",
             "version": "latest"
           },
           "osDisk": {
@@ -438,7 +441,7 @@
       },
       "resources": [
         {
-          "name": "Microsoft.Powershell.DSC",
+          "name": "dscPrepareSQLVM",
           "type": "extensions",
           "location": "[resourceGroup().location]",
           "apiVersion": "2015-06-15",
@@ -446,7 +449,7 @@
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]"
           ],
           "tags": {
-            "displayName": "ProvisionSQL"
+            "displayName": "dscPrepareSQLVM"
           },
           "properties": {
             "publisher": "Microsoft.Powershell",
@@ -457,9 +460,9 @@
             "settings": {
               "wmfVersion": "latest",
               "configuration": {
-                "url": "[variables('dscProvisionSQL').url]",
-                "script": "[variables('dscProvisionSQL').script]",
-                "function": "[variables('dscProvisionSQL').function]"
+                "url": "[variables('dscPrepareSQLVM').url]",
+                "script": "[variables('dscPrepareSQLVM').script]",
+                "function": "[variables('dscPrepareSQLVM').function]"
               },
               "configurationArguments": {
                 "DNSServer": "[variables('vmDC').nicPrivateIPAddress]"
