@@ -122,9 +122,9 @@
       "function": "CreateADPDC"
     },
     "dscPrepareSQLVM": {
-      "url": "https://github.com/Azure/azure-quickstart-templates/raw/master/active-directory-new-domain/DSC/CreateADPDC.ps1.zip",
+      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/PrepareSQLVM.zip",
       "script": "PrepareSQLVM.ps1",
-      "function": "PrepareSQLVM"
+      "function": "PrepareSqlServer"
     }
   },
   "resources": [
@@ -287,7 +287,7 @@
       },
       "resources": [
         {
-          "name": "dscCreateADForest",
+          "name": "CreateADForest",
           "type": "extensions",
           "location": "[resourceGroup().location]",
           "apiVersion": "2015-06-15",
@@ -295,7 +295,7 @@
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]"
           ],
           "tags": {
-            "displayName": "dscCreateADForest"
+            "displayName": "CreateADForest"
           },
           "properties": {
             "publisher": "Microsoft.Powershell",
@@ -441,7 +441,7 @@
       },
       "resources": [
         {
-          "name": "dscPrepareSQLVM",
+          "name": "PrepareSQLVM",
           "type": "extensions",
           "location": "[resourceGroup().location]",
           "apiVersion": "2015-06-15",
@@ -449,7 +449,7 @@
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]"
           ],
           "tags": {
-            "displayName": "dscPrepareSQLVM"
+            "displayName": "PrepareSQLVM"
           },
           "properties": {
             "publisher": "Microsoft.Powershell",
