@@ -24,6 +24,22 @@
     "adminPassword": {
       "type": "securestring"
     },
+    "sqlSvcUserName": {
+      "type": "string",
+      "defaultValue": "sqlsvc",
+      "minLength": 1
+    },
+    "sqlSvcPassword": {
+      "type": "securestring"
+    },
+    "spSetupUserName": {
+      "type": "string",
+      "defaultValue": "spsetup",
+      "minLength": 1
+    },
+    "spSetupPassword": {
+      "type": "securestring"
+    },
     "vmDCName": {
       "type": "string",
       "defaultValue": "DC",
@@ -69,6 +85,13 @@
       }
     },
     "PrepareSPVMUpdateTagVersion": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "This value must be changed from a previous deployment to ensure the extension will run"
+      }
+    },
+    "ConfigureSQLVMUpdateTagVersion": {
       "type": "string",
       "defaultValue": "1.0",
       "metadata": {
@@ -138,6 +161,11 @@
       "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/PrepareSPVM.zip",
       "script": "PrepareSPVM.ps1",
       "function": "PrepareSharePointServer"
+    },
+    "dscConfigureSQLVM": {
+      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
+      "script": "ConfigureSQLVM.ps1",
+      "function": "ConfigureSQLVM"
     }
   },
   "resources": [
@@ -487,6 +515,49 @@
             "protectedSettings": {
             }
           }
+        },
+        {
+          "name": "ConfigureSQLVM",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "Microsoft.Resources/deployments/PrepareSQLVM"
+          ],
+          "tags": {
+            "displayName": "ConfigureSQLVM"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "forceUpdateTag": "[parameters('ConfigureSQLVMUpdateTagVersion')]",
+            "settings": {
+              "configuration": {
+                "url": "[variables('dscConfigureSQLVM').url]",
+                "script": "[variables('dscConfigureSQLVM').script]",
+                "function": "[variables('dscConfigureSQLVM').function]"
+              },
+              "configurationArguments": {
+                "DomainName": "[parameters('domainName')]",
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                },
+                "SqlServerServiceAccountcreds": {
+                  "UserName": "[parameters('sqlSvcUserName')]",
+                  "Password": "[parameters('sqlSvcPassword')]"
+                },
+                "SharePointSetupUserAccountcreds": {
+                  "UserName": "[parameters('spSetupUserName')]",
+                  "Password": "[parameters('spSetupPassword')]"
+                }
+              }
+            },
+            "protectedSettings": {
+            }
+          }
         }
       ]
     },
@@ -594,7 +665,7 @@
       },
       "resources": [
         {
-          "name": "Microsoft.Powershell.DSC",
+          "name": "PrepareSPVM",
           "type": "extensions",
           "location": "[resourceGroup().location]",
           "apiVersion": "2015-06-15",

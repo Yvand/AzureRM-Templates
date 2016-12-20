@@ -10,7 +10,7 @@ $resourceDeploymentName = 'yd-sp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $TemplateParametersFile = 'azuredeploy.parameters.json'
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $templateFileName))
-#$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS", $templateFileName))
+$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS", $templateFileName))
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
 #$password = "****"
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
@@ -56,6 +56,8 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
 ### Deploy Resources
 $additionalParameters = New-Object -TypeName HashTable
 $additionalParameters['adminPassword'] = $securePassword
+$additionalParameters['sqlSvcPassword'] = $securePassword
+$additionalParameters['spSetupPassword'] = $securePassword
 New-AzureRmResourceGroupDeployment `
     -Name $resourceDeploymentName `
     -ResourceGroupName $resourceGroupName `
