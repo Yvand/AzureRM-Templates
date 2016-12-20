@@ -67,6 +67,13 @@
       "metadata": {
         "description": "This value must be changed from a previous deployment to ensure the extension will run"
       }
+    },
+    "PrepareSPVMUpdateTagVersion": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "This value must be changed from a previous deployment to ensure the extension will run"
+      }
     }
   },
   "variables": {
@@ -95,7 +102,7 @@
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet1Name)]",
       "vmNicName": "[concat(parameters('vmDCName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmDC-PublicIP",
-      "nicPrivateIPAddress": "10.0.1.10"
+      "nicPrivateIPAddress": "10.0.1.4"
     },
     "vmSQL": {
       "vmImagePublisher": "MicrosoftSQLServer",
@@ -110,7 +117,8 @@
       "vmPublicIPName": "vmSQL-PublicIP"
     },
     "vmSP": {
-      "vmOSDiskName": "vm-SPOSDisk",
+      "vmOSDiskName": "vm-SP-OSDisk",
+      "vmDataDiskName": "vm-SP-DataDisk",
       "vmVmSize": "Standard_A6",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet3Name)]",
       "vmNicName": "[concat(parameters('vmSPName'), '-', 'nic-0')]",
@@ -125,6 +133,11 @@
       "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/PrepareSQLVM.zip",
       "script": "PrepareSQLVM.ps1",
       "function": "PrepareSqlServer"
+    },
+    "dscPrepareSPVM": {
+      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/PrepareSPVM.zip",
+      "script": "PrepareSPVM.ps1",
+      "function": "PrepareSharePointServer"
     }
   },
   "resources": [
@@ -557,7 +570,19 @@
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          }
+          },
+          "dataDisks": [
+            {
+              "vhd": {
+                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName, '.vhd')]"
+              },
+              "name": "[variables('vmSP').vmDataDiskName]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": "100",
+              "lun": 0
+            }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -566,7 +591,44 @@
             }
           ]
         }
-      }
+      },
+      "resources": [
+        {
+          "name": "Microsoft.Powershell.DSC",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSPName'))]"
+          ],
+          "tags": {
+            "displayName": "PrepareSPVM"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "forceUpdateTag": "[parameters('PrepareSPVMUpdateTagVersion')]",
+            "settings": {
+              "wmfVersion": "latest",
+              "configuration": {
+                "url": "[variables('dscPrepareSPVM').url]",
+                "script": "[variables('dscPrepareSPVM').script]",
+                "function": "[variables('dscPrepareSPVM').function]"
+              },
+              "configurationArguments": {
+                "DNSServer": "[variables('vmDC').nicPrivateIPAddress]"
+              },
+              "privacy": {
+                "dataCollection": "enable"
+              }
+            },
+            "protectedSettings": {
+            }
+          }
+        }
+      ]
     }
   ],
   "outputs": {

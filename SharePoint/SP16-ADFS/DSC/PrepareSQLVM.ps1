@@ -1,5 +1,5 @@
 #
-# Copyright="� Microsoft Corporation. All rights reserved."
+# Copyright="Microsoft Corporation. All rights reserved."
 #
 
 configuration PrepareSqlServer
