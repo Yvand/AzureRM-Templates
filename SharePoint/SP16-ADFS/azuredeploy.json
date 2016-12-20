@@ -133,7 +133,7 @@
       "vmSKU": "Standard",
       "vmOSDiskName": "vm-SQLOSDisk",
       "vmDataDiskName": "vm-SQL-DataDisk-Data",
-      "vmLogsDiskName": "vm-DC-DataDisk-Logs",
+      "vmLogsDiskName": "vm-SQL-DataDisk-Logs",
       "vmVmSize": "Standard_A3",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet2Name)]",
       "vmNicName": "[concat(parameters('vmSQLName'), '-', 'nic-0')]",
@@ -522,7 +522,8 @@
           "location": "[resourceGroup().location]",
           "apiVersion": "2015-06-15",
           "dependsOn": [
-            "Microsoft.Resources/deployments/PrepareSQLVM"
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]",
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmSQLName'), '/extensions/PrepareSQLVM')]"
           ],
           "tags": {
             "displayName": "ConfigureSQLVM"
