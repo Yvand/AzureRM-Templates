@@ -53,7 +53,7 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
         -Verbose -Force
 }
 
-### Deploy Resources
+### Deploy template
 $additionalParameters = New-Object -TypeName HashTable
 $additionalParameters['adminPassword'] = $securePassword
 $additionalParameters['sqlSvcPassword'] = $securePassword
@@ -64,3 +64,17 @@ New-AzureRmResourceGroupDeployment `
     -TemplateFile $TemplateFile `
     @additionalParameters `
     -Verbose -Force
+
+### Remove initial extension on SQL VM and add new one
+{
+$SQLVMname = "SQL"
+$previousCustomExtension = "PrepareSQLVM"
+$newCustomExtension = "ConfigureSQLVM"
+Remove-AzurermVMCustomScriptExtension -ResourceGroupName $resourceGroupName `
+    -VMName $SQLVMname –Name $previousCustomExtension -Force
+
+Set-AzureRMVMExtension –ResourceGroupName $resourceGroupName -Location $resourceGroupLocation `
+    -extensiontype "DSC" -name $newCustomExtension -Publisher "Microsoft.Powershell" `
+    -TypeHandlerVersion "2.9" -VMName $SQLVMname `
+    -Settings @{"workspaceId" = "WorkspaceID"} -ProtectedSettings @{"workspaceKey"= "workspaceID"}
+}
