@@ -6,66 +6,40 @@
       "type": "string"
     },
     "domainName": {
-      "type": "string",
-      "defaultValue": "contoso.local",
-      "minLength": 1
+      "type": "string"
     },
     "adminUserName": {
-      "type": "string",
-      "defaultValue": "yvand",
-      "minLength": 1
+      "type": "string"
     },
     "adminPassword": {
       "type": "securestring"
     },
     "sqlSvcUserName": {
-      "type": "string",
-      "defaultValue": "sqlsvc",
-      "minLength": 1
+      "type": "string"
     },
     "sqlSvcPassword": {
       "type": "securestring"
     },
     "spSetupUserName": {
-      "type": "string",
-      "defaultValue": "spsetup",
-      "minLength": 1
+      "type": "string"
     },
     "spSetupPassword": {
       "type": "securestring"
     },
     "vmSQLName": {
-      "type": "string",
-      "defaultValue": "SQL",
-      "minLength": 1
+      "type": "string"
     },
     "ConfigureSQLVMUpdateTagVersion": {
-      "type": "string",
-      "defaultValue": "1.0",
-      "metadata": {
-        "description": "This value must be changed from a previous deployment to ensure the extension will run"
-      }
+      "type": "string"
     },
     "dscUurl": {
-      "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
-      "metadata": {
-        "description": "DSC archive URL"
-      }
+      "type": "string"
     },
     "dscScript": {
-      "type": "string",
-      "defaultValue": "ConfigureSQLVM.ps1",
-      "metadata": {
-        "description": "DSC script name"
-      }
+      "type": "string"
     },
     "dscFunction": {
-      "type": "string",
-      "defaultValue": "ConfigureSQLVM",
-      "metadata": {
-        "description": "DSC function name inside script"
-      }
+      "type": "string"
     }
   },
   "resources": [
