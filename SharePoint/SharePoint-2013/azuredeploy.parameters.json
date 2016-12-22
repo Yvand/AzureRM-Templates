@@ -13,6 +13,12 @@
     },
     "storageAccountNamePrefix": {
       "value": "sp2013dsc"
-    }
+    },
+      "adVMSize": {
+          "value": "Standard_D1_v2"
+      },
+      "spPublicIPRGName": {
+          "value": "ydsp13pip"
+      }
   }
 }

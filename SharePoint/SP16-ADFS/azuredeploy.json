@@ -163,6 +163,7 @@
       "function": "PrepareSharePointServer"
     },
     "dscConfigureSQLVM": {
+      "armTemplateLocation": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/vmSQL-DSC-ConfigureSQL.json",
       "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
       "script": "ConfigureSQLVM.ps1",
       "function": "ConfigureSQLVM"
@@ -481,41 +482,7 @@
         }
       },
       "resources": [
-        {
-          "name": "PrepareSQLVM",
-          "type": "extensions",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2015-06-15",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]"
-          ],
-          "tags": {
-            "displayName": "PrepareSQLVM"
-          },
-          "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.9",
-            "autoUpgradeMinorVersion": true,
-            "forceUpdateTag": "[parameters('dscCreateADForestUpdateTagVersion')]",
-            "settings": {
-              "wmfVersion": "latest",
-              "configuration": {
-                "url": "[variables('dscPrepareSQLVM').url]",
-                "script": "[variables('dscPrepareSQLVM').script]",
-                "function": "[variables('dscPrepareSQLVM').function]"
-              },
-              "configurationArguments": {
-                "DNSServer": "[variables('vmDC').nicPrivateIPAddress]"
-              },
-              "privacy": {
-                "dataCollection": "enable"
-              }
-            },
-            "protectedSettings": {
-            }
-          }
-        }
+
       ]
     },
     {
@@ -664,8 +631,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmSQLName'), '/extensions/PrepareSQLVM')]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]"
       ],
       "tags": {
         "displayName": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]"
@@ -675,30 +641,79 @@
         "type": "DSC",
         "typeHandlerVersion": "2.9",
         "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[parameters('ConfigureSQLVMUpdateTagVersion')]",
+        "forceUpdateTag": "[parameters('dscCreateADForestUpdateTagVersion')]",
         "settings": {
+          "wmfVersion": "latest",
           "configuration": {
-            "url": "[variables('dscConfigureSQLVM').url]",
-            "script": "[variables('dscConfigureSQLVM').script]",
-            "function": "[variables('dscConfigureSQLVM').function]"
+            "url": "[variables('dscPrepareSQLVM').url]",
+            "script": "[variables('dscPrepareSQLVM').script]",
+            "function": "[variables('dscPrepareSQLVM').function]"
           },
           "configurationArguments": {
-            "DomainName": "[parameters('domainName')]",
-            "AdminCreds": {
-              "UserName": "[parameters('adminUsername')]",
-              "Password": "[parameters('adminPassword')]"
-            },
-            "SqlServerServiceAccountcreds": {
-              "UserName": "[parameters('sqlSvcUserName')]",
-              "Password": "[parameters('sqlSvcPassword')]"
-            },
-            "SharePointSetupUserAccountcreds": {
-              "UserName": "[parameters('spSetupUserName')]",
-              "Password": "[parameters('spSetupPassword')]"
-            }
+            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]"
+          },
+          "privacy": {
+            "dataCollection": "enable"
           }
         },
         "protectedSettings": {
+        }
+      }
+    },
+    {
+      "name": "ConfigureSQLVM2",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmSQLName'), '/extensions/ConfigureSQLVM')]"
+      ],
+      "tags": {
+        "displayName": "ConfigureSQLVM2"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('dscConfigureSQLVM').armTemplateLocation]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('domainName')]"
+          },
+          "sqlVMName": {
+            "value": "[parameters('adminUserName')]"
+          },
+          "sqlVMSize": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "sqlAvailabilitySetName": {
+            "value": "[parameters('sqlSvcUserName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('sqlSvcPassword')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('spSetupUserName')]"
+          },
+          "storageAccountNamePrefix": {
+            "value": "[parameters('spSetupPassword')]"
+          },
+          "sqlDataDisk": {
+            "value": "[parameters('vmSQLName')]"
+          },
+          "sqlLogDisk": {
+            "value": "[parameters('ConfigureSQLVMUpdateTagVersion')]"
+          },
+          "dscUurl": {
+            "value": "[variables('dscConfigureSQLVM').url]"
+          },
+          "dscScript": {
+            "value": "[variables('dscConfigureSQLVM').script]"
+          },
+          "dscFunction": {
+            "value": "[variables('dscConfigureSQLVM').function]"
+          }
         }
       }
     }

@@ -118,6 +118,15 @@ if ($UploadArtifacts) {
 # Create or update the resource group using the specified template file and template parameters file
 New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -Force -ErrorAction Stop
 
+### YVAND set a quick password
+$securePassword = Read-Host "Enter the password" -AsSecureString
+$additionalParameters = New-Object -TypeName HashTable
+$additionalParameters['adminPassword'] = $securePassword
+$additionalParameters['sharePointFarmAccountPassword'] = $securePassword
+$additionalParameters['sharePointFarmPassphrasePassword'] = $securePassword
+$additionalParameters['sharePointSetupUserAccountPassword'] = $securePassword
+$additionalParameters['sqlServerServiceAccountPassword'] = $securePassword
+
 $ErrorMessages = @()
 if ($ValidateOnly) {
     $ErrorMessages = Format-ValidationOutput (Test-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
@@ -132,6 +141,7 @@ else {
                                        -TemplateFile $TemplateFile `
                                        -TemplateParameterFile $TemplateParametersFile `
                                        @OptionalParameters `
+                                       @additionalParameters `
                                        -Force -Verbose `
                                        -ErrorVariable ErrorMessages
     $ErrorMessages = $ErrorMessages | ForEach-Object { $_.Exception.Message.TrimEnd("`r`n") }
@@ -140,3 +150,8 @@ if ($ErrorMessages)
 {
     "", ("{0} returned the following errors:" -f ("Template deployment", "Validation")[[bool]$ValidateOnly]), @($ErrorMessages) | ForEach-Object { Write-Output $_ }
 }
+
+<#
+Called by Visual Studio like this:
+'C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SharePoint-2013\bin\Debug\staging\SharePoint-2013\Deploy-AzureResourceGroup.ps1' -StorageAccountName '' -ResourceGroupName 'quickstart-sp13' -ResourceGroupLocation 'westeurope' -TemplateFile 'c:\job\dev\github\azurerm-templates\sharepoint\sharepoint-2013\azuredeploy.json' -TemplateParametersFile 'c:\job\dev\github\azurerm-templates\sharepoint\sharepoint-2013\azuredeploy.parameters.json' -ArtifactStagingDirectory '.' -DSCSourceFolder '.\DSC'
+#>
