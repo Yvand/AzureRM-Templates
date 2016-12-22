@@ -163,7 +163,7 @@
       "function": "PrepareSharePointServer"
     },
     "dscConfigureSQLVM": {
-      "armTemplateLocation": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/vmSQL-DSC-ConfigureSQL.json",
+      "armTemplateLocation": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/master/SharePoint/SP16-ADFS/vmSQL-DSC-ConfigureSQL.json",
       "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
       "script": "ConfigureSQLVM.ps1",
       "function": "ConfigureSQLVM"
@@ -675,6 +675,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "location": {
+            "value": "[resourceGroup().location]"
+          },
           "domainName": {
             "value": "[parameters('domainName')]"
           },
