@@ -678,31 +678,31 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "location": {
+          "domainName": {
             "value": "[parameters('domainName')]"
           },
-          "sqlVMName": {
+          "adminUserName": {
             "value": "[parameters('adminUserName')]"
           },
-          "sqlVMSize": {
+          "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
-          "sqlAvailabilitySetName": {
+          "sqlSvcUserName": {
             "value": "[parameters('sqlSvcUserName')]"
           },
-          "adminUsername": {
+          "sqlSvcPassword": {
             "value": "[parameters('sqlSvcPassword')]"
           },
-          "adminPassword": {
+          "spSetupUserName": {
             "value": "[parameters('spSetupUserName')]"
           },
-          "storageAccountNamePrefix": {
+          "spSetupPassword": {
             "value": "[parameters('spSetupPassword')]"
           },
-          "sqlDataDisk": {
+          "vmSQLName": {
             "value": "[parameters('vmSQLName')]"
           },
-          "sqlLogDisk": {
+          "ConfigureSQLVMUpdateTagVersion": {
             "value": "[parameters('ConfigureSQLVMUpdateTagVersion')]"
           },
           "dscUurl": {

@@ -73,10 +73,6 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmSQLName'), '/extensions/PrepareSQLVM')]"
-      ],
       "tags": {
         "displayName": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]"
       },
