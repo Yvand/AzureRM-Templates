@@ -671,12 +671,12 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('dscConfigureSQLVM').armTemplateLocation]",
+          "uri": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/master/SharePoint/SP16-ADFS/configureSQL.json",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "location": {
-            "value": "[resourceGroup().location]"
+            "value": "westeurope"
           },
           "domainName": {
             "value": "[parameters('domainName')]"
