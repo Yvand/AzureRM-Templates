@@ -671,13 +671,10 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/master/SharePoint/SP16-ADFS/configureSQL.json",
+          "uri": "[variables('dscConfigureSQLVM').armTemplateLocation]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "location": {
-            "value": "westeurope"
-          },
           "domainName": {
             "value": "[parameters('domainName')]"
           },
@@ -705,7 +702,7 @@
           "ConfigureSQLVMUpdateTagVersion": {
             "value": "[parameters('ConfigureSQLVMUpdateTagVersion')]"
           },
-          "dscUurl": {
+          "dscUrl": {
             "value": "[variables('dscConfigureSQLVM').url]"
           },
           "dscScript": {

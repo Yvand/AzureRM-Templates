@@ -2,9 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "location": {
-      "type": "string"
-    },
     "domainName": {
       "type": "string",
       "defaultValue": "contoso.local",
@@ -70,9 +67,9 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]",
-      "location": "[parameters('location')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -83,8 +80,8 @@
         "settings": {
           "configuration": {
             "url": "[parameters('dscUrl')]",
-            "script": "ConfigureSQLVM.ps1",
-            "function": "ConfigureSQLVM"
+            "script": "[parameters('dscScript')]",
+            "function": "[parameters('dscFunction')]"
           },
           "configurationArguments": {
             "DomainName": "[parameters('domainName')]",
