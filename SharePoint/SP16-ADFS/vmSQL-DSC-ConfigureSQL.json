@@ -65,8 +65,6 @@
       }
     }
   },
-  "variables": {
-  },
   "resources": [
     {
       "name": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]",

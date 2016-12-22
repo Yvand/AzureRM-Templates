@@ -661,16 +661,13 @@
       }
     },
     {
-      "name": "ConfigureSQLVM2",
+      "name": "ConfigureSQLVMStage2",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmSQLName'), '/extensions/ConfigureSQLVM')]"
       ],
-      "tags": {
-        "displayName": "ConfigureSQLVM2"
-      },
       "properties": {
         "mode": "Incremental",
         "templateLink": {
