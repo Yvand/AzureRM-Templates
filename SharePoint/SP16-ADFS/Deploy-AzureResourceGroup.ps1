@@ -33,6 +33,7 @@ if ($azurecontext -eq $null){
 
 if ($UploadArtifacts) {
     $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactStagingDirectory))
+    $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS", $DSCSourceFolder))
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
 
     # Create DSC configuration archive
@@ -77,4 +78,11 @@ Set-AzureRMVMExtension –ResourceGroupName $resourceGroupName -Location $resource
     -extensiontype "DSC" -name $newCustomExtension -Publisher "Microsoft.Powershell" `
     -TypeHandlerVersion "2.9" -VMName $SQLVMname `
     -Settings @{"workspaceId" = "WorkspaceID"} -ProtectedSettings @{"workspaceKey"= "workspaceID"}
+}
+
+### Shutdown VMs
+{
+Stop-AzureRmVM -ResourceGroupName $resourceGroupName -Name "SP" -Force
+Stop-AzureRmVM -ResourceGroupName $resourceGroupName -Name "SQL" -Force
+Stop-AzureRmVM -ResourceGroupName $resourceGroupName -Name "DC" -Force
 }

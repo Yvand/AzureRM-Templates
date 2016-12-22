@@ -47,7 +47,7 @@
     },
     "vmDCPublicIPDnsName": {
       "type": "string",
-      "defaultValue": "yd3vms-dc",
+      "defaultValue": "ydsp16adfs-dc",
       "minLength": 1
     },
     "vmSQLName": {
@@ -57,7 +57,7 @@
     },
     "vmSQLPublicIPDnsName": {
       "type": "string",
-      "defaultValue": "yd3vms-sql",
+      "defaultValue": "ydsp16adfs-sql",
       "minLength": 1
     },
     "vmSPName": {
@@ -67,7 +67,7 @@
     },
     "vmSPPublicIPDnsName": {
       "type": "string",
-      "defaultValue": "yd3vms-sp",
+      "defaultValue": "ydsp16adfs-sp",
       "minLength": 1
     },
     "dscCreateADForestUpdateTagVersion": {

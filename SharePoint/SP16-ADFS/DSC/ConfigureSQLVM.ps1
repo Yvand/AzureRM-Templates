@@ -11,13 +11,13 @@ configuration ConfigureSQLVM
         [String]$DomainName,
 
         [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$Admincreds,
+        [System.Management.Automation.PSCredential]$AdminCreds,
 
         [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SqlServerServiceAccountcreds,
+        [System.Management.Automation.PSCredential]$SqlSvcCreds,
 
         [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SharePointSetupUserAccountcreds,
+        [System.Management.Automation.PSCredential]$SPSetupCreds,
         [String]$DomainNetbiosName=(Get-NetBIOSName -DomainName $DomainName),
         [Int]$RetryCount=30,
         [Int]$RetryIntervalSec=60
@@ -25,9 +25,9 @@ configuration ConfigureSQLVM
 
     Import-DscResource -ModuleName xComputerManagement, xActiveDirectory, xSQLServer
 
-    [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
-    [System.Management.Automation.PSCredential]$SPSCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SharePointSetupUserAccountcreds.UserName)", $SharePointSetupUserAccountcreds.Password)
-    [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SqlServerServiceAccountcreds.UserName)", $SqlServerServiceAccountcreds.Password)
+    [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdminCreds.UserName)", $AdminCreds.Password)
+    [System.Management.Automation.PSCredential]$SPSCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
+    [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
 
     Node localhost
     {
@@ -36,6 +36,7 @@ configuration ConfigureSQLVM
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
         }
+        
         xWaitForADDomain DscForestWait
         {
             DomainName = $DomainName
@@ -52,44 +53,64 @@ configuration ConfigureSQLVM
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
-        xADUser CreateSqlServerServiceAccount
+        xADUser CreateSqlSvcAccount
         {
             DomainAdministratorCredential = $DomainCreds
             DomainName = $DomainName
-            UserName = $SqlServerServiceAccountcreds.UserName
+            UserName = $SqlSvcCreds.UserName
             Password = $SQLCreds
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
 
-        xADUser CreateSharePointSetupAccount
+        xADUser CreateSPSetupAccount
         {
             DomainAdministratorCredential = $DomainCreds
             DomainName = $DomainName
-            UserName = $SharePointSetupUserAccountcreds.UserName
+            UserName = $SPSetupCreds.UserName
             Password = $SPSCreds
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
 
-        xSQLServerRole AddDomainAdminAccountToSysadminServerRole
+        xSQLServerLogin AddDomainAdminLogin
         {
-            Name = "${DomainNetbiosName}\$($Admincreds.UserName)"
+            Name = "${DomainNetbiosName}\$($AdminCreds.UserName)"
+            Ensure = "Present"
+            SQLServer = $env:COMPUTERNAME
+            SQLInstanceName = "MSSQLSERVER"
+            LoginType = "WindowsUser"
+            DependsOn = "[xComputer]DomainJoin"
+        }
+
+        xSQLServerLogin AddSPSetupLogin
+        {
+            Name = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            Ensure = "Present"
+            SQLServer = $env:COMPUTERNAME
+            SQLInstanceName = "MSSQLSERVER"
+            LoginType = "WindowsUser"
+            DependsOn = "[xADUser]CreateSPSetupAccount"
+        }
+
+        xSQLServerRole GrantDomainAdminSQLRoles
+        {
+            Name = "${DomainNetbiosName}\$($AdminCreds.UserName)"
             Ensure = "Present"
             SQLServer = $env:COMPUTERNAME
             SQLInstanceName = "MSSQLSERVER"
             ServerRole = "sysadmin"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn = "[xSQLServerLogin]AddDomainAdminLogin"
         }
 
-        xSQLServerRole ConfigureSharePointSetupAccountSqlLogin
+        xSQLServerRole GrantSPSetupSQLRoles
         {
-            Name = "${DomainNetbiosName}\$($SharePointSetupUserAccountcreds.UserName)"
+            Name = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
             Ensure = "Present"
             SQLServer = $env:COMPUTERNAME
             SQLInstanceName = "MSSQLSERVER"
             ServerRole = "securityadmin","dbcreator"
-            DependsOn = "[xADUser]CreateSharePointSetupAccount"
+            DependsOn = "[xSQLServerLogin]AddSPSetupLogin"
         }
 
         xSQLServerMaxDop ConfigureMaxDOP
@@ -98,7 +119,6 @@ configuration ConfigureSQLVM
             SQLInstanceName = "MSSQLSERVER"
             MaxDop = 1
             DependsOn = "[xComputer]DomainJoin"
-
         }
     }
 }
@@ -129,13 +149,13 @@ function Get-NetBIOSName
 
 
 <#
-$Admincreds = Get-Credential -Credential "yvand"
-$SqlServerServiceAccountcreds = Get-Credential -Credential "sqlsvc"
-$SharePointSetupUserAccountcreds = Get-Credential -Credential "spsetup"
+$AdminCreds = Get-Credential -Credential "yvand"
+$SqlSvcCreds = Get-Credential -Credential "sqlsvc"
+$SPSetupCreds = Get-Credential -Credential "spsetup"
 $DomainName = "contoso.local"
 
-ConfigureSqlServer -DomainName $DomainName -Admincreds $Admincreds -SqlServerServiceAccountcreds $SqlServerServiceAccountcreds -SharePointSetupUserAccountcreds $SharePointSetupUserAccountcreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\Dev\output"
-help ConfigureSqlServer
+ConfigureSQLVM -DomainName $DomainName -AdminCreds $AdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+help ConfigureSQLVM
 
-Start-DscConfiguration -Path "C:\Data\Dev\output" -Wait -Verbose -Force
+Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 #>
