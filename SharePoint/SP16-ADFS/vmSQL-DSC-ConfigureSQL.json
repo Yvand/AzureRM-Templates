@@ -46,7 +46,7 @@
         "description": "This value must be changed from a previous deployment to ensure the extension will run"
       }
     },
-    "dscUurl": {
+    "dscUrl": {
       "type": "string",
       "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
       "metadata": {
@@ -82,9 +82,9 @@
         "forceUpdateTag": "[parameters('ConfigureSQLVMUpdateTagVersion')]",
         "settings": {
           "configuration": {
-            "url": "[parameters('dscUurl').url]",
-            "script": "[parameters('dscScript').script]",
-            "function": "[parameters('dscFunction').function]"
+            "url": "[parameters('dscUrl')]",
+            "script": "ConfigureSQLVM.ps1",
+            "function": "ConfigureSQLVM"
           },
           "configurationArguments": {
             "DomainName": "[parameters('domainName')]",
