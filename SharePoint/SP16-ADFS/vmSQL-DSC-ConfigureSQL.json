@@ -89,11 +89,11 @@
               "UserName": "[parameters('adminUsername')]",
               "Password": "[parameters('adminPassword')]"
             },
-            "SqlServerServiceAccountcreds": {
+            "SqlSvcCreds": {
               "UserName": "[parameters('sqlSvcUserName')]",
               "Password": "[parameters('sqlSvcPassword')]"
             },
-            "SharePointSetupUserAccountcreds": {
+            "SPSetupCreds": {
               "UserName": "[parameters('spSetupUserName')]",
               "Password": "[parameters('spSetupPassword')]"
             }
