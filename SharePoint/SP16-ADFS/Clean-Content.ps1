@@ -10,7 +10,7 @@ $resourceGroupName = 'yd-sp16adfs'
 $StorageAccountName = "ydsp16adfsst0"
 $vmName = "SQL"
 $blobStorageContainer = "vhds"
-Set-AzureRmCurrentStorageAccount –ResourceGroupName $resourceGroupName –StorageAccountName $StorageAccountName 
+Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccountName 
 Get-AzureRmContext
 
 $disksNames = @()

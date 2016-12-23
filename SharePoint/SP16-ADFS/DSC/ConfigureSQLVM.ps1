@@ -120,6 +120,16 @@ configuration ConfigureSQLVM
             MaxDop = 1
             DependsOn = "[xComputer]DomainJoin"
         }
+
+        <#
+        xSQLServerSetup ConfigureSQLServer
+        {
+            SetupCredential = $AdminCreds
+            InstanceName = "MSSQLSERVER"
+            SQLUserDBDir = "F:\DATA"
+            SQLUserDBLogDir = "G:\LOG"
+        }
+        #>
     }
 }
 function Get-NetBIOSName
