@@ -1,34 +1,32 @@
-#
-# Copyright="Microsoft Corporation. All rights reserved."
-#
-
-configuration ConfigureSQLVM
+configuration ConfigureSPVMStage2
 {
 
     param
     (
         [Parameter(Mandatory)]
-        [String]$DomainName,
+        [String]$DomainFQDN,
+        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainFQDN $DomainFQDN),
+        [Int]$RetryCount=30,
+        [Int]$RetryIntervalSec=60,
 
         [Parameter(Mandatory)]
-        [String]$ArtifactsLocation,
-
-        [Parameter(Mandatory)]
-        [String]$ArtifactsLocationSasToken,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SqlSvcCreds,
+        [System.Management.Automation.PSCredential]$DomainAdminCreds,
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPSetupCreds,
-        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainName $DomainName),
-        [Int]$RetryCount=30,
-        [Int]$RetryIntervalSec=60
+        
+        [Parameter(Mandatory)]
+        [System.Management.Automation.PSCredential]$SPFarmCreds,
+
+        [Parameter(Mandatory)]
+        [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xActiveDirectory
+    Import-DscResource -ModuleName xComputerManagement, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc
 
-    [System.Management.Automation.PSCredential]$SPSCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
+    [System.Management.Automation.PSCredential]$DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $SPSetupCreds.Password)
+    [System.Management.Automation.PSCredential]$SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
+    [System.Management.Automation.PSCredential]$SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPSetupCreds.Password)
 
     Node localhost
     {
@@ -37,11 +35,19 @@ configuration ConfigureSQLVM
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
         }
-        
+
+        Registry DisableLoopBackCheck {
+            Ensure = "Present"
+            Key = "HKLM:\System\CurrentControlSet\Control\Lsa"
+            ValueName = "DisableLoopbackCheck"
+            ValueData = "1"
+            ValueType = "Dword"
+        }
+
         xWaitForADDomain DscForestWait
         {
-            DomainName = $DomainName
-            DomainUserCredential= $DomainCreds
+            DomainName = $DomainFQDN
+            DomainUserCredential= $DomainAdminCredsQualified
             RetryCount = $RetryCount
             RetryIntervalSec = $RetryIntervalSec
         }
@@ -49,42 +55,64 @@ configuration ConfigureSQLVM
         xComputer DomainJoin
         {
             Name = $env:COMPUTERNAME
-            DomainName = $DomainName
-            Credential = $DomainCreds
+            DomainName = $DomainFQDN
+            Credential = $DomainAdminCredsQualified
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
+        xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xComputer]DomainJoin" } 
+        xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xComputer]DomainJoin" }
+
+        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
+        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
+        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
+        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
+        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
+        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
+        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[xComputer]DomainJoin"}
+
         xADUser CreateSPSetupAccount
         {
-            DomainAdministratorCredential = $DomainCreds
-            DomainName = $DomainName
+            DomainAdministratorCredential = $DomainAdminCredsQualified
+            DomainName = $DomainFQDN
             UserName = $SPSetupCreds.UserName
-            Password = $SPSCreds
+            Password = $SPSetupCreds
+            Ensure = "Present"
+            DependsOn = "[xComputer]DomainJoin"
+        }
+
+        xADUser CreateSParmAccount
+        {
+            DomainAdministratorCredential = $DomainAdminCredsQualified
+            DomainName = $DomainFQDN
+            UserName = $SPFarmCreds.UserName
+            Password = $SPFarmCreds
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
     }
 }
+
 function Get-NetBIOSName
 {
     [OutputType([string])]
     param(
-        [string]$DomainName
+        [string]$DomainFQDN
     )
 
-    if ($DomainName.Contains('.')) {
-        $length=$DomainName.IndexOf('.')
+    if ($DomainFQDN.Contains('.')) {
+        $length=$DomainFQDN.IndexOf('.')
         if ( $length -ge 16) {
             $length=15
         }
-        return $DomainName.Substring(0,$length)
+        return $DomainFQDN.Substring(0,$length)
     }
     else {
-        if ($DomainName.Length -gt 15) {
-            return $DomainName.Substring(0,15)
+        if ($DomainFQDN.Length -gt 15) {
+            return $DomainFQDN.Substring(0,15)
         }
         else {
-            return $DomainName
+            return $DomainFQDN
         }
     }
 }
@@ -92,13 +120,14 @@ function Get-NetBIOSName
 
 
 <#
-$AdminCreds = Get-Credential -Credential "yvand"
-$SqlSvcCreds = Get-Credential -Credential "sqlsvc"
+$DomainAdminCreds = Get-Credential -Credential "yvand"
 $SPSetupCreds = Get-Credential -Credential "spsetup"
-$DomainName = "contoso.local"
+$SPFarmCreds = Get-Credential -Credential "spfarm"
+$SPPassphraseCreds = Get-Credential -Credential "Passphrase"
+$DomainFQDN = "contoso.local"
 
-ConfigureSQLVM -DomainName $DomainName -AdminCreds $AdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
-help ConfigureSQLVM
+ConfigureSPVMStage2 -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+help ConfigureSPVMStage2
 
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 #>
