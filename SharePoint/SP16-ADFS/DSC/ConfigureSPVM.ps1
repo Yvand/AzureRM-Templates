@@ -1,13 +1,10 @@
 configuration ConfigureSPVMStage2
 {
-
     param
     (
         [Parameter(Mandatory)]
         [String]$DomainFQDN,
-        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainFQDN $DomainFQDN),
-        [Int]$RetryCount=30,
-        [Int]$RetryIntervalSec=60,
+        [String]$DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN),
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$DomainAdminCreds,
@@ -22,11 +19,14 @@ configuration ConfigureSPVMStage2
         [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc
+    Import-DscResource -ModuleName xComputerManagement, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration
 
     [System.Management.Automation.PSCredential]$DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential]$SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential]$SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPSetupCreds.Password)
+    [Int]$RetryCount = 30
+    [Int]$RetryIntervalSec = 60
+    [String]$SPDBPrefix = "SP16DSC_"
 
     Node localhost
     {
@@ -81,6 +81,16 @@ configuration ConfigureSPVMStage2
             DependsOn = "[xComputer]DomainJoin"
         }
 
+        Group AddSPSetupAccountToAdminGroup
+        {
+            GroupName='Administrators'   
+            Ensure= 'Present'             
+            MembersToInclude= $SPSetupCredsQualified.UserName
+            Credential = $DomainAdminCredsQualified    
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn = "[xADUser]CreateSPSetupAccount"
+        }
+
         xADUser CreateSParmAccount
         {
             DomainAdministratorCredential = $DomainAdminCredsQualified
@@ -89,6 +99,56 @@ configuration ConfigureSPVMStage2
             Password = $SPFarmCreds
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
+        }
+
+        File PreSPConfigDone
+        {
+            DestinationPath = "F:\Logs\DSC1.txt"
+            PsDscRunAsCredential = $SPSetupCredential
+            Contents = "DSC Pre-SharePoint config done"
+            Type = 'File'
+            Force = $true
+            DependsOn = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount"
+        }
+
+        
+        #**********************************************************
+        # SharePoint configuration
+        #**********************************************************
+        xRemoteFile Download201612CU
+        {  
+            Uri             = "https://download.microsoft.com/download/D/0/4/D04FD356-E140-433E-94F6-472CF45FD591/sts2016-kb3128014-fullfile-x64-glb.exe"
+            DestinationPath = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe"
+            MatchSource = $false
+            DependsOn = "[File]PreSPConfigDone"
+        }
+
+        xPackage Install201612CU
+        {
+            Ensure = "Present"
+            Name = "Update for Microsoft SharePoint Enterprise Server 2016 (KB3128014) 64-Bit Edition"
+            ProductId = "{ECE043F3-EEF8-4070-AF9B-D805C42A8ED4}"
+            InstalledCheckRegHive = "LocalMachine"
+            InstalledCheckRegKey = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{90160000-1014-0000-1000-0000000FF1CE}_Office16.OSERVER_{ECE043F3-EEF8-4070-AF9B-D805C42A8ED4}"
+            InstalledCheckRegValueName = "DisplayName"
+            InstalledCheckRegValueData = "Update for Microsoft SharePoint Enterprise Server 2016 (KB3128014) 64-Bit Edition"
+            Path = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe"
+            Arguments = "/q"
+            RunAsCredential = $DomainAdminCredsQualified
+            ReturnCode = @( 0, 1641, 3010, 17025 )
+            DependsOn = "[xRemoteFile]Download201612CU"
+        }
+        
+        SPCreateFarm CreateSPFarm
+        {
+            DatabaseServer           = "sql"
+            FarmConfigDatabaseName   = $SPDBPrefix+"Config"
+            Passphrase               = $SPPassphraseCreds
+            FarmAccount              = $SPFarmCredsQualified
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            AdminContentDatabaseName = $SPDBPrefix+"AdminContent"
+            CentralAdministrationPort = 5000
+            DependsOn = "[xPackage]Install201612CU"
         }
     }
 }
@@ -118,6 +178,8 @@ function Get-NetBIOSName
 }
 
 
+ConfigureSPVMStage2 -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
 <#
 $DomainAdminCreds = Get-Credential -Credential "yvand"
