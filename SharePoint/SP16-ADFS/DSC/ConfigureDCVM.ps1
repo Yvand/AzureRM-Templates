@@ -12,7 +12,7 @@
         [Int]$RetryIntervalSec=30
     ) 
     
-    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, PSDesiredStateConfiguration, xAdcsDeployment
+    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, PSDesiredStateConfiguration, xAdcsDeployment, xCertificate
     [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
@@ -108,10 +108,39 @@
             CAType = "EnterpriseRootCA"
             DependsOn = "[WindowsFeature]AddCertAuthority"              
         }
+
+        xADCSWebEnrollment CertSrv
+        {
+            IsSingleInstance = 'Yes'
+            Ensure = 'Present'
+            Credential = $DomainCreds
+            DependsOn = '[xADCSCertificationAuthority]ADCS'
+        }
+
+        xCertReq SSLCert
+        {
+            CARootName                = 'contoso-DC-CA'
+            CAServerFQDN              = 'dc.contoso.local'
+            Subject                   = 'ADFS.contoso.local'
+            KeyLength                 = '1024'
+            Exportable                = $true
+            ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                       = '1.3.6.1.5.5.7.3.1'
+            KeyUsage                  = '0xa0'
+            CertificateTemplate       = 'WebServer'
+            AutoRenew                 = $true
+            Credential                = $DomainCreds
+            DependsOn = '[xADCSWebEnrollment]CertSrv'
+        }
+
+        
         
         WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[xADCSCertificationAuthority]ADCS" }
    }
 } 
+
+CreateADPDC -Admincreds $Admincreds -DomainName $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
 <#
 help CreateADPDC
