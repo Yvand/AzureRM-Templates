@@ -16,6 +16,12 @@ configuration ConfigureSPVMStage2
         [System.Management.Automation.PSCredential]$SPFarmCreds,
 
         [Parameter(Mandatory)]
+        [System.Management.Automation.PSCredential]$SPSvcCreds,
+
+        [Parameter(Mandatory)]
+        [System.Management.Automation.PSCredential]$SPAppPoolCreds,
+
+        [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
@@ -23,9 +29,9 @@ configuration ConfigureSPVMStage2
 
     [System.Management.Automation.PSCredential]$DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential]$SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
-    [System.Management.Automation.PSCredential]$SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPSetupCreds.Password)
-    [Int]$RetryCount = 30
-    [Int]$RetryIntervalSec = 60
+    [System.Management.Automation.PSCredential]$SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
+    [System.Management.Automation.PSCredential]$SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
+    [System.Management.Automation.PSCredential]$SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [String]$SPDBPrefix = "SP16DSC_"
 
     Node localhost
@@ -36,20 +42,15 @@ configuration ConfigureSPVMStage2
             RebootNodeIfNeeded = $true
         }
 
-        Registry DisableLoopBackCheck {
-            Ensure = "Present"
-            Key = "HKLM:\System\CurrentControlSet\Control\Lsa"
-            ValueName = "DisableLoopbackCheck"
-            ValueData = "1"
-            ValueType = "Dword"
-        }
-
+        #**********************************************************
+        # Join AD forest
+        #**********************************************************
         xWaitForADDomain DscForestWait
         {
             DomainName = $DomainFQDN
             DomainUserCredential= $DomainAdminCredsQualified
-            RetryCount = $RetryCount
-            RetryIntervalSec = $RetryIntervalSec
+            RetryCount = 30
+            RetryIntervalSec = 60
         }
 
         xComputer DomainJoin
@@ -58,6 +59,17 @@ configuration ConfigureSPVMStage2
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
             DependsOn = "[xWaitForADDomain]DscForestWait"
+        }
+
+        #**********************************************************
+        # Do some cleanup and preparation for SharePoint
+        #**********************************************************
+        Registry DisableLoopBackCheck {
+            Ensure = "Present"
+            Key = "HKLM:\System\CurrentControlSet\Control\Lsa"
+            ValueName = "DisableLoopbackCheck"
+            ValueData = "1"
+            ValueType = "Dword"
         }
 
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xComputer]DomainJoin" } 
@@ -71,6 +83,9 @@ configuration ConfigureSPVMStage2
         xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
         xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[xComputer]DomainJoin"}
 
+        #**********************************************************
+        # Provision required accounts for SharePoint
+        #**********************************************************
         xADUser CreateSPSetupAccount
         {
             DomainAdministratorCredential = $DomainAdminCredsQualified
@@ -101,28 +116,56 @@ configuration ConfigureSPVMStage2
             DependsOn = "[xComputer]DomainJoin"
         }
 
-        File PreSPConfigDone
+        xADUser CreateSPSvcAccount
+        {
+            DomainAdministratorCredential = $DomainAdminCredsQualified
+            DomainName = $DomainFQDN
+            UserName = $SPSvcCreds.UserName
+            Password = $SPSvcCreds
+            Ensure = "Present"
+            DependsOn = "[xComputer]DomainJoin"
+        }
+
+        xADUser CreateSPAppPoolAccount
+        {
+            DomainAdministratorCredential = $DomainAdminCredsQualified
+            DomainName = $DomainFQDN
+            UserName = $SPAppPoolCreds.UserName
+            Password = $SPAppPoolCreds
+            Ensure = "Present"
+            DependsOn = "[xComputer]DomainJoin"
+        }
+
+        File AccountsProvisioned
         {
             DestinationPath = "F:\Logs\DSC1.txt"
             PsDscRunAsCredential = $SPSetupCredential
-            Contents = "DSC Pre-SharePoint config done"
+            Contents = "AccountsProvisioned"
             Type = 'File'
             Force = $true
-            DependsOn = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount"
+            DependsOn = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount", "[xADUser]CreateSPSvcAccount", "[xADUser]CreateSPAppPoolAccount"
         }
 
         
         #**********************************************************
-        # SharePoint configuration
+        # Download binaries and install SharePoint CU
         #**********************************************************
+        xRemoteFile DownloadLdapcp 
+        {  
+            Uri             = "https://ldapcp.codeplex.com/downloads/get/557616"
+            DestinationPath = "F:\Setup\LDAPCP.wsp"
+            DependsOn = "[File]AccountsProvisioned"
+        }
+
         xRemoteFile Download201612CU
         {  
             Uri             = "https://download.microsoft.com/download/D/0/4/D04FD356-E140-433E-94F6-472CF45FD591/sts2016-kb3128014-fullfile-x64-glb.exe"
-            DestinationPath = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe"
+            DestinationPath = "F:\Setup\sts2016-kb3128014-fullfile-x64-glb.exe"
             MatchSource = $false
-            DependsOn = "[File]PreSPConfigDone"
+            DependsOn = "[File]AccountsProvisioned"
         }
 
+        <#
         xPackage Install201612CU
         {
             Ensure = "Present"
@@ -138,7 +181,13 @@ configuration ConfigureSPVMStage2
             ReturnCode = @( 0, 1641, 3010, 17025 )
             DependsOn = "[xRemoteFile]Download201612CU"
         }
-        
+
+        # TODO: implement stupid workaround documented in https://technet.microsoft.com/en-us/library/mt723354(v=office.16).aspx until SP2016 image is fixed
+        #>
+
+        #**********************************************************
+        # SharePoint configuration
+        #**********************************************************
         SPCreateFarm CreateSPFarm
         {
             DatabaseServer           = "sql"
@@ -148,7 +197,76 @@ configuration ConfigureSPVMStage2
             PsDscRunAsCredential     = $SPSetupCredsQualified
             AdminContentDatabaseName = $SPDBPrefix+"AdminContent"
             CentralAdministrationPort = 5000
-            DependsOn = "[xPackage]Install201612CU"
+            #DependsOn = "[xPackage]Install201612CU"
+            DependsOn = "[xRemoteFile]Download201612CU"
+        }
+
+        SPManagedAccount CreateSPSvcManagedAccount
+        {
+            AccountName          = $SPSvcCredsQualified.UserName
+            Account              = $SPSvcCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+        }
+        SPManagedAccount CreateSPAppPoolManagedAccount
+        {
+            AccountName          = $SPAppPoolCredsQualified.UserName
+            Account              = $SPAppPoolCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+        }
+
+        SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
+        {
+            LogPath                                     = "F:\ULS"
+            LogSpaceInGB = 20
+            PsDscRunAsCredential                        = $SPSetupCredsQualified
+            DependsOn                                   = "[SPCreateFarm]CreateSPFarm"
+        }
+
+        SPDistributedCacheService EnableDistributedCache
+        {
+            Name                 = "AppFabricCachingService"
+            CacheSizeInMB        = 8192
+            CreateFirewallRules  = $true
+            ServiceAccount       = $SPSvcCredsQualified.UserName
+            InstallAccount       = $SPSetupCredsQualified
+            Ensure               = "Present"
+        }
+
+        SPFarmSolution InstallLdapcp 
+        {
+            LiteralPath = "F:\Setup\LDAPCP.wsp"
+            Name = "LDAPCP.wsp"
+            Deployed = $true
+            Ensure = "Present"
+            PsDscRunAsCredential  = $SPSetupCredsQualified
+            DependsOn = "[SPDistributedCacheService]EnableDistributedCache"
+        }
+
+        SPWebApplication MainWebApp
+        {
+            Name                   = "SharePoint Sites"
+            ApplicationPool        = "SharePoint Sites - 80"
+            ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
+            AllowAnonymous         = $false
+            AuthenticationMethod   = "NTLM"
+            DatabaseName           = $SPDBPrefix + "Content_80"
+            Url                    = "http://sp"
+            Port                   = 80
+            Ensure = "Present"
+            PsDscRunAsCredential   = $SPSetupCredsQualified
+            DependsOn              = "[SPFarmSolution]InstallLdapcp"
+        }
+
+        SPSite TeamSite
+        {
+            Url                      = "http://sp"
+            OwnerAlias               = $DomainAdminCredsQualified.UserName
+            Name                     = "Team site"
+            Template                 = "STS#0"
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            DependsOn                = "[SPWebApplication]MainWebApp"
         }
     }
 }
@@ -177,19 +295,21 @@ function Get-NetBIOSName
     }
 }
 
-
-ConfigureSPVMStage2 -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+ConfigureSPVMStage2 -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
 <#
+help ConfigureSPVMStage2
+
 $DomainAdminCreds = Get-Credential -Credential "yvand"
 $SPSetupCreds = Get-Credential -Credential "spsetup"
 $SPFarmCreds = Get-Credential -Credential "spfarm"
+$SPSvcCreds = Get-Credential -Credential "spsvc"
+$SPAppPoolCreds = Get-Credential -Credential "spapppool"
 $SPPassphraseCreds = Get-Credential -Credential "Passphrase"
 $DomainFQDN = "contoso.local"
 
-ConfigureSPVMStage2 -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
-help ConfigureSPVMStage2
-
+ConfigureSPVMStage2 -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
+
 #>
