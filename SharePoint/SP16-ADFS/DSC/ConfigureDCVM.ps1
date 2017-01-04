@@ -309,17 +309,14 @@ function Get-NetBIOSName
     }
 } 
 
-CreateADPDC -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainName $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
-Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
-
 <#
-help CreateADPDC
+help ConfigureDCVM
 
 $Admincreds = Get-Credential -Credential "yvand"
 $AdfsSvcCreds = Get-Credential -Credential "AdfsSvcCreds"
 $DomainFQDN = "contoso.local"
 
-CreateADPDC -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainName $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainName $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
 Uninstall-WindowsFeature "ADFS-Federation"
