@@ -192,9 +192,9 @@
       "vmPublicIPName": "vmSP-PublicIP"
     },
     "dscConfigureDCVM": {
-      "url": "https://github.com/Azure/azure-quickstart-templates/raw/master/active-directory-new-domain/DSC/CreateADPDC.ps1.zip",
-      "script": "CreateADPDC.ps1",
-      "function": "CreateADPDC"
+      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip",
+      "script": "ConfigureDCVM.ps1",
+      "function": "ConfigureDCVM"
     },
     "dscConfigureSQLVM": {
       "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
