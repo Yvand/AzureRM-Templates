@@ -38,8 +38,8 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential]$SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential]$SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [String]$SPDBPrefix = "SP16DSC_"
-	[Int]$RetryCount=3
-    [Int]$RetryIntervalSec=30
+	[Int]$RetryCount = 60
+    [Int]$RetryIntervalSec = 30
 
     Node localhost
     {

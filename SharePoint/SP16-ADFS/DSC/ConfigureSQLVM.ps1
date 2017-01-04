@@ -17,8 +17,8 @@ configuration ConfigureSQLVM
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPSetupCreds,
         [String]$DomainNetbiosName=(Get-NetBIOSName -DomainFQDN $DomainFQDN),
-        [Int]$RetryCount=5,
-        [Int]$RetryIntervalSec=60
+        [Int]$RetryCount = 60,
+        [Int]$RetryIntervalSec = 30
     )
 
     Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, xSQLServer

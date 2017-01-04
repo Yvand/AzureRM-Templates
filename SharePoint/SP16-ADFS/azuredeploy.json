@@ -118,14 +118,7 @@
       "defaultValue": "ydsp16adfs-sp",
       "minLength": 1
     },
-    "dscCreateADForestUpdateTagVersion": {
-      "type": "string",
-      "defaultValue": "2.1",
-      "metadata": {
-        "description": "This value must be changed from a previous deployment to ensure the extension will run"
-      }
-    },
-    "ProvisionSQLUpdateTagVersion": {
+    "ConfigureDCVMUpdateTagVersion": {
       "type": "string",
       "defaultValue": "1.0",
       "metadata": {
@@ -198,26 +191,20 @@
       "vmNicName": "[concat(parameters('vmSPName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmSP-PublicIP"
     },
-    "dscCreateADForest": {
+    "dscConfigureDCVM": {
       "url": "https://github.com/Azure/azure-quickstart-templates/raw/master/active-directory-new-domain/DSC/CreateADPDC.ps1.zip",
       "script": "CreateADPDC.ps1",
       "function": "CreateADPDC"
     },
-    "dscPrepareSQLVM": {
-      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/PrepareSQLVM.zip",
-      "script": "PrepareSQLVM.ps1",
-      "function": "PrepareSqlServer"
+    "dscConfigureSQLVM": {
+      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
+      "script": "ConfigureSQLVM.ps1",
+      "function": "ConfigureSQLVM"
     },
     "dscConfigureSPVM": {
       "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip",
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM"
-    },
-    "dscConfigureSQLVM": {
-      "armTemplateLocation": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/master/SharePoint/SP16-ADFS/vmSQL-DSC-ConfigureSQL.json",
-      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
-      "script": "ConfigureSQLVM.ps1",
-      "function": "ConfigureSQLVM"
     }
   },
   "resources": [
@@ -380,7 +367,7 @@
       },
       "resources": [
         {
-          "name": "CreateADForest",
+          "name": "ConfigureDCVM",
           "type": "extensions",
           "location": "[resourceGroup().location]",
           "apiVersion": "2015-06-15",
@@ -388,20 +375,20 @@
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]"
           ],
           "tags": {
-            "displayName": "CreateADForest"
+            "displayName": "ConfigureDCVM"
           },
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
             "typeHandlerVersion": "2.9",
             "autoUpgradeMinorVersion": true,
-            "forceUpdateTag": "[parameters('dscCreateADForestUpdateTagVersion')]",
+            "forceUpdateTag": "[parameters('ConfigureDCVMUpdateTagVersion')]",
             "settings": {
               "wmfVersion": "latest",
               "configuration": {
-                "url": "[variables('dscCreateADForest').url]",
-                "script": "[variables('dscCreateADForest').script]",
-                "function": "[variables('dscCreateADForest').function]"
+                "url": "[variables('dscConfigureDCVM').url]",
+                "script": "[variables('dscConfigureDCVM').script]",
+                "function": "[variables('dscConfigureDCVM').function]"
               },
               "configurationArguments": {
                 "DomainName": "[parameters('domainName')]",
