@@ -1,7 +1,10 @@
-configuration ConfigureSPVMStage2
+configuration ConfigureSPVM
 {
     param
     (
+		[Parameter(Mandatory)]
+        [String]$DNSServer,
+
         [Parameter(Mandatory)]
         [String]$DomainFQDN,
         [String]$DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN),
@@ -25,8 +28,10 @@ configuration ConfigureSPVMStage2
         [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration
+    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration
 
+    $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
+    $InterfaceAlias=$($Interface.Name)
     [System.Management.Automation.PSCredential]$DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential]$SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential]$SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
@@ -42,6 +47,35 @@ configuration ConfigureSPVMStage2
             RebootNodeIfNeeded = $true
         }
 
+		#**********************************************************
+        # Initialization of VM
+        #**********************************************************
+		xWaitforDisk Disk2
+        {
+            DiskNumber = 2
+            RetryIntervalSec =$RetryIntervalSec
+            RetryCount = $RetryCount
+        }
+        cDiskNoRestart SPDataDisk
+        {
+            DiskNumber = 2
+            DriveLetter = "F"
+            DependsOn = "[xWaitforDisk]Disk2"
+        }
+        WindowsFeature ADPS
+        {
+            Name = "RSAT-AD-PowerShell"
+            Ensure = "Present"
+            DependsOn = "[cDiskNoRestart]SPDataDisk"
+        }
+        xDnsServerAddress DnsServerAddress
+        {
+            Address        = $DNSServer
+            InterfaceAlias = $InterfaceAlias
+            AddressFamily  = 'IPv4'
+            DependsOn="[WindowsFeature]ADPS"
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
@@ -51,6 +85,7 @@ configuration ConfigureSPVMStage2
             DomainUserCredential= $DomainAdminCredsQualified
             RetryCount = 30
             RetryIntervalSec = 60
+            DependsOn="[xDnsServerAddress]DnsServerAddress"
         }
 
         xComputer DomainJoin
@@ -295,11 +330,9 @@ function Get-NetBIOSName
     }
 }
 
-ConfigureSPVMStage2 -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
-Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
 <#
-help ConfigureSPVMStage2
+help ConfigureSPVM
 
 $DomainAdminCreds = Get-Credential -Credential "yvand"
 $SPSetupCreds = Get-Credential -Credential "spsetup"
@@ -307,9 +340,10 @@ $SPFarmCreds = Get-Credential -Credential "spfarm"
 $SPSvcCreds = Get-Credential -Credential "spsvc"
 $SPAppPoolCreds = Get-Credential -Credential "spapppool"
 $SPPassphraseCreds = Get-Credential -Credential "Passphrase"
+$DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 
-ConfigureSPVMStage2 -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
 #>

@@ -14,7 +14,10 @@
     "domainName": {
       "type": "string",
       "defaultValue": "contoso.local",
-      "minLength": 1
+      "minLength": 1,
+      "metadata": {
+        "description": "FQDN of the AD forest to create"
+      }
     },
     "adminUserName": {
       "type": "string",
@@ -38,6 +41,33 @@
       "minLength": 1
     },
     "spSetupPassword": {
+      "type": "securestring"
+    },
+    "spFarmUserName": {
+      "type": "string",
+      "defaultValue": "spfarm",
+      "minLength": 1
+    },
+    "spFarmPassword": {
+      "type": "securestring"
+    },
+    "spSvcUserName": {
+      "type": "string",
+      "defaultValue": "spsvc",
+      "minLength": 1
+    },
+    "spSvcPassword": {
+      "type": "securestring"
+    },
+    "spAppPoolUserName": {
+      "type": "string",
+      "defaultValue": "spapppool",
+      "minLength": 1
+    },
+    "spAppPoolPassword": {
+      "type": "securestring"
+    },
+    "spPassphrase": {
       "type": "securestring"
     },
     "vmDCName": {
@@ -84,7 +114,7 @@
         "description": "This value must be changed from a previous deployment to ensure the extension will run"
       }
     },
-    "PrepareSPVMUpdateTagVersion": {
+    "ConfigureSPVMUpdateTagVersion": {
       "type": "string",
       "defaultValue": "1.0",
       "metadata": {
@@ -98,18 +128,18 @@
         "description": "This value must be changed from a previous deployment to ensure the extension will run"
       }
     },
-      "_artifactsLocation": {
-          "type": "string",
-          "metadata": {
-              "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
-          }
-      },
-      "_artifactsLocationSasToken": {
-          "type": "securestring",
-          "metadata": {
-              "description": "Auto-generated token to access _artifactsLocation"
-          }
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
       }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    }
   },
   "variables": {
     "storageAccountNamePrefix": "[concat(parameters('templatePrefix'), 'st')]",
@@ -172,10 +202,10 @@
       "script": "PrepareSQLVM.ps1",
       "function": "PrepareSqlServer"
     },
-    "dscPrepareSPVM": {
-      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/PrepareSPVM.zip",
-      "script": "PrepareSPVM.ps1",
-      "function": "PrepareSharePointServer"
+    "dscConfigureSPVM": {
+      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip",
+      "script": "ConfigureSPVM.ps1",
+      "function": "ConfigureSPVM"
     },
     "dscConfigureSQLVM": {
       "armTemplateLocation": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/master/SharePoint/SP16-ADFS/vmSQL-DSC-ConfigureSQL.json",
@@ -604,7 +634,7 @@
       },
       "resources": [
         {
-          "name": "PrepareSPVM",
+          "name": "ConfigureSPVM",
           "type": "extensions",
           "location": "[resourceGroup().location]",
           "apiVersion": "2015-06-15",
@@ -612,23 +642,48 @@
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSPName'))]"
           ],
           "tags": {
-            "displayName": "PrepareSPVM"
+            "displayName": "ConfigureSPVM"
           },
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
             "typeHandlerVersion": "2.9",
             "autoUpgradeMinorVersion": true,
-            "forceUpdateTag": "[parameters('PrepareSPVMUpdateTagVersion')]",
+            "forceUpdateTag": "[parameters('ConfigureSPVMUpdateTagVersion')]",
             "settings": {
               "wmfVersion": "latest",
               "configuration": {
-                "url": "[variables('dscPrepareSPVM').url]",
-                "script": "[variables('dscPrepareSPVM').script]",
-                "function": "[variables('dscPrepareSPVM').function]"
+                "url": "[variables('dscConfigureSPVM').url]",
+                "script": "[variables('dscConfigureSPVM').script]",
+                "function": "[variables('dscConfigureSPVM').function]"
               },
               "configurationArguments": {
-                "DNSServer": "[variables('vmDC').nicPrivateIPAddress]"
+                "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
+                "DomainFQDN": "[parameters('domainName')]",
+                "DomainAdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                },
+                "SPSetupCreds": {
+                  "UserName": "[parameters('spSetupUserName')]",
+                  "Password": "[parameters('spSetupPassword')]"
+                },
+                "SPFarmCreds": {
+                  "UserName": "[parameters('spFarmUserName')]",
+                  "Password": "[parameters('spFarmPassword')]"
+                },
+                "SPSvcCreds": {
+                  "UserName": "[parameters('spSvcUserName')]",
+                  "Password": "[parameters('spSvcPassword')]"
+                },
+                "SPAppPoolCreds": {
+                  "UserName": "[parameters('spAppPoolUserName')]",
+                  "Password": "[parameters('spAppPoolPassword')]"
+                },
+                "SPPassphraseCreds": {
+                  "UserName": "Passphrase",
+                  "Password": "[parameters('spPassphrase')]"
+                }
               },
               "privacy": {
                 "dataCollection": "enable"
