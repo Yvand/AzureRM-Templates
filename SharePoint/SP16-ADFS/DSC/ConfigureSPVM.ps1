@@ -38,7 +38,7 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential]$SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential]$SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [String]$SPDBPrefix = "SP16DSC_"
-	[Int]$RetryCount=5
+	[Int]$RetryCount=3
     [Int]$RetryIntervalSec=30
 
     Node localhost
@@ -55,7 +55,7 @@ configuration ConfigureSPVM
 		xWaitforDisk Disk2
         {
             DiskNumber = 2
-            RetryIntervalSec =$RetryIntervalSec
+            RetryIntervalSec = $RetryIntervalSec
             RetryCount = $RetryCount
         }
         cDiskNoRestart SPDataDisk
@@ -78,6 +78,9 @@ configuration ConfigureSPVM
             DependsOn="[WindowsFeature]ADPS"
         }
 
+		xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" } 
+        xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[CredSSPServer]CredSSPClient" }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
@@ -85,9 +88,9 @@ configuration ConfigureSPVM
         {
             DomainName = $DomainFQDN
             DomainUserCredential= $DomainAdminCredsQualified
-            RetryCount = 30
-            RetryIntervalSec = 60
-            DependsOn="[xDnsServerAddress]DnsServerAddress"
+            RetryCount = $RetryCount
+            RetryIntervalSec = $RetryIntervalSec
+            DependsOn="[xCredSSP]CredSSPClient"
         }
 
         xComputer DomainJoin
@@ -108,9 +111,6 @@ configuration ConfigureSPVM
             ValueData = "1"
             ValueType = "Dword"
         }
-
-        xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xComputer]DomainJoin" } 
-        xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xComputer]DomainJoin" }
 
         xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
         xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}

@@ -19,7 +19,7 @@ configuration ConfigureSQLVM
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPSetupCreds,
         [String]$DomainNetbiosName=(Get-NetBIOSName -DomainName $DomainName),
-        [Int]$RetryCount=30,
+        [Int]$RetryCount=5,
         [Int]$RetryIntervalSec=60
     )
 
@@ -159,13 +159,13 @@ function Get-NetBIOSName
 
 
 <#
+help ConfigureSQLVM
 $AdminCreds = Get-Credential -Credential "yvand"
 $SqlSvcCreds = Get-Credential -Credential "sqlsvc"
 $SPSetupCreds = Get-Credential -Credential "spsetup"
 $DomainName = "contoso.local"
 
 ConfigureSQLVM -DomainName $DomainName -AdminCreds $AdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
-help ConfigureSQLVM
-
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
+
 #>
