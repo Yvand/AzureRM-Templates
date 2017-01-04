@@ -11,6 +11,7 @@ $templateFileName = 'azuredeploy.json'
 $TemplateParametersFile = 'azuredeploy.parameters.json'
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $templateFileName))
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS", $templateFileName))
+$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("F:\Job\Dev\GitHub\AzureRM-Templates\SharePoint\SP16-ADFS", $templateFileName))
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 $securePassword = Read-Host "Enter the password" -AsSecureString
@@ -18,6 +19,11 @@ $OptionalParameters = New-Object -TypeName HashTable
 $OptionalParameters['adminPassword'] = $securePassword
 $OptionalParameters['sqlSvcPassword'] = $securePassword
 $OptionalParameters['spSetupPassword'] = $securePassword
+$OptionalParameters['spFarmPassword'] = $securePassword
+$OptionalParameters['spSvcPassword'] = $securePassword
+$OptionalParameters['spAppPoolPassword'] = $securePassword
+$OptionalParameters['spPassphrase'] = $securePassword
+
 
 # DSC
 $DSCSourceFolder = 'DSC'
@@ -41,6 +47,7 @@ if ($azurecontext -eq $null){
 }
 
 if ($GenerateDscArchives) {
+    $DSCSourceFolder = "F:\Job\Dev\GitHub\AzureRM-Templates\SharePoint\SP16-ADFS\DSC"
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS", $DSCSourceFolder))
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
 
@@ -121,6 +128,11 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
 }
 
 ### Deploy template
+Test-AzureRmResourceGroupDeployment `
+    -ResourceGroupName $resourceGroupName `
+    -TemplateFile $TemplateFile `
+    @OptionalParameters
+
 New-AzureRmResourceGroupDeployment `
     -Name $resourceDeploymentName `
     -ResourceGroupName $resourceGroupName `

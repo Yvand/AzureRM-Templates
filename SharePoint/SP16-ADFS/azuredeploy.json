@@ -25,7 +25,10 @@
       "minLength": 1
     },
     "adminPassword": {
-      "type": "securestring"
+      "type": "securestring",
+      "metadata": {
+        "description": "The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
+      }
     },
     "sqlSvcUserName": {
       "type": "string",
@@ -33,7 +36,10 @@
       "minLength": 1
     },
     "sqlSvcPassword": {
-      "type": "securestring"
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
+      }
     },
     "spSetupUserName": {
       "type": "string",
@@ -41,7 +47,10 @@
       "minLength": 1
     },
     "spSetupPassword": {
-      "type": "securestring"
+      "type": "securestring",
+      "metadata": {
+        "description": "The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
+      }
     },
     "spFarmUserName": {
       "type": "string",
@@ -49,7 +58,10 @@
       "minLength": 1
     },
     "spFarmPassword": {
-      "type": "securestring"
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
+      }
     },
     "spSvcUserName": {
       "type": "string",
@@ -57,7 +69,10 @@
       "minLength": 1
     },
     "spSvcPassword": {
-      "type": "securestring"
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
+      }
     },
     "spAppPoolUserName": {
       "type": "string",
@@ -65,7 +80,10 @@
       "minLength": 1
     },
     "spAppPoolPassword": {
-      "type": "securestring"
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
+      }
     },
     "spPassphrase": {
       "type": "securestring"
@@ -126,18 +144,6 @@
       "defaultValue": "1.0",
       "metadata": {
         "description": "This value must be changed from a previous deployment to ensure the extension will run"
-      }
-    },
-    "_artifactsLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
-      }
-    },
-    "_artifactsLocationSasToken": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Auto-generated token to access _artifactsLocation"
       }
     }
   },
