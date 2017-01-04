@@ -17,6 +17,7 @@ $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combin
 $securePassword = Read-Host "Enter the password" -AsSecureString
 $OptionalParameters = New-Object -TypeName HashTable
 $OptionalParameters['adminPassword'] = $securePassword
+$OptionalParameters['adfsSvcPassword'] = $securePassword
 $OptionalParameters['sqlSvcPassword'] = $securePassword
 $OptionalParameters['spSetupPassword'] = $securePassword
 $OptionalParameters['spFarmPassword'] = $securePassword
