@@ -533,7 +533,54 @@
         }
       },
       "resources": [
-
+        {
+          "name": "ConfigureSQLVM",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]"
+          ],
+          "tags": {
+            "displayName": "ConfigureSQLVM"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "forceUpdateTag": "[parameters('ConfigureSQLVMUpdateTagVersion')]",
+            "settings": {
+              "wmfVersion": "latest",
+              "configuration": {
+                "url": "[variables('dscConfigureSQLVM').url]",
+                "script": "[variables('dscConfigureSQLVM').script]",
+                "function": "[variables('dscConfigureSQLVM').function]"
+              },
+              "configurationArguments": {
+                "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
+                "DomainFQDN": "[parameters('domainName')]",
+                "DomainAdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                },
+                "SqlSvcCreds": {
+                  "UserName": "[parameters('sqlSvcUserName')]",
+                  "Password": "[parameters('sqlSvcPassword')]"
+                },
+                "SPSetupCreds": {
+                  "UserName": "[parameters('spSetupUserName')]",
+                  "Password": "[parameters('spSetupPassword')]"
+                }
+              },
+              "privacy": {
+                "dataCollection": "enable"
+              }
+            },
+            "protectedSettings": {
+            }
+          }
+        }
       ]
     },
     {
@@ -700,95 +747,6 @@
           }
         }
       ]
-    },
-    {
-      "name": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]"
-      ],
-      "tags": {
-        "displayName": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.9",
-        "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[parameters('dscCreateADForestUpdateTagVersion')]",
-        "settings": {
-          "wmfVersion": "latest",
-          "configuration": {
-            "url": "[variables('dscPrepareSQLVM').url]",
-            "script": "[variables('dscPrepareSQLVM').script]",
-            "function": "[variables('dscPrepareSQLVM').function]"
-          },
-          "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]"
-          },
-          "privacy": {
-            "dataCollection": "enable"
-          }
-        },
-        "protectedSettings": {
-        }
-      }
-    },
-    {
-      "name": "ConfigureSQLVMStage2",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmSQLName'), '/extensions/ConfigureSQLVM')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('dscConfigureSQLVM').armTemplateLocation]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "domainName": {
-            "value": "[parameters('domainName')]"
-          },
-          "adminUserName": {
-            "value": "[parameters('adminUserName')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "sqlSvcUserName": {
-            "value": "[parameters('sqlSvcUserName')]"
-          },
-          "sqlSvcPassword": {
-            "value": "[parameters('sqlSvcPassword')]"
-          },
-          "spSetupUserName": {
-            "value": "[parameters('spSetupUserName')]"
-          },
-          "spSetupPassword": {
-            "value": "[parameters('spSetupPassword')]"
-          },
-          "vmSQLName": {
-            "value": "[parameters('vmSQLName')]"
-          },
-          "ConfigureSQLVMUpdateTagVersion": {
-            "value": "[parameters('ConfigureSQLVMUpdateTagVersion')]"
-          },
-          "dscUrl": {
-            "value": "[variables('dscConfigureSQLVM').url]"
-          },
-          "dscScript": {
-            "value": "[variables('dscConfigureSQLVM').script]"
-          },
-          "dscFunction": {
-            "value": "[variables('dscConfigureSQLVM').function]"
-          }
-        }
-      }
     }
   ],
   "outputs": {

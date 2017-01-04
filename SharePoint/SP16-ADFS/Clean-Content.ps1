@@ -8,7 +8,7 @@ $subscriptionId = $azurecontext.Subscription.SubscriptionId
 $resourceGroupLocation = 'westeurope'
 $resourceGroupName = 'yd-sp16adfs'
 $StorageAccountName = "ydsp16adfsst0"
-$vmName = "SP"
+$vmName = "SQL"
 $blobStorageContainer = "vhds"
 Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccountName 
 Get-AzureRmContext
