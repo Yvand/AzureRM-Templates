@@ -112,6 +112,7 @@
             UserName = $Admincreds.UserName
             Password = $Admincreds
             EmailAddress = $Admincreds.UserName + "@" + $DomainName
+            PasswordAuthentication = 'Negotiate'
             Ensure = "Present"
             DependsOn = "[xADDomain]FirstDS"
         }
@@ -184,6 +185,7 @@
             UserName = $AdfsSvcCreds.UserName
             Password = $AdfsSvcCreds
             Ensure = "Present"
+            PasswordAuthentication = 'Negotiate'
             DependsOn = "[xADDomain]FirstDS"
         }
 
@@ -310,6 +312,17 @@ function Get-NetBIOSName
 } 
 
 <#
+Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+Install-Module -Name xAdcsDeployment
+Install-Module -Name xCertificate
+Install-Module -Name xPSDesiredStateConfiguration
+Install-Module -Name xCredSSP
+Install-Module -Name xActiveDirectory -RequiredVersion 2.13.0.0
+Install-Module -Name xWebAdministration
+Install-Module -Name xDisk
+Install-Module -Name xNetworking
+
 help ConfigureDCVM
 
 $Admincreds = Get-Credential -Credential "yvand"
@@ -317,8 +330,10 @@ $AdfsSvcCreds = Get-Credential -Credential "AdfsSvcCreds"
 $DomainFQDN = "contoso.local"
 
 ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainName $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+Set-DscLocalConfigurationManager -Path "C:\Data\output\"
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
+https://github.com/PowerShell/xActiveDirectory/issues/27
 Uninstall-WindowsFeature "ADFS-Federation"
 https://msdn.microsoft.com/library/mt238290.aspx
 \\.\pipe\MSSQL$MICROSOFT##SSEE\sql\query
