@@ -26,6 +26,12 @@
 
     Node localhost
     {
+        LocalConfigurationManager 
+        {
+            ConfigurationMode = 'ApplyOnly'
+            RebootNodeIfNeeded = $true
+        }
+
         Script AddADDSFeature {
             SetScript = {
                 Add-WindowsFeature "AD-Domain-Services" -ErrorAction SilentlyContinue   
@@ -94,12 +100,6 @@
             LogPath = "F:\NTDS"
             SysvolPath = "F:\SYSVOL"
 	        DependsOn = "[WindowsFeature]ADDSInstall"
-        } 
-
-        LocalConfigurationManager 
-        {
-            ConfigurationMode = 'ApplyOnly'
-            RebootNodeIfNeeded = $true
         }
 
         #**********************************************************
