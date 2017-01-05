@@ -88,8 +88,8 @@
         xADDomain FirstDS 
         {
             DomainName = $DomainName
-            DomainAdministratorCredential = $DomainCreds
-            SafemodeAdministratorPassword = $DomainCreds
+            DomainAdministratorCredential = $DomainCredsNetbios
+            SafemodeAdministratorPassword = $DomainCredsNetbios
             DatabasePath = "F:\NTDS"
             LogPath = "F:\NTDS"
             SysvolPath = "F:\SYSVOL"
@@ -107,7 +107,7 @@
         #**********************************************************
         xADUser SetEmailOfDomainAdmin
         {
-            DomainAdministratorCredential = $DomainCreds
+            DomainAdministratorCredential = $DomainCredsNetbios
             DomainName = $DomainName
             UserName = $Admincreds.UserName
             Password = $Admincreds
@@ -122,7 +122,7 @@
         xADCSCertificationAuthority ADCS
         {
             Ensure = "Present"
-            Credential = $DomainCreds
+            Credential = $DomainCredsNetbios
             CAType = "EnterpriseRootCA"
             DependsOn = "[WindowsFeature]AddCertAuthority"              
         }
