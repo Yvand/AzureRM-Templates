@@ -203,7 +203,7 @@
       "vmPublicIPName": "vmSP-PublicIP"
     },
     "dscConfigureDCVM": {
-      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/CreateADPDC.zip",
+      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip",
       "script": "CreateADPDC.ps1",
       "function": "CreateADPDC"
     },
@@ -406,6 +406,10 @@
                 "AdminCreds": {
                   "UserName": "[parameters('adminUsername')]",
                   "Password": "[parameters('adminPassword')]"
+                },
+                "AdfsSvcCreds": {
+                  "UserName": "[parameters('adfsSvcUserName')]",
+                  "Password": "[parameters('adfsSvcPassword')]"
                 }
               },
               "privacy": {
