@@ -318,7 +318,7 @@ Install-Module -Name xAdcsDeployment
 Install-Module -Name xCertificate
 Install-Module -Name xPSDesiredStateConfiguration
 Install-Module -Name xCredSSP
-Install-Module -Name xActiveDirectory -RequiredVersion 2.13.0.0
+Install-Module -Name xActiveDirectory
 Install-Module -Name xWebAdministration
 Install-Module -Name xDisk
 Install-Module -Name xNetworking

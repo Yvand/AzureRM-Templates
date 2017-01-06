@@ -173,7 +173,7 @@
       "vmImageSKU": "2016-Datacenter",
       "vmOSDiskName": "vm-DC-OSDisk",
       "vmDataDiskName": "vm-DC-DataDisk",
-      "vmVmSize": "Standard_D1_v2",
+      "vmVmSize": "Standard_D2_v2",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet1Name)]",
       "vmNicName": "[concat(parameters('vmDCName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmDC-PublicIP",
@@ -203,9 +203,9 @@
       "vmPublicIPName": "vmSP-PublicIP"
     },
     "dscConfigureDCVM": {
-      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip",
-      "script": "ConfigureDCVM.ps1",
-      "function": "ConfigureDCVM"
+      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/CreateADPDC.zip",
+      "script": "CreateADPDC.ps1",
+      "function": "CreateADPDC"
     },
     "dscConfigureSQLVM": {
       "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
