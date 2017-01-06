@@ -406,10 +406,6 @@
                 "AdminCreds": {
                   "UserName": "[parameters('adminUsername')]",
                   "Password": "[parameters('adminPassword')]"
-                },
-                "AdfsSvcCreds": {
-                  "UserName": "[parameters('adfsSvcUserName')]",
-                  "Password": "[parameters('adfsSvcPassword')]"
                 }
               },
               "privacy": {

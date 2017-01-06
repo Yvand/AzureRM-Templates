@@ -8,9 +8,6 @@
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds,
 
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$AdfsSvcCreds,
-
         [Int]$RetryCount=20,
         [Int]$RetryIntervalSec=30
     ) 
