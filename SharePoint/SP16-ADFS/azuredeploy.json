@@ -204,8 +204,8 @@
     },
     "dscConfigureDCVM": {
       "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip",
-      "script": "CreateADPDC.ps1",
-      "function": "CreateADPDC"
+      "script": "ConfigureDCVM.ps1",
+      "function": "ConfigureDCVM"
     },
     "dscConfigureSQLVM": {
       "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
