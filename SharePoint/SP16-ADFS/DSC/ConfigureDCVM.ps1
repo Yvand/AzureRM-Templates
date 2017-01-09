@@ -140,6 +140,7 @@
             KeyUsage                  = '0xa0'
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
+			SubjectAltName            = "certauth.ADFS.$DomainName"
             Credential                = $DomainCredsNetbios
             DependsOn = '[WindowsFeature]AddCertAuthority'
         }
@@ -245,8 +246,8 @@
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup"
         }
-		<#
-        Script CreateADFSRelyingParty
+        
+		Script CreateADFSRelyingParty
         {
             SetScript = 
             {
@@ -284,7 +285,6 @@
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[Script]CreateADFSFarm"
         }
-		#>
    }
 }
 
