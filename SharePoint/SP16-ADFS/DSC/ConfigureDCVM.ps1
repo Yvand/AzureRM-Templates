@@ -245,7 +245,7 @@
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup"
         }
-
+		<#
         Script CreateADFSRelyingParty
         {
             SetScript = 
@@ -284,6 +284,7 @@
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[Script]CreateADFSFarm"
         }
+		#>
    }
 }
 
@@ -318,7 +319,6 @@ Install-Module -Name xAdcsDeployment
 Install-Module -Name xCertificate
 Install-Module -Name xPSDesiredStateConfiguration
 Install-Module -Name xCredSSP
-Install-Module -Name xActiveDirectory
 Install-Module -Name xWebAdministration
 Install-Module -Name xDisk
 Install-Module -Name xNetworking
