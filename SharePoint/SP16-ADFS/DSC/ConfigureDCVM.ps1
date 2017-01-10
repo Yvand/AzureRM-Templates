@@ -140,7 +140,7 @@
             KeyUsage                  = '0xa0'
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
-			SubjectAltName            = "certauth.ADFS.$DomainName"
+			#SubjectAltName            = "certauth.ADFS.$DomainName"
             Credential                = $DomainCredsNetbios
             DependsOn = '[WindowsFeature]AddCertAuthority'
         }
@@ -177,7 +177,7 @@
             DependsOn = '[WindowsFeature]AddCertAuthority'
         }
         
-        WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[WindowsFeature]AddCertAuthority" }
+        WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert" }
 
         xADUser CreateAdfsSvcAccount
         {
@@ -187,7 +187,7 @@
             Password = $AdfsSvcCreds
             Ensure = "Present"
             PasswordAuthentication = 'Negotiate'
-            DependsOn = "[xADDomain]FirstDS"
+            DependsOn = "[WindowsFeature]AddADFS"
         }
 
         Group AddAdfsSvcAccountToDomainAdminsGroup
