@@ -283,7 +283,7 @@
                 return $false
             }
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[Script]CreateADFSFarm"
+            DependsOn = "[xScript]CreateADFSFarm"
         }
    }
 }
