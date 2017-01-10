@@ -103,7 +103,7 @@
         }
 
         #**********************************************************
-        # Yvand custom
+        # Misc: Set email of AD domain admin and add remote AD tools
         #**********************************************************
         xADUser SetEmailOfDomainAdmin
         {
@@ -116,9 +116,12 @@
             Ensure = "Present"
             DependsOn = "[xADDomain]FirstDS"
         }
-
         WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
         WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
+
+        #**********************************************************
+        # Configure AD CS
+        #**********************************************************
         WindowsFeature AddCertAuthority { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
         xADCSCertificationAuthority ADCS
         {
@@ -128,6 +131,9 @@
             DependsOn = "[WindowsFeature]AddCertAuthority"              
         }
         
+        #**********************************************************
+        # Configure AD FS
+        #**********************************************************
         xCertReq ADFSSiteCert
         {
             CARootName                = $DomainNetbiosName + "-DC-CA"
@@ -175,9 +181,7 @@
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
             DependsOn = '[xADCSCertificationAuthority]ADCS'
-        }
-        
-        WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert" }
+        }        
 
         xADUser CreateAdfsSvcAccount
         {
@@ -187,7 +191,7 @@
             Password = $AdfsSvcCreds
             Ensure = "Present"
             PasswordAuthentication = 'Negotiate'
-            DependsOn = "[WindowsFeature]AddADFS"
+            DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert"
         }
 
         Group AddAdfsSvcAccountToDomainAdminsGroup
@@ -200,6 +204,7 @@
             DependsOn = "[xADUser]CreateAdfsSvcAccount"
         }
 
+        WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
         xScript CreateADFSFarm
         {
             SetScript = 
@@ -244,7 +249,7 @@
                 }
             }
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup"
+            DependsOn = "[WindowsFeature]AddADFS"
         }
         
 		xScript CreateADFSRelyingParty
