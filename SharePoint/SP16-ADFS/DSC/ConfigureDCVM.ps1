@@ -262,7 +262,6 @@
             }
             TestScript = 
             {
-                    return $false
                 try
                 {
                     Get-AdfsProperties
@@ -358,7 +357,7 @@ Install-Module -Name xNetworking
 help ConfigureDCVM
 
 $Admincreds = Get-Credential -Credential "yvand"
-$AdfsSvcCreds = Get-Credential -Credential "AdfsSvcCreds"
+$AdfsSvcCreds = Get-Credential -Credential "adfssvc"
 $DomainFQDN = "contoso.local"
 
 ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainName $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
