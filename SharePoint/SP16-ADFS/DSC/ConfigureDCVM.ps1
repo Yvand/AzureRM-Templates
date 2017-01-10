@@ -17,7 +17,7 @@
         [String]$ADFSRelyingPartyTrustName = "SPSites"
     ) 
     
-    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, PSDesiredStateConfiguration, xAdcsDeployment, xCertificate
+    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate
     [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential ]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential ]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
@@ -200,7 +200,7 @@
             DependsOn = "[xADUser]CreateAdfsSvcAccount"
         }
 
-        Script CreateADFSFarm
+        xScript CreateADFSFarm
         {
             SetScript = 
             {
@@ -247,7 +247,7 @@
             DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup"
         }
         
-		Script CreateADFSRelyingParty
+		xScript CreateADFSRelyingParty
         {
             SetScript = 
             {
