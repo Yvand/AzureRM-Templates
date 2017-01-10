@@ -142,7 +142,7 @@
             AutoRenew                 = $true
 			#SubjectAltName            = "certauth.ADFS.$DomainName"
             Credential                = $DomainCredsNetbios
-            DependsOn = '[WindowsFeature]AddCertAuthority'
+            DependsOn = '[xADCSCertificationAuthority]ADCS'
         }
 
         xCertReq ADFSSigningCert
@@ -158,7 +158,7 @@
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
-            DependsOn = '[WindowsFeature]AddCertAuthority'
+            DependsOn = '[xADCSCertificationAuthority]ADCS'
         }
         
         xCertReq ADFSDecryptionCert
@@ -174,7 +174,7 @@
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
-            DependsOn = '[WindowsFeature]AddCertAuthority'
+            DependsOn = '[xADCSCertificationAuthority]ADCS'
         }
         
         WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert" }
