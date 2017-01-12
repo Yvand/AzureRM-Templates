@@ -28,7 +28,7 @@ configuration ConfigureSPVM
         [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration
+    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xPendingReboot
 
     $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
@@ -202,6 +202,76 @@ configuration ConfigureSPVM
             DependsOn = "[File]AccountsProvisioned"
         }
 
+        xScript Install201612CU
+        {
+            SetScript = 
+            {
+                $updateLocation = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe"
+                $cuInstallLogPath = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe.install.log"
+                $setup = Start-Process -FilePath $updateLocation -ArgumentList "/log:`"$CuInstallLogPath`" /quiet /passive /norestart" -Wait -PassThru
+ 
+                if ($setup.ExitCode -eq 0) {
+                    Write-Verbose -Message "SharePoint cumulative update $Build installation complete"
+                }
+                else
+                {
+                    Write-Verbose -Message "SharePoint cumulative update install failed, exit code was $($setup.ExitCode)"
+                    throw "SharePoint cumulative update install failed, exit code was $($setup.ExitCode)"
+                }
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                $cuBuildNUmber = "16.0.4471.1000"
+                $result = "false"
+                Write-Verbose -Message 'Getting Sharepoint buildnumber'
+
+                try
+                {
+                    $spInstall = Get-SPDSCInstalledProductVersion
+                    $build = $spInstall.ProductVersion
+                    if ($build -eq $cuBuildNUmber) {
+                        $result = "true"
+                    }
+                }
+                catch
+                {
+                    Write-Verbose -Message 'Sharepoint not installed, CU installation is going to fail if attempted'
+                }
+
+                return @{ "Result" = $result }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                $cuBuildNUmber = "16.0.4471.1000"
+                $result = $false
+                try
+                {
+                    Write-Verbose -Message "Getting Sharepoint build number"
+                    $spInstall = Get-SPDSCInstalledProductVersion
+                    $build = $spInstall.ProductVersion
+                    Write-Verbose -Message "Current Sharepoint build number is $build and expected build number is $cuBuildNUmber"
+                    if ($build -eq $cuBuildNUmber) {
+                        $result = $true
+                    }
+                }
+                catch
+                {
+                    Write-Verbose -Message "Sharepoint is not installed, abort installation of CU or it will fail otherwise"
+                    $result = $true
+                }
+                return $result
+            }
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn = "[xRemoteFile]Install201612CU"
+        }
+
+        xPendingReboot RebootAfterInstall201612CU
+        { 
+            Name = 'RebootAfterInstall201612CU'
+        }
+
         <#
         xPackage Install201612CU
         {
@@ -332,8 +402,16 @@ function Get-NetBIOSName
     }
 }
 
+function Get-SPDSCInstalledProductVersion
+{
+    $pathToSearch = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\*\ISAPI\Microsoft.SharePoint.dll"
+    $fullPath = Get-Item $pathToSearch | Sort-Object { $_.Directory } -Descending | Select-Object -First 1
+    return (Get-Command $fullPath).FileVersionInfo
+}
+
 
 <#
+Install-Module -Name xPendingReboot
 help ConfigureSPVM
 
 $DomainAdminCreds = Get-Credential -Credential "yvand"

@@ -249,6 +249,7 @@
             }
             GetScript =  
             {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                 $result = "true"
                 try
                 {
@@ -262,6 +263,7 @@
             }
             TestScript = 
             {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
                 try
                 {
                     Get-AdfsProperties
@@ -294,6 +296,7 @@
             }
             GetScript =  
             {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                 $result = "false"
                 $rpFound = Get-ADFSRelyingPartyTrust -Name $using:ADFSRelyingPartyTrustName                
                 if ($rpFound -ne $null)
@@ -304,6 +307,7 @@
             }
             TestScript = 
             {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
                 $rpFound = Get-ADFSRelyingPartyTrust -Name $using:ADFSRelyingPartyTrustName                
                 if ($rpFound -ne $null)
                 {
