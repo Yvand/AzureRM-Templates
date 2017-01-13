@@ -264,7 +264,7 @@ configuration ConfigureSPVM
                 return $result
             }
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[xRemoteFile]Install201612CU"
+            DependsOn = "[xRemoteFile]Download201612CU"
         }
 
         xPendingReboot RebootAfterInstall201612CU
