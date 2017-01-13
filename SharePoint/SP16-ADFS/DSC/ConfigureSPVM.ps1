@@ -206,12 +206,13 @@ configuration ConfigureSPVM
         {
             SetScript = 
             {
+                $cuBuildNUmber = "16.0.4471.1000"
                 $updateLocation = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe"
                 $cuInstallLogPath = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe.install.log"
                 $setup = Start-Process -FilePath $updateLocation -ArgumentList "/log:`"$CuInstallLogPath`" /quiet /passive /norestart" -Wait -PassThru
  
                 if ($setup.ExitCode -eq 0) {
-                    Write-Verbose -Message "SharePoint cumulative update $Build installation complete"
+                    Write-Verbose -Message "SharePoint cumulative update $cuBuildNUmber installation complete"
                 }
                 else
                 {
