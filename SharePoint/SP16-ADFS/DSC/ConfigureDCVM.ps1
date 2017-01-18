@@ -205,6 +205,7 @@
         }
 
         WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
+        <#
         xScript CreateADFSFarm
         {
             SetScript = 
@@ -320,6 +321,7 @@
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[xScript]CreateADFSFarm"
         }
+        #>
    }
 }
 

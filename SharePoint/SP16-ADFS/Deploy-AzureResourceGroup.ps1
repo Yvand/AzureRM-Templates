@@ -128,18 +128,20 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
         -Verbose -Force
 }
 
-### Deploy template
-Test-AzureRmResourceGroupDeployment `
+### Deploy template if it is valid
+$checkTemplate = Test-AzureRmResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
     @OptionalParameters
 
-New-AzureRmResourceGroupDeployment `
-    -Name $resourceDeploymentName `
-    -ResourceGroupName $resourceGroupName `
-    -TemplateFile $TemplateFile `
-    @OptionalParameters `
-    -Verbose -Force
+if ($checkTemplate.Count -eq 0) {
+    New-AzureRmResourceGroupDeployment `
+        -Name $resourceDeploymentName `
+        -ResourceGroupName $resourceGroupName `
+        -TemplateFile $TemplateFile `
+        @OptionalParameters `
+        -Verbose -Force
+}
 
 ### Remove initial extension on SQL VM and add new one
 {
