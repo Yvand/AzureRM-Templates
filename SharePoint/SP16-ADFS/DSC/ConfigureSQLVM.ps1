@@ -17,7 +17,7 @@ configuration ConfigureSQLVM
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPSetupCreds,
         [String]$DomainNetbiosName=(Get-NetBIOSName -DomainFQDN $DomainFQDN),
-        [Int]$RetryCount = 60,
+        [Int]$RetryCount = 90,
         [Int]$RetryIntervalSec = 60
     )
 
