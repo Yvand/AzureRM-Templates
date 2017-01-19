@@ -197,7 +197,7 @@
       "vmImageSKU": "2016",
       "vmOSDiskName": "vm-SP-OSDisk",
       "vmDataDiskName": "vm-SP-DataDisk",
-      "vmVmSize": "Standard_A6",
+      "vmVmSize": "Standard_A8_v2",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet3Name)]",
       "vmNicName": "[concat(parameters('vmSPName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmSP-PublicIP"
@@ -641,66 +641,6 @@
         }
       },
       "resources": [
-        {
-          "name": "ConfigureSPVM",
-          "type": "extensions",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2015-06-15",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSPName'))]"
-          ],
-          "tags": {
-            "displayName": "ConfigureSPVM"
-          },
-          "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.9",
-            "autoUpgradeMinorVersion": true,
-            "forceUpdateTag": "[parameters('ConfigureSPVMUpdateTagVersion')]",
-            "settings": {
-              "wmfVersion": "latest",
-              "configuration": {
-                "url": "[variables('dscConfigureSPVM').url]",
-                "script": "[variables('dscConfigureSPVM').script]",
-                "function": "[variables('dscConfigureSPVM').function]"
-              },
-              "configurationArguments": {
-                "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
-                "DomainFQDN": "[parameters('domainName')]",
-                "DomainAdminCreds": {
-                  "UserName": "[parameters('adminUsername')]",
-                  "Password": "[parameters('adminPassword')]"
-                },
-                "SPSetupCreds": {
-                  "UserName": "[parameters('spSetupUserName')]",
-                  "Password": "[parameters('spSetupPassword')]"
-                },
-                "SPFarmCreds": {
-                  "UserName": "[parameters('spFarmUserName')]",
-                  "Password": "[parameters('spFarmPassword')]"
-                },
-                "SPSvcCreds": {
-                  "UserName": "[parameters('spSvcUserName')]",
-                  "Password": "[parameters('spSvcPassword')]"
-                },
-                "SPAppPoolCreds": {
-                  "UserName": "[parameters('spAppPoolUserName')]",
-                  "Password": "[parameters('spAppPoolPassword')]"
-                },
-                "SPPassphraseCreds": {
-                  "UserName": "Passphrase",
-                  "Password": "[parameters('spPassphrase')]"
-                }
-              },
-              "privacy": {
-                "dataCollection": "enable"
-              }
-            },
-            "protectedSettings": {
-            }
-          }
-        }
       ]
     },
     {
@@ -743,6 +683,68 @@
             "SPSetupCreds": {
               "UserName": "[parameters('spSetupUserName')]",
               "Password": "[parameters('spSetupPassword')]"
+            }
+          },
+          "privacy": {
+            "dataCollection": "enable"
+          }
+        },
+        "protectedSettings": {
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('vmSPName'),'/ConfigureSPVM')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSPName'))]"
+      ],
+      "tags": {
+        "displayName": "[concat(parameters('vmSPName'),'/ConfigureSPVM')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.9",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "[parameters('ConfigureSPVMUpdateTagVersion')]",
+        "settings": {
+          "wmfVersion": "latest",
+          "configuration": {
+            "url": "[variables('dscConfigureSPVM').url]",
+            "script": "[variables('dscConfigureSPVM').script]",
+            "function": "[variables('dscConfigureSPVM').function]"
+          },
+          "configurationArguments": {
+            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
+            "DomainFQDN": "[parameters('domainName')]",
+            "DomainAdminCreds": {
+              "UserName": "[parameters('adminUsername')]",
+              "Password": "[parameters('adminPassword')]"
+            },
+            "SPSetupCreds": {
+              "UserName": "[parameters('spSetupUserName')]",
+              "Password": "[parameters('spSetupPassword')]"
+            },
+            "SPFarmCreds": {
+              "UserName": "[parameters('spFarmUserName')]",
+              "Password": "[parameters('spFarmPassword')]"
+            },
+            "SPSvcCreds": {
+              "UserName": "[parameters('spSvcUserName')]",
+              "Password": "[parameters('spSvcPassword')]"
+            },
+            "SPAppPoolCreds": {
+              "UserName": "[parameters('spAppPoolUserName')]",
+              "Password": "[parameters('spAppPoolPassword')]"
+            },
+            "SPPassphraseCreds": {
+              "UserName": "Passphrase",
+              "Password": "[parameters('spPassphrase')]"
             }
           },
           "privacy": {
