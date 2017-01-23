@@ -5,6 +5,10 @@ $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 if ($azurecontext -eq $null) {
     Login-AzureRmAccount
     $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
+    <#
+    Get-AzureRmSubscription
+    Select-AzureRmSubscription -SubscriptionId 00000-0000-0000-000-0000
+    #>
 }
 
 if ($azurecontext -eq $null){ 
@@ -36,17 +40,30 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
 }
 
 ### Deploy Resources
-$checkTemplate = Test-AzureRmResourceGroupDeployment `
-    -ResourceGroupName $resourceGroupName `
-    -TemplateFile $templateFile `
-    @additionalParameters
+$errorMessages = @()
+    $errorMessages = Format-ValidationOutput (Test-AzureRmResourceGroupDeployment `
+        -ResourceGroupName $resourceGroupName `
+        -TemplateFile $templateFile `
+        @additionalParameters `
+        -verbose)
 
-if ($checkTemplate.Count -eq 0) {
+if ($errorMessages -eq $null) {
     New-AzureRmResourceGroupDeployment `
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $templateFile `
         @additionalParameters `
-        -Verbose -Force
+        -Verbose -Force `
+        -ErrorVariable $errorMessages
 }
-else { $checkTemplate }
+
+if ($errorMessages)
+{
+    "", ("{0} returned the following errors:" -f ("Template deployment", "Validation")[[bool]$ValidateOnly]), @($errorMessages) | ForEach-Object { Write-Output $_ }
+}
+
+function Format-ValidationOutput {
+    param ($ValidationOutput, [int] $Depth = 0)
+    Set-StrictMode -Off
+    return @($ValidationOutput | Where-Object { $_ -ne $null } | ForEach-Object { @("  " * $Depth + $_.Code + ": " + $_.Message) + @(Format-ValidationOutput @($_.Details) ($Depth + 1)) })
+}
