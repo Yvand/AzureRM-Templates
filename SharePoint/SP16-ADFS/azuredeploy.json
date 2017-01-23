@@ -403,20 +403,20 @@
               },
               "configurationArguments": {
                 "DomainName": "[parameters('domainName')]",
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                },
+                "AdfsSvcCreds": {
+                  "UserName": "[parameters('adfsSvcUserName')]",
+                  "Password": "[parameters('adfsSvcPassword')]"
+                }
               },
               "privacy": {
                 "dataCollection": "enable"
               }
             },
             "protectedSettings": {
-              "AdminCreds": {
-                "UserName": "[parameters('adminUsername')]",
-                "Password": "[parameters('adminPassword')]"
-              },
-              "AdfsSvcCreds": {
-                "UserName": "[parameters('adfsSvcUserName')]",
-                "Password": "[parameters('adfsSvcPassword')]"
-              }
             }
           }
         }
