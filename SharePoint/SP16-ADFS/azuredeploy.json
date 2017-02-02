@@ -678,7 +678,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('dscConfigureSQLVM').templateDCStage2Location]",
+          "uri": "[variables('dscConfigureDCVM').templateDCStage2Location]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {

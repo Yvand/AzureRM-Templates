@@ -26,7 +26,8 @@ $OptionalParameters['spAppPoolPassword'] = $securePassword
 $OptionalParameters['spPassphrase'] = $securePassword
 
 # dev branch settings
-$OptionalParameters['baseurl'] = "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SP16-ADFS"
+$OptionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
+$OptionalParameters['baseurl'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS"
 $OptionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
 
 # DSC
@@ -147,7 +148,7 @@ if ($checkTemplate.Count -eq 0) {
         -Verbose -Force
 }
 
-### Remove initial extension on SQL VM and add new one
+### Remove initial extension on a VM and add a new one
 {
 $SQLVMname = "SQL"
 $previousCustomExtension = "PrepareSQLVM"
