@@ -2,6 +2,11 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "baseurl": {
+      "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS",
+      "minLength": 1
+    },
     "templatePrefix": {
       "type": "string",
       "defaultValue": "ydsp16adfs",
@@ -218,18 +223,19 @@
       "vmPublicIPName": "vmSP-PublicIP"
     },
     "dscConfigureDCVM": {
-      "url": "parameters('dscDCTemplateURL')",
+      "url": "[parameters('dscDCTemplateURL')]",
       "script": "ConfigureDCVM.ps1",
-      "function": "ConfigureDCVM"
+      "functionStage1": "ConfigureDCVMStage1",
+      "functionStage2": "ConfigureDCVMStage2",
+      "templateDCStage2Location": "[concat(parameters('baseUrl'),'/Templates/ConfigureDCVMStage2.json')]"
     },
     "dscConfigureSQLVM": {
-      "url": "parameters('dscSQLTemplateURL')",
+      "url": "[parameters('dscSQLTemplateURL')]",
       "script": "ConfigureSQLVM.ps1",
-      "functionStage1": "ConfigureDCVMStage1",
-      "functionStage2": "ConfigureDCVMStage2"
+      "function": "ConfigureSQLVM"
     },
     "dscConfigureSPVM": {
-      "url": "parameters('dscSPTemplateURL')",
+      "url": "[parameters('dscSPTemplateURL')]",
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM"
     }
@@ -666,13 +672,13 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmSQLName'), '/extensions/ConfigureSQLVM')]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('dscConfigureSQLVM').armTemplateLocation]",
+          "uri": "[variables('dscConfigureSQLVM').templateDCStage2Location]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -716,7 +722,7 @@
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
+        "Microsoft.Resources/deployments/ConfigureDCVMStage2",
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]"
       ],
       "tags": {
@@ -766,7 +772,7 @@
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
+        "Microsoft.Resources/deployments/ConfigureDCVMStage2",
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSPName'))]"
       ],
       "tags": {

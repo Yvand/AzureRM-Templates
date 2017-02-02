@@ -26,7 +26,8 @@ $OptionalParameters['spAppPoolPassword'] = $securePassword
 $OptionalParameters['spPassphrase'] = $securePassword
 
 # dev branch settings
-$OptionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
+$OptionalParameters['baseurl'] = "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SP16-ADFS"
+$OptionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
 
 # DSC
 $DSCSourceFolder = 'DSC'
@@ -134,7 +135,8 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
 $checkTemplate = Test-AzureRmResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
-    @OptionalParameters
+    @OptionalParameters `
+    -Verbose
 
 if ($checkTemplate.Count -eq 0) {
     New-AzureRmResourceGroupDeployment `
