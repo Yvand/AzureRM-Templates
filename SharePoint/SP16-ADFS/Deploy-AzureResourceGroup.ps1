@@ -25,6 +25,8 @@ $OptionalParameters['spSvcPassword'] = $securePassword
 $OptionalParameters['spAppPoolPassword'] = $securePassword
 $OptionalParameters['spPassphrase'] = $securePassword
 
+# dev branch settings
+$OptionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
 
 # DSC
 $DSCSourceFolder = 'DSC'

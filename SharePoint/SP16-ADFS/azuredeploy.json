@@ -129,21 +129,36 @@
       "defaultValue": "ydsp16adfs-sp",
       "minLength": 1
     },
-    "ConfigureDCVMUpdateTagVersion": {
+    "dscDCTemplateURL": {
+      "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip",
+      "minLength": 1
+    },
+    "dscDCUpdateTagVersion": {
       "type": "string",
       "defaultValue": "1.0",
       "metadata": {
         "description": "This value must be changed from a previous deployment to ensure the extension will run"
       }
     },
-    "ConfigureSPVMUpdateTagVersion": {
+    "dscSQLTemplateURL": {
+      "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
+      "minLength": 1
+    },
+    "dscSQLUpdateTagVersion": {
       "type": "string",
       "defaultValue": "1.0",
       "metadata": {
         "description": "This value must be changed from a previous deployment to ensure the extension will run"
       }
     },
-    "ConfigureSQLVMUpdateTagVersion": {
+    "dscSPTemplateURL": {
+      "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip",
+      "minLength": 1
+    },
+    "dscSPUpdateTagVersion": {
       "type": "string",
       "defaultValue": "1.0",
       "metadata": {
@@ -186,7 +201,7 @@
       "vmOSDiskName": "vm-SQLOSDisk",
       "vmDataDiskName": "vm-SQL-DataDisk-Data",
       "vmLogsDiskName": "vm-SQL-DataDisk-Logs",
-      "vmVmSize": "Standard_A3",
+      "vmVmSize": "Standard_A4_v2",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet2Name)]",
       "vmNicName": "[concat(parameters('vmSQLName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmSQL-PublicIP"
@@ -203,17 +218,18 @@
       "vmPublicIPName": "vmSP-PublicIP"
     },
     "dscConfigureDCVM": {
-      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip",
+      "url": "parameters('dscDCTemplateURL')",
       "script": "ConfigureDCVM.ps1",
       "function": "ConfigureDCVM"
     },
     "dscConfigureSQLVM": {
-      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
+      "url": "parameters('dscSQLTemplateURL')",
       "script": "ConfigureSQLVM.ps1",
-      "function": "ConfigureSQLVM"
+      "functionStage1": "ConfigureDCVMStage1",
+      "functionStage2": "ConfigureDCVMStage2"
     },
     "dscConfigureSPVM": {
-      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip",
+      "url": "parameters('dscSPTemplateURL')",
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM"
     }
@@ -393,30 +409,32 @@
             "type": "DSC",
             "typeHandlerVersion": "2.9",
             "autoUpgradeMinorVersion": true,
-            "forceUpdateTag": "[parameters('ConfigureDCVMUpdateTagVersion')]",
+            "forceUpdateTag": "[parameters('dscDCUpdateTagVersion')]",
             "settings": {
               "wmfVersion": "latest",
               "configuration": {
                 "url": "[variables('dscConfigureDCVM').url]",
                 "script": "[variables('dscConfigureDCVM').script]",
-                "function": "[variables('dscConfigureDCVM').function]"
+                "function": "[variables('dscConfigureDCVM').functionStage1]"
               },
               "configurationArguments": {
-                "DomainName": "[parameters('domainName')]"
+                "DomainName": "[parameters('domainName')]",
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "PrivateSettingsRef:adminPassword"
+                },
+                "AdfsSvcCreds": {
+                  "UserName": "[parameters('adfsSvcUserName')]",
+                  "Password": "PrivateSettingsRef:adfsSvcPassword"
+                }
               },
               "privacy": {
                 "dataCollection": "enable"
               }
             },
             "protectedSettings": {
-              "AdminCreds": {
-                "UserName": "[parameters('adminUsername')]",
-                "Password": "[parameters('adminPassword')]"
-              },
-              "AdfsSvcCreds": {
-                "UserName": "[parameters('adfsSvcUserName')]",
-                "Password": "[parameters('adfsSvcPassword')]"
-              }
+              "adminPassword": "[parameters('adminPassword')]",
+              "adfsSvcPassword": "[parameters('adfsSvcPassword')]"
             }
           }
         }
@@ -644,6 +662,54 @@
       ]
     },
     {
+      "name": "ConfigureDCVMStage2",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmSQLName'), '/extensions/ConfigureSQLVM')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('dscConfigureSQLVM').armTemplateLocation]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "adfsSvcUserName": {
+            "value": "[parameters('adfsSvcUserName')]"
+          },
+          "adfsSvcPassword": {
+            "value": "[parameters('adfsSvcPassword')]"
+          },
+          "vmName": {
+            "value": "[parameters('vmDCName')]"
+          },
+          "updateTagVersion": {
+            "value": "[parameters('dscDCUpdateTagVersion')]"
+          },
+          "dscUrl": {
+            "value": "[variables('dscConfigureDCVM').url]"
+          },
+          "dscScript": {
+            "value": "[variables('dscConfigureDCVM').script]"
+          },
+          "dscFunction": {
+            "value": "[variables('dscConfigureDCVM').functionStage2]"
+          }
+        }
+      }
+    },
+    {
       "name": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[resourceGroup().location]",
@@ -661,7 +727,7 @@
         "type": "DSC",
         "typeHandlerVersion": "2.9",
         "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[parameters('ConfigureSQLVMUpdateTagVersion')]",
+        "forceUpdateTag": "[parameters('dscSQLUpdateTagVersion')]",
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
@@ -711,7 +777,7 @@
         "type": "DSC",
         "typeHandlerVersion": "2.9",
         "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[parameters('ConfigureSPVMUpdateTagVersion')]",
+        "forceUpdateTag": "[parameters('dscSPUpdateTagVersion')]",
         "settings": {
           "wmfVersion": "latest",
           "configuration": {

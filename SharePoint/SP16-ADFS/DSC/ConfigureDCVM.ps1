@@ -1,4 +1,4 @@
-﻿configuration ConfigureDCVM 
+﻿configuration ConfigureDCVMStage1
 { 
    param 
    ( 
@@ -100,6 +100,42 @@
             LogPath = "F:\NTDS"
             SysvolPath = "F:\SYSVOL"
 	        DependsOn = "[WindowsFeature]ADDSInstall"
+        }
+   }
+}
+
+configuration ConfigureDCVMStage2
+{ 
+   param 
+   ( 
+        [Parameter(Mandatory)]
+        [String]$DomainName,
+
+        [Parameter(Mandatory)]
+        [System.Management.Automation.PSCredential]$Admincreds,
+
+        [Parameter(Mandatory)]
+        [System.Management.Automation.PSCredential]$AdfsSvcCreds,
+
+        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainName $DomainName),
+        [Int]$RetryCount=20,
+        [Int]$RetryIntervalSec=30,
+        [String]$ADFSRelyingPartyTrustName = "SPSites"
+    ) 
+    
+    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate
+    [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
+    [System.Management.Automation.PSCredential ]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
+    [System.Management.Automation.PSCredential ]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
+    $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
+    $InterfaceAlias=$($Interface.Name)
+
+    Node localhost
+    {
+        LocalConfigurationManager 
+        {
+            ConfigurationMode = 'ApplyOnly'
+            RebootNodeIfNeeded = $true
         }
 
         #**********************************************************
