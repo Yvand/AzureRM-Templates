@@ -105,6 +105,7 @@
         #**********************************************************
         # Misc: Set email of AD domain admin and add remote AD tools
         #**********************************************************
+        <#
         xADUser SetEmailOfDomainAdmin
         {
             DomainAdministratorCredential = $DomainCredsNetbios
@@ -115,7 +116,7 @@
             PasswordAuthentication = 'Negotiate'
             Ensure = "Present"
             DependsOn = "[xADDomain]FirstDS"
-        }
+        }#>
         WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
         WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
 
