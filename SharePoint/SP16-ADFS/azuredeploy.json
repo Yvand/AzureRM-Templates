@@ -19,10 +19,25 @@
         "description": "FQDN of the AD forest to create"
       }
     },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the key vault used for storing the Username and Password combinations"
+      },
+      "defaultValue": "ydsp16adfsvault"
+    },
     "adminUserName": {
       "type": "string",
       "defaultValue": "yvand",
       "minLength": 1
+    },
+    "adminPasswordKeyName": {
+      "type": "string",
+      "defaultValue": "adminPassword",
+      "minLength": 1,
+      "metadata": {
+        "description": "The admin account password secret key name"
+      }
     },
     "adminPassword": {
       "type": "securestring",
@@ -231,6 +246,14 @@
       "url": "[parameters('dscSPTemplateURL')]",
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM"
+    },
+    "adminPasswordVault": {
+      "reference": {
+        "keyVault": {
+          "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+        },
+        "secretName": "[parameters('adminPasswordKeyName')]"
+      }
     }
   },
   "resources": [
@@ -432,7 +455,7 @@
               }
             },
             "protectedSettings": {
-              "adminPassword": "[parameters('adminPassword')]",
+              "adminPassword": "[variables('adminPasswordVault')]",
               "adfsSvcPassword": "[parameters('adfsSvcPassword')]"
             }
           }

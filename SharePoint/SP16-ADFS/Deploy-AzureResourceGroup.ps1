@@ -26,10 +26,8 @@ $OptionalParameters['spAppPoolPassword'] = $securePassword
 $OptionalParameters['spPassphrase'] = $securePassword
 
 # dev branch settings
-#$OptionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
-#$OptionalParameters['baseurl'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS"
 $OptionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
-#$OptionalParameters['dscDCUpdateTagVersion'] = "2.0"
+$OptionalParameters['keyVaultName'] = "ydsp16adfsvault"
 
 # DSC
 $DSCSourceFolder = 'DSC'
@@ -37,7 +35,6 @@ $DSCSourceFolder = 'DSC'
 # Artifacts
 $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts'
 $ArtifactStagingDirectory = "Artifacts"
-
 }
 
 ### Ensure connection to Azure RM
@@ -59,7 +56,7 @@ if ($GenerateDscArchives) {
 
     # Create DSC configuration archive
     if (Test-Path $DSCSourceFolder) {
-        $DSCSourceFilePaths = @(Get-ChildItem $DSCSourceFolder -File -Filter "*.ps1" | ForEach-Object -Process {$_.FullName})
+        $DSCSourceFilePaths = @(Get-ChildItem $DSCSourceFolder -File -Filter "*DCVM.ps1" | ForEach-Object -Process {$_.FullName})
         foreach ($DSCSourceFilePath in $DSCSourceFilePaths) {
             $DSCArchiveFilePath = $DSCSourceFilePath.Substring(0, $DSCSourceFilePath.Length - 4) + ".zip"
             Publish-AzureRmVMDscConfiguration $DSCSourceFilePath -OutputArchivePath $DSCArchiveFilePath -Force -Verbose
@@ -123,6 +120,20 @@ if ($UploadArtifacts) {
         $UnsecureSASToken
         ConvertFrom-SecureString $ArtifactsLocationSasToken
     }
+}
+
+### Configure Azure key vault
+{
+$vault = Get-AzureRmKeyVault -VaultName $OptionalParameters['keyVaultName']
+if ($vault -eq $null) {
+    $vault = New-AzureRmKeyVault -VaultName $OptionalParameters['keyVaultName'] -ResourceGroupName $resourceGroupName -Location $resourceGroupLocation -EnabledForTemplateDeployment
+}
+
+# Create one key per password and overrride password with the key vault secret
+$passwordsHT = $OptionalParameters.GetEnumerator()| ?{$_.Name -like "*Password"}
+foreach ($password in $passwordsHT) {
+    $secret = Set-AzureKeyVaultSecret -VaultName $OptionalParameters['keyVaultName'] -Name $password.Name -SecretValue $password.Value
+}
 }
 
 ### Create Resource Group if it doesn't exist

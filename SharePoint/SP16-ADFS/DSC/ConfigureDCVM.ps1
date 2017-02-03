@@ -18,7 +18,6 @@
     ) 
     
     Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate
-    [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential ]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential ]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
     $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
@@ -31,6 +30,8 @@
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
         }
+
+        xLog Log1 { Message = "Log1. DomainNetbiosName: $DomainNetbiosName, DomainCredsNetbios.Username: " +  $Admincreds.UserName + ", DomainCredsNetbios.Password: " + $Admincreds.Password }
 
         Script AddADDSFeature {
             SetScript = {
@@ -105,7 +106,7 @@
         #**********************************************************
         # Misc: Set email of AD domain admin and add remote AD tools
         #**********************************************************
-        <#
+        xLog Log2 { Message = "Log1. DomainNetbiosName: $DomainNetbiosName, DomainCredsNetbios.Username: " +  $Admincreds.UserName + ", DomainCredsNetbios.Password: " + $Admincreds.Password; DependsOn = "[xADDomain]FirstDS" }
         xADUser SetEmailOfDomainAdmin
         {
             DomainAdministratorCredential = $DomainCredsNetbios
@@ -116,7 +117,7 @@
             PasswordAuthentication = 'Negotiate'
             Ensure = "Present"
             DependsOn = "[xADDomain]FirstDS"
-        }#>
+        }
         WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
         WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
 
