@@ -26,9 +26,10 @@ $OptionalParameters['spAppPoolPassword'] = $securePassword
 $OptionalParameters['spPassphrase'] = $securePassword
 
 # dev branch settings
-$OptionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
-$OptionalParameters['baseurl'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS"
+#$OptionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
+#$OptionalParameters['baseurl'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS"
 $OptionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
+#$OptionalParameters['dscDCUpdateTagVersion'] = "2.0"
 
 # DSC
 $DSCSourceFolder = 'DSC'

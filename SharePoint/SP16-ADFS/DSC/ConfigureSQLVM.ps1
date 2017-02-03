@@ -238,6 +238,9 @@ function WaitForSqlSetup
 
 
 <#
+# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
+# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
+
 help ConfigureSQLVM
 $DomainAdminCreds = Get-Credential -Credential "yvand"
 $SqlSvcCreds = Get-Credential -Credential "sqlsvc"

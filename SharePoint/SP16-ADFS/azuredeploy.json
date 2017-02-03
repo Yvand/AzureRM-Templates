@@ -2,11 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "baseurl": {
-      "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS",
-      "minLength": 1
-    },
     "templatePrefix": {
       "type": "string",
       "defaultValue": "ydsp16adfs",
@@ -225,9 +220,7 @@
     "dscConfigureDCVM": {
       "url": "[parameters('dscDCTemplateURL')]",
       "script": "ConfigureDCVM.ps1",
-      "functionStage1": "ConfigureDCVMStage1",
-      "functionStage2": "ConfigureDCVMStage2",
-      "templateDCStage2Location": "[concat(parameters('baseUrl'),'/Templates/ConfigureDCVMStage2.json')]"
+      "function": "ConfigureDCVM"
     },
     "dscConfigureSQLVM": {
       "url": "[parameters('dscSQLTemplateURL')]",
@@ -421,7 +414,7 @@
               "configuration": {
                 "url": "[variables('dscConfigureDCVM').url]",
                 "script": "[variables('dscConfigureDCVM').script]",
-                "function": "[variables('dscConfigureDCVM').functionStage1]"
+                "function": "[variables('dscConfigureDCVM').function]"
               },
               "configurationArguments": {
                 "DomainName": "[parameters('domainName')]",
@@ -668,61 +661,13 @@
       ]
     },
     {
-      "name": "ConfigureDCVMStage2",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('dscConfigureDCVM').templateDCStage2Location]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "domainName": {
-            "value": "[parameters('domainName')]"
-          },
-          "adminUserName": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "adfsSvcUserName": {
-            "value": "[parameters('adfsSvcUserName')]"
-          },
-          "adfsSvcPassword": {
-            "value": "[parameters('adfsSvcPassword')]"
-          },
-          "vmName": {
-            "value": "[parameters('vmDCName')]"
-          },
-          "updateTagVersion": {
-            "value": "[parameters('dscDCUpdateTagVersion')]"
-          },
-          "dscUrl": {
-            "value": "[variables('dscConfigureDCVM').url]"
-          },
-          "dscScript": {
-            "value": "[variables('dscConfigureDCVM').script]"
-          },
-          "dscFunction": {
-            "value": "[variables('dscConfigureDCVM').functionStage2]"
-          }
-        }
-      }
-    },
-    {
       "name": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
-        "Microsoft.Resources/deployments/ConfigureDCVMStage2",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]"
       ],
       "tags": {
@@ -772,7 +717,7 @@
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
-        "Microsoft.Resources/deployments/ConfigureDCVMStage2",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSPName'))]"
       ],
       "tags": {
