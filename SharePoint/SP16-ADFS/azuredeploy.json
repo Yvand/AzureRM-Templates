@@ -50,6 +50,14 @@
       "defaultValue": "adfssvc",
       "minLength": 1
     },
+    "adfsPasswordKeyName": {
+      "type": "string",
+      "defaultValue": "adfsSvcPassword",
+      "minLength": 1,
+      "metadata": {
+        "description": "The adfs account password secret key name"
+      }
+    },
     "adfsSvcPassword": {
       "type": "securestring",
       "metadata": {
@@ -254,6 +262,14 @@
         },
         "secretName": "[parameters('adminPasswordKeyName')]"
       }
+    },
+    "adfsPasswordVault": {
+      "reference": {
+        "keyVault": {
+          "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+        },
+        "secretName": "[parameters('adfsPasswordKeyName')]"
+      }
     }
   },
   "resources": [
@@ -441,9 +457,9 @@
               },
               "configurationArguments": {
                 "DomainName": "[parameters('domainName')]",
-                "AdfsSvcCreds": {
-                  "UserName": "[parameters('adfsSvcUserName')]",
-                  "Password": "[parameters('adfsSvcPassword')]"
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[variables('adminPasswordVault')]"
                 }
               },
               "privacy": {
@@ -452,9 +468,9 @@
             },
             "protectedSettings": {
               "configurationArguments": {
-                "AdminCreds": {
-                  "userName": "[parameters('adminUsername')]",
-                  "Password": "[variables('adminPasswordVault')]"
+                "AdfsSvcCreds": {
+                  "UserName": "[parameters('adfsSvcUserName')]",
+                  "Password": "[variables('adfsPasswordVault')]"
                 }
               }
             }

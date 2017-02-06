@@ -20,7 +20,7 @@
     Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot
     [System.Management.Automation.PSCredential ]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential ]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
-    $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
+    $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
 
     Node localhost
@@ -31,14 +31,6 @@
             RebootNodeIfNeeded = $true
         }
 
-        <#File Log1
-        {
-            DestinationPath = "C:\Logs\DSC1.txt"
-            Contents = "Log1. DomainNetbiosName: $DomainNetbiosName, DomainCredsNetbios.Username: " +  $Admincreds.UserName + ", DomainCredsNetbios.Password: " + $Admincreds.Password
-            Type = 'File'
-            Force = $true
-        }#>
-
         Script AddADDSFeature {
             SetScript = {
                 Add-WindowsFeature "AD-Domain-Services" -ErrorAction SilentlyContinue   
@@ -47,11 +39,7 @@
             TestScript = { $false }
         }
 	
-	    WindowsFeature DNS 
-        { 
-            Ensure = "Present" 
-            Name = "DNS"		
-        }
+	    WindowsFeature DNS { Ensure = "Present"; Name = "DNS" }
 
         Script script1
 	    {
@@ -64,11 +52,7 @@
 	        DependsOn = "[WindowsFeature]DNS"
         }
 
-	    WindowsFeature DnsTools
-	    {
-	        Ensure = "Present"
-            Name = "RSAT-DNS-Server"
-	    }
+	    WindowsFeature DnsTools { Ensure = "Present"; Name = "RSAT-DNS-Server" }
 
         xDnsServerAddress DnsServerAddress 
         { 
@@ -109,15 +93,6 @@
 	        DependsOn = "[WindowsFeature]ADDSInstall"
         }
 
-        <#xWaitForADDomain DscForestWait
-        {
-            DomainName = $DomainName
-            DomainUserCredential = $DomainCredsNetbios
-            RetryCount = $RetryCount
-            RetryIntervalSec = $RetryIntervalSec
-            DependsOn = "[xADDomain]FirstDS"
-        }#>
-
         xPendingReboot Reboot1
         { 
             Name = "RebootServer"
@@ -127,15 +102,6 @@
         #**********************************************************
         # Misc: Set email of AD domain admin and add remote AD tools
         #**********************************************************
-        <#File Log2
-        {
-            DestinationPath = "C:\Logs\DSC1.txt"
-            Contents = "Log2. DomainNetbiosName: $DomainNetbiosName, DomainCredsNetbios.Username: " +  $Admincreds.UserName + ", DomainCredsNetbios.Password: " + $Admincreds.Password
-            Type = 'File'
-            Force = $true
-            DependsOn = "[xPendingReboot]Reboot1"
-        }#>
-
         xADUser SetEmailOfDomainAdmin
         {
             DomainAdministratorCredential = $DomainCredsNetbios
