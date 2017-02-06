@@ -17,7 +17,7 @@
         [String]$ADFSRelyingPartyTrustName = "SPSites"
     ) 
     
-    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, PSDesiredStateConfiguration
+    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot
     [System.Management.Automation.PSCredential ]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential ]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
     $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
@@ -31,7 +31,13 @@
             RebootNodeIfNeeded = $true
         }
 
-        Log Log1 { Message = "Log1. DomainNetbiosName: $DomainNetbiosName, DomainCredsNetbios.Username: " +  $Admincreds.UserName + ", DomainCredsNetbios.Password: " + $Admincreds.Password }
+        File Log1
+        {
+            DestinationPath = "C:\Logs\DSC1.txt"
+            Contents = "Log1. DomainNetbiosName: $DomainNetbiosName, DomainCredsNetbios.Username: " +  $Admincreds.UserName + ", DomainCredsNetbios.Password: " + $Admincreds.Password
+            Type = 'File'
+            Force = $true
+        }
 
         Script AddADDSFeature {
             SetScript = {
@@ -103,10 +109,33 @@
 	        DependsOn = "[WindowsFeature]ADDSInstall"
         }
 
+        xWaitForADDomain DscForestWait
+        {
+            DomainName = $DomainName
+            DomainUserCredential = $DomainCredsNetbios
+            RetryCount = $RetryCount
+            RetryIntervalSec = $RetryIntervalSec
+            DependsOn = "[xADDomain]FirstDS"
+        }
+
+        xPendingReboot Reboot1
+        { 
+            Name = "RebootServer"
+            DependsOn = "[xWaitForADDomain]DscForestWait"
+        }
+
         #**********************************************************
         # Misc: Set email of AD domain admin and add remote AD tools
         #**********************************************************
-        Log Log2 { Message = "Log1. DomainNetbiosName: $DomainNetbiosName, DomainCredsNetbios.Username: " +  $Admincreds.UserName + ", DomainCredsNetbios.Password: " + $Admincreds.Password; DependsOn = "[xADDomain]FirstDS" }
+        File Log2
+        {
+            DestinationPath = "C:\Logs\DSC1.txt"
+            Contents = "Log2. DomainNetbiosName: $DomainNetbiosName, DomainCredsNetbios.Username: " +  $Admincreds.UserName + ", DomainCredsNetbios.Password: " + $Admincreds.Password
+            Type = 'File'
+            Force = $true
+            DependsOn = "[xADDomain]FirstDS"
+        }
+
         xADUser SetEmailOfDomainAdmin
         {
             DomainAdministratorCredential = $DomainCredsNetbios
