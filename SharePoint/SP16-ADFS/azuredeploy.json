@@ -441,13 +441,9 @@
               },
               "configurationArguments": {
                 "DomainName": "[parameters('domainName')]",
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUsername')]",
-                  "Password": "PrivateSettingsRef:adminPassword"
-                },
                 "AdfsSvcCreds": {
                   "UserName": "[parameters('adfsSvcUserName')]",
-                  "Password": "PrivateSettingsRef:adfsSvcPassword"
+                  "Password": "[parameters('adfsSvcPassword')]"
                 }
               },
               "privacy": {
@@ -455,8 +451,12 @@
               }
             },
             "protectedSettings": {
-              "adminPassword": "[variables('adminPasswordVault')]",
-              "adfsSvcPassword": "[parameters('adfsSvcPassword')]"
+              "configurationArguments": {
+                "AdminCreds": {
+                  "userName": "[parameters('adminUsername')]",
+                  "Password": "[variables('adminPasswordVault')]"
+                }
+              }
             }
           }
         }

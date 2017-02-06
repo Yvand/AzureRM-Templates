@@ -109,19 +109,19 @@
 	        DependsOn = "[WindowsFeature]ADDSInstall"
         }
 
-        xWaitForADDomain DscForestWait
+        <#xWaitForADDomain DscForestWait
         {
             DomainName = $DomainName
             DomainUserCredential = $DomainCredsNetbios
             RetryCount = $RetryCount
             RetryIntervalSec = $RetryIntervalSec
             DependsOn = "[xADDomain]FirstDS"
-        }
+        }#>
 
         xPendingReboot Reboot1
         { 
             Name = "RebootServer"
-            DependsOn = "[xWaitForADDomain]DscForestWait"
+            DependsOn = "[xADDomain]FirstDS"
         }
 
         #**********************************************************
