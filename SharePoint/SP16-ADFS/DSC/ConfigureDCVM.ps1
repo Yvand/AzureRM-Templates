@@ -31,13 +31,13 @@
             RebootNodeIfNeeded = $true
         }
 
-        File Log1
+        <#File Log1
         {
             DestinationPath = "C:\Logs\DSC1.txt"
             Contents = "Log1. DomainNetbiosName: $DomainNetbiosName, DomainCredsNetbios.Username: " +  $Admincreds.UserName + ", DomainCredsNetbios.Password: " + $Admincreds.Password
             Type = 'File'
             Force = $true
-        }
+        }#>
 
         Script AddADDSFeature {
             SetScript = {
@@ -127,14 +127,14 @@
         #**********************************************************
         # Misc: Set email of AD domain admin and add remote AD tools
         #**********************************************************
-        File Log2
+        <#File Log2
         {
             DestinationPath = "C:\Logs\DSC1.txt"
             Contents = "Log2. DomainNetbiosName: $DomainNetbiosName, DomainCredsNetbios.Username: " +  $Admincreds.UserName + ", DomainCredsNetbios.Password: " + $Admincreds.Password
             Type = 'File'
             Force = $true
-            DependsOn = "[xADDomain]FirstDS"
-        }
+            DependsOn = "[xPendingReboot]Reboot1"
+        }#>
 
         xADUser SetEmailOfDomainAdmin
         {
@@ -145,15 +145,15 @@
             EmailAddress = $Admincreds.UserName + "@" + $DomainName
             PasswordAuthentication = 'Negotiate'
             Ensure = "Present"
-            DependsOn = "[xADDomain]FirstDS"
+            DependsOn = "[xPendingReboot]Reboot1"
         }
-        WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
-        WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
+        WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
+        WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
 
         #**********************************************************
         # Configure AD CS
         #**********************************************************
-        WindowsFeature AddCertAuthority { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
+        WindowsFeature AddCertAuthority { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
         xADCSCertificationAuthority ADCS
         {
             Ensure = "Present"

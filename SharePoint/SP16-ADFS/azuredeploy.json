@@ -203,7 +203,7 @@
       "vmImageSKU": "2016-Datacenter",
       "vmOSDiskName": "vm-DC-OSDisk",
       "vmDataDiskName": "vm-DC-DataDisk",
-      "vmVmSize": "Standard_D2_v2",
+      "vmVmSize": "Standard_F4",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet1Name)]",
       "vmNicName": "[concat(parameters('vmDCName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmDC-PublicIP",
