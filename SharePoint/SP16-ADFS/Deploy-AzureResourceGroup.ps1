@@ -9,10 +9,13 @@ $resourceGroupName = 'yd-sp16adfs'
 $resourceDeploymentName = 'yd-sp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $TemplateParametersFile = 'azuredeploy.parameters.json'
-$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $templateFileName))
-$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("F:\Job\Dev\GitHub\AzureRM-Templates\SharePoint\SP16-ADFS", $templateFileName))
-$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS", $templateFileName))
-$TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
+$DSCSourceFolder = 'DSC'
+$scriptRoot = $PSScriptRoot
+$scriptRoot = "F:\Job\Dev\GitHub\AzureRM-Templates\SharePoint\SP16-ADFS"
+$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
+$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
+$TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $TemplateParametersFile))
+
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 $securePassword = Read-Host "Enter the password" -AsSecureString
 $OptionalParameters = New-Object -TypeName HashTable
@@ -28,9 +31,6 @@ $OptionalParameters['spPassphrase'] = $securePassword
 # dev branch settings
 $OptionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
 $OptionalParameters['keyVaultName'] = "ydsp16adfsvault"
-
-# DSC
-$DSCSourceFolder = 'DSC'
 
 # Artifacts
 $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts'
@@ -49,10 +49,11 @@ if ($azurecontext -eq $null){
     return
 }
 
+$GenerateDscArchives = $false
+$UploadArtifacts = $false
+
 if ($GenerateDscArchives) {
-    $DSCSourceFolder = "F:\Job\Dev\GitHub\AzureRM-Templates\SharePoint\SP16-ADFS\DSC"
-    $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS", $DSCSourceFolder))
-    $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
+    $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $DSCSourceFolder))
 
     # Create DSC configuration archive
     if (Test-Path $DSCSourceFolder) {
@@ -65,8 +66,7 @@ if ($GenerateDscArchives) {
 }
 
 if ($UploadArtifacts) {
-	$ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS", $ArtifactStagingDirectory))
-    $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactStagingDirectory))
+    $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $ArtifactStagingDirectory))
 
 	Set-Variable ArtifactsLocationName '_artifactsLocation' -Option ReadOnly -Force
     Set-Variable ArtifactsLocationSasTokenName '_artifactsLocationSasToken' -Option ReadOnly -Force
@@ -123,17 +123,16 @@ if ($UploadArtifacts) {
 }
 
 ### Configure Azure key vault
-{
 $vault = Get-AzureRmKeyVault -VaultName $OptionalParameters['keyVaultName']
 if ($vault -eq $null) {
     $vault = New-AzureRmKeyVault -VaultName $OptionalParameters['keyVaultName'] -ResourceGroupName $resourceGroupName -Location $resourceGroupLocation -EnabledForTemplateDeployment
+    $vault.ResourceId
 }
 
 # Create one key per password and overrride password with the key vault secret
 $passwordsHT = $OptionalParameters.GetEnumerator()| ?{$_.Name -like "*Password"}
 foreach ($password in $passwordsHT) {
     $secret = Set-AzureKeyVaultSecret -VaultName $OptionalParameters['keyVaultName'] -Name $password.Name -SecretValue $password.Value
-}
 }
 
 ### Create Resource Group if it doesn't exist
@@ -148,6 +147,7 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
 $checkTemplate = Test-AzureRmResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
+    -TemplateParameterFile $TemplateParametersFile `
     @OptionalParameters `
     -Verbose
 
@@ -156,6 +156,7 @@ if ($checkTemplate.Count -eq 0) {
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $TemplateFile `
+        -TemplateParameterFile $TemplateParametersFile `
         @OptionalParameters `
         -Verbose -Force
 }

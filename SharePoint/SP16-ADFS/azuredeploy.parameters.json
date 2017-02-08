@@ -1,6 +1,14 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {
+  "parameters": {
+    "adminPasswordKeyName": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/3c497a87-7ec4-4e9c-b227-a733be37d602/resourceGroups/yd-sp16adfs/providers/Microsoft.KeyVault/vaults/ydsp16adfsvault"
+        },
+        "secretName": "adminPassword"
+      }
     }
+  }
 }

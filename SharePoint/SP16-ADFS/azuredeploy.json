@@ -32,11 +32,9 @@
       "minLength": 1
     },
     "adminPasswordKeyName": {
-      "type": "string",
-      "defaultValue": "adminPassword",
-      "minLength": 1,
+      "type": "securestring",
       "metadata": {
-        "description": "The admin account password secret key name"
+        "description": "The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
       }
     },
     "adminPassword": {
@@ -69,6 +67,14 @@
       "defaultValue": "sqlsvc",
       "minLength": 1
     },
+    "sqlPasswordKeyName": {
+      "type": "string",
+      "defaultValue": "sqlSvcPassword",
+      "minLength": 1,
+      "metadata": {
+        "description": "The adfs account password secret key name"
+      }
+    },
     "sqlSvcPassword": {
       "type": "securestring",
       "metadata": {
@@ -79,6 +85,14 @@
       "type": "string",
       "defaultValue": "spsetup",
       "minLength": 1
+    },
+    "spSetupPasswordKeyName": {
+      "type": "string",
+      "defaultValue": "spSetupPassword",
+      "minLength": 1,
+      "metadata": {
+        "description": "The adfs account password secret key name"
+      }
     },
     "spSetupPassword": {
       "type": "securestring",
@@ -255,20 +269,30 @@
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM"
     },
-    "adminPasswordVault": {
-      "reference": {
-        "keyVault": {
-          "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
-        },
-        "secretName": "[parameters('adminPasswordKeyName')]"
-      }
-    },
-    "adfsPasswordVault": {
-      "reference": {
-        "keyVault": {
-          "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
-        },
-        "secretName": "[parameters('adfsPasswordKeyName')]"
+    "keyVaultSecrets": {
+      "adminPasswordVault": {
+        "reference": {
+          "keyVault": {
+            "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+          },
+          "secretName": "[parameters('adminPasswordKeyName')]"
+        }
+      },
+      "adfsPasswordVault": {
+        "reference": {
+          "keyVault": {
+            "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+          },
+          "secretName": "[parameters('adfsPasswordKeyName')]"
+        }
+      },
+      "spSetupPasswordVault": {
+        "reference": {
+          "keyVault": {
+            "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+          },
+          "secretName": "[parameters('spSetupPasswordKeyName')]"
+        }
       }
     }
   },
@@ -392,7 +416,7 @@
         "osProfile": {
           "computerName": "[parameters('vmDCName')]",
           "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordKeyName')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -435,7 +459,7 @@
           "name": "ConfigureDCVM",
           "type": "extensions",
           "location": "[resourceGroup().location]",
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2016-03-30",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]"
           ],
@@ -456,11 +480,7 @@
                 "function": "[variables('dscConfigureDCVM').function]"
               },
               "configurationArguments": {
-                "DomainName": "[parameters('domainName')]",
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUsername')]",
-                  "Password": "[variables('adminPasswordVault')]"
-                }
+                "DomainName": "[parameters('domainName')]"
               },
               "privacy": {
                 "dataCollection": "enable"
@@ -468,9 +488,13 @@
             },
             "protectedSettings": {
               "configurationArguments": {
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPasswordKeyName')]"
+                },
                 "AdfsSvcCreds": {
                   "UserName": "[parameters('adfsSvcUserName')]",
-                  "Password": "[variables('adfsPasswordVault')]"
+                  "Password": "[parameters('adminPasswordKeyName')]"
                 }
               }
             }
@@ -542,7 +566,7 @@
         "osProfile": {
           "computerName": "[parameters('vmSQLName')]",
           "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordKeyName')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -702,8 +726,8 @@
     {
       "name": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
@@ -727,25 +751,27 @@
           },
           "configurationArguments": {
             "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
-            "DomainFQDN": "[parameters('domainName')]",
-            "DomainAdminCreds": {
-              "UserName": "[parameters('adminUsername')]",
-              "Password": "[parameters('adminPassword')]"
-            },
-            "SqlSvcCreds": {
-              "UserName": "[parameters('sqlSvcUserName')]",
-              "Password": "[parameters('sqlSvcPassword')]"
-            },
-            "SPSetupCreds": {
-              "UserName": "[parameters('spSetupUserName')]",
-              "Password": "[parameters('spSetupPassword')]"
-            }
+            "DomainFQDN": "[parameters('domainName')]"
           },
           "privacy": {
             "dataCollection": "enable"
           }
         },
         "protectedSettings": {
+          "configurationArguments": {
+            "DomainAdminCreds": {
+              "UserName": "[parameters('adminUsername')]",
+              "Password": "[parameters('adminPasswordKeyName')]"
+            },
+            "SqlSvcCreds": {
+              "UserName": "[parameters('sqlSvcUserName')]",
+              "Password": "[parameters('spSvcPassword')]"
+            },
+            "SPSetupCreds": {
+              "UserName": "[parameters('spSetupUserName')]",
+              "Password": "[parameters('adminPasswordKeyName')]"
+            }
+          }
         }
       }
     },
@@ -753,7 +779,7 @@
       "name": "[concat(parameters('vmSPName'),'/ConfigureSPVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2016-03-30",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
