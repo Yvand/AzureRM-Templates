@@ -28,7 +28,7 @@ $OptionalParameters['spAppPoolPassword'] = $securePassword
 $OptionalParameters['spPassphrase'] = $securePassword
 
 # dev branch settings
-$OptionalParameters['baseurl'] = "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SP16-ADFS"
+$OptionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
 $OptionalParameters['vaultName'] = "ydsp16adfsvault"
 
 # Artifacts

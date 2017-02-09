@@ -242,6 +242,7 @@
       "nicPrivateIPAddress": "10.0.1.4"
     },
     "vmSQL": {
+      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Create-GenericVM.json')]",
       "vmImagePublisher": "MicrosoftSQLServer",
       "vmImageOffer": "SQL2016SP1-WS2016",
       "vmImageSKU": "Standard",
@@ -567,75 +568,56 @@
       }
     },
     {
-      "name": "[parameters('vmSQLName')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "name": "CreateSQLVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
       ],
-      "tags": {
-        "displayName": "[parameters('vmSQLName')]"
-      },
       "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('vmSQL').vmVmSize]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vmSQL').templateLocation]",
+          "contentVersion": "1.0.0.0"
         },
-        "osProfile": {
-          "computerName": "[parameters('vmSQLName')]",
-          "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPasswordKeyName')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('vmSQL').vmImagePublisher]",
-            "offer": "[variables('vmSQL').vmImageOffer]",
-            "sku": "[variables('vmSQL').vmImageSKU]",
-            "version": "latest"
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmSQLName')]"
           },
-          "osDisk": {
-            "name": "[variables('vmSQL').vmOSDiskName]",
-            "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmOSDiskName, '.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+          "vmSize": {
+            "value": "[variables('vmSQL').vmVmSize]"
           },
-          "dataDisks": [
-            {
-              "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmDataDiskName, '.vhd')]"
-              },
-              "name": "[variables('vmSQL').vmDataDiskName]",
-              "caching": "None",
-              "createOption": "Empty",
-              "diskSizeGB": "100",
-              "lun": 0
-            },
-            {
-              "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmLogsDiskName, '.vhd')]"
-              },
-              "name": "[variables('vmSQL').vmLogsDiskName]",
-              "caching": "None",
-              "createOption": "Empty",
-              "diskSizeGB": "100",
-              "lun": 1
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
-            }
-          ]
+          "vmImagePublisher": {
+            "value": "[variables('vmSQL').vmImagePublisher]"
+          },
+          "vmImageOffer": {
+            "value": "[variables('vmSQL').vmImageOffer]"
+          },
+          "vmImageSKU": {
+            "value": "[variables('vmSQL').vmImageSKU]"
+          },
+          "vmNicName": {
+            "value": "variables('vmSQL').vmNicName)]"
+          },
+          "vmOSDiskName": {
+            "value": "[variables('vmSQL').vmOSDiskName]"
+          },
+          "vmDataDiskName": {
+            "value": "[variables('vmSQL').vmDataDiskName]"
+          },
+          "storageAccountNamePrefix": {
+            "value": "variables('storageAccountNamePrefix')"
+          },
+          "storageContainerName": {
+            "value": "variables('vmsCommonSettings').vmsStorageAccountContainerName"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": "[variables('keyVaultSecrets').adminPasswordVault]"
         }
-      },
-      "resources": [
-
-      ]
+      }
     },
     {
       "name": "[variables('vmSP').vmPublicIPName]",
@@ -749,7 +731,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]"
+        "Microsoft.Resources/deployments/CreateSQLVM"
       ],
       "properties": {
         "mode": "Incremental",
@@ -782,21 +764,15 @@
           "adminUserName": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[variables('keyVaultSecrets').adminPasswordVault]"
-          },
+          "adminPassword": "[variables('keyVaultSecrets').adminPasswordVault]",
           "sqlSvcUserName": {
             "value": "[parameters('sqlSvcUserName')]"
           },
-          "sqlPassword": {
-            "value": "[variables('keyVaultSecrets').sqlSvcPasswordVault]"
-          },
+          "sqlPassword": "[variables('keyVaultSecrets').sqlSvcPasswordVault]",
           "spSetupUserName": {
             "value": "[parameters('spSetupUserName')]"
           },
-          "spSetupPassword": {
-            "value": "[variables('keyVaultSecrets').spSetupPasswordVault]"
-          }
+          "spSetupPassword": "[variables('keyVaultSecrets').spSetupPasswordVault]"
         }
       }
     },

@@ -4,7 +4,6 @@
   "parameters": {
     "vmName": {
       "type": "string",
-      "defaultValue": "SQL",
       "minLength": 1
     },
     "dscUrl": {
@@ -16,38 +15,32 @@
     },
     "dscScript": {
       "type": "string",
-      "defaultValue": "ConfigureSQLVM.ps1",
       "metadata": {
         "description": "DSC script name"
       }
     },
     "dscFunction": {
       "type": "string",
-      "defaultValue": "ConfigureSQLVM",
       "metadata": {
         "description": "DSC function name inside script"
       }
     },
     "updateTagVersion": {
       "type": "string",
-      "defaultValue": "1.0",
       "metadata": {
         "description": "This value must be changed from a previous deployment to ensure the extension will run"
       }
     },
     "dnsServer": {
       "type": "string",
-      "defaultValue": "contoso.local",
       "minLength": 1
     },
     "domainName": {
       "type": "string",
-      "defaultValue": "contoso.local",
       "minLength": 1
     },
     "adminUserName": {
       "type": "string",
-      "defaultValue": "yvand",
       "minLength": 1
     },
     "adminPassword": {
@@ -55,7 +48,6 @@
     },
     "sqlSvcUserName": {
       "type": "string",
-      "defaultValue": "adfssvc",
       "minLength": 1
     },
     "sqlPassword": {
@@ -63,7 +55,6 @@
     },
     "spSetupUserName": {
       "type": "string",
-      "defaultValue": "adfssvc",
       "minLength": 1
     },
     "spSetupPassword": {
