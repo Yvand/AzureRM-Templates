@@ -2,9 +2,19 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "baseurl": {
+      "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS",
+      "minLength": 1
+    },
     "templatePrefix": {
       "type": "string",
       "defaultValue": "ydsp16adfs",
+      "minLength": 1
+    },
+    "vaultName": {
+      "type": "string",
+      "defaultValue": "ydsp16adfsvault",
       "minLength": 1
     },
     "storageAccountType": {
@@ -260,6 +270,7 @@
       "function": "ConfigureDCVM"
     },
     "dscConfigureSQLVM": {
+      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Configure-SQLVM.json')]",
       "url": "[parameters('dscSQLTemplateURL')]",
       "script": "ConfigureSQLVM.ps1",
       "function": "ConfigureSQLVM"
@@ -273,23 +284,31 @@
       "adminPasswordVault": {
         "reference": {
           "keyVault": {
-            "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
           },
-          "secretName": "[parameters('adminPasswordKeyName')]"
+          "secretName": "[parameters('spSetupPasswordKeyName')]"
         }
       },
       "adfsPasswordVault": {
         "reference": {
           "keyVault": {
-            "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
           },
           "secretName": "[parameters('adfsPasswordKeyName')]"
+        }
+      },
+      "sqlSvcPasswordVault": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('sqlPasswordKeyName')]"
         }
       },
       "spSetupPasswordVault": {
         "reference": {
           "keyVault": {
-            "id": "[resourceId('Microsoft.KeyVault/vaults',parameters('keyVaultName'))]"
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
           },
           "secretName": "[parameters('spSetupPasswordKeyName')]"
         }
@@ -724,53 +743,59 @@
       ]
     },
     {
-      "name": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2016-03-30",
-      "location": "[resourceGroup().location]",
+      "name": "ConfigureSQLVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]"
       ],
-      "tags": {
-        "displayName": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]"
-      },
       "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.9",
-        "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[parameters('dscSQLUpdateTagVersion')]",
-        "settings": {
-          "wmfVersion": "latest",
-          "configuration": {
-            "url": "[variables('dscConfigureSQLVM').url]",
-            "script": "[variables('dscConfigureSQLVM').script]",
-            "function": "[variables('dscConfigureSQLVM').function]"
-          },
-          "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
-            "DomainFQDN": "[parameters('domainName')]"
-          },
-          "privacy": {
-            "dataCollection": "enable"
-          }
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('dscConfigureSQLVM').templateLocation]",
+          "contentVersion": "1.0.0.0"
         },
-        "protectedSettings": {
-          "configurationArguments": {
-            "DomainAdminCreds": {
-              "UserName": "[parameters('adminUsername')]",
-              "Password": "[parameters('adminPasswordKeyName')]"
-            },
-            "SqlSvcCreds": {
-              "UserName": "[parameters('sqlSvcUserName')]",
-              "Password": "[parameters('spSvcPassword')]"
-            },
-            "SPSetupCreds": {
-              "UserName": "[parameters('spSetupUserName')]",
-              "Password": "[parameters('adminPasswordKeyName')]"
-            }
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmSQLName')]"
+          },
+          "dscUrl": {
+            "value": "[variables('dscConfigureSQLVM').url]"
+          },
+          "dscScript": {
+            "value": "[variables('dscConfigureSQLVM').script]"
+          },
+          "dscFunction": {
+            "value": "[variables('dscConfigureSQLVM').function]"
+          },
+          "updateTagVersion": {
+            "value": "[parameters('dscSQLUpdateTagVersion')]"
+          },
+          "dnsServer": {
+            "value": "[variables('vmDC').nicPrivateIPAddress]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[variables('keyVaultSecrets').adminPasswordVault]"
+          },
+          "sqlSvcUserName": {
+            "value": "[parameters('sqlSvcUserName')]"
+          },
+          "sqlPassword": {
+            "value": "[variables('keyVaultSecrets').sqlSvcPasswordVault]"
+          },
+          "spSetupUserName": {
+            "value": "[parameters('spSetupUserName')]"
+          },
+          "spSetupPassword": {
+            "value": "[variables('keyVaultSecrets').spSetupPasswordVault]"
           }
         }
       }
