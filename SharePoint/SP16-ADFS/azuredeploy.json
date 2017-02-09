@@ -598,7 +598,7 @@
             "value": "[variables('vmSQL').vmImageSKU]"
           },
           "vmNicName": {
-            "value": "variables('vmSQL').vmNicName)]"
+            "value": "[variables('vmSQL').vmNicName]"
           },
           "vmOSDiskName": {
             "value": "[variables('vmSQL').vmOSDiskName]"
@@ -607,10 +607,10 @@
             "value": "[variables('vmSQL').vmDataDiskName]"
           },
           "storageAccountNamePrefix": {
-            "value": "variables('storageAccountNamePrefix')"
+            "value": "[variables('storageAccountNamePrefix')]"
           },
           "storageContainerName": {
-            "value": "variables('vmsCommonSettings').vmsStorageAccountContainerName"
+            "value": "[variables('vmsCommonSettings').vmsStorageAccountContainerName]"
           },
           "adminUserName": {
             "value": "[parameters('adminUsername')]"
