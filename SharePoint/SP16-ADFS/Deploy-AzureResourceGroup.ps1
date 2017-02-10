@@ -56,7 +56,7 @@ if ($GenerateDscArchives) {
 
     # Create DSC configuration archive
     if (Test-Path $DSCSourceFolder) {
-        $DSCSourceFilePaths = @(Get-ChildItem $DSCSourceFolder -File -Filter "*DCVM.ps1" | ForEach-Object -Process {$_.FullName})
+        $DSCSourceFilePaths = @(Get-ChildItem $DSCSourceFolder -File -Filter "*SQLVM.ps1" | ForEach-Object -Process {$_.FullName})
         foreach ($DSCSourceFilePath in $DSCSourceFilePaths) {
             $DSCArchiveFilePath = $DSCSourceFilePath.Substring(0, $DSCSourceFilePath.Length - 4) + ".zip"
             Publish-AzureRmVMDscConfiguration $DSCSourceFilePath -OutputArchivePath $DSCArchiveFilePath -Force -Verbose

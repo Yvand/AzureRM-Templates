@@ -255,6 +255,7 @@
       "vmPublicIPName": "vmSQL-PublicIP"
     },
     "vmSP": {
+      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Create-GenericVM.json')]",
       "vmImagePublisher": "MicrosoftSharePoint",
       "vmImageOffer": "MicrosoftSharePointServer",
       "vmImageSKU": "2016",
@@ -665,64 +666,56 @@
       }
     },
     {
-      "name": "[parameters('vmSPName')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "name": "CreateSPVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
       ],
-      "tags": {
-        "displayName": "[parameters('vmSPName')]"
-      },
       "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('vmSP').vmVmSize]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vmSP').templateLocation]",
+          "contentVersion": "1.0.0.0"
         },
-        "osProfile": {
-          "computerName": "[parameters('vmSPName')]",
-          "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('vmSP').vmImagePublisher]",
-            "offer": "[variables('vmSP').vmImageOffer]",
-            "sku": "[variables('vmSP').vmImageSKU]",
-            "version": "latest"
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmSPName')]"
           },
-          "osDisk": {
-            "name": "[variables('vmSP').vmOSDiskName]",
-            "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName, '.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+          "vmSize": {
+            "value": "[variables('vmSP').vmVmSize]"
           },
-          "dataDisks": [
-            {
-              "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName, '.vhd')]"
-              },
-              "name": "[variables('vmSP').vmDataDiskName]",
-              "caching": "None",
-              "createOption": "Empty",
-              "diskSizeGB": "100",
-              "lun": 0
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
-            }
-          ]
+          "vmImagePublisher": {
+            "value": "[variables('vmSP').vmImagePublisher]"
+          },
+          "vmImageOffer": {
+            "value": "[variables('vmSP').vmImageOffer]"
+          },
+          "vmImageSKU": {
+            "value": "[variables('vmSP').vmImageSKU]"
+          },
+          "vmNicName": {
+            "value": "[variables('vmSP').vmNicName]"
+          },
+          "vmOSDiskName": {
+            "value": "[variables('vmSP').vmOSDiskName]"
+          },
+          "vmDataDiskName": {
+            "value": "[variables('vmSP').vmDataDiskName]"
+          },
+          "storageAccountNamePrefix": {
+            "value": "[variables('storageAccountNamePrefix')]"
+          },
+          "storageContainerName": {
+            "value": "[variables('vmsCommonSettings').vmsStorageAccountContainerName]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": "[variables('keyVaultSecrets').adminPasswordVault]"
         }
-      },
-      "resources": [
-      ]
+      }
     },
     {
       "name": "ConfigureSQLVM",
@@ -784,7 +777,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSPName'))]"
+        "Microsoft.Resources/deployments/CreateSQLVM"
       ],
       "tags": {
         "displayName": "[concat(parameters('vmSPName'),'/ConfigureSPVM')]"
