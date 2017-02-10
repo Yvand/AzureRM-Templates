@@ -42,10 +42,7 @@
       "minLength": 1
     },
     "adminPasswordKeyName": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
-      }
+      "type": "string"
     },
     "adminPassword": {
       "type": "securestring",
@@ -58,7 +55,7 @@
       "defaultValue": "adfssvc",
       "minLength": 1
     },
-    "adfsPasswordKeyName": {
+    "adfsSvcPasswordKeyName": {
       "type": "string",
       "defaultValue": "adfsSvcPassword",
       "minLength": 1,
@@ -77,7 +74,7 @@
       "defaultValue": "sqlsvc",
       "minLength": 1
     },
-    "sqlPasswordKeyName": {
+    "sqlSvcPasswordKeyName": {
       "type": "string",
       "defaultValue": "sqlSvcPassword",
       "minLength": 1,
@@ -99,10 +96,7 @@
     "spSetupPasswordKeyName": {
       "type": "string",
       "defaultValue": "spSetupPassword",
-      "minLength": 1,
-      "metadata": {
-        "description": "The adfs account password secret key name"
-      }
+      "minLength": 1
     },
     "spSetupPassword": {
       "type": "securestring",
@@ -115,6 +109,9 @@
       "defaultValue": "spfarm",
       "minLength": 1
     },
+    "spFarmPasswordKeyName": {
+      "type": "string"
+    },
     "spFarmPassword": {
       "type": "securestring",
       "metadata": {
@@ -125,6 +122,9 @@
       "type": "string",
       "defaultValue": "spsvc",
       "minLength": 1
+    },
+    "spSvcPasswordKeyName": {
+      "type": "string"
     },
     "spSvcPassword": {
       "type": "securestring",
@@ -137,6 +137,9 @@
       "defaultValue": "spapppool",
       "minLength": 1
     },
+    "spAppPoolPasswordKeyName": {
+      "type": "string"
+    },
     "spAppPoolPassword": {
       "type": "securestring",
       "metadata": {
@@ -145,6 +148,9 @@
     },
     "spPassphrase": {
       "type": "securestring"
+    },
+    "spPassphraseKeyName": {
+      "type": "string"
     },
     "vmDCName": {
       "type": "string",
@@ -278,6 +284,7 @@
       "function": "ConfigureSQLVM"
     },
     "dscConfigureSPVM": {
+      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Configure-SPVM.json')]",
       "url": "[parameters('dscSPTemplateURL')]",
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM"
@@ -296,7 +303,7 @@
           "keyVault": {
             "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
           },
-          "secretName": "[parameters('adfsPasswordKeyName')]"
+          "secretName": "[parameters('adfsSvcPasswordKeyName')]"
         }
       },
       "sqlSvcPasswordVault": {
@@ -304,7 +311,7 @@
           "keyVault": {
             "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
           },
-          "secretName": "[parameters('sqlPasswordKeyName')]"
+          "secretName": "[parameters('sqlSvcPasswordKeyName')]"
         }
       },
       "spSetupPasswordVault": {
@@ -313,6 +320,38 @@
             "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
           },
           "secretName": "[parameters('spSetupPasswordKeyName')]"
+        }
+      },
+      "spFarmPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('spFarmPasswordKeyName')]"
+        }
+      },
+      "spSvcPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('spSvcPasswordKeyName')]"
+        }
+      },
+      "spAppPoolPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('spAppPoolPasswordKeyName')]"
+        }
+      },
+      "spPassphrase": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('spPassphraseKeyName')]"
         }
       }
     }
@@ -770,64 +809,63 @@
       }
     },
     {
-      "name": "[concat(parameters('vmSPName'),'/ConfigureSPVM')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
+      "name": "ConfigureSPVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
-        "Microsoft.Resources/deployments/CreateSQLVM"
+        "Microsoft.Resources/deployments/CreateSPVM"
       ],
-      "tags": {
-        "displayName": "[concat(parameters('vmSPName'),'/ConfigureSPVM')]"
-      },
       "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.9",
-        "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[parameters('dscSPUpdateTagVersion')]",
-        "settings": {
-          "wmfVersion": "latest",
-          "configuration": {
-            "url": "[variables('dscConfigureSPVM').url]",
-            "script": "[variables('dscConfigureSPVM').script]",
-            "function": "[variables('dscConfigureSPVM').function]"
-          },
-          "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
-            "DomainFQDN": "[parameters('domainName')]",
-            "DomainAdminCreds": {
-              "UserName": "[parameters('adminUsername')]",
-              "Password": "[parameters('adminPassword')]"
-            },
-            "SPSetupCreds": {
-              "UserName": "[parameters('spSetupUserName')]",
-              "Password": "[parameters('spSetupPassword')]"
-            },
-            "SPFarmCreds": {
-              "UserName": "[parameters('spFarmUserName')]",
-              "Password": "[parameters('spFarmPassword')]"
-            },
-            "SPSvcCreds": {
-              "UserName": "[parameters('spSvcUserName')]",
-              "Password": "[parameters('spSvcPassword')]"
-            },
-            "SPAppPoolCreds": {
-              "UserName": "[parameters('spAppPoolUserName')]",
-              "Password": "[parameters('spAppPoolPassword')]"
-            },
-            "SPPassphraseCreds": {
-              "UserName": "Passphrase",
-              "Password": "[parameters('spPassphrase')]"
-            }
-          },
-          "privacy": {
-            "dataCollection": "enable"
-          }
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('dscConfigureSPVM').templateLocation]",
+          "contentVersion": "1.0.0.0"
         },
-        "protectedSettings": {
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmSPName')]"
+          },
+          "dscUrl": {
+            "value": "[variables('dscConfigureSPVM').url]"
+          },
+          "dscScript": {
+            "value": "[variables('dscConfigureSPVM').script]"
+          },
+          "dscFunction": {
+            "value": "[variables('dscConfigureSPVM').function]"
+          },
+          "updateTagVersion": {
+            "value": "[parameters('dscSQLUpdateTagVersion')]"
+          },
+          "dnsServer": {
+            "value": "[variables('vmDC').nicPrivateIPAddress]"
+          },
+          "domainFQDN": {
+            "value": "[parameters('domainName')]"
+          },
+          "domainAdminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "domainAdminPassword": "[variables('keyVaultSecrets').adminPasswordVault]",
+          "spSetupUserName": {
+            "value": "[parameters('spSetupUserName')]"
+          },
+          "spSetupPassword": "[variables('keyVaultSecrets').spSetupPasswordVault]",
+          "spFarmUserName": {
+            "value": "[parameters('spFarmUserName')]"
+          },
+          "spFarmPassword": "[variables('keyVaultSecrets').spFarmPassword]",
+          "spSvcUserName": {
+            "value": "[parameters('spSvcUserName')]"
+          },
+          "spSvcPassword": "[variables('keyVaultSecrets').spSvcPassword]",
+          "spAppPoolUserName": {
+            "value": "[parameters('spAppPoolUserName')]"
+          },
+          "spAppPoolPassword": "[variables('keyVaultSecrets').spAppPoolPassword]",
+          "spPassphrase": "[variables('keyVaultSecrets').spPassphrase]"
         }
       }
     }

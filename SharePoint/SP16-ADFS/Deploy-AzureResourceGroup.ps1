@@ -30,6 +30,9 @@ $OptionalParameters['spPassphrase'] = $securePassword
 # dev branch settings
 $OptionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
 $OptionalParameters['vaultName'] = "ydsp16adfsvault"
+$OptionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
+$OptionalParameters['dscSQLTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
+$OptionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
 
 # Artifacts
 $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts'
@@ -122,16 +125,18 @@ if ($UploadArtifacts) {
 }
 
 ### Configure Azure key vault
-$vault = Get-AzureRmKeyVault -VaultName $OptionalParameters['keyVaultName']
+$vault = Get-AzureRmKeyVault -VaultName $OptionalParameters['vaultName']
 if ($vault -eq $null) {
-    $vault = New-AzureRmKeyVault -VaultName $OptionalParameters['keyVaultName'] -ResourceGroupName $resourceGroupName -Location $resourceGroupLocation -EnabledForTemplateDeployment
+    $vault = New-AzureRmKeyVault -VaultName $OptionalParameters['vaultName'] -ResourceGroupName $resourceGroupName -Location $resourceGroupLocation -EnabledForTemplateDeployment
     $vault.ResourceId
 }
 
 # Create one key per password and overrride password with the key vault secret
 $passwordsHT = $OptionalParameters.GetEnumerator()| ?{$_.Name -like "*Password"}
 foreach ($password in $passwordsHT) {
-    $secret = Set-AzureKeyVaultSecret -VaultName $OptionalParameters['keyVaultName'] -Name $password.Name -SecretValue $password.Value
+    $secret = Set-AzureKeyVaultSecret -VaultName $OptionalParameters['vaultName'] -Name $password.Name -SecretValue $password.Value
+    $key = $secret.Name + "KeyName"
+    $OptionalParameters[$key] = $secret.Name
 }
 
 ### Create Resource Group if it doesn't exist
@@ -146,7 +151,6 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
 $checkTemplate = Test-AzureRmResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
-    -TemplateParameterFile $TemplateParametersFile `
     @OptionalParameters `
     -Verbose
 
@@ -155,7 +159,6 @@ if ($checkTemplate.Count -eq 0) {
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $TemplateFile `
-        -TemplateParameterFile $TemplateParametersFile `
         @OptionalParameters `
         -Verbose -Force
 }
