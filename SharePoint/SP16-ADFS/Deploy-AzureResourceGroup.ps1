@@ -132,7 +132,7 @@ if ($vault -eq $null) {
 }
 
 # Create one key per password and overrride password with the key vault secret
-$passwordsHT = $OptionalParameters.GetEnumerator()| ?{$_.Name -like "*Password"}
+$passwordsHT = $OptionalParameters.GetEnumerator()| ?{$_.Name -like "*Password" -or $_.Name -like "spPassphrase"}
 foreach ($password in $passwordsHT) {
     $secret = Set-AzureKeyVaultSecret -VaultName $OptionalParameters['vaultName'] -Name $password.Name -SecretValue $password.Value
     $key = $secret.Name + "KeyName"
