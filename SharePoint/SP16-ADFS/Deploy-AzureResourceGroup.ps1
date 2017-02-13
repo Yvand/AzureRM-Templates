@@ -8,12 +8,11 @@ $resourceGroupName = 'yd-sp16adfs'
 $resourceDeploymentName = 'yd-sp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFile = 'azuredeploy.parameters.json'
-$dscSourceFolder = 'DSC'
 $scriptRoot = $PSScriptRoot
 #$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFile))
-$optionalParameters = New-Object -TypeName HashTable
+$dscSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, "DSC"))
 
 # Define passwords
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
@@ -28,13 +27,16 @@ $passwords['spSvcPassword'] = $securePassword
 $passwords['spAppPoolPassword'] = $securePassword
 $passwords['spPassphrase'] = $securePassword
 
-# dev branch settings
-$optionalParameters['baseurl'] = "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SP16-ADFS"
-$optionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
-$optionalParameters['vaultName'] = "ydsp16adfsvault"
-$optionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
-$optionalParameters['dscSQLTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
-$optionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
+# Additional settings
+$optionalParameters = New-Object -TypeName HashTable
+$overrideTemplateParametersFile = $true
+if ($overrideTemplateParametersFile -eq $true) {
+    $optionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
+    $optionalParameters['vaultName'] = "ydsp16adfsvault2"
+    $optionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
+    $optionalParameters['dscSQLTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
+    $optionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
+}
 
 # Artifacts
 {
@@ -56,10 +58,8 @@ if ($azurecontext -eq $null){
 }
 
 $generateDscArchives = $false
+# Create DSC configuration archive
 if ($generateDscArchives) {
-    $dscSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $dscSourceFolder))
-
-    # Create DSC configuration archive
     if (Test-Path $dscSourceFolder) {
         $dscSourceFilePaths = @(Get-ChildItem $dscSourceFolder -File -Filter "*SPVM.ps1" | ForEach-Object -Process {$_.FullName})
         foreach ($dscSourceFilePath in $dscSourceFilePaths) {
@@ -126,8 +126,16 @@ if ($uploadArtifacts) {
     }
 }
 
+### Create Resource Group if it doesn't exist
+if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue) -eq $null) {
+    New-AzureRmResourceGroup `
+        -Name $resourceGroupName `
+        -Location $resourceGroupLocation `
+        -Verbose -Force
+}
+
 ### Configure Azure key vault
-$vault = Get-AzureRmKeyVault -VaultName $optionalParameters['vaultName']
+$vault = Get-AzureRmKeyVault -VaultName $optionalParameters['vaultName'] -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue
 if ($vault -eq $null) {
     $vault = New-AzureRmKeyVault -VaultName $optionalParameters['vaultName'] -ResourceGroupName $resourceGroupName -Location $resourceGroupLocation -EnabledForTemplateDeployment
     $vault.ResourceId
@@ -139,14 +147,6 @@ foreach ($password in $passwords.GetEnumerator()) {
     $secret = Set-AzureKeyVaultSecret -VaultName $optionalParameters['vaultName'] -Name $password.Name -SecretValue $password.Value
     $key = $secret.Name + "KeyName"
     $vaultSecrets[$key] = $secret.Name
-}
-
-### Create Resource Group if it doesn't exist
-if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue) -eq $null) {
-    New-AzureRmResourceGroup `
-        -Name $resourceGroupName `
-        -Location $resourceGroupLocation `
-        -Verbose -Force
 }
 
 ### Test template and deploy if it is valid, otherwise display error details
