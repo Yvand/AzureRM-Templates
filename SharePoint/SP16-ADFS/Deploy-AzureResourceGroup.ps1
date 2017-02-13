@@ -9,7 +9,7 @@ $resourceGroupName = 'yd-sp16adfs'
 $resourceDeploymentName = 'yd-sp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $TemplateParametersFile = 'azuredeploy.parameters.json'
-$DSCSourceFolder = 'DSC'
+$dscSourceFolder = 'DSC'
 $scriptRoot = $PSScriptRoot
 #$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
@@ -40,6 +40,7 @@ $optionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Temp
 # Artifacts
 $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts'
 $ArtifactStagingDirectory = "Artifacts"
+$UploadArtifacts = $true
 }
 
 ### Ensure connection to Azure RM
@@ -54,18 +55,16 @@ if ($azurecontext -eq $null){
     return
 }
 
-$GenerateDscArchives = $false
-$UploadArtifacts = $false
-
-if ($GenerateDscArchives) {
-    $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $DSCSourceFolder))
+$generateDscArchives = $false
+if ($generateDscArchives) {
+    $dscSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $dscSourceFolder))
 
     # Create DSC configuration archive
-    if (Test-Path $DSCSourceFolder) {
-        $DSCSourceFilePaths = @(Get-ChildItem $DSCSourceFolder -File -Filter "*SQLVM.ps1" | ForEach-Object -Process {$_.FullName})
-        foreach ($DSCSourceFilePath in $DSCSourceFilePaths) {
-            $DSCArchiveFilePath = $DSCSourceFilePath.Substring(0, $DSCSourceFilePath.Length - 4) + ".zip"
-            Publish-AzureRmVMDscConfiguration $DSCSourceFilePath -OutputArchivePath $DSCArchiveFilePath -Force -Verbose
+    if (Test-Path $dscSourceFolder) {
+        $dscSourceFilePaths = @(Get-ChildItem $dscSourceFolder -File -Filter "*SPVM.ps1" | ForEach-Object -Process {$_.FullName})
+        foreach ($dscSourceFilePath in $dscSourceFilePaths) {
+            $dscArchiveFilePath = $dscSourceFilePath.Substring(0, $dscSourceFilePath.Length - 4) + ".zip"
+            Publish-AzureRmVMDscConfiguration $dscSourceFilePath -OutputArchivePath $dscArchiveFilePath -Force -Verbose
         }
     }
 }
@@ -169,20 +168,6 @@ if ($checkTemplate.Count -eq 0) {
 }
 else {
     $checkTemplate[0].Details
-}
-
-### Remove initial extension on a VM and add a new one
-{
-$SQLVMname = "SQL"
-$previousCustomExtension = "PrepareSQLVM"
-$newCustomExtension = "ConfigureSQLVM"
-Remove-AzurermVMCustomScriptExtension -ResourceGroupName $resourceGroupName `
-    -VMName $SQLVMname –Name $previousCustomExtension -Force
-
-Set-AzureRMVMExtension –ResourceGroupName $resourceGroupName -Location $resourceGroupLocation `
-    -extensiontype "DSC" -name $newCustomExtension -Publisher "Microsoft.Powershell" `
-    -TypeHandlerVersion "2.9" -VMName $SQLVMname `
-    -Settings @{"workspaceId" = "WorkspaceID"} -ProtectedSettings @{"workspaceKey"= "workspaceID"}
 }
 
 ### Shutdown VMs
