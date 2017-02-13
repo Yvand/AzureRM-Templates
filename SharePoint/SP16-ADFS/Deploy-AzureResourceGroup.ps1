@@ -150,7 +150,7 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
         -Verbose -Force
 }
 
-### Deploy template if it is valid
+### Test template and deploy if it is valid, otherwise display error details
 $checkTemplate = Test-AzureRmResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
@@ -166,6 +166,9 @@ if ($checkTemplate.Count -eq 0) {
         @optionalParameters `
         @vaultSecrets `
         -Verbose -Force
+}
+else {
+    $checkTemplate[0].Details
 }
 
 ### Remove initial extension on a VM and add a new one

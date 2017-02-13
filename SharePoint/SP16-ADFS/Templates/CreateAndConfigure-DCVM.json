@@ -131,7 +131,7 @@
             "type": "DSC",
             "typeHandlerVersion": "2.9",
             "autoUpgradeMinorVersion": true,
-            "forceUpdateTag": "[parameters('dscDCUpdateTagVersion')]",
+            "forceUpdateTag": "[parameters('dscUpdateTagVersion')]",
             "settings": {
               "wmfVersion": "latest",
               "configuration": {
