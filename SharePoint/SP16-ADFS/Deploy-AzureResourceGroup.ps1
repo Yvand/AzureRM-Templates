@@ -14,8 +14,9 @@ $scriptRoot = $PSScriptRoot
 #$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $TemplateParametersFile))
+$optionalParameters = New-Object -TypeName HashTable
 
-$OptionalParameters = New-Object -TypeName HashTable
+# Define passwords
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 $securePassword = Read-Host "Enter the password" -AsSecureString
 $passwords = New-Object -TypeName HashTable
@@ -29,11 +30,12 @@ $passwords['spAppPoolPassword'] = $securePassword
 $passwords['spPassphrase'] = $securePassword
 
 # dev branch settings
-$OptionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
-$OptionalParameters['vaultName'] = "ydsp16adfsvault"
-$OptionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
-$OptionalParameters['dscSQLTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
-$OptionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
+$optionalParameters['baseurl'] = "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SP16-ADFS"
+$optionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
+$optionalParameters['vaultName'] = "ydsp16adfsvault"
+$optionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
+$optionalParameters['dscSQLTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
+$optionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
 
 # Artifacts
 $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts'
@@ -74,8 +76,8 @@ if ($UploadArtifacts) {
 	Set-Variable ArtifactsLocationName '_artifactsLocation' -Option ReadOnly -Force
     Set-Variable ArtifactsLocationSasTokenName '_artifactsLocationSasToken' -Option ReadOnly -Force
 
-    $OptionalParameters.Add($ArtifactsLocationName, $null)
-    $OptionalParameters.Add($ArtifactsLocationSasTokenName, $null)
+    $optionalParameters.Add($ArtifactsLocationName, $null)
+    $optionalParameters.Add($ArtifactsLocationSasTokenName, $null)
 
 	# Create a storage account name if none was provided
     if($StorageAccountName -eq "") {
@@ -95,10 +97,10 @@ if ($UploadArtifacts) {
     $StorageAccountContext = (Get-AzureRmStorageAccount | Where-Object{$_.StorageAccountName -eq $StorageAccountName}).Context
 
     # Generate the value for artifacts location if it is not provided in the parameter file
-    $ArtifactsLocation = $OptionalParameters[$ArtifactsLocationName]
+    $ArtifactsLocation = $optionalParameters[$ArtifactsLocationName]
     if ($ArtifactsLocation -eq $null) {
         $ArtifactsLocation = $StorageAccountContext.BlobEndPoint + $StorageContainerName
-        $OptionalParameters[$ArtifactsLocationName] = $ArtifactsLocation
+        $optionalParameters[$ArtifactsLocationName] = $ArtifactsLocation
     }
 
     # Copy files from the local storage staging location to the storage account container
@@ -111,12 +113,12 @@ if ($UploadArtifacts) {
     }
 
     # Generate the value for artifacts location SAS token if it is not provided in the parameter file
-    $ArtifactsLocationSasToken = $OptionalParameters[$ArtifactsLocationSasTokenName]
+    $ArtifactsLocationSasToken = $optionalParameters[$ArtifactsLocationSasTokenName]
     if ($ArtifactsLocationSasToken -eq $null) {
         # Create a SAS token for the storage container - this gives temporary read-only access to the container
         $ArtifactsLocationSasToken = New-AzureStorageContainerSASToken -Container $StorageContainerName -Context $StorageAccountContext -Permission r -ExpiryTime (Get-Date).AddHours(4)
         $ArtifactsLocationSasToken = ConvertTo-SecureString $ArtifactsLocationSasToken -AsPlainText -Force
-        $OptionalParameters[$ArtifactsLocationSasTokenName] = $ArtifactsLocationSasToken
+        $optionalParameters[$ArtifactsLocationSasTokenName] = $ArtifactsLocationSasToken
 
         $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($ArtifactsLocationSasToken)
         $UnsecureSASToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
@@ -126,16 +128,16 @@ if ($UploadArtifacts) {
 }
 
 ### Configure Azure key vault
-$vault = Get-AzureRmKeyVault -VaultName $OptionalParameters['vaultName']
+$vault = Get-AzureRmKeyVault -VaultName $optionalParameters['vaultName']
 if ($vault -eq $null) {
-    $vault = New-AzureRmKeyVault -VaultName $OptionalParameters['vaultName'] -ResourceGroupName $resourceGroupName -Location $resourceGroupLocation -EnabledForTemplateDeployment
+    $vault = New-AzureRmKeyVault -VaultName $optionalParameters['vaultName'] -ResourceGroupName $resourceGroupName -Location $resourceGroupLocation -EnabledForTemplateDeployment
     $vault.ResourceId
 }
 
 # Create one key per password and overrride password with the key vault secret
 $vaultSecrets = New-Object -TypeName HashTable
 foreach ($password in $passwords.GetEnumerator()) {
-    $secret = Set-AzureKeyVaultSecret -VaultName $OptionalParameters['vaultName'] -Name $password.Name -SecretValue $password.Value
+    $secret = Set-AzureKeyVaultSecret -VaultName $optionalParameters['vaultName'] -Name $password.Name -SecretValue $password.Value
     $key = $secret.Name + "KeyName"
     $vaultSecrets[$key] = $secret.Name
 }
@@ -152,7 +154,7 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
 $checkTemplate = Test-AzureRmResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
-    @OptionalParameters `
+    @optionalParameters `
     @vaultSecrets `
     -Verbose
 
@@ -161,7 +163,7 @@ if ($checkTemplate.Count -eq 0) {
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $TemplateFile `
-        @OptionalParameters `
+        @optionalParameters `
         @vaultSecrets `
         -Verbose -Force
 }

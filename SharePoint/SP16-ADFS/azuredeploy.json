@@ -21,7 +21,7 @@
       "type": "array",
       "defaultValue": [ "Standard_LRS" ]
     },
-    "domainName": {
+    "domainFQDN": {
       "type": "string",
       "defaultValue": "contoso.local",
       "minLength": 1,
@@ -471,11 +471,11 @@
           "dscFunction": {
             "value": "[variables('dscConfigureDCVM').function]"
           },
-          "updateTagVersion": {
+          "dscUpdateTagVersion": {
             "value": "[parameters('dscSQLUpdateTagVersion')]"
           },
           "domainFQDN": {
-            "value": "[parameters('domainName')]"
+            "value": "[parameters('domainFQDN')]"
           },
           "adminUserName": {
             "value": "[parameters('adminUsername')]"
@@ -715,8 +715,8 @@
           "dnsServer": {
             "value": "[variables('vmDC').nicPrivateIPAddress]"
           },
-          "domainName": {
-            "value": "[parameters('domainName')]"
+          "domainFQDN": {
+            "value": "[parameters('domainFQDN')]"
           },
           "adminUserName": {
             "value": "[parameters('adminUsername')]"
@@ -767,7 +767,7 @@
             "value": "[variables('vmDC').nicPrivateIPAddress]"
           },
           "domainFQDN": {
-            "value": "[parameters('domainName')]"
+            "value": "[parameters('domainFQDN')]"
           },
           "domainAdminUserName": {
             "value": "[parameters('adminUsername')]"

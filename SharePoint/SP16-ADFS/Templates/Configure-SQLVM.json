@@ -35,7 +35,7 @@
       "type": "string",
       "minLength": 1
     },
-    "domainName": {
+    "domainFQDN": {
       "type": "string",
       "minLength": 1
     },
@@ -81,7 +81,7 @@
           },
           "configurationArguments": {
             "DNSServer": "[parameters('dnsServer')]",
-            "DomainFQDN": "[parameters('domainName')]"
+            "DomainFQDN": "[parameters('domainFQDN')]"
           },
           "privacy": {
             "dataCollection": "enable"

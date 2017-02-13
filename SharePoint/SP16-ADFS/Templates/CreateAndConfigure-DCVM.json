@@ -41,10 +41,10 @@
     "dscFunction": {
       "type": "string"
     },
-    "dscDCUpdateTagVersion": {
+    "dscUpdateTagVersion": {
       "type": "string"
     },
-    "domainName": {
+    "domainFQDN": {
       "type": "string"
     },
     "adminUserName": {
@@ -140,7 +140,7 @@
                 "function": "[parameters('dscFunction')]"
               },
               "configurationArguments": {
-                "DomainName": "[parameters('domainName')]"
+                "DomainName": "[parameters('domainFQDN')]"
               },
               "privacy": {
                 "dataCollection": "enable"
