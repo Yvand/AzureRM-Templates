@@ -3,22 +3,21 @@
 #Requires -Module Azure.Storage
 
 ### Define variables
-{
 $resourceGroupLocation = 'westeurope'
 $resourceGroupName = 'yd-sp16adfs'
 $resourceDeploymentName = 'yd-sp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
-$TemplateParametersFile = 'azuredeploy.parameters.json'
+$templateParametersFile = 'azuredeploy.parameters.json'
 $dscSourceFolder = 'DSC'
 $scriptRoot = $PSScriptRoot
 #$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
-$TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $TemplateParametersFile))
+$templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFile))
 $optionalParameters = New-Object -TypeName HashTable
 
 # Define passwords
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
-$securePassword = Read-Host "Enter the password" -AsSecureString
+if ($securePassword -eq $null) { $securePassword = Read-Host "Enter the password" -AsSecureString }
 $passwords = New-Object -TypeName HashTable
 $passwords['adminPassword'] = $securePassword
 $passwords['adfsSvcPassword'] = $securePassword
@@ -38,9 +37,10 @@ $optionalParameters['dscSQLTemplateURL'] = "https://github.com/Yvand/AzureRM-Tem
 $optionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
 
 # Artifacts
+{
+$uploadArtifacts = $true
 $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts'
 $ArtifactStagingDirectory = "Artifacts"
-$UploadArtifacts = $true
 }
 
 ### Ensure connection to Azure RM
@@ -69,7 +69,7 @@ if ($generateDscArchives) {
     }
 }
 
-if ($UploadArtifacts) {
+if ($uploadArtifacts) {
     $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $ArtifactStagingDirectory))
 
 	Set-Variable ArtifactsLocationName '_artifactsLocation' -Option ReadOnly -Force

@@ -307,7 +307,7 @@ configuration ConfigureSPVM
             AdminContentDatabaseName = $SPDBPrefix+"AdminContent"
             CentralAdministrationPort = 5000
             #DependsOn = "[xPackage]Install201612CU"
-            DependsOn = "[xRemoteFile]Download201612CU"
+            DependsOn = "[xRemoteFile]DownloadLdapcp"
         }
 
         SPManagedAccount CreateSPSvcManagedAccount
