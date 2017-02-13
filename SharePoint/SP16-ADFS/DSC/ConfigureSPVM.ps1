@@ -337,7 +337,7 @@ configuration ConfigureSPVM
         {
             Name                 = "State Service Application"
             DatabaseName         = $SPDBPrefix + "_StateService"
-            PsDscRunAsCredential = $SPSetupAccount
+            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPCreateFarm]CreateSPFarm"
         }
 
