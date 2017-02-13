@@ -11,21 +11,22 @@ $templateFileName = 'azuredeploy.json'
 $TemplateParametersFile = 'azuredeploy.parameters.json'
 $DSCSourceFolder = 'DSC'
 $scriptRoot = $PSScriptRoot
-$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
+#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $TemplateParametersFile))
 
+$OptionalParameters = New-Object -TypeName HashTable
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 $securePassword = Read-Host "Enter the password" -AsSecureString
-$OptionalParameters = New-Object -TypeName HashTable
-$OptionalParameters['adminPassword'] = $securePassword
-$OptionalParameters['adfsSvcPassword'] = $securePassword
-$OptionalParameters['sqlSvcPassword'] = $securePassword
-$OptionalParameters['spSetupPassword'] = $securePassword
-$OptionalParameters['spFarmPassword'] = $securePassword
-$OptionalParameters['spSvcPassword'] = $securePassword
-$OptionalParameters['spAppPoolPassword'] = $securePassword
-$OptionalParameters['spPassphrase'] = $securePassword
+$passwords = New-Object -TypeName HashTable
+$passwords['adminPassword'] = $securePassword
+$passwords['adfsSvcPassword'] = $securePassword
+$passwords['sqlSvcPassword'] = $securePassword
+$passwords['spSetupPassword'] = $securePassword
+$passwords['spFarmPassword'] = $securePassword
+$passwords['spSvcPassword'] = $securePassword
+$passwords['spAppPoolPassword'] = $securePassword
+$passwords['spPassphrase'] = $securePassword
 
 # dev branch settings
 $OptionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
@@ -132,11 +133,11 @@ if ($vault -eq $null) {
 }
 
 # Create one key per password and overrride password with the key vault secret
-$passwordsHT = $OptionalParameters.GetEnumerator()| ?{$_.Name -like "*Password" -or $_.Name -like "spPassphrase"}
-foreach ($password in $passwordsHT) {
+$vaultSecrets = New-Object -TypeName HashTable
+foreach ($password in $passwords.GetEnumerator()) {
     $secret = Set-AzureKeyVaultSecret -VaultName $OptionalParameters['vaultName'] -Name $password.Name -SecretValue $password.Value
     $key = $secret.Name + "KeyName"
-    $OptionalParameters[$key] = $secret.Name
+    $vaultSecrets[$key] = $secret.Name
 }
 
 ### Create Resource Group if it doesn't exist
@@ -152,6 +153,7 @@ $checkTemplate = Test-AzureRmResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
     @OptionalParameters `
+    @vaultSecrets `
     -Verbose
 
 if ($checkTemplate.Count -eq 0) {
@@ -160,6 +162,7 @@ if ($checkTemplate.Count -eq 0) {
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $TemplateFile `
         @OptionalParameters `
+        @vaultSecrets `
         -Verbose -Force
 }
 
