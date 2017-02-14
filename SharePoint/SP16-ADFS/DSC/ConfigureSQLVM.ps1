@@ -53,19 +53,6 @@ configuration ConfigureSQLVM
             DriveLetter = "F"
 	        DependsOn="[xWaitForDisk]Disk2"
         }
-        xWaitforDisk Disk3
-        {
-            DiskNumber = 3
-            RetryIntervalSec =$RetryIntervalSec
-            RetryCount = $RetryCount
-            DependsOn="[cDiskNoRestart]SQLDataDisk"
-        }
-        cDiskNoRestart SQLLogDisk
-        {
-            DiskNumber = 3
-            DriveLetter = "G"
-            DependsOn="[xWaitForDisk]Disk3"
-        }
         xFirewall DatabaseEngineFirewallRule
         {
             Direction = "Inbound"
@@ -82,7 +69,7 @@ configuration ConfigureSQLVM
         {
             Name = "RSAT-AD-PowerShell"
             Ensure = "Present"
-            DependsOn = "[cDiskNoRestart]SQLDataDisk","[cDiskNoRestart]SQLLogDisk"
+            DependsOn = "[cDiskNoRestart]SQLDataDisk"
 
         }
         xDnsServerAddress DnsServerAddress
@@ -238,6 +225,9 @@ function WaitForSqlSetup
 
 
 <#
+# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
+# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
+
 help ConfigureSQLVM
 $DomainAdminCreds = Get-Credential -Credential "yvand"
 $SqlSvcCreds = Get-Credential -Credential "sqlsvc"

@@ -2,16 +2,26 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "baseurl": {
+      "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS",
+      "minLength": 1
+    },
     "templatePrefix": {
       "type": "string",
       "defaultValue": "ydsp16adfs",
+      "minLength": 1
+    },
+    "vaultName": {
+      "type": "string",
+      "defaultValue": "ydsp16adfsvault",
       "minLength": 1
     },
     "storageAccountType": {
       "type": "array",
       "defaultValue": [ "Standard_LRS" ]
     },
-    "domainName": {
+    "domainFQDN": {
       "type": "string",
       "defaultValue": "contoso.local",
       "minLength": 1,
@@ -19,15 +29,23 @@
         "description": "FQDN of the AD forest to create"
       }
     },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the key vault used for storing the Username and Password combinations"
+      },
+      "defaultValue": "ydsp16adfsvault"
+    },
     "adminUserName": {
       "type": "string",
       "defaultValue": "yvand",
       "minLength": 1
     },
-    "adminPassword": {
-      "type": "securestring",
+    "adminPasswordKeyName": {
+      "type": "string",
+      "minLength": 1,
       "metadata": {
-        "description": "The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
+        "description": "The key name to get password of admin account stored in Azure key vault"
       }
     },
     "adfsSvcUserName": {
@@ -35,10 +53,12 @@
       "defaultValue": "adfssvc",
       "minLength": 1
     },
-    "adfsSvcPassword": {
-      "type": "securestring",
+    "adfsSvcPasswordKeyName": {
+      "type": "string",
+      "defaultValue": "adfsSvcPassword",
+      "minLength": 1,
       "metadata": {
-        "description": "The password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
+        "description": "The adfs account password secret key name"
       }
     },
     "sqlSvcUserName": {
@@ -46,10 +66,12 @@
       "defaultValue": "sqlsvc",
       "minLength": 1
     },
-    "sqlSvcPassword": {
-      "type": "securestring",
+    "sqlSvcPasswordKeyName": {
+      "type": "string",
+      "defaultValue": "sqlSvcPassword",
+      "minLength": 1,
       "metadata": {
-        "description": "The password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
+        "description": "The adfs account password secret key name"
       }
     },
     "spSetupUserName": {
@@ -57,47 +79,37 @@
       "defaultValue": "spsetup",
       "minLength": 1
     },
-    "spSetupPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
-      }
+    "spSetupPasswordKeyName": {
+      "type": "string",
+      "defaultValue": "spSetupPassword",
+      "minLength": 1
     },
     "spFarmUserName": {
       "type": "string",
       "defaultValue": "spfarm",
       "minLength": 1
     },
-    "spFarmPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
-      }
+    "spFarmPasswordKeyName": {
+      "type": "string"
     },
     "spSvcUserName": {
       "type": "string",
       "defaultValue": "spsvc",
       "minLength": 1
     },
-    "spSvcPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
-      }
+    "spSvcPasswordKeyName": {
+      "type": "string"
     },
     "spAppPoolUserName": {
       "type": "string",
       "defaultValue": "spapppool",
       "minLength": 1
     },
-    "spAppPoolPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
-      }
+    "spAppPoolPasswordKeyName": {
+      "type": "string"
     },
-    "spPassphrase": {
-      "type": "securestring"
+    "spPassphraseKeyName": {
+      "type": "string"
     },
     "vmDCName": {
       "type": "string",
@@ -129,21 +141,36 @@
       "defaultValue": "ydsp16adfs-sp",
       "minLength": 1
     },
-    "ConfigureDCVMUpdateTagVersion": {
+    "dscDCTemplateURL": {
+      "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip",
+      "minLength": 1
+    },
+    "dscDCUpdateTagVersion": {
       "type": "string",
       "defaultValue": "1.0",
       "metadata": {
         "description": "This value must be changed from a previous deployment to ensure the extension will run"
       }
     },
-    "ConfigureSPVMUpdateTagVersion": {
+    "dscSQLTemplateURL": {
+      "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
+      "minLength": 1
+    },
+    "dscSQLUpdateTagVersion": {
       "type": "string",
       "defaultValue": "1.0",
       "metadata": {
         "description": "This value must be changed from a previous deployment to ensure the extension will run"
       }
     },
-    "ConfigureSQLVMUpdateTagVersion": {
+    "dscSPTemplateURL": {
+      "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip",
+      "minLength": 1
+    },
+    "dscSPUpdateTagVersion": {
       "type": "string",
       "defaultValue": "1.0",
       "metadata": {
@@ -168,30 +195,33 @@
       "vmsStorageAccountContainerName": "vhds"
     },
     "vmDC": {
+      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/CreateAndConfigure-DCVM.json')]",
       "vmImagePublisher": "MicrosoftWindowsServer",
       "vmImageOffer": "WindowsServer",
       "vmImageSKU": "2016-Datacenter",
       "vmOSDiskName": "vm-DC-OSDisk",
       "vmDataDiskName": "vm-DC-DataDisk",
-      "vmVmSize": "Standard_D2_v2",
+      "vmVmSize": "Standard_F4",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet1Name)]",
       "vmNicName": "[concat(parameters('vmDCName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmDC-PublicIP",
       "nicPrivateIPAddress": "10.0.1.4"
     },
     "vmSQL": {
+      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Create-GenericVM.json')]",
       "vmImagePublisher": "MicrosoftSQLServer",
       "vmImageOffer": "SQL2016SP1-WS2016",
       "vmImageSKU": "Standard",
       "vmOSDiskName": "vm-SQLOSDisk",
       "vmDataDiskName": "vm-SQL-DataDisk-Data",
       "vmLogsDiskName": "vm-SQL-DataDisk-Logs",
-      "vmVmSize": "Standard_A3",
+      "vmVmSize": "Standard_A4_v2",
       "vmSubnetRef": "[concat(variables('vmsCommonSettings').vmsVnetID, '/subnets/', variables('vNetPrivate').vNetPrivateSubnet2Name)]",
       "vmNicName": "[concat(parameters('vmSQLName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmSQL-PublicIP"
     },
     "vmSP": {
+      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Create-GenericVM.json')]",
       "vmImagePublisher": "MicrosoftSharePoint",
       "vmImageOffer": "MicrosoftSharePointServer",
       "vmImageSKU": "2016",
@@ -203,19 +233,87 @@
       "vmPublicIPName": "vmSP-PublicIP"
     },
     "dscConfigureDCVM": {
-      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip",
+      "url": "[parameters('dscDCTemplateURL')]",
       "script": "ConfigureDCVM.ps1",
       "function": "ConfigureDCVM"
     },
     "dscConfigureSQLVM": {
-      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
+      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Configure-SQLVM.json')]",
+      "url": "[parameters('dscSQLTemplateURL')]",
       "script": "ConfigureSQLVM.ps1",
       "function": "ConfigureSQLVM"
     },
     "dscConfigureSPVM": {
-      "url": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip",
+      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Configure-SPVM.json')]",
+      "url": "[parameters('dscSPTemplateURL')]",
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM"
+    },
+    "keyVaultSecrets": {
+      "adminPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('adminPasswordKeyName')]"
+        }
+      },
+      "adfsPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('adfsSvcPasswordKeyName')]"
+        }
+      },
+      "sqlSvcPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('sqlSvcPasswordKeyName')]"
+        }
+      },
+      "spSetupPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('spSetupPasswordKeyName')]"
+        }
+      },
+      "spFarmPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('spFarmPasswordKeyName')]"
+        }
+      },
+      "spSvcPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('spSvcPasswordKeyName')]"
+        }
+      },
+      "spAppPoolPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('spAppPoolPasswordKeyName')]"
+        }
+      },
+      "spPassphrase": {
+        "reference": {
+          "keyVault": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
+          },
+          "secretName": "[parameters('spPassphraseKeyName')]"
+        }
+      }
     }
   },
   "resources": [
@@ -320,107 +418,75 @@
       }
     },
     {
-      "name": "[parameters('vmDCName')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "name": "CreateAndConfigureDCVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
       ],
-      "tags": {
-        "displayName": "[parameters('vmDCName')]"
-      },
       "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('vmDC').vmVmSize]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vmDC').templateLocation]",
+          "contentVersion": "1.0.0.0"
         },
-        "osProfile": {
-          "computerName": "[parameters('vmDCName')]",
-          "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('vmDC').vmImagePublisher]",
-            "offer": "[variables('vmDC').vmImageOffer]",
-            "sku": "[variables('vmDC').vmImageSKU]",
-            "version": "latest"
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmDCName')]"
           },
-          "osDisk": {
-            "name": "[variables('vmDC').vmOSDiskName]",
-            "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmOSDiskName, '.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+          "vmSize": {
+            "value": "[variables('vmDC').vmVmSize]"
           },
-          "dataDisks": [
-            {
-              "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmDataDiskName, '.vhd')]"
-              },
-              "name": "[variables('vmDC').vmDataDiskName]",
-              "caching": "None",
-              "createOption": "Empty",
-              "diskSizeGB": "100",
-              "lun": 0
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
-            }
-          ]
+          "vmImagePublisher": {
+            "value": "[variables('vmDC').vmImagePublisher]"
+          },
+          "vmImageOffer": {
+            "value": "[variables('vmDC').vmImageOffer]"
+          },
+          "vmImageSKU": {
+            "value": "[variables('vmDC').vmImageSKU]"
+          },
+          "vmNicName": {
+            "value": "[variables('vmDC').vmNicName]"
+          },
+          "vmOSDiskName": {
+            "value": "[variables('vmDC').vmOSDiskName]"
+          },
+          "vmDataDiskName": {
+            "value": "[variables('vmDC').vmDataDiskName]"
+          },
+          "storageAccountNamePrefix": {
+            "value": "[variables('storageAccountNamePrefix')]"
+          },
+          "storageContainerName": {
+            "value": "[variables('vmsCommonSettings').vmsStorageAccountContainerName]"
+          },
+          "dscUrl": {
+            "value": "[variables('dscConfigureDCVM').url]"
+          },
+          "dscScript": {
+            "value": "[variables('dscConfigureDCVM').script]"
+          },
+          "dscFunction": {
+            "value": "[variables('dscConfigureDCVM').function]"
+          },
+          "dscUpdateTagVersion": {
+            "value": "[parameters('dscDCUpdateTagVersion')]"
+          },
+          "domainFQDN": {
+            "value": "[parameters('domainFQDN')]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": "[variables('keyVaultSecrets').adminPassword]",
+          "adfsSvcUserName": {
+            "value": "[parameters('adfsSvcUserName')]"
+          },
+          "adfsSvcPassword": "[variables('keyVaultSecrets').adfsPassword]"
         }
-      },
-      "resources": [
-        {
-          "name": "ConfigureDCVM",
-          "type": "extensions",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2015-06-15",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]"
-          ],
-          "tags": {
-            "displayName": "ConfigureDCVM"
-          },
-          "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.9",
-            "autoUpgradeMinorVersion": true,
-            "forceUpdateTag": "[parameters('ConfigureDCVMUpdateTagVersion')]",
-            "settings": {
-              "wmfVersion": "latest",
-              "configuration": {
-                "url": "[variables('dscConfigureDCVM').url]",
-                "script": "[variables('dscConfigureDCVM').script]",
-                "function": "[variables('dscConfigureDCVM').function]"
-              },
-              "configurationArguments": {
-                "DomainName": "[parameters('domainName')]",
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUsername')]",
-                  "Password": "[parameters('adminPassword')]"
-                },
-                "AdfsSvcCreds": {
-                  "UserName": "[parameters('adfsSvcUserName')]",
-                  "Password": "[parameters('adfsSvcPassword')]"
-                }
-              },
-              "privacy": {
-                "dataCollection": "enable"
-              }
-            },
-            "protectedSettings": {
-            }
-          }
-        }
-      ]
+      }
     },
     {
       "name": "[variables('vmSQL').vmPublicIPName]",
@@ -468,75 +534,56 @@
       }
     },
     {
-      "name": "[parameters('vmSQLName')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "name": "CreateSQLVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
       ],
-      "tags": {
-        "displayName": "[parameters('vmSQLName')]"
-      },
       "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('vmSQL').vmVmSize]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vmSQL').templateLocation]",
+          "contentVersion": "1.0.0.0"
         },
-        "osProfile": {
-          "computerName": "[parameters('vmSQLName')]",
-          "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('vmSQL').vmImagePublisher]",
-            "offer": "[variables('vmSQL').vmImageOffer]",
-            "sku": "[variables('vmSQL').vmImageSKU]",
-            "version": "latest"
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmSQLName')]"
           },
-          "osDisk": {
-            "name": "[variables('vmSQL').vmOSDiskName]",
-            "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmOSDiskName, '.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+          "vmSize": {
+            "value": "[variables('vmSQL').vmVmSize]"
           },
-          "dataDisks": [
-            {
-              "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmDataDiskName, '.vhd')]"
-              },
-              "name": "[variables('vmSQL').vmDataDiskName]",
-              "caching": "None",
-              "createOption": "Empty",
-              "diskSizeGB": "100",
-              "lun": 0
-            },
-            {
-              "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmLogsDiskName, '.vhd')]"
-              },
-              "name": "[variables('vmSQL').vmLogsDiskName]",
-              "caching": "None",
-              "createOption": "Empty",
-              "diskSizeGB": "100",
-              "lun": 1
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
-            }
-          ]
+          "vmImagePublisher": {
+            "value": "[variables('vmSQL').vmImagePublisher]"
+          },
+          "vmImageOffer": {
+            "value": "[variables('vmSQL').vmImageOffer]"
+          },
+          "vmImageSKU": {
+            "value": "[variables('vmSQL').vmImageSKU]"
+          },
+          "vmNicName": {
+            "value": "[variables('vmSQL').vmNicName]"
+          },
+          "vmOSDiskName": {
+            "value": "[variables('vmSQL').vmOSDiskName]"
+          },
+          "vmDataDiskName": {
+            "value": "[variables('vmSQL').vmDataDiskName]"
+          },
+          "storageAccountNamePrefix": {
+            "value": "[variables('storageAccountNamePrefix')]"
+          },
+          "storageContainerName": {
+            "value": "[variables('vmsCommonSettings').vmsStorageAccountContainerName]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": "[variables('keyVaultSecrets').adminPassword]"
         }
-      },
-      "resources": [
-
-      ]
+      }
     },
     {
       "name": "[variables('vmSP').vmPublicIPName]",
@@ -584,174 +631,165 @@
       }
     },
     {
-      "name": "[parameters('vmSPName')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "name": "CreateSPVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
       ],
-      "tags": {
-        "displayName": "[parameters('vmSPName')]"
-      },
       "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('vmSP').vmVmSize]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vmSP').templateLocation]",
+          "contentVersion": "1.0.0.0"
         },
-        "osProfile": {
-          "computerName": "[parameters('vmSPName')]",
-          "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('vmSP').vmImagePublisher]",
-            "offer": "[variables('vmSP').vmImageOffer]",
-            "sku": "[variables('vmSP').vmImageSKU]",
-            "version": "latest"
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmSPName')]"
           },
-          "osDisk": {
-            "name": "[variables('vmSP').vmOSDiskName]",
-            "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName, '.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+          "vmSize": {
+            "value": "[variables('vmSP').vmVmSize]"
           },
-          "dataDisks": [
-            {
-              "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('vmsCommonSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName, '.vhd')]"
-              },
-              "name": "[variables('vmSP').vmDataDiskName]",
-              "caching": "None",
-              "createOption": "Empty",
-              "diskSizeGB": "100",
-              "lun": 0
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
-            }
-          ]
-        }
-      },
-      "resources": [
-      ]
-    },
-    {
-      "name": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSQLName'))]"
-      ],
-      "tags": {
-        "displayName": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.9",
-        "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[parameters('ConfigureSQLVMUpdateTagVersion')]",
-        "settings": {
-          "wmfVersion": "latest",
-          "configuration": {
-            "url": "[variables('dscConfigureSQLVM').url]",
-            "script": "[variables('dscConfigureSQLVM').script]",
-            "function": "[variables('dscConfigureSQLVM').function]"
+          "vmImagePublisher": {
+            "value": "[variables('vmSP').vmImagePublisher]"
           },
-          "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
-            "DomainFQDN": "[parameters('domainName')]",
-            "DomainAdminCreds": {
-              "UserName": "[parameters('adminUsername')]",
-              "Password": "[parameters('adminPassword')]"
-            },
-            "SqlSvcCreds": {
-              "UserName": "[parameters('sqlSvcUserName')]",
-              "Password": "[parameters('sqlSvcPassword')]"
-            },
-            "SPSetupCreds": {
-              "UserName": "[parameters('spSetupUserName')]",
-              "Password": "[parameters('spSetupPassword')]"
-            }
+          "vmImageOffer": {
+            "value": "[variables('vmSP').vmImageOffer]"
           },
-          "privacy": {
-            "dataCollection": "enable"
-          }
-        },
-        "protectedSettings": {
+          "vmImageSKU": {
+            "value": "[variables('vmSP').vmImageSKU]"
+          },
+          "vmNicName": {
+            "value": "[variables('vmSP').vmNicName]"
+          },
+          "vmOSDiskName": {
+            "value": "[variables('vmSP').vmOSDiskName]"
+          },
+          "vmDataDiskName": {
+            "value": "[variables('vmSP').vmDataDiskName]"
+          },
+          "storageAccountNamePrefix": {
+            "value": "[variables('storageAccountNamePrefix')]"
+          },
+          "storageContainerName": {
+            "value": "[variables('vmsCommonSettings').vmsStorageAccountContainerName]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": "[variables('keyVaultSecrets').adminPassword]"
         }
       }
     },
     {
-      "name": "[concat(parameters('vmSPName'),'/ConfigureSPVM')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "name": "ConfigureSQLVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSPName'))]"
+        "Microsoft.Resources/deployments/CreateAndConfigureDCVM",
+        "Microsoft.Resources/deployments/CreateSQLVM"
       ],
-      "tags": {
-        "displayName": "[concat(parameters('vmSPName'),'/ConfigureSPVM')]"
-      },
       "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.9",
-        "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[parameters('ConfigureSPVMUpdateTagVersion')]",
-        "settings": {
-          "wmfVersion": "latest",
-          "configuration": {
-            "url": "[variables('dscConfigureSPVM').url]",
-            "script": "[variables('dscConfigureSPVM').script]",
-            "function": "[variables('dscConfigureSPVM').function]"
-          },
-          "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
-            "DomainFQDN": "[parameters('domainName')]",
-            "DomainAdminCreds": {
-              "UserName": "[parameters('adminUsername')]",
-              "Password": "[parameters('adminPassword')]"
-            },
-            "SPSetupCreds": {
-              "UserName": "[parameters('spSetupUserName')]",
-              "Password": "[parameters('spSetupPassword')]"
-            },
-            "SPFarmCreds": {
-              "UserName": "[parameters('spFarmUserName')]",
-              "Password": "[parameters('spFarmPassword')]"
-            },
-            "SPSvcCreds": {
-              "UserName": "[parameters('spSvcUserName')]",
-              "Password": "[parameters('spSvcPassword')]"
-            },
-            "SPAppPoolCreds": {
-              "UserName": "[parameters('spAppPoolUserName')]",
-              "Password": "[parameters('spAppPoolPassword')]"
-            },
-            "SPPassphraseCreds": {
-              "UserName": "Passphrase",
-              "Password": "[parameters('spPassphrase')]"
-            }
-          },
-          "privacy": {
-            "dataCollection": "enable"
-          }
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('dscConfigureSQLVM').templateLocation]",
+          "contentVersion": "1.0.0.0"
         },
-        "protectedSettings": {
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmSQLName')]"
+          },
+          "dscUrl": {
+            "value": "[variables('dscConfigureSQLVM').url]"
+          },
+          "dscScript": {
+            "value": "[variables('dscConfigureSQLVM').script]"
+          },
+          "dscFunction": {
+            "value": "[variables('dscConfigureSQLVM').function]"
+          },
+          "updateTagVersion": {
+            "value": "[parameters('dscSQLUpdateTagVersion')]"
+          },
+          "dnsServer": {
+            "value": "[variables('vmDC').nicPrivateIPAddress]"
+          },
+          "domainFQDN": {
+            "value": "[parameters('domainFQDN')]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": "[variables('keyVaultSecrets').adminPassword]",
+          "sqlSvcUserName": {
+            "value": "[parameters('sqlSvcUserName')]"
+          },
+          "sqlPassword": "[variables('keyVaultSecrets').sqlSvcPassword]",
+          "spSetupUserName": {
+            "value": "[parameters('spSetupUserName')]"
+          },
+          "spSetupPassword": "[variables('keyVaultSecrets').spSetupPassword]"
+        }
+      }
+    },
+    {
+      "name": "ConfigureSPVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/CreateAndConfigureDCVM",
+        "Microsoft.Resources/deployments/CreateSPVM"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('dscConfigureSPVM').templateLocation]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmSPName')]"
+          },
+          "dscUrl": {
+            "value": "[variables('dscConfigureSPVM').url]"
+          },
+          "dscScript": {
+            "value": "[variables('dscConfigureSPVM').script]"
+          },
+          "dscFunction": {
+            "value": "[variables('dscConfigureSPVM').function]"
+          },
+          "updateTagVersion": {
+            "value": "[parameters('dscSPUpdateTagVersion')]"
+          },
+          "dnsServer": {
+            "value": "[variables('vmDC').nicPrivateIPAddress]"
+          },
+          "domainFQDN": {
+            "value": "[parameters('domainFQDN')]"
+          },
+          "domainAdminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "domainAdminPassword": "[variables('keyVaultSecrets').adminPassword]",
+          "spSetupUserName": {
+            "value": "[parameters('spSetupUserName')]"
+          },
+          "spSetupPassword": "[variables('keyVaultSecrets').spSetupPassword]",
+          "spFarmUserName": {
+            "value": "[parameters('spFarmUserName')]"
+          },
+          "spFarmPassword": "[variables('keyVaultSecrets').spFarmPassword]",
+          "spSvcUserName": {
+            "value": "[parameters('spSvcUserName')]"
+          },
+          "spSvcPassword": "[variables('keyVaultSecrets').spSvcPassword]",
+          "spAppPoolUserName": {
+            "value": "[parameters('spAppPoolUserName')]"
+          },
+          "spAppPoolPassword": "[variables('keyVaultSecrets').spAppPoolPassword]",
+          "spPassphrase": "[variables('keyVaultSecrets').spPassphrase]"
         }
       }
     }

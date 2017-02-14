@@ -1,2 +1,2 @@
-# AzureRM-Templates
-Templates for ARM
+# AzureRM Templates
+Various templates for Azure Resource Manager

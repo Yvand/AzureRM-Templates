@@ -10,7 +10,8 @@ $resourceGroupName = 'yd-sp16adfs'
 $StorageAccountName = "ydsp16adfsst0"
 $blobStorageContainer = "vhds"
 $vmsToDelete = @("SP", "SQL", "DC")
-#$vmsToDelete = @("SQL")
+#$vmsToDelete = @("SP", "SQL")
+#$vmsToDelete = @("SP")
 Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccountName 
 Get-AzureRmContext
 
@@ -21,8 +22,7 @@ ForEach ($vmToDelete in $vmsToDelete) {
     $disksNames = @()
     $vm = Get-AzureRmVM -ResourceGroupName $resourceGroupName -Name $vmToDelete
     $disksNames+=$vm.StorageProfile.OsDisk.Name
-    #$vm.StorageProfile.DataDisks| %{$disksNames+=$_.Vhd.Uri}
-    $disksNames+=$vm.DataDiskNames
+    $vm.StorageProfile.DataDisks| %{$disksNames+=$_.Name}
     
     Write-Host "Removing VM $vmToDelete..."
     Remove-AzureRmVM -ResourceGroupName $resourceGroupName -Name $vmToDelete -Force
@@ -52,8 +52,7 @@ ForEach ($vmToDelete in $vmsToDelete) {
         $disksNames = @()
         $vm = Get-AzureRmVM -ResourceGroupName $resourceGroupName -Name $vmToDelete
         $disksNames+=$vm.StorageProfile.OsDisk.Name
-        #$vm.StorageProfile.DataDisks| %{$disksNames+=$_.Vhd.Uri}
-        $disksNames+=$vm.DataDiskNames
+        $vm.StorageProfile.DataDisks| %{$disksNames+=$_.Name}
     
         Write-Host "Removing VM $vmToDelete..."
         Remove-AzureRmVM -ResourceGroupName $resourceGroupName -Name $vmToDelete -Force

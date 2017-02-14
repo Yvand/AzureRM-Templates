@@ -17,11 +17,10 @@
         [String]$ADFSRelyingPartyTrustName = "SPSites"
     ) 
     
-    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate
-    [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
+    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot
     [System.Management.Automation.PSCredential ]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential ]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
-    $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
+    $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
 
     Node localhost
@@ -40,11 +39,7 @@
             TestScript = { $false }
         }
 	
-	    WindowsFeature DNS 
-        { 
-            Ensure = "Present" 
-            Name = "DNS"		
-        }
+	    WindowsFeature DNS { Ensure = "Present"; Name = "DNS" }
 
         Script script1
 	    {
@@ -57,11 +52,7 @@
 	        DependsOn = "[WindowsFeature]DNS"
         }
 
-	    WindowsFeature DnsTools
-	    {
-	        Ensure = "Present"
-            Name = "RSAT-DNS-Server"
-	    }
+	    WindowsFeature DnsTools { Ensure = "Present"; Name = "RSAT-DNS-Server" }
 
         xDnsServerAddress DnsServerAddress 
         { 
@@ -102,6 +93,12 @@
 	        DependsOn = "[WindowsFeature]ADDSInstall"
         }
 
+        xPendingReboot Reboot1
+        { 
+            Name = "RebootServer"
+            DependsOn = "[xADDomain]FirstDS"
+        }
+
         #**********************************************************
         # Misc: Set email of AD domain admin and add remote AD tools
         #**********************************************************
@@ -114,15 +111,15 @@
             EmailAddress = $Admincreds.UserName + "@" + $DomainName
             PasswordAuthentication = 'Negotiate'
             Ensure = "Present"
-            DependsOn = "[xADDomain]FirstDS"
+            DependsOn = "[xPendingReboot]Reboot1"
         }
-        WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
-        WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
+        WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
+        WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
 
         #**********************************************************
         # Configure AD CS
         #**********************************************************
-        WindowsFeature AddCertAuthority { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xADDomain]FirstDS" }
+        WindowsFeature AddCertAuthority { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
         xADCSCertificationAuthority ADCS
         {
             Ensure = "Present"
@@ -350,6 +347,9 @@ function Get-NetBIOSName
 } 
 
 <#
+# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
+# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
+
 Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 Install-Module -Name xAdcsDeployment

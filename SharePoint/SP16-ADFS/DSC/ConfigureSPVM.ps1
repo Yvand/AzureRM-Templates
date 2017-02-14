@@ -28,7 +28,7 @@ configuration ConfigureSPVM
         [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xPendingReboot
+    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration
 
     $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
@@ -194,6 +194,7 @@ configuration ConfigureSPVM
             DependsOn = "[File]AccountsProvisioned"
         }
 
+        <#
         xRemoteFile Download201612CU
         {  
             Uri             = "https://download.microsoft.com/download/D/0/4/D04FD356-E140-433E-94F6-472CF45FD591/sts2016-kb3128014-fullfile-x64-glb.exe"
@@ -271,9 +272,9 @@ configuration ConfigureSPVM
         xPendingReboot RebootAfterInstall201612CU
         { 
             Name = 'RebootAfterInstall201612CU'
+            DependsOn = "[xScript]Install201612CU"
         }
 
-        <#
         xPackage Install201612CU
         {
             Ensure = "Present"
@@ -287,7 +288,7 @@ configuration ConfigureSPVM
             Arguments = "/q"
             RunAsCredential = $DomainAdminCredsQualified
             ReturnCode = @( 0, 1641, 3010, 17025 )
-            DependsOn = "[xRemoteFile]Download201612CU"
+            DependsOn = "[xPendingReboot]RebootAfterInstall201612CU"
         }
 
         # TODO: implement stupid workaround documented in https://technet.microsoft.com/en-us/library/mt723354(v=office.16).aspx until SP2016 image is fixed
@@ -306,7 +307,7 @@ configuration ConfigureSPVM
             AdminContentDatabaseName = $SPDBPrefix+"AdminContent"
             CentralAdministrationPort = 5000
             #DependsOn = "[xPackage]Install201612CU"
-            DependsOn = "[xRemoteFile]Download201612CU"
+            DependsOn = "[xRemoteFile]DownloadLdapcp"
         }
 
         SPManagedAccount CreateSPSvcManagedAccount
@@ -332,6 +333,14 @@ configuration ConfigureSPVM
             DependsOn                                   = "[SPCreateFarm]CreateSPFarm"
         }
 
+        SPStateServiceApp StateServiceApp
+        {
+            Name                 = "State Service Application"
+            DatabaseName         = $SPDBPrefix + "_StateService"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+        }
+
         SPDistributedCacheService EnableDistributedCache
         {
             Name                 = "AppFabricCachingService"
@@ -340,6 +349,7 @@ configuration ConfigureSPVM
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
             Ensure               = "Present"
+            DependsOn            = "[SPCreateFarm]CreateSPFarm"
         }
 
         SPFarmSolution InstallLdapcp 
@@ -412,6 +422,9 @@ function Get-SPDSCInstalledProductVersion
 
 
 <#
+# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
+# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
+
 Install-Module -Name xPendingReboot
 help ConfigureSPVM
 

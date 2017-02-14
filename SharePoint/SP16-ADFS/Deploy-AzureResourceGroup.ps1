@@ -3,36 +3,47 @@
 #Requires -Module Azure.Storage
 
 ### Define variables
-{
 $resourceGroupLocation = 'westeurope'
 $resourceGroupName = 'yd-sp16adfs'
 $resourceDeploymentName = 'yd-sp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
-$TemplateParametersFile = 'azuredeploy.parameters.json'
-$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $templateFileName))
-$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("F:\Job\Dev\GitHub\AzureRM-Templates\SharePoint\SP16-ADFS", $templateFileName))
-$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS", $templateFileName))
-$TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
+$templateParametersFileName = 'azuredeploy.parameters.json'
+$scriptRoot = $PSScriptRoot
+#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
+$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
+$templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
+$dscSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, "DSC"))
+
+# Define passwords
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
-$securePassword = Read-Host "Enter the password" -AsSecureString
-$OptionalParameters = New-Object -TypeName HashTable
-$OptionalParameters['adminPassword'] = $securePassword
-$OptionalParameters['adfsSvcPassword'] = $securePassword
-$OptionalParameters['sqlSvcPassword'] = $securePassword
-$OptionalParameters['spSetupPassword'] = $securePassword
-$OptionalParameters['spFarmPassword'] = $securePassword
-$OptionalParameters['spSvcPassword'] = $securePassword
-$OptionalParameters['spAppPoolPassword'] = $securePassword
-$OptionalParameters['spPassphrase'] = $securePassword
+if ($securePassword -eq $null) { $securePassword = Read-Host "Enter the password" -AsSecureString }
+$passwords = New-Object -TypeName HashTable
+$passwords['adminPassword'] = $securePassword
+$passwords['adfsSvcPassword'] = $securePassword
+$passwords['sqlSvcPassword'] = $securePassword
+$passwords['spSetupPassword'] = $securePassword
+$passwords['spFarmPassword'] = $securePassword
+$passwords['spSvcPassword'] = $securePassword
+$passwords['spAppPoolPassword'] = $securePassword
+$passwords['spPassphrase'] = $securePassword
 
-
-# DSC
-$DSCSourceFolder = 'DSC'
+# Additional settings
+$optionalParameters = New-Object -TypeName HashTable
+$overrideTemplateParametersFile = $true
+if ($overrideTemplateParametersFile -eq $true) {
+    $optionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
+    $optionalParameters['vaultName'] = "ydsp16adfsvault"
+    $optionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
+    $optionalParameters['dscSQLTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
+    $optionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
+    $optionalParameters['dscSPUpdateTagVersion'] = "3.0"
+}
 
 # Artifacts
+{
+$uploadArtifacts = $true
 $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts'
 $ArtifactStagingDirectory = "Artifacts"
-
 }
 
 ### Ensure connection to Azure RM
@@ -47,30 +58,26 @@ if ($azurecontext -eq $null){
     return
 }
 
-if ($GenerateDscArchives) {
-    $DSCSourceFolder = "F:\Job\Dev\GitHub\AzureRM-Templates\SharePoint\SP16-ADFS\DSC"
-    $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS", $DSCSourceFolder))
-    $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
-
-    # Create DSC configuration archive
-    if (Test-Path $DSCSourceFolder) {
-        $DSCSourceFilePaths = @(Get-ChildItem $DSCSourceFolder -File -Filter "*.ps1" | ForEach-Object -Process {$_.FullName})
-        foreach ($DSCSourceFilePath in $DSCSourceFilePaths) {
-            $DSCArchiveFilePath = $DSCSourceFilePath.Substring(0, $DSCSourceFilePath.Length - 4) + ".zip"
-            Publish-AzureRmVMDscConfiguration $DSCSourceFilePath -OutputArchivePath $DSCArchiveFilePath -Force -Verbose
+$generateDscArchives = $false
+# Create DSC archives
+if ($generateDscArchives) {
+    if (Test-Path $dscSourceFolder) {
+        $dscSourceFilePaths = @(Get-ChildItem $dscSourceFolder -File -Filter "*SPVM.ps1" | ForEach-Object -Process {$_.FullName})
+        foreach ($dscSourceFilePath in $dscSourceFilePaths) {
+            $dscArchiveFilePath = $dscSourceFilePath.Substring(0, $dscSourceFilePath.Length - 4) + ".zip"
+            Publish-AzureRmVMDscConfiguration $dscSourceFilePath -OutputArchivePath $dscArchiveFilePath -Force -Verbose
         }
     }
 }
 
-if ($UploadArtifacts) {
-	$ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine("C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS", $ArtifactStagingDirectory))
-    $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactStagingDirectory))
+if ($uploadArtifacts) {
+    $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $ArtifactStagingDirectory))
 
 	Set-Variable ArtifactsLocationName '_artifactsLocation' -Option ReadOnly -Force
     Set-Variable ArtifactsLocationSasTokenName '_artifactsLocationSasToken' -Option ReadOnly -Force
 
-    $OptionalParameters.Add($ArtifactsLocationName, $null)
-    $OptionalParameters.Add($ArtifactsLocationSasTokenName, $null)
+    $optionalParameters.Add($ArtifactsLocationName, $null)
+    $optionalParameters.Add($ArtifactsLocationSasTokenName, $null)
 
 	# Create a storage account name if none was provided
     if($StorageAccountName -eq "") {
@@ -90,10 +97,10 @@ if ($UploadArtifacts) {
     $StorageAccountContext = (Get-AzureRmStorageAccount | Where-Object{$_.StorageAccountName -eq $StorageAccountName}).Context
 
     # Generate the value for artifacts location if it is not provided in the parameter file
-    $ArtifactsLocation = $OptionalParameters[$ArtifactsLocationName]
+    $ArtifactsLocation = $optionalParameters[$ArtifactsLocationName]
     if ($ArtifactsLocation -eq $null) {
         $ArtifactsLocation = $StorageAccountContext.BlobEndPoint + $StorageContainerName
-        $OptionalParameters[$ArtifactsLocationName] = $ArtifactsLocation
+        $optionalParameters[$ArtifactsLocationName] = $ArtifactsLocation
     }
 
     # Copy files from the local storage staging location to the storage account container
@@ -106,12 +113,12 @@ if ($UploadArtifacts) {
     }
 
     # Generate the value for artifacts location SAS token if it is not provided in the parameter file
-    $ArtifactsLocationSasToken = $OptionalParameters[$ArtifactsLocationSasTokenName]
+    $ArtifactsLocationSasToken = $optionalParameters[$ArtifactsLocationSasTokenName]
     if ($ArtifactsLocationSasToken -eq $null) {
         # Create a SAS token for the storage container - this gives temporary read-only access to the container
         $ArtifactsLocationSasToken = New-AzureStorageContainerSASToken -Container $StorageContainerName -Context $StorageAccountContext -Permission r -ExpiryTime (Get-Date).AddHours(4)
         $ArtifactsLocationSasToken = ConvertTo-SecureString $ArtifactsLocationSasToken -AsPlainText -Force
-        $OptionalParameters[$ArtifactsLocationSasTokenName] = $ArtifactsLocationSasToken
+        $optionalParameters[$ArtifactsLocationSasTokenName] = $ArtifactsLocationSasToken
 
         $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($ArtifactsLocationSasToken)
         $UnsecureSASToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
@@ -128,33 +135,43 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
         -Verbose -Force
 }
 
-### Deploy template if it is valid
+### Configure Azure key vault
+$vault = Get-AzureRmKeyVault -VaultName $optionalParameters['vaultName'] -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue
+if ($vault -eq $null) {
+    $vault = New-AzureRmKeyVault -VaultName $optionalParameters['vaultName'] -ResourceGroupName $resourceGroupName -Location $resourceGroupLocation -EnabledForTemplateDeployment
+    Write-Host "Created Azure key vault " $vault.VaultName " with ResourceId " $vault.ResourceId
+}
+
+# Create one key per password and overrride password with the key vault secret
+$vaultSecrets = New-Object -TypeName HashTable
+foreach ($password in $passwords.GetEnumerator()) {
+    $secret = Set-AzureKeyVaultSecret -VaultName $optionalParameters['vaultName'] -Name $password.Name -SecretValue $password.Value
+    Write-Host "Created secret " $secret.Name " in Azure key vault " $vault.VaultName
+    $key = $secret.Name + "KeyName"
+    $vaultSecrets[$key] = $secret.Name
+}
+
+### Test template and deploy if it is valid, otherwise display error details
 $checkTemplate = Test-AzureRmResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
-    @OptionalParameters
+    -TemplateParameterFile $templateParametersFile `
+    @optionalParameters `
+    @vaultSecrets `
+    -Verbose
 
 if ($checkTemplate.Count -eq 0) {
     New-AzureRmResourceGroupDeployment `
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $TemplateFile `
-        @OptionalParameters `
+        -TemplateParameterFile $templateParametersFile `
+        @optionalParameters `
+        @vaultSecrets `
         -Verbose -Force
 }
-
-### Remove initial extension on SQL VM and add new one
-{
-$SQLVMname = "SQL"
-$previousCustomExtension = "PrepareSQLVM"
-$newCustomExtension = "ConfigureSQLVM"
-Remove-AzurermVMCustomScriptExtension -ResourceGroupName $resourceGroupName `
-    -VMName $SQLVMname –Name $previousCustomExtension -Force
-
-Set-AzureRMVMExtension –ResourceGroupName $resourceGroupName -Location $resourceGroupLocation `
-    -extensiontype "DSC" -name $newCustomExtension -Publisher "Microsoft.Powershell" `
-    -TypeHandlerVersion "2.9" -VMName $SQLVMname `
-    -Settings @{"workspaceId" = "WorkspaceID"} -ProtectedSettings @{"workspaceKey"= "workspaceID"}
+else {
+    $checkTemplate[0].Details
 }
 
 ### Shutdown VMs

@@ -1,0 +1,100 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "vmImagePublisher": {
+      "type": "string"
+    },
+    "vmImageOffer": {
+      "type": "string"
+    },
+    "vmImageSKU": {
+      "type": "string"
+    },
+    "vmNicName": {
+      "type": "string"
+    },
+    "vmOSDiskName": {
+      "type": "string"
+    },
+    "vmDataDiskName": {
+      "type": "string"
+    },
+    "storageAccountNamePrefix": {
+      "type": "string"
+    },
+    "storageContainerName": {
+      "type": "string"
+    },
+    "adminUserName": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "tags": {
+        "displayName": "[parameters('vmName')]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('vmImagePublisher')]",
+            "offer": "[parameters('vmImageOffer')]",
+            "sku": "[parameters('vmImageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[parameters('vmOSDiskName')]",
+            "vhd": {
+              "uri": "[concat('https://', concat(parameters('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', parameters('storageContainerName'), '/', parameters('vmOSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "vhd": {
+                "uri": "[concat('https://', concat(parameters('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', parameters('storageContainerName'), '/', parameters('vmDataDiskName'), '.vhd')]"
+              },
+              "name": "[parameters('vmDataDiskName')]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": "100",
+              "lun": 0
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('vmNicName'))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
