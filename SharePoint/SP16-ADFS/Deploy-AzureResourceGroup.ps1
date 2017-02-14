@@ -7,11 +7,11 @@ $resourceGroupLocation = 'westeurope'
 $resourceGroupName = 'yd-sp16adfs'
 $resourceDeploymentName = 'yd-sp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
-$templateParametersFile = 'azuredeploy.parameters.json'
+$templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
 #$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
-$templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFile))
+$templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 $dscSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, "DSC"))
 
 # Define passwords
@@ -32,10 +32,11 @@ $optionalParameters = New-Object -TypeName HashTable
 $overrideTemplateParametersFile = $true
 if ($overrideTemplateParametersFile -eq $true) {
     $optionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
-    $optionalParameters['vaultName'] = "ydsp16adfsvault2"
+    $optionalParameters['vaultName'] = "ydsp16adfsvault"
     $optionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
     $optionalParameters['dscSQLTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
     $optionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
+    $optionalParameters['dscSPUpdateTagVersion'] = "3.0"
 }
 
 # Artifacts
@@ -58,7 +59,7 @@ if ($azurecontext -eq $null){
 }
 
 $generateDscArchives = $false
-# Create DSC configuration archive
+# Create DSC archives
 if ($generateDscArchives) {
     if (Test-Path $dscSourceFolder) {
         $dscSourceFilePaths = @(Get-ChildItem $dscSourceFolder -File -Filter "*SPVM.ps1" | ForEach-Object -Process {$_.FullName})
@@ -138,13 +139,14 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
 $vault = Get-AzureRmKeyVault -VaultName $optionalParameters['vaultName'] -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue
 if ($vault -eq $null) {
     $vault = New-AzureRmKeyVault -VaultName $optionalParameters['vaultName'] -ResourceGroupName $resourceGroupName -Location $resourceGroupLocation -EnabledForTemplateDeployment
-    $vault.ResourceId
+    Write-Host "Created Azure key vault " $vault.VaultName " with ResourceId " $vault.ResourceId
 }
 
 # Create one key per password and overrride password with the key vault secret
 $vaultSecrets = New-Object -TypeName HashTable
 foreach ($password in $passwords.GetEnumerator()) {
     $secret = Set-AzureKeyVaultSecret -VaultName $optionalParameters['vaultName'] -Name $password.Name -SecretValue $password.Value
+    Write-Host "Created secret " $secret.Name " in Azure key vault " $vault.VaultName
     $key = $secret.Name + "KeyName"
     $vaultSecrets[$key] = $secret.Name
 }
@@ -153,6 +155,7 @@ foreach ($password in $passwords.GetEnumerator()) {
 $checkTemplate = Test-AzureRmResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
+    -TemplateParameterFile $templateParametersFile `
     @optionalParameters `
     @vaultSecrets `
     -Verbose
@@ -162,6 +165,7 @@ if ($checkTemplate.Count -eq 0) {
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $TemplateFile `
+        -TemplateParameterFile $templateParametersFile `
         @optionalParameters `
         @vaultSecrets `
         -Verbose -Force

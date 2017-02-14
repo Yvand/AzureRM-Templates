@@ -250,7 +250,7 @@
       "function": "ConfigureSPVM"
     },
     "keyVaultSecrets": {
-      "adminPasswordVault": {
+      "adminPassword": {
         "reference": {
           "keyVault": {
             "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
@@ -258,7 +258,7 @@
           "secretName": "[parameters('adminPasswordKeyName')]"
         }
       },
-      "adfsPasswordVault": {
+      "adfsPassword": {
         "reference": {
           "keyVault": {
             "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
@@ -266,7 +266,7 @@
           "secretName": "[parameters('adfsSvcPasswordKeyName')]"
         }
       },
-      "sqlSvcPasswordVault": {
+      "sqlSvcPassword": {
         "reference": {
           "keyVault": {
             "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
@@ -274,7 +274,7 @@
           "secretName": "[parameters('sqlSvcPasswordKeyName')]"
         }
       },
-      "spSetupPasswordVault": {
+      "spSetupPassword": {
         "reference": {
           "keyVault": {
             "id": "[concat(resourceGroup().id, '/providers/Microsoft.KeyVault/vaults/', parameters('vaultName'))]"
@@ -472,7 +472,7 @@
             "value": "[variables('dscConfigureDCVM').function]"
           },
           "dscUpdateTagVersion": {
-            "value": "[parameters('dscSQLUpdateTagVersion')]"
+            "value": "[parameters('dscDCUpdateTagVersion')]"
           },
           "domainFQDN": {
             "value": "[parameters('domainFQDN')]"
@@ -480,11 +480,11 @@
           "adminUserName": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": "[variables('keyVaultSecrets').adminPasswordVault]",
+          "adminPassword": "[variables('keyVaultSecrets').adminPassword]",
           "adfsSvcUserName": {
             "value": "[parameters('adfsSvcUserName')]"
           },
-          "adfsSvcPassword": "[variables('keyVaultSecrets').adfsPasswordVault]"
+          "adfsSvcPassword": "[variables('keyVaultSecrets').adfsPassword]"
         }
       }
     },
@@ -581,7 +581,7 @@
           "adminUserName": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": "[variables('keyVaultSecrets').adminPasswordVault]"
+          "adminPassword": "[variables('keyVaultSecrets').adminPassword]"
         }
       }
     },
@@ -678,7 +678,7 @@
           "adminUserName": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": "[variables('keyVaultSecrets').adminPasswordVault]"
+          "adminPassword": "[variables('keyVaultSecrets').adminPassword]"
         }
       }
     },
@@ -721,15 +721,15 @@
           "adminUserName": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": "[variables('keyVaultSecrets').adminPasswordVault]",
+          "adminPassword": "[variables('keyVaultSecrets').adminPassword]",
           "sqlSvcUserName": {
             "value": "[parameters('sqlSvcUserName')]"
           },
-          "sqlPassword": "[variables('keyVaultSecrets').sqlSvcPasswordVault]",
+          "sqlPassword": "[variables('keyVaultSecrets').sqlSvcPassword]",
           "spSetupUserName": {
             "value": "[parameters('spSetupUserName')]"
           },
-          "spSetupPassword": "[variables('keyVaultSecrets').spSetupPasswordVault]"
+          "spSetupPassword": "[variables('keyVaultSecrets').spSetupPassword]"
         }
       }
     },
@@ -761,7 +761,7 @@
             "value": "[variables('dscConfigureSPVM').function]"
           },
           "updateTagVersion": {
-            "value": "[parameters('dscSQLUpdateTagVersion')]"
+            "value": "[parameters('dscSPUpdateTagVersion')]"
           },
           "dnsServer": {
             "value": "[variables('vmDC').nicPrivateIPAddress]"
@@ -772,11 +772,11 @@
           "domainAdminUserName": {
             "value": "[parameters('adminUsername')]"
           },
-          "domainAdminPassword": "[variables('keyVaultSecrets').adminPasswordVault]",
+          "domainAdminPassword": "[variables('keyVaultSecrets').adminPassword]",
           "spSetupUserName": {
             "value": "[parameters('spSetupUserName')]"
           },
-          "spSetupPassword": "[variables('keyVaultSecrets').spSetupPasswordVault]",
+          "spSetupPassword": "[variables('keyVaultSecrets').spSetupPassword]",
           "spFarmUserName": {
             "value": "[parameters('spFarmUserName')]"
           },
