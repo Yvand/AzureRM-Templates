@@ -336,7 +336,7 @@ configuration ConfigureSPVM
         SPStateServiceApp StateServiceApp
         {
             Name                 = "State Service Application"
-            DatabaseName         = $SPDBPrefix + "_StateService"
+            DatabaseName         = $SPDBPrefix + "StateService"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPCreateFarm]CreateSPFarm"
         }
@@ -352,6 +352,20 @@ configuration ConfigureSPVM
             DependsOn            = "[SPCreateFarm]CreateSPFarm"
         }
 
+        SPUserProfileServiceApp UserProfileServiceApp
+        {
+            Name                 = "User Profile Service Application"
+            ApplicationPool      = "User Profile Service Application"
+            MySiteHostLocation   = "http://sp/sites/my"
+            ProfileDBName        = $SPDBPrefix + "Profiles"
+            SocialDBName         = $SPDBPrefix + "Social"
+            SyncDBName           = $SPDBPrefix + "Sync"
+            EnableNetBIOS        = $false
+            FarmAccount          = $SPFarmCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[SPDistributedCacheService]EnableDistributedCache"
+        }
+
         SPFarmSolution InstallLdapcp 
         {
             LiteralPath = "F:\Setup\LDAPCP.wsp"
@@ -361,7 +375,7 @@ configuration ConfigureSPVM
             PsDscRunAsCredential  = $SPSetupCredsQualified
             DependsOn = "[SPDistributedCacheService]EnableDistributedCache"
         }
-
+        
         SPWebApplication MainWebApp
         {
             Name                   = "SharePoint Sites"
@@ -372,7 +386,7 @@ configuration ConfigureSPVM
             DatabaseName           = $SPDBPrefix + "Content_80"
             Url                    = "http://sp"
             Port                   = 80
-            Ensure = "Present"
+            Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
             DependsOn              = "[SPFarmSolution]InstallLdapcp"
         }
@@ -383,6 +397,16 @@ configuration ConfigureSPVM
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             Name                     = "Team site"
             Template                 = "STS#0"
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            DependsOn                = "[SPWebApplication]MainWebApp"
+        }
+
+        SPSite MySiteHost
+        {
+            Url                      = "http://sp/sites/my"
+            OwnerAlias               = $DomainAdminCredsQualified.UserName
+            Name                     = "MySite host"
+            Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
             DependsOn                = "[SPWebApplication]MainWebApp"
         }
