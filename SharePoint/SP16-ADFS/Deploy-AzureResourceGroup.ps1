@@ -31,12 +31,12 @@ $passwords['spPassphrase'] = $securePassword
 $optionalParameters = New-Object -TypeName HashTable
 $overrideTemplateParametersFile = $true
 if ($overrideTemplateParametersFile -eq $true) {
-    $optionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/master/SharePoint/SP16-ADFS"
+    $optionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
     $optionalParameters['vaultName'] = "ydsp16adfsvault"
-    $optionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
-    $optionalParameters['dscSQLTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
-    $optionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
-    $optionalParameters['dscSPUpdateTagVersion'] = "3.0"
+    $optionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
+    $optionalParameters['dscSQLTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
+    $optionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
+    $optionalParameters['dscSPUpdateTagVersion'] = "1.0"
 }
 
 # Artifacts
