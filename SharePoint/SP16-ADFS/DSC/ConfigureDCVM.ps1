@@ -210,7 +210,7 @@
                 Write-Verbose -Message "Creating ADFS farm 'ADFS.$using:DomainName'"
 
                 $Key = [byte]1..16
-                $using:AdfsSvcCredsQualified.Password | ConvertFrom-SecureString -Key $Key | Set-Content c:\cred.key
+                $using:DomainCredsNetbios.Password | ConvertFrom-SecureString -Key $Key | Set-Content c:\cred.key
 
                 $ScriptBlock = {
                     param
@@ -242,7 +242,7 @@
 
                 $stdOutLog = "C:\stdout.log"
                 $stdErrLog = "C:\stderr.log"
-                Start-Process -LoadUserProfile -Wait -FilePath $PSHOME\powershell.exe -ArgumentList "-Command & {$ScriptBlock CreateADFSFarm}", "$using:DomainName", $using:DomainCredsNetbios.UserName -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
+                Start-Process -LoadUserProfile -Credential $DomainCredsNetbios -Wait -FilePath $PSHOME\powershell.exe -ArgumentList "-Command & {$ScriptBlock CreateADFSFarm}", "$using:DomainName", $using:DomainCredsNetbios.UserName -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
                 Write-Verbose -Message "ADFS farm successfully created"
             }
             GetScript =  
