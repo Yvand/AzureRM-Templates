@@ -11,7 +11,7 @@ $StorageAccountName = "ydsp16adfsst0"
 $blobStorageContainer = "vhds"
 $vmsToDelete = @("SP", "SQL", "DC")
 #$vmsToDelete = @("SP", "SQL")
-$vmsToDelete = @("SP")
+$vmsToDelete = @("DC")
 Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccountName 
 Get-AzureRmContext
 
