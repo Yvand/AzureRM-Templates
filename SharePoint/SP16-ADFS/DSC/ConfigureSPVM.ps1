@@ -352,20 +352,6 @@ configuration ConfigureSPVM
             DependsOn            = "[SPCreateFarm]CreateSPFarm"
         }
 
-        SPUserProfileServiceApp UserProfileServiceApp
-        {
-            Name                 = "User Profile Service Application"
-            ApplicationPool      = "User Profile Service Application"
-            MySiteHostLocation   = "http://sp/sites/my"
-            ProfileDBName        = $SPDBPrefix + "Profiles"
-            SocialDBName         = $SPDBPrefix + "Social"
-            SyncDBName           = $SPDBPrefix + "Sync"
-            EnableNetBIOS        = $false
-            FarmAccount          = $SPFarmCredsQualified
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[SPDistributedCacheService]EnableDistributedCache"
-        }
-
         SPFarmSolution InstallLdapcp 
         {
             LiteralPath = "F:\Setup\LDAPCP.wsp"
@@ -391,9 +377,19 @@ configuration ConfigureSPVM
             DependsOn              = "[SPFarmSolution]InstallLdapcp"
         }
 
-        SPSite TeamSite
+        SPSite DevSite
         {
             Url                      = "http://sp"
+            OwnerAlias               = $DomainAdminCredsQualified.UserName
+            Name                     = "Developer site"
+            Template                 = "DEV#0"
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            DependsOn                = "[SPWebApplication]MainWebApp"
+        }
+
+        SPSite TeamSite
+        {
+            Url                      = "http://sp/sites/team"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             Name                     = "Team site"
             Template                 = "STS#0"
@@ -409,6 +405,37 @@ configuration ConfigureSPVM
             Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
             DependsOn                = "[SPWebApplication]MainWebApp"
+        }
+
+        $serviceAppPoolName = "SharePoint Service Applications"
+        SPServiceAppPool MainServiceAppPool
+        {
+            Name                 = $serviceAppPoolName
+            ServiceAccount       = $SPSvcCredsQualified.UserName
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+        }
+
+        SPServiceInstance UPAServiceInstance
+        {  
+            Name                 = "User Profile Service"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+        }
+
+        SPUserProfileServiceApp UserProfileServiceApp
+        {
+            Name                 = "User Profile Service Application"
+            ApplicationPool      = $serviceAppPoolName
+            MySiteHostLocation   = "http://sp/sites/my"
+            ProfileDBName        = $SPDBPrefix + "Profiles"
+            SocialDBName         = $SPDBPrefix + "Social"
+            SyncDBName           = $SPDBPrefix + "Sync"
+            EnableNetBIOS        = $false
+            FarmAccount          = $SPFarmCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPSite]MySiteHost"
         }
     }
 }
