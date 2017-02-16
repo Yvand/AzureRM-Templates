@@ -127,6 +127,27 @@
             CAType = "EnterpriseRootCA"
             DependsOn = "[WindowsFeature]AddCertAuthority"              
         }
+
+        xScript CreateLocalProfile
+        {
+            SetScript = 
+            {
+                Start-Process cmd.exe /c -LoadUserProfile -Credential $DomainCredsNetbios -Wait
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                $result = "false"
+                return @{ "Result" = $result }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                return $false
+            }
+            PsDscRunAsCredential = $DomainCredsNetbios
+            DependsOn = '[xADCSCertificationAuthority]ADCS'
+        }
         
         #**********************************************************
         # Configure AD FS
