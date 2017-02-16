@@ -231,7 +231,7 @@
                 Write-Verbose -Message "Creating ADFS farm 'ADFS.$using:DomainName'"
 
                 $Key = [byte]1..16
-                $using:DomainCredsNetbios.Password | ConvertFrom-SecureString -Key $Key | Set-Content c:\cred.key
+                $using:AdfsSvcCreds.Password | ConvertFrom-SecureString -Key $Key | Set-Content c:\cred.key
 
                 $ScriptBlock = {
                     param
@@ -241,6 +241,7 @@
                     )
                     function CreateADFSFarm
                     {
+                        <#
                         $Key = [byte]1..16
                         $encrypted = Get-Content c:\cred.key | ConvertTo-SecureString -Key $Key
                         $AdfsSvcCredsQualified = New-Object System.Management.Automation.PsCredential($AdfsSvcUsernameQualified, $encrypted)
@@ -258,13 +259,14 @@
 		                $runParams.Add("""SigningCertificateThumbprint""", $signingCert.Thumbprint)
 		                $runParams.Add("""DecryptionCertificateThumbprint""", $decryptionCert.Thumbprint)
 		                $runParams.Add("""Credential""", $AdfsSvcCredsQualified)
-		                <#Install-AdfsFarm @runParams -OverwriteConfiguration#>
+		                #Install-AdfsFarm @runParams -OverwriteConfiguration
+                        #>
                     }
                 }
 
                 $stdOutLog = "C:\stdout.log"
                 $stdErrLog = "C:\stderr.log"
-                Start-Process -LoadUserProfile -Credential $DomainCredsNetbios -Wait -FilePath $PSHOME\powershell.exe -ArgumentList "-Command & {$ScriptBlock CreateADFSFarm}", "$using:DomainName", $using:DomainCredsNetbios.UserName -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
+                Start-Process -LoadUserProfile -Credential $DomainCredsNetbios -Wait -FilePath $PSHOME\powershell.exe -ArgumentList "-Command & {$ScriptBlock CreateADFSFarm}", "$using:DomainName", $using:AdfsSvcCreds.UserName -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
                 Write-Verbose -Message "ADFS farm successfully created"
             }
             GetScript =  
