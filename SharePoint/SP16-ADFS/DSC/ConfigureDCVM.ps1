@@ -237,7 +237,7 @@
 		                $runParams.Add("""SigningCertificateThumbprint""", $signingCert.Thumbprint)
 		                $runParams.Add("""DecryptionCertificateThumbprint""", $decryptionCert.Thumbprint)
 		                $runParams.Add("""Credential""", $AdfsSvcCredsQualified)
-		                Install-AdfsFarm @runParams -OverwriteConfiguration
+		                <#Install-AdfsFarm @runParams -OverwriteConfiguration#>
                     }
                 }
 
