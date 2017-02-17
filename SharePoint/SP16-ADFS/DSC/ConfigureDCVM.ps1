@@ -132,7 +132,7 @@
         {
             SetScript = 
             {
-                Start-Process cmd.exe /c -LoadUserProfile -Credential $DomainCredsNetbios -Wait
+                Start-Process cmd.exe /c -LoadUserProfile -Credential $using:DomainCredsNetbios -Wait
             }
             GetScript =  
             {
@@ -266,7 +266,7 @@
 
                 $stdOutLog = "C:\stdout.log"
                 $stdErrLog = "C:\stderr.log"
-                #Start-Process -LoadUserProfile -Credential $DomainCredsNetbios -Wait -FilePath $PSHOME\powershell.exe -ArgumentList "-Command & {$ScriptBlock CreateADFSFarm}", "$using:DomainName", $using:AdfsSvcCreds.UserName -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
+                #Start-Process -LoadUserProfile -Credential $using:DomainCredsNetbios -Wait -FilePath $PSHOME\powershell.exe -ArgumentList "-Command & {$ScriptBlock CreateADFSFarm}", "$using:DomainName", $using:AdfsSvcCreds.UserName -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
                 Write-Verbose -Message "ADFS farm successfully created"
             }
             GetScript =  
@@ -301,7 +301,7 @@
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[WindowsFeature]AddADFS"
         }
-        
+        <#
 		xScript CreateADFSRelyingParty
         {
             SetScript = 
@@ -342,6 +342,7 @@
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[xScript]CreateADFSFarm"
         }
+        #>
    }
 }
 
