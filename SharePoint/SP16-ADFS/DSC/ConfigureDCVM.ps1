@@ -241,26 +241,7 @@
                     )
                     function CreateADFSFarm
                     {
-                        <#
-                        $Key = [byte]1..16
-                        $encrypted = Get-Content c:\cred.key | ConvertTo-SecureString -Key $Key
-                        $AdfsSvcCredsQualified = New-Object System.Management.Automation.PsCredential($AdfsSvcUsernameQualified, $encrypted)
-
-                        $siteCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.$DomainName"""
-		                $signingCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.Signing"""
-		                $decryptionCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.Decryption"""
-
-                        New-Item """C:\new_file.txt""" -type file -force -value """Creating ADFS farm 'ADFS.$DomainName' as $AdfsSvcUsernameQualified sitecert $sitecert $signingCert $decryptionCert"""
-
-		                $runParams = @{}
-		                $runParams.Add("""CertificateThumbprint""", $siteCert.Thumbprint)
-		                $runParams.Add("""FederationServiceName""", """ADFS.$DomainName""")
-		                $runParams.Add("""ServiceAccountCredential""", $AdfsSvcCredsQualified)
-		                $runParams.Add("""SigningCertificateThumbprint""", $signingCert.Thumbprint)
-		                $runParams.Add("""DecryptionCertificateThumbprint""", $decryptionCert.Thumbprint)
-		                $runParams.Add("""Credential""", $AdfsSvcCredsQualified)
-		                #Install-AdfsFarm @runParams -OverwriteConfiguration
-                        #>
+                        
                     }
                 }
 
