@@ -266,7 +266,7 @@
                     return $false
                 }
             }
-            PsDscRunAsCredential = $DomainCredsNetbios
+            PsDscRunAsCredential = $Admincreds
             DependsOn = "[xPendingReboot]RebootAfterAddADFS"
         }
    }
