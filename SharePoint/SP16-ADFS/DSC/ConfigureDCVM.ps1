@@ -224,6 +224,12 @@
 
         WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
         
+        xPendingReboot RebootAfterAddADFS
+        { 
+            Name = 'RebootAfterAddADFS'
+            DependsOn = "[WindowsFeature]AddADFS"
+        }
+
         Script CreateADFSFarm
         {
             SetScript = 
@@ -261,7 +267,7 @@
                 }
             }
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[WindowsFeature]AddADFS"
+            DependsOn = "[xPendingReboot]RebootAfterAddADFS"
         }
         <#
 		xScript CreateADFSRelyingParty
