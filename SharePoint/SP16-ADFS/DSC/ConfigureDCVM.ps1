@@ -230,7 +230,7 @@
             DependsOn = "[WindowsFeature]AddADFS"
         }
 
-        Script CreateADFSFarm
+        xScript CreateADFSFarm
         {
             SetScript = 
             {
