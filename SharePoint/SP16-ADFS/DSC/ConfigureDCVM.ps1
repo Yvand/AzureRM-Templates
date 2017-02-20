@@ -269,48 +269,6 @@
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[xPendingReboot]RebootAfterAddADFS"
         }
-        <#
-		xScript CreateADFSRelyingParty
-        {
-            SetScript = 
-            {
-                Write-Verbose -Message "Creating Relying Party '$using:ADFSRelyingPartyTrustName' in ADFS farm"
-                Add-ADFSRelyingPartyTrust -Name $using:ADFSRelyingPartyTrustName `
-                    -Identifier "https://$using:ADFSRelyingPartyTrustName.$using:DomainName" `
-                    -ClaimsProviderName "Active Directory" `
-                    -Enabled $true `
-                    -WSFedEndpoint "https://$using:ADFSRelyingPartyTrustName.$using:DomainName/_trust/" `
-                    -IssuanceAuthorizationRules '=> issue (Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");' `
-                    -Confirm:$false 
-                Write-Verbose -Message "Relying Party '$using:ADFSRelyingPartyTrustName' successfully created"
-            }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                $result = "false"
-                $rpFound = Get-ADFSRelyingPartyTrust -Name $using:ADFSRelyingPartyTrustName                
-                if ($rpFound -ne $null)
-                {
-                    $result = "true"
-                }
-                return @{ "Result" = $result }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                $rpFound = Get-ADFSRelyingPartyTrust -Name $using:ADFSRelyingPartyTrustName                
-                if ($rpFound -ne $null)
-                {
-                    Write-Verbose -Message "Relying Party '$using:ADFSRelyingPartyTrustName' already exists"
-                    return $true
-                }
-                Write-Verbose -Message "Relying Party '$using:ADFSRelyingPartyTrustName' does not exist"
-                return $false
-            }
-            PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[xScript]CreateADFSFarm"
-        }
-        #>
    }
 }
 
