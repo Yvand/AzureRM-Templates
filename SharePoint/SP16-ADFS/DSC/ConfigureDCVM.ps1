@@ -224,7 +224,7 @@
 
         WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
         
-        xScript CreateADFSFarm
+        Script CreateADFSFarm
         {
             SetScript = 
             {
