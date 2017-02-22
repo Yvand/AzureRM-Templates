@@ -152,7 +152,6 @@
         #**********************************************************
         # Configure AD FS
         #**********************************************************
-        <#
         xCertReq ADFSSiteCert
         {
             CARootName                = $DomainNetbiosName + "-DC-CA"
@@ -201,9 +200,7 @@
             Credential                = $DomainCredsNetbios
             DependsOn = '[xADCSCertificationAuthority]ADCS'
         }
-        #>
 
-        <#
         xADUser CreateAdfsSvcAccount
         {
             DomainAdministratorCredential = $DomainCredsNetbios
@@ -212,8 +209,7 @@
             Password = $AdfsSvcCreds
             Ensure = "Present"
             PasswordAuthentication = 'Negotiate'
-            #DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert"
-            DependsOn = "[xADCSCertificationAuthority]ADCS"
+            DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert"
         }
 
         Group AddAdfsSvcAccountToDomainAdminsGroup
@@ -226,7 +222,7 @@
             DependsOn = "[xADUser]CreateAdfsSvcAccount"
         }
 
-        #WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
+        WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
         
         xPendingReboot RebootAfterAddADFS
         { 
@@ -234,13 +230,11 @@
             #DependsOn = "[WindowsFeature]AddADFS"
             DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup"
         }
-        #>
 
         xScript CreateADFSFarm
         {
             SetScript = 
             {
-                <#
                 Write-Verbose -Message "Creating ADFS farm 'ADFS.$using:DomainName'"
 
                 $Key = [byte]1..16
@@ -270,7 +264,7 @@
 		                $runParams.Add("""ServiceAccountCredential""", $AdfsSvcCredsQualified)
 		                $runParams.Add("""SigningCertificateThumbprint""", $signingCert.Thumbprint)
 		                $runParams.Add("""DecryptionCertificateThumbprint""", $decryptionCert.Thumbprint)
-		                $runParams.Add("""Credential""", $AdfsSvcCredsQualified)
+		                #$runParams.Add("""Credential""", $AdfsSvcCredsQualified)
 		                #Install-AdfsFarm @runParams -OverwriteConfiguration
                     }
                 }
@@ -278,7 +272,6 @@
                 $stdOutLog = "C:\stdout.log"
                 $stdErrLog = "C:\stderr.log"
                 Start-Process -LoadUserProfile -Credential $using:DomainCredsNetbios -Wait -FilePath $PSHOME\powershell.exe -ArgumentList "-Command & {$ScriptBlock CreateADFSFarm}", "$using:DomainName", $using:AdfsSvcCreds.UserName -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
-                #>
                 Write-Verbose -Message "ADFS farm successfully created"
             }
             GetScript =  
@@ -314,11 +307,9 @@
                 }
             }
             #PsDscRunAsCredential = $DomainCredsNetbios
-            #DependsOn = "[xPendingReboot]RebootAfterAddADFS"
-            DependsOn = "[xScript]CreateLocalProfile"
+            DependsOn = "[xPendingReboot]RebootAfterAddADFS"
         }
 
-        <#
 		xScript CreateADFSRelyingParty
         {
             SetScript = 
@@ -356,10 +347,9 @@
                 Write-Verbose -Message "Relying Party '$using:ADFSRelyingPartyTrustName' does not exist"
                 return $false
             }
-            PsDscRunAsCredential = $DomainCredsNetbios
+            #PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[xScript]CreateADFSFarm"
         }
-        #>
    }
 }
 
