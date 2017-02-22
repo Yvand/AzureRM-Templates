@@ -152,6 +152,7 @@
         #**********************************************************
         # Configure AD FS
         #**********************************************************
+        <#
         xCertReq ADFSSiteCert
         {
             CARootName                = $DomainNetbiosName + "-DC-CA"
@@ -199,7 +200,8 @@
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
             DependsOn = '[xADCSCertificationAuthority]ADCS'
-        }        
+        }
+        #>
 
         xADUser CreateAdfsSvcAccount
         {
@@ -209,7 +211,8 @@
             Password = $AdfsSvcCreds
             Ensure = "Present"
             PasswordAuthentication = 'Negotiate'
-            DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert"
+            #DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert"
+            DependsOn = "[xADCSCertificationAuthority]ADCS"
         }
 
         Group AddAdfsSvcAccountToDomainAdminsGroup
@@ -234,7 +237,45 @@
         {
             SetScript = 
             {
-                            
+                <#
+                Write-Verbose -Message "Creating ADFS farm 'ADFS.$using:DomainName'"
+
+                $Key = [byte]1..16
+                $using:AdfsSvcCreds.Password | ConvertFrom-SecureString -Key $Key | Set-Content c:\cred.key
+
+                $ScriptBlock = {
+                    param
+                    (
+                        [string]$DomainName = $args[0],
+                        [string]$AdfsSvcUsernameQualified = $args[1]
+                    )
+                    function CreateADFSFarm
+                    {
+                        $Key = [byte]1..16
+                        $encrypted = Get-Content c:\cred.key | ConvertTo-SecureString -Key $Key
+                        $AdfsSvcCredsQualified = New-Object System.Management.Automation.PsCredential($AdfsSvcUsernameQualified, $encrypted)
+
+                        $siteCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.$DomainName"""
+		                $signingCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.Signing"""
+		                $decryptionCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.Decryption"""
+
+                        New-Item """C:\new_file.txt""" -type file -force -value """Creating ADFS farm 'ADFS.$DomainName' as $AdfsSvcUsernameQualified sitecert $sitecert $signingCert $decryptionCert"""
+
+		                $runParams = @{}
+		                $runParams.Add("""CertificateThumbprint""", $siteCert.Thumbprint)
+		                $runParams.Add("""FederationServiceName""", """ADFS.$DomainName""")
+		                $runParams.Add("""ServiceAccountCredential""", $AdfsSvcCredsQualified)
+		                $runParams.Add("""SigningCertificateThumbprint""", $signingCert.Thumbprint)
+		                $runParams.Add("""DecryptionCertificateThumbprint""", $decryptionCert.Thumbprint)
+		                $runParams.Add("""Credential""", $AdfsSvcCredsQualified)
+		                #Install-AdfsFarm @runParams -OverwriteConfiguration
+                    }
+                }
+
+                $stdOutLog = "C:\stdout.log"
+                $stdErrLog = "C:\stderr.log"
+                Start-Process -LoadUserProfile -Credential $using:DomainCredsNetbios -Wait -FilePath $PSHOME\powershell.exe -ArgumentList "-Command & {$ScriptBlock CreateADFSFarm}", "$using:DomainName", $using:AdfsSvcCreds.UserName -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
+                #>
                 Write-Verbose -Message "ADFS farm successfully created"
             }
             GetScript =  
@@ -269,6 +310,49 @@
             PsDscRunAsCredential = $Admincreds
             DependsOn = "[xPendingReboot]RebootAfterAddADFS"
         }
+
+        <#
+		xScript CreateADFSRelyingParty
+        {
+            SetScript = 
+            {
+                Write-Verbose -Message "Creating Relying Party '$using:ADFSRelyingPartyTrustName' in ADFS farm"
+                Add-ADFSRelyingPartyTrust -Name $using:ADFSRelyingPartyTrustName `
+                    -Identifier "https://$using:ADFSRelyingPartyTrustName.$using:DomainName" `
+                    -ClaimsProviderName "Active Directory" `
+                    -Enabled $true `
+                    -WSFedEndpoint "https://$using:ADFSRelyingPartyTrustName.$using:DomainName/_trust/" `
+                    -IssuanceAuthorizationRules '=> issue (Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");' `
+                    -Confirm:$false 
+                Write-Verbose -Message "Relying Party '$using:ADFSRelyingPartyTrustName' successfully created"
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                $result = "false"
+                $rpFound = Get-ADFSRelyingPartyTrust -Name $using:ADFSRelyingPartyTrustName                
+                if ($rpFound -ne $null)
+                {
+                    $result = "true"
+                }
+                return @{ "Result" = $result }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                $rpFound = Get-ADFSRelyingPartyTrust -Name $using:ADFSRelyingPartyTrustName                
+                if ($rpFound -ne $null)
+                {
+                    Write-Verbose -Message "Relying Party '$using:ADFSRelyingPartyTrustName' already exists"
+                    return $true
+                }
+                Write-Verbose -Message "Relying Party '$using:ADFSRelyingPartyTrustName' does not exist"
+                return $false
+            }
+            PsDscRunAsCredential = $DomainCredsNetbios
+            DependsOn = "[xScript]CreateADFSFarm"
+        }
+        #>
    }
 }
 
