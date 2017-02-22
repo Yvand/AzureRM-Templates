@@ -203,6 +203,7 @@
         }
         #>
 
+        <#
         xADUser CreateAdfsSvcAccount
         {
             DomainAdministratorCredential = $DomainCredsNetbios
@@ -233,6 +234,7 @@
             #DependsOn = "[WindowsFeature]AddADFS"
             DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup"
         }
+        #>
 
         xScript CreateADFSFarm
         {
@@ -281,6 +283,8 @@
             }
             GetScript =  
             {
+                $result = "false"
+                return @{ "Result" = $result }
                 # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                 $result = "true"
                 try
@@ -295,6 +299,7 @@
             }
             TestScript = 
             {
+                return $false
                 # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
                 try
                 {
@@ -309,7 +314,8 @@
                 }
             }
             #PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[xPendingReboot]RebootAfterAddADFS"
+            #DependsOn = "[xPendingReboot]RebootAfterAddADFS"
+            DependsOn = "[xScript]CreateLocalProfile"
         }
 
         <#
