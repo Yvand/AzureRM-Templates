@@ -237,41 +237,21 @@
             {
                 Write-Verbose -Message "Creating ADFS farm 'ADFS.$using:DomainName'"
 
-                $Key = [byte]1..16
-                $using:AdfsSvcCreds.Password | ConvertFrom-SecureString -Key $Key | Set-Content c:\cred.key
+                $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.$DomainName"
+                $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.Signing"
+                $decryptionCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.Decryption"
 
-                $ScriptBlock = {
-                    param
-                    (
-                        [string]$DomainName = $args[0],
-                        [string]$AdfsSvcUsernameQualified = $args[1]
-                    )
-                    function CreateADFSFarm
-                    {
-                        $Key = [byte]1..16
-                        $encrypted = Get-Content c:\cred.key | ConvertTo-SecureString -Key $Key
-                        $AdfsSvcCredsQualified = New-Object System.Management.Automation.PsCredential($AdfsSvcUsernameQualified, $encrypted)
+                New-Item "C:\new_file.txt" -type file -force -value "Creating ADFS farm 'ADFS.$using:DomainName' as $using:AdfsSvcUsernameQualified sitecert $sitecert $signingCert $decryptionCert"
 
-                        $siteCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.$DomainName"""
-		                $signingCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.Signing"""
-		                $decryptionCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.Decryption"""
+                $runParams = @{}
+                $runParams.Add("CertificateThumbprint", $siteCert.Thumbprint)
+                $runParams.Add("FederationServiceName", "ADFS.$using:DomainName")
+                $runParams.Add("ServiceAccountCredential", $using:AdfsSvcCredsQualified)
+                $runParams.Add("SigningCertificateThumbprint", $signingCert.Thumbprint)
+                $runParams.Add("DecryptionCertificateThumbprint", $decryptionCert.Thumbprint)
+                $runParams.Add("Credential", $using:DomainCredsNetbios)
+                Install-AdfsFarm @runParams -OverwriteConfiguration
 
-                        New-Item """C:\new_file.txt""" -type file -force -value """Creating ADFS farm 'ADFS.$DomainName' as $AdfsSvcUsernameQualified sitecert $sitecert $signingCert $decryptionCert"""
-
-		                $runParams = @{}
-		                $runParams.Add("""CertificateThumbprint""", $siteCert.Thumbprint)
-		                $runParams.Add("""FederationServiceName""", """ADFS.$DomainName""")
-		                $runParams.Add("""ServiceAccountCredential""", $AdfsSvcCredsQualified)
-		                $runParams.Add("""SigningCertificateThumbprint""", $signingCert.Thumbprint)
-		                $runParams.Add("""DecryptionCertificateThumbprint""", $decryptionCert.Thumbprint)
-		                #$runParams.Add("""Credential""", $AdfsSvcCredsQualified)
-		                #Install-AdfsFarm @runParams -OverwriteConfiguration
-                    }
-                }
-
-                $stdOutLog = "C:\stdout.log"
-                $stdErrLog = "C:\stderr.log"
-                Start-Process -LoadUserProfile -Credential $using:DomainCredsNetbios -Wait -FilePath $PSHOME\powershell.exe -ArgumentList "-Command & {$ScriptBlock CreateADFSFarm}", "$using:DomainName", $using:AdfsSvcCreds.UserName -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
                 Write-Verbose -Message "ADFS farm successfully created"
             }
             GetScript =  
