@@ -241,7 +241,7 @@
                 $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.Signing"
                 $decryptionCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.Decryption"
 
-                New-Item "C:\new_file.txt" -type file -force -value "Creating ADFS farm 'ADFS.$using:DomainName' as $using:AdfsSvcUsernameQualified sitecert $sitecert $signingCert $decryptionCert"
+                New-Item "C:\new_file.txt" -type file -force -value "Creating ADFS farm 'ADFS.$using:DomainName' with certs: $sitecert $signingCert $decryptionCert"
 
                 $runParams = @{}
                 $runParams.Add("CertificateThumbprint", $siteCert.Thumbprint)
