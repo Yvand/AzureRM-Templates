@@ -225,12 +225,13 @@
             DependsOn = "[xADUser]CreateAdfsSvcAccount"
         }
 
-        WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
+        #WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
         
         xPendingReboot RebootAfterAddADFS
         { 
             Name = 'RebootAfterAddADFS'
-            DependsOn = "[WindowsFeature]AddADFS"
+            #DependsOn = "[WindowsFeature]AddADFS"
+            DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup"
         }
 
         xScript CreateADFSFarm
