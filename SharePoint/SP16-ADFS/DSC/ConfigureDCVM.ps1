@@ -224,11 +224,27 @@
 
         WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
         
-        xPendingReboot RebootAfterAddADFS
-        { 
-            Name = 'RebootAfterAddADFS'
-            #DependsOn = "[WindowsFeature]AddADFS"
-            DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup"
+        xScript ExportCertificates
+        {
+            SetScript = 
+            {
+                Write-Verbose -Message "Exporting public key of certificates..."
+                $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS Signing"
+                $signingCert| Export-Certificate -FilePath "F:\Setup\ADFS Signing.cer"
+                Get-ChildItem -Path "cert:\LocalMachine\Root\" | ?{$_.Subject -eq  $signingCert.Issuer}| Select -First 1| Export-Certificate -FilePath "F:\Setup\ADFS Signing issuer.cer"
+                Write-Verbose -Message "Public key of certificates successfully exported"
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            DependsOn = "[WindowsFeature]AddADFS"
         }
 
         cADFSFarm CreateADFSFarm
@@ -245,7 +261,7 @@
             DecryptionCertificateName = "ADFS.Decryption"
             Ensure= 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[xPendingReboot]RebootAfterAddADFS"
+            DependsOn = "[WindowsFeature]AddADFS"
         }
 
         cADFSRelyingPartyTrust CreateADFSRelyingParty
@@ -255,6 +271,16 @@
             ClaimsProviderName = @("Active Directory")
             WsFederationEndpoint = "https://$ADFSRelyingPartyTrustName.$DomainName/_trust/"
             IssuanceAuthorizationRules = '=> issue (Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
+            IssuanceTransformRules = @"
+@RuleTemplate = "LdapClaims"
+@RuleName = "AD"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+=> issue(
+store = "Active Directory", 
+types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"), 
+query = ";mail,tokenGroups(domainQualifiedName);{0}", 
+param = c.Value);
+"@
             ProtocolProfile = "WsFed-SAML"
             Ensure= 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
