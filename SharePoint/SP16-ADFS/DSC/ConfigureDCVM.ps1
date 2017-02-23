@@ -283,7 +283,7 @@
                     return $false
                 }
             }
-            Credential = $DomainCredsNetbios
+            #Credential = $DomainCredsNetbios
             DependsOn = "[xPendingReboot]RebootAfterAddADFS"
         }
 
