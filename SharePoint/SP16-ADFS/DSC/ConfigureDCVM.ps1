@@ -243,9 +243,21 @@
             CertificateName = "ADFS.$DomainName"
             SigningCertificateName = "ADFS.Signing"
             DecryptionCertificateName = "ADFS.Decryption"
-            Ensure= 'Present'             
+            Ensure= 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[xPendingReboot]RebootAfterAddADFS"
+        }
+
+        cADFSRelyingPartyTrust CreateADFSRelyingParty
+        {
+            Name = $ADFSRelyingPartyTrustName
+            Identifier = "https://$ADFSRelyingPartyTrustName.$DomainName"
+            ClaimsProviderName = @("Active Directory")
+            WsFederationEndpoint = "https://$ADFSRelyingPartyTrustName.$DomainName/_trust/"
+            IssuanceAuthorizationRules = '=> issue (Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
+            Ensure= 'Present'
+            PsDscRunAsCredential = $DomainCredsNetbios
+            DependsOn = "[cADFSFarm]CreateADFSFarm"
         }
         <#
         xScript CreateADFSFarm
@@ -303,7 +315,6 @@
             #Credential = $DomainCredsNetbios
             DependsOn = "[xPendingReboot]RebootAfterAddADFS"
         }
-        #>
 
 		xScript CreateADFSRelyingParty
         {
@@ -346,6 +357,7 @@
             #DependsOn = "[xScript]CreateADFSFarm"
             DependsOn = "[cADFSFarm]CreateADFSFarm"
         }
+        #>
    }
 }
 
