@@ -231,15 +231,19 @@
             DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup"
         }
 
+        $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.$DomainName"
+        $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.Signing"
+        $decryptionCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.Decryption"
+
         cADFSFarm CreateADFSFarm
         {
             ServiceCredential = $AdfsSvcCredsQualified
             InstallCredential = $DomainCredsNetbios
-            CertificateThumbprint = "4564564"
-            DisplayName = "ADFS"
-            ServiceName = "ADFS"
-            SigningCertificateThumbprint = "45645645"
-            DecryptionCertificateThumbprint = "454545548"
+            CertificateThumbprint = $siteCert
+            DisplayName = "ADFS.$DomainName"
+            ServiceName = "ADFS.$DomainName"
+            SigningCertificateThumbprint = $signingCert
+            DecryptionCertificateThumbprint = $decryptionCert
             Ensure= 'Present'             
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[xPendingReboot]RebootAfterAddADFS"
