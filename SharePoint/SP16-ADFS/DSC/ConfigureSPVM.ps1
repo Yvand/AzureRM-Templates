@@ -194,6 +194,16 @@ configuration ConfigureSPVM
             DependsOn = "[File]AccountsProvisioned"
         }
 
+        File DirectoryCopy
+        {
+            Ensure = "Present"
+            Type = "Directory" # Default is "File".
+            Recurse = $true # Ensure presence of subdirectories, too
+            SourcePath = "\\DC\F$\Setup"
+            DestinationPath = "F:\Setup\Certificates"
+            DependsOn = "[xRemoteFile]DownloadLdapcp"
+        }
+
         <#
         xRemoteFile Download201612CU
         {  
