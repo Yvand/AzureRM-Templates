@@ -17,7 +17,7 @@
         [String]$ADFSRelyingPartyTrustName = "SPSites"
     ) 
     
-    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot
+    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS
     [System.Management.Automation.PSCredential ]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential ]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
     $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -231,6 +231,20 @@
             DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup"
         }
 
+        cADFSFarm CreateADFSFarm
+        {
+            ServiceCredential = $AdfsSvcCredsQualified
+            InstallCredential = $DomainCredsNetbios
+            CertificateThumbprint = "4564564"
+            DisplayName = "ADFS"
+            ServiceName = "ADFS"
+            SigningCertificateThumbprint = "45645645"
+            DecryptionCertificateThumbprint = "454545548"
+            Ensure= 'Present'             
+            PsDscRunAsCredential = $DomainCredsNetbios
+            DependsOn = "[xPendingReboot]RebootAfterAddADFS"
+        }
+        <#
         xScript CreateADFSFarm
         {
             SetScript = 
@@ -286,6 +300,7 @@
             #Credential = $DomainCredsNetbios
             DependsOn = "[xPendingReboot]RebootAfterAddADFS"
         }
+        #>
 
 		xScript CreateADFSRelyingParty
         {
@@ -325,7 +340,8 @@
                 return $false
             }
             #PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[xScript]CreateADFSFarm"
+            #DependsOn = "[xScript]CreateADFSFarm"
+            DependsOn = "[cADFSFarm]CreateADFSFarm"
         }
    }
 }
