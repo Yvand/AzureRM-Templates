@@ -249,15 +249,13 @@
                 $runParams.Add("ServiceAccountCredential", $using:AdfsSvcCredsQualified)
                 $runParams.Add("SigningCertificateThumbprint", $signingCert.Thumbprint)
                 $runParams.Add("DecryptionCertificateThumbprint", $decryptionCert.Thumbprint)
-                $runParams.Add("Credential", $using:DomainCredsNetbios)
+                #$runParams.Add("Credential", $using:DomainCredsNetbios)
                 Install-AdfsFarm @runParams -OverwriteConfiguration
 
                 Write-Verbose -Message "ADFS farm successfully created"
             }
             GetScript =  
             {
-                $result = "false"
-                return @{ "Result" = $result }
                 # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                 $result = "true"
                 try
@@ -272,7 +270,6 @@
             }
             TestScript = 
             {
-                return $false
                 # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
                 try
                 {
@@ -286,7 +283,7 @@
                     return $false
                 }
             }
-            #PsDscRunAsCredential = $DomainCredsNetbios
+            Credential = $DomainCredsNetbios
             DependsOn = "[xPendingReboot]RebootAfterAddADFS"
         }
 
