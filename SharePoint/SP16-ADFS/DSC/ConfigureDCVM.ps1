@@ -255,6 +255,7 @@
             ClaimsProviderName = @("Active Directory")
             WsFederationEndpoint = "https://$ADFSRelyingPartyTrustName.$DomainName/_trust/"
             IssuanceAuthorizationRules = '=> issue (Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
+            ProtocolProfile = "WsFed-SAML"
             Ensure= 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[cADFSFarm]CreateADFSFarm"
