@@ -229,7 +229,8 @@
             SetScript = 
             {
                 Write-Verbose -Message "Exporting public key of certificates..."
-                $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS Signing"
+                New-Item F:\Setup -Type directory -ErrorAction SilentlyContinue
+                $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.Signing"
                 $signingCert| Export-Certificate -FilePath "F:\Setup\ADFS Signing.cer"
                 Get-ChildItem -Path "cert:\LocalMachine\Root\" | ?{$_.Subject -eq  $signingCert.Issuer}| Select -First 1| Export-Certificate -FilePath "F:\Setup\ADFS Signing issuer.cer"
                 Write-Verbose -Message "Public key of certificates successfully exported"
