@@ -187,22 +187,23 @@ configuration ConfigureSPVM
         #**********************************************************
         # Download binaries and install SharePoint CU
         #**********************************************************
+        File CopyCertificatesFromDC
+        {
+            Ensure = "Present"
+            Type = "Directory"
+            Recurse = $true
+            SourcePath = "\\DC\F$\Setup"
+            DestinationPath = "F:\Setup\Certificates"
+            Credential = $DomainAdminCredsQualified
+            DependsOn = "[File]AccountsProvisioned"
+        }
+
         xRemoteFile DownloadLdapcp 
         {  
             Uri             = "https://ldapcp.codeplex.com/downloads/get/557616"
             DestinationPath = "F:\Setup\LDAPCP.wsp"
             DependsOn = "[File]AccountsProvisioned"
-        }
-
-        File DirectoryCopy
-        {
-            Ensure = "Present"
-            Type = "Directory" # Default is "File".
-            Recurse = $true # Ensure presence of subdirectories, too
-            SourcePath = "\\DC\F$\Setup"
-            DestinationPath = "F:\Setup\Certificates"
-            DependsOn = "[xRemoteFile]DownloadLdapcp"
-        }
+        }        
 
         <#
         xRemoteFile Download201612CU
@@ -327,6 +328,7 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPCreateFarm]CreateSPFarm"
         }
+
         SPManagedAccount CreateSPAppPoolManagedAccount
         {
             AccountName          = $SPAppPoolCredsQualified.UserName
@@ -371,6 +373,31 @@ configuration ConfigureSPVM
             PsDscRunAsCredential  = $SPSetupCredsQualified
             DependsOn = "[SPDistributedCacheService]EnableDistributedCache"
         }
+
+        SPTrustedIdentityTokenIssuer CreateSPTrust
+        {
+            Name                         = "$DomainFQDN"
+            Description                  = "Federation with $DomainFQDN"
+            Realm                        = "https://spsites.$DomainFQDN"
+            SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
+            IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+            ClaimsMappings               = @(
+                MSFT_SPClaimTypeMapping{
+                    Name = "Email"
+                    IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                }
+                MSFT_SPClaimTypeMapping{
+                    Name = "Role"
+                    IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                }
+            )
+            SigningCertificateThumbPrintOrFilePath = "F:\Setup\Certificates\ADFS Signing.cer"
+            ClaimProviderName            = "LDAPCP"
+            ProviderSignOutUri           = "https://adfs.$DomainFQDN/adfs/ls/"
+            Ensure                       = "Present"
+            DependsOn = "[SPFarmSolution]InstallLdapcp"
+            PsDscRunAsCredential         = $SPSetupCredsQualified
+        }
         
         SPWebApplication MainWebApp
         {
@@ -384,7 +411,7 @@ configuration ConfigureSPVM
             Port                   = 80
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[SPFarmSolution]InstallLdapcp"
+            DependsOn              = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
         }
 
         SPSite DevSite
@@ -481,7 +508,6 @@ function Get-SPDSCInstalledProductVersion
     return (Get-Command $fullPath).FileVersionInfo
 }
 
-
 <#
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
 # Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
@@ -499,6 +525,7 @@ $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 
 ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+Set-DscLocalConfigurationManager -Path "C:\Data\output\"
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
 #>
