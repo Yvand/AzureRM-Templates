@@ -10,9 +10,6 @@ configuration ConfigureSPVM
         [String]$DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN),
 
         [Parameter(Mandatory)]
-        [String]$DCName,
-
-        [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$DomainAdminCreds,
 
         [Parameter(Mandatory)]
@@ -33,7 +30,7 @@ configuration ConfigureSPVM
         [String]$SPTrustedSitesName = "SPSites"
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer
+    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration
 
     $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
@@ -115,15 +112,6 @@ configuration ConfigureSPVM
             ValueName = "DisableLoopbackCheck"
             ValueData = "1"
             ValueType = "Dword"
-            DependsOn = "[xComputer]DomainJoin"
-        }
-
-        xDnsRecord AddADFSHostEntry {
-            Name = $SPTrustedSitesName
-            Zone = $DomainFQDN
-            Target = $DCName
-            Type = "CName"
-            Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
 

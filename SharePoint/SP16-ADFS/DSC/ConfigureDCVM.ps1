@@ -231,11 +231,20 @@
 
         WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
 
-        xDnsRecord AddADFSHostEntry {
+        xDnsRecord AddADFSHostDNS {
             Name = $ADFSSiteName
             Zone = $DomainFQDN
             Target = $PrivateIP
             Type = "ARecord"
+            Ensure = "Present"
+            DependsOn = "[xPendingReboot]Reboot1"
+        }
+
+        xDnsRecord AddTrustedSiteDNS {
+            Name = $SPTrustedSitesName
+            Zone = $DomainFQDN
+            Target = $DCName
+            Type = "CName"
             Ensure = "Present"
             DependsOn = "[xPendingReboot]Reboot1"
         }
@@ -246,9 +255,9 @@
             {
                 Write-Verbose -Message "Exporting public key of certificates..."
                 New-Item F:\Setup -Type directory -ErrorAction SilentlyContinue
-                $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$ADFSSiteName.Signing"
+                $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:ADFSSiteName.Signing"
                 $signingCert| Export-Certificate -FilePath "F:\Setup\ADFS Signing.cer"
-                Get-ChildItem -Path "cert:\LocalMachine\Root\" | ?{$_.Subject -eq  $signingCert.Issuer}| Select -First 1| Export-Certificate -FilePath "F:\Setup\ADFS Signing issuer.cer"
+                Get-ChildItem -Path "cert:\LocalMachine\Root\" | ?{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath "F:\Setup\ADFS Signing issuer.cer"
                 Write-Verbose -Message "Public key of certificates successfully exported"
             }
             GetScript =  

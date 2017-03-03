@@ -772,9 +772,6 @@
           "domainFQDN": {
             "value": "[parameters('domainFQDN')]"
           },
-          "dcName": {
-            "value": "[parameters('vmDCName')]"
-          },
           "domainAdminUserName": {
             "value": "[parameters('adminUsername')]"
           },
