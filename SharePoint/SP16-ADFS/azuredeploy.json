@@ -477,6 +477,9 @@
           "domainFQDN": {
             "value": "[parameters('domainFQDN')]"
           },
+          "privateIP": {
+            "value": "[variables('vmDC').nicPrivateIPAddress]"
+          },
           "adminUserName": {
             "value": "[parameters('adminUsername')]"
           },
@@ -768,6 +771,9 @@
           },
           "domainFQDN": {
             "value": "[parameters('domainFQDN')]"
+          },
+          "dcName": {
+            "value": "[parameters('vmDCName')]"
           },
           "domainAdminUserName": {
             "value": "[parameters('adminUsername')]"

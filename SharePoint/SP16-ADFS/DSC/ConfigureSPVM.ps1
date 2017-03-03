@@ -10,6 +10,9 @@ configuration ConfigureSPVM
         [String]$DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN),
 
         [Parameter(Mandatory)]
+        [String]$DCName,
+
+        [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$DomainAdminCreds,
 
         [Parameter(Mandatory)]
@@ -25,10 +28,12 @@ configuration ConfigureSPVM
         [System.Management.Automation.PSCredential]$SPAppPoolCreds,
 
         [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SPPassphraseCreds
+        [System.Management.Automation.PSCredential]$SPPassphraseCreds,
+
+        [String]$SPTrustedSitesName = "SPSites"
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration
+    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer
 
     $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
@@ -110,6 +115,16 @@ configuration ConfigureSPVM
             ValueName = "DisableLoopbackCheck"
             ValueData = "1"
             ValueType = "Dword"
+            DependsOn = "[xComputer]DomainJoin"
+        }
+
+        xDnsRecord AddADFSHostEntry {
+            Name = $SPTrustedSitesName
+            Zone = $DomainFQDN
+            Target = $DCName
+            Type = "CName"
+            Ensure = "Present"
+            DependsOn = "[xComputer]DomainJoin"
         }
 
         xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}

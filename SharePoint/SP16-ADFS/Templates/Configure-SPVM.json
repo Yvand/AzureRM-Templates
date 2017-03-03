@@ -39,6 +39,10 @@
       "type": "string",
       "minLength": 1
     },
+    "dcName": {
+      "type": "string",
+      "minLength": 1
+    },
     "domainAdminUserName": {
       "type": "string",
       "minLength": 1
@@ -99,7 +103,8 @@
           },
           "configurationArguments": {
             "DNSServer": "[parameters('dnsServer')]",
-            "DomainFQDN": "[parameters('domainFQDN')]"
+            "DomainFQDN": "[parameters('domainFQDN')]",
+            "DCName": "[parameters('dcName')]"
           },
           "privacy": {
             "dataCollection": "enable"
