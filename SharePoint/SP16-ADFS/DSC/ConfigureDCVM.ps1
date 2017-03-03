@@ -171,7 +171,7 @@
             KeyUsage                  = '0xa0'
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
-			SubjectAltName            = "certauth.$ADFSSiteName.$DomainFQDN"
+			#SubjectAltName            = "certauth.$ADFSSiteName.$DomainFQDN"
             Credential                = $DomainCredsNetbios
             DependsOn = '[xADCSCertificationAuthority]ADCS'
         }
