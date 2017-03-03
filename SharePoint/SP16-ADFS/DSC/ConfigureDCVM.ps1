@@ -17,7 +17,7 @@
         [Parameter(Mandatory)]
         [String]$PrivateIP,
 
-        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainName $DomainFQDN),
+        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainFQDN $DomainFQDN),
         [Int]$RetryCount=20,
         [Int]$RetryIntervalSec=30,
         [String]$SPTrustedSitesName = "SPSites",
