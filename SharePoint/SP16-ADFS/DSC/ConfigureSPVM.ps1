@@ -364,7 +364,6 @@ configuration ConfigureSPVM
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
             Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPCreateFarm]CreateSPFarm"
         }
 

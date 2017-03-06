@@ -4,19 +4,25 @@ Provision from scratch a ready-to-use 3VMs SharePoint 2016 environment with foll
 
 * DC: Domain controller of a new AD forest running a root certification authority and ADFS
 * SQL: Running SQL Server 2016
-* SharePoint: 1 single SharePoint 2016 server
+* SharePoint: Single SharePoint 2016 server, configured to use federated authentication with ADFS installed on DC and running claims provider [LDAPCP](https://ldapcp.codeplex.com/).
 
 ## Changelog
+### March 2017 release
+* DC: DSC fully creates ADFS farm and add a relying party. It also exports signing certificate and signing certificate issuer in file system
+* SP: DSC copies signing certificate and signing certificate issuer from DC to a local path, and uses it to create a SPLoginProvider object and establish trust relationship between SharePoint and DC
+* SP: DSC populates more sites collections in web application
+* SP: Use a custom version of SharePointDsc (from version 1.5.0.0) to update SPTrustedIdentityTokenIssuer resource to get signing certificate from file system. I started a [pull request](https://github.com/PowerShell/SharePointDsc/pull/520) to push those changes in standard module.
+* Updated xNetworking to version 3.2.0.0
+* Minor updates to clean code, improve consistency and make some settings working fine when they are not using default value (e.g. name of DC VM).
+
 ### February 2017 release
 * Azure template now uses Azure Key Vault to store and use passwords, which forced the use of netsted templates to allow it to be dynamic
 * Updated xActiveDirectory to version 2.16.0.0, which fixed the AD domain creation issue on Azure
  
 ## Known issues
-### On DC VM
-* Creation of ADFS farm fails on 1st execution of DSC script, probably because the account running the script doesn't have a local profile yet, which somehow prevents it to access private keys of ADFS certificates.
- 
 ### On SQL VM
-* SQL DSC module currently doesn't allow to change location of log/data files
+* SQL DSC module currently doesn't allow to change location of log/data files, so all SQL data/log files are created in their default folders.
 
 ### On SharePoint VM
-* Download of CU from download.microsoft.com randomly fails, causing the SharePoint configuration to fail, so it is disabled until a reliable solution is found
+* Download of 2016-12 CU from download.microsoft.com randomly fails, causing the whole SharePoint configuration to fail, so it is disabled until a reliable solution is found.
+* SharePointDsc modules does not support yet to set a web application zone to use federated authentication, so that part must be done manually for the moment.
