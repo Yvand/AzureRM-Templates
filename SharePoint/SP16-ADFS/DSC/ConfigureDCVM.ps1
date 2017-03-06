@@ -238,15 +238,6 @@
             Ensure = "Present"
             DependsOn = "[xPendingReboot]Reboot1"
         }
-
-        xDnsRecord AddTrustedSiteDNS {
-            Name = $SPTrustedSitesName
-            Zone = $DomainFQDN
-            Target = $ComputerName
-            Type = "CName"
-            Ensure = "Present"
-            DependsOn = "[xPendingReboot]Reboot1"
-        }
         
         xScript ExportCertificates
         {

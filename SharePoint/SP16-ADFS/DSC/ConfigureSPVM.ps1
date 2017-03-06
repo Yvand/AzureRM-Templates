@@ -67,12 +67,8 @@ configuration ConfigureSPVM
             DriveLetter = "F"
             DependsOn = "[xWaitforDisk]Disk2"
         }
-        WindowsFeature ADPS
-        {
-            Name = "RSAT-AD-PowerShell"
-            Ensure = "Present"
-            DependsOn = "[cDiskNoRestart]SPDataDisk"
-        }
+        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[cDiskNoRestart]SPDataDisk" }
+        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[cDiskNoRestart]SPDataDisk"  }
         xDnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
