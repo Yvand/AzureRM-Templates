@@ -144,7 +144,6 @@
               },
               "configurationArguments": {
                 "DomainFQDN": "[parameters('domainFQDN')]",
-                "DCName": "[parameters('vmName')]",
                 "PrivateIP": "[parameters('privateIP')]"
               },
               "privacy": {

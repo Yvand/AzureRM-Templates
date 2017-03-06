@@ -24,11 +24,12 @@ configuration ConfigureSQLVM
     Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, xSQLServer
 	
 	WaitForSqlSetup
-    $Interface = Get-NetAdapter| Where Name -Like "Ethernet*"| Select-Object -First 1
+    $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     [PSCredential]$DomainCreds = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
     [PSCredential]$SPSCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [PSCredential]$SQLCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
+    $ComputerName = Get-Content env:computername
 
     Node localhost
     {
@@ -94,7 +95,7 @@ configuration ConfigureSQLVM
 
         xComputer DomainJoin
         {
-            Name = $env:COMPUTERNAME
+            Name = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainCreds
             DependsOn = "[xWaitForADDomain]DscForestWait"
@@ -127,7 +128,7 @@ configuration ConfigureSQLVM
         {
             Name = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
             Ensure = "Present"
-            SQLServer = $env:COMPUTERNAME
+            SQLServer = $ComputerName
             SQLInstanceName = "MSSQLSERVER"
             LoginType = "WindowsUser"
             DependsOn = "[xComputer]DomainJoin"
@@ -137,7 +138,7 @@ configuration ConfigureSQLVM
         {
             Name = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
             Ensure = "Present"
-            SQLServer = $env:COMPUTERNAME
+            SQLServer = $ComputerName
             SQLInstanceName = "MSSQLSERVER"
             LoginType = "WindowsUser"
             DependsOn = "[xADUser]CreateSPSetupAccount"
@@ -147,7 +148,7 @@ configuration ConfigureSQLVM
         {
             Name = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
             Ensure = "Present"
-            SQLServer = $env:COMPUTERNAME
+            SQLServer = $ComputerName
             SQLInstanceName = "MSSQLSERVER"
             ServerRole = "sysadmin"
             DependsOn = "[xSQLServerLogin]AddDomainAdminLogin"
@@ -157,7 +158,7 @@ configuration ConfigureSQLVM
         {
             Name = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
             Ensure = "Present"
-            SQLServer = $env:COMPUTERNAME
+            SQLServer = $ComputerName
             SQLInstanceName = "MSSQLSERVER"
             ServerRole = "securityadmin","dbcreator"
             DependsOn = "[xSQLServerLogin]AddSPSetupLogin"
@@ -165,7 +166,7 @@ configuration ConfigureSQLVM
 
         xSQLServerMaxDop ConfigureMaxDOP
         {
-            SQLServer = $env:COMPUTERNAME
+            SQLServer = $ComputerName
             SQLInstanceName = "MSSQLSERVER"
             MaxDop = 1
             DependsOn = "[xComputer]DomainJoin"

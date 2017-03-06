@@ -30,9 +30,9 @@ configuration ConfigureSPVM
         [String]$SPTrustedSitesName = "SPSites"
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration
+    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer
 
-    $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
+    $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
     [System.Management.Automation.PSCredential]$DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential]$SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
@@ -42,6 +42,7 @@ configuration ConfigureSPVM
     [String]$SPDBPrefix = "SP16DSC_"
 	[Int]$RetryCount = 30
     [Int]$RetryIntervalSec = 30
+    $ComputerName = Get-Content env:computername
 
     Node localhost
     {
@@ -97,7 +98,7 @@ configuration ConfigureSPVM
 
         xComputer DomainJoin
         {
-            Name = $env:COMPUTERNAME
+            Name = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
             DependsOn = "[xWaitForADDomain]DscForestWait"
@@ -112,6 +113,15 @@ configuration ConfigureSPVM
             ValueName = "DisableLoopbackCheck"
             ValueData = "1"
             ValueType = "Dword"
+            DependsOn = "[xComputer]DomainJoin"
+        }
+
+        xDnsRecord AddTrustedSiteDNS {
+            Name = $SPTrustedSitesName
+            Zone = $DomainFQDN
+            Target = $ComputerName
+            Type = "CName"
+            Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
 

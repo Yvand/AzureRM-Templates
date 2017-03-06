@@ -12,9 +12,6 @@
         [System.Management.Automation.PSCredential]$AdfsSvcCreds,
 
         [Parameter(Mandatory)]
-        [String]$DCName,
-
-        [Parameter(Mandatory)]
         [String]$PrivateIP,
 
         [String]$DomainNetbiosName=(Get-NetBIOSName -DomainFQDN $DomainFQDN),
@@ -25,10 +22,11 @@
     ) 
     
     Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
-    [System.Management.Automation.PSCredential ]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
-    [System.Management.Automation.PSCredential ]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
+    [System.Management.Automation.PSCredential]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
+    [System.Management.Automation.PSCredential]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
     $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
+    $ComputerName = Get-Content env:computername
 
     Node localhost
     {
@@ -126,7 +124,8 @@
         #**********************************************************
         # Configure AD CS
         #**********************************************************
-        WindowsFeature AddCertAuthority { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
+        WindowsFeature AddCertAuthority       { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
+        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
         xADCSCertificationAuthority ADCS
         {
             Ensure = "Present"
@@ -161,8 +160,8 @@
         #**********************************************************
         xCertReq ADFSSiteCert
         {
-            CARootName                = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN              = "$DCName.$DomainFQDN"
+            CARootName                = "$DomainNetbiosName-$ComputerName-CA"
+            CAServerFQDN              = "$ComputerName.$DomainFQDN"
             Subject                   = "$ADFSSiteName.$DomainFQDN"
             KeyLength                 = '2048'
             Exportable                = $true
@@ -178,8 +177,8 @@
 
         xCertReq ADFSSigningCert
         {
-            CARootName                = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN              = "$DCName.$DomainFQDN"
+            CARootName                = "$DomainNetbiosName-$ComputerName-CA"
+            CAServerFQDN              = "$ComputerName.$DomainFQDN"
             Subject                   = "$ADFSSiteName.Signing"
             KeyLength                 = '2048'
             Exportable                = $true
@@ -194,8 +193,8 @@
         
         xCertReq ADFSDecryptionCert
         {
-            CARootName                = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN              = "$DCName.$DomainFQDN"
+            CARootName                = "$DomainNetbiosName-$ComputerName-CA"
+            CAServerFQDN              = "$ComputerName.$DomainFQDN"
             Subject                   = "$ADFSSiteName.Decryption"
             KeyLength                 = '2048'
             Exportable                = $true
@@ -243,7 +242,7 @@
         xDnsRecord AddTrustedSiteDNS {
             Name = $SPTrustedSitesName
             Zone = $DomainFQDN
-            Target = $DCName
+            Target = $ComputerName
             Type = "CName"
             Ensure = "Present"
             DependsOn = "[xPendingReboot]Reboot1"

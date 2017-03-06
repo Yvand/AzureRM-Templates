@@ -19,10 +19,12 @@ Provision from scratch a ready-to-use 3VMs SharePoint 2016 environment with foll
 * Azure template now uses Azure Key Vault to store and use passwords, which forced the use of netsted templates to allow it to be dynamic
 * Updated xActiveDirectory to version 2.16.0.0, which fixed the AD domain creation issue on Azure
  
-## Known issues
+## Known issues or limitations
 ### On SQL VM
 * SQL DSC module currently doesn't allow to change location of log/data files, so all SQL data/log files are created in their default folders.
 
 ### On SharePoint VM
 * Download of 2016-12 CU from download.microsoft.com randomly fails, causing the whole SharePoint configuration to fail, so it is disabled until a reliable solution is found.
-* SharePointDsc modules does not support yet to set a web application zone to use federated authentication, so that part must be done manually for the moment.
+* SharePointDsc modules does not support yet the extension of the web application, so it must be done manually.
+* SharePointDsc modules does not support yet to set a web application zone to use federated authentication, so it must be done manually.
+* SP VM does not have permission "Enroll" in WebServer template to submit a certificate request with this template, so this permission must be granted tp "SP$" before certificate request for HTTPS web site can be submitted.
