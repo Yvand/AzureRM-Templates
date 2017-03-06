@@ -212,7 +212,7 @@
       "vmImagePublisher": "MicrosoftSQLServer",
       "vmImageOffer": "SQL2016SP1-WS2016",
       "vmImageSKU": "Standard",
-      "vmOSDiskName": "vm-SQLOSDisk",
+      "vmOSDiskName": "vm-SQL-OSDisk",
       "vmDataDiskName": "vm-SQL-DataDisk-Data",
       "vmLogsDiskName": "vm-SQL-DataDisk-Logs",
       "vmVmSize": "Standard_A4_v2",
