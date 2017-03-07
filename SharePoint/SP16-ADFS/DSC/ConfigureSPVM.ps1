@@ -111,7 +111,8 @@ configuration ConfigureSPVM
             ValueType = "Dword"
             DependsOn = "[xComputer]DomainJoin"
         }
-
+        
+        <#
         xDnsRecord AddTrustedSiteDNS {
             Name = $SPTrustedSitesName
             Zone = $DomainFQDN
@@ -121,6 +122,7 @@ configuration ConfigureSPVM
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
+        #>
 
         xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
         xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}

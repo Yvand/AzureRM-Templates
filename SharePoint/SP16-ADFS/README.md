@@ -28,3 +28,4 @@ Provision from scratch a ready-to-use 3VMs SharePoint 2016 environment with foll
 * SharePointDsc modules does not support yet the extension of the web application, so it must be done manually.
 * SharePointDsc modules does not support yet to set a web application zone to use federated authentication, so it must be done manually.
 * SP VM does not have permission "Enroll" in WebServer template to submit a certificate request with this template, so this permission must be granted tp "SP$" before certificate request for HTTPS web site can be submitted.
+* DNS CName record "spsites" is not created, so it must be done manually.
