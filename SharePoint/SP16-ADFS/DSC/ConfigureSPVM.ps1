@@ -43,7 +43,6 @@ configuration ConfigureSPVM
 	[Int]$RetryCount = 30
     [Int]$RetryIntervalSec = 30
     $ComputerName = Get-Content env:computername
-    $DCName = (Get-ADDomainController).HostName
 
     Node localhost
     {
@@ -116,7 +115,7 @@ configuration ConfigureSPVM
         xDnsRecord AddTrustedSiteDNS {
             Name = $SPTrustedSitesName
             Zone = $DomainFQDN
-            DnsServer = $DCName
+            DnsServer = (Get-ADDomainController).HostName
             Target = $ComputerName
             Type = "CName"
             Ensure = "Present"
