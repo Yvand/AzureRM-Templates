@@ -115,7 +115,7 @@ configuration ConfigureSPVM
         xDnsRecord AddTrustedSiteDNS {
             Name = $SPTrustedSitesName
             Zone = $DomainFQDN
-            DnsServer = (Get-ADDomainController).HostName
+            DnsServer = "DC"
             Target = $ComputerName
             Type = "CName"
             Ensure = "Present"
