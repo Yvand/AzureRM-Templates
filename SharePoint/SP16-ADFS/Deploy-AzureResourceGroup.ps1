@@ -29,10 +29,10 @@ $passwords['spPassphrase'] = $securePassword
 
 # Additional settings
 $optionalParameters = New-Object -TypeName HashTable
-$overrideTemplateParametersFile = $true
+$optionalParameters['vaultName'] = "ydsp16adfsvault"
+$overrideTemplateParametersFile = $false
 if ($overrideTemplateParametersFile -eq $true) {
     $optionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
-    $optionalParameters['vaultName'] = "ydsp16adfsvault"
     $optionalParameters['dscDCTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
     $optionalParameters['dscSQLTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
     $optionalParameters['dscSPTemplateURL'] = "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
