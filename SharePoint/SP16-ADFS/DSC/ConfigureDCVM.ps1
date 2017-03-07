@@ -1,9 +1,9 @@
 ﻿configuration ConfigureDCVM 
 { 
-   param 
-   ( 
+    param 
+    ( 
         [Parameter(Mandatory)]
-        [String]$DomainName,
+        [String]$DomainFQDN,
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds,
@@ -11,17 +11,22 @@
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$AdfsSvcCreds,
 
-        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainName $DomainName),
+        [Parameter(Mandatory)]
+        [String]$PrivateIP,
+
+        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainFQDN $DomainFQDN),
         [Int]$RetryCount=20,
         [Int]$RetryIntervalSec=30,
-        [String]$ADFSRelyingPartyTrustName = "SPSites"
+        [String]$SPTrustedSitesName = "SPSites",
+        [String]$ADFSSiteName = "ADFS"
     ) 
     
-    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot
-    [System.Management.Automation.PSCredential ]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
-    [System.Management.Automation.PSCredential ]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
+    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
+    [System.Management.Automation.PSCredential]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
+    [System.Management.Automation.PSCredential]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
     $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
+    $ComputerName = Get-Content env:computername
 
     Node localhost
     {
@@ -84,7 +89,7 @@
          
         xADDomain FirstDS 
         {
-            DomainName = $DomainName
+            DomainName = $DomainFQDN
             DomainAdministratorCredential = $DomainCredsNetbios
             SafemodeAdministratorPassword = $DomainCredsNetbios
             DatabasePath = "F:\NTDS"
@@ -105,10 +110,10 @@
         xADUser SetEmailOfDomainAdmin
         {
             DomainAdministratorCredential = $DomainCredsNetbios
-            DomainName = $DomainName
+            DomainName = $DomainFQDN
             UserName = $Admincreds.UserName
             Password = $Admincreds
-            EmailAddress = $Admincreds.UserName + "@" + $DomainName
+            EmailAddress = $Admincreds.UserName + "@" + $DomainFQDN
             PasswordAuthentication = 'Negotiate'
             Ensure = "Present"
             DependsOn = "[xPendingReboot]Reboot1"
@@ -119,13 +124,35 @@
         #**********************************************************
         # Configure AD CS
         #**********************************************************
-        WindowsFeature AddCertAuthority { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
+        WindowsFeature AddCertAuthority       { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
+        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
         xADCSCertificationAuthority ADCS
         {
             Ensure = "Present"
             Credential = $DomainCredsNetbios
             CAType = "EnterpriseRootCA"
-            DependsOn = "[WindowsFeature]AddCertAuthority"              
+            DependsOn = "[WindowsFeature]AddCertAuthority"
+        }
+
+        xScript CreateLocalProfile
+        {
+            SetScript = 
+            {
+                Start-Process cmd.exe /c -LoadUserProfile -Credential $using:DomainCredsNetbios -Wait
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                $result = "false"
+                return @{ "Result" = $result }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                return $false
+            }
+            #PsDscRunAsCredential = $DomainCredsNetbios
+            DependsOn = '[xADCSCertificationAuthority]ADCS'
         }
         
         #**********************************************************
@@ -133,9 +160,9 @@
         #**********************************************************
         xCertReq ADFSSiteCert
         {
-            CARootName                = $DomainNetbiosName + "-DC-CA"
-            CAServerFQDN              = "dc." + $DomainName
-            Subject                   = "ADFS." + $DomainName
+            CARootName                = "$DomainNetbiosName-$ComputerName-CA"
+            CAServerFQDN              = "$ComputerName.$DomainFQDN"
+            Subject                   = "$ADFSSiteName.$DomainFQDN"
             KeyLength                 = '2048'
             Exportable                = $true
             ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
@@ -143,16 +170,16 @@
             KeyUsage                  = '0xa0'
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
-			#SubjectAltName            = "certauth.ADFS.$DomainName"
+			#SubjectAltName            = "certauth.$ADFSSiteName.$DomainFQDN"
             Credential                = $DomainCredsNetbios
             DependsOn = '[xADCSCertificationAuthority]ADCS'
         }
 
         xCertReq ADFSSigningCert
         {
-            CARootName                = $DomainNetbiosName + "-DC-CA"
-            CAServerFQDN              = "dc." + $DomainName
-            Subject                   = "ADFS.Signing"
+            CARootName                = "$DomainNetbiosName-$ComputerName-CA"
+            CAServerFQDN              = "$ComputerName.$DomainFQDN"
+            Subject                   = "$ADFSSiteName.Signing"
             KeyLength                 = '2048'
             Exportable                = $true
             ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
@@ -166,9 +193,9 @@
         
         xCertReq ADFSDecryptionCert
         {
-            CARootName                = $DomainNetbiosName + "-DC-CA"
-            CAServerFQDN              = "dc." + $DomainName
-            Subject                   = "ADFS.Decryption"
+            CARootName                = "$DomainNetbiosName-$ComputerName-CA"
+            CAServerFQDN              = "$ComputerName.$DomainFQDN"
+            Subject                   = "$ADFSSiteName.Decryption"
             KeyLength                 = '2048'
             Exportable                = $true
             ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
@@ -178,12 +205,12 @@
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
             DependsOn = '[xADCSCertificationAuthority]ADCS'
-        }        
+        }
 
         xADUser CreateAdfsSvcAccount
         {
             DomainAdministratorCredential = $DomainCredsNetbios
-            DomainName = $DomainName
+            DomainName = $DomainFQDN
             UserName = $AdfsSvcCreds.UserName
             Password = $AdfsSvcCreds
             Ensure = "Present"
@@ -202,6 +229,79 @@
         }
 
         WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
+
+        xDnsRecord AddADFSHostDNS {
+            Name = $ADFSSiteName
+            Zone = $DomainFQDN
+            Target = $PrivateIP
+            Type = "ARecord"
+            Ensure = "Present"
+            DependsOn = "[xPendingReboot]Reboot1"
+        }
+        
+        xScript ExportCertificates
+        {
+            SetScript = 
+            {
+                Write-Verbose -Message "Exporting public key of certificates..."
+                New-Item F:\Setup -Type directory -ErrorAction SilentlyContinue
+                $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:ADFSSiteName.Signing"
+                $signingCert| Export-Certificate -FilePath "F:\Setup\ADFS Signing.cer"
+                Get-ChildItem -Path "cert:\LocalMachine\Root\" | ?{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath "F:\Setup\ADFS Signing issuer.cer"
+                Write-Verbose -Message "Public key of certificates successfully exported"
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            DependsOn = "[WindowsFeature]AddADFS"
+        }
+
+        cADFSFarm CreateADFSFarm
+        {
+            ServiceCredential = $AdfsSvcCredsQualified
+            InstallCredential = $DomainCredsNetbios
+            #CertificateThumbprint = $siteCert
+            DisplayName = "$ADFSSiteName.$DomainFQDN"
+            ServiceName = "$ADFSSiteName.$DomainFQDN"
+            #SigningCertificateThumbprint = $signingCert
+            #DecryptionCertificateThumbprint = $decryptionCert
+            CertificateName = "$ADFSSiteName.$DomainFQDN"
+            SigningCertificateName = "$ADFSSiteName.Signing"
+            DecryptionCertificateName = "$ADFSSiteName.Decryption"
+            Ensure= 'Present'
+            PsDscRunAsCredential = $DomainCredsNetbios
+            DependsOn = "[WindowsFeature]AddADFS"
+        }
+
+        cADFSRelyingPartyTrust CreateADFSRelyingParty
+        {
+            Name = $SPTrustedSitesName
+            Identifier = "https://$SPTrustedSitesName.$DomainFQDN"
+            ClaimsProviderName = @("Active Directory")
+            WsFederationEndpoint = "https://$SPTrustedSitesName.$DomainFQDN/_trust/"
+            IssuanceAuthorizationRules = '=> issue (Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
+            IssuanceTransformRules = @"
+@RuleTemplate = "LdapClaims"
+@RuleName = "AD"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+=> issue(
+store = "Active Directory", 
+types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"), 
+query = ";mail,tokenGroups(domainQualifiedName);{0}", 
+param = c.Value);
+"@
+            ProtocolProfile = "WsFed-SAML"
+            Ensure= 'Present'
+            PsDscRunAsCredential = $DomainCredsNetbios
+            DependsOn = "[cADFSFarm]CreateADFSFarm"
+        }
         <#
         xScript CreateADFSFarm
         {
@@ -209,40 +309,21 @@
             {
                 Write-Verbose -Message "Creating ADFS farm 'ADFS.$using:DomainName'"
 
-                $Key = [byte]1..16
-                $using:AdfsSvcCredsQualified.Password | ConvertFrom-SecureString -Key $Key | Set-Content c:\cred.key
+                $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.$DomainFQDN"
+                $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.Signing"
+                $decryptionCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "ADFS.Decryption"
 
-                $ScriptBlock = {
-                    param
-                    (
-                        [string]$DomainName = $args[0],
-                        [string]$AdfsSvcUsernameQualified = $args[1]
-                    )
-                    function CreateADFSFarm
-                    {
-                        $Key = [byte]1..16
-                        $encrypted = Get-Content c:\cred.key | ConvertTo-SecureString -Key $Key
-                        $AdfsSvcCredsQualified = New-Object System.Management.Automation.PsCredential($AdfsSvcUsernameQualified, $encrypted)
+                New-Item "C:\new_file.txt" -type file -force -value "Creating ADFS farm 'ADFS.$using:DomainName' with certs: $sitecert $signingCert $decryptionCert"
 
-                        $siteCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.$DomainName"""
-		                $signingCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.Signing"""
-		                $decryptionCert = Get-ChildItem -Path """cert:\LocalMachine\My\""" -DnsName """ADFS.Decryption"""
+                $runParams = @{}
+                $runParams.Add("CertificateThumbprint", $siteCert.Thumbprint)
+                $runParams.Add("FederationServiceName", "ADFS.$using:DomainName")
+                $runParams.Add("ServiceAccountCredential", $using:AdfsSvcCredsQualified)
+                $runParams.Add("SigningCertificateThumbprint", $signingCert.Thumbprint)
+                $runParams.Add("DecryptionCertificateThumbprint", $decryptionCert.Thumbprint)
+                #$runParams.Add("Credential", $using:DomainCredsNetbios)
+                Install-AdfsFarm @runParams -OverwriteConfiguration
 
-                        New-Item """C:\new_file.txt""" -type file -force -value """Creating ADFS farm 'ADFS.$DomainName' as $AdfsSvcUsernameQualified sitecert $sitecert $signingCert $decryptionCert"""
-
-		                $runParams = @{}
-		                $runParams.Add("""CertificateThumbprint""", $siteCert.Thumbprint)
-		                $runParams.Add("""FederationServiceName""", """ADFS.$DomainName""")
-		                $runParams.Add("""ServiceAccountCredential""", $AdfsSvcCredsQualified)
-		                $runParams.Add("""SigningCertificateThumbprint""", $signingCert.Thumbprint)
-		                $runParams.Add("""DecryptionCertificateThumbprint""", $decryptionCert.Thumbprint)
-		                Install-AdfsFarm @runParams -OverwriteConfiguration
-                    }
-                }
-
-                $stdOutLog = "C:\stdout.log"
-                $stdErrLog = "C:\stderr.log"
-                Start-Process -LoadUserProfile -Wait -FilePath $PSHOME\powershell.exe -ArgumentList "-Command & {$ScriptBlock CreateADFSFarm}", "$using:DomainName", $using:AdfsSvcCredsQualified.UserName -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
                 Write-Verbose -Message "ADFS farm successfully created"
             }
             GetScript =  
@@ -274,10 +355,10 @@
                     return $false
                 }
             }
-            PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[WindowsFeature]AddADFS"
+            #Credential = $DomainCredsNetbios
+            DependsOn = "[xPendingReboot]RebootAfterAddADFS"
         }
-        
+
 		xScript CreateADFSRelyingParty
         {
             SetScript = 
@@ -315,8 +396,9 @@
                 Write-Verbose -Message "Relying Party '$using:ADFSRelyingPartyTrustName' does not exist"
                 return $false
             }
-            PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[xScript]CreateADFSFarm"
+            #PsDscRunAsCredential = $DomainCredsNetbios
+            #DependsOn = "[xScript]CreateADFSFarm"
+            DependsOn = "[cADFSFarm]CreateADFSFarm"
         }
         #>
    }
@@ -326,22 +408,22 @@ function Get-NetBIOSName
 {
     [OutputType([string])]
     param(
-        [string]$DomainName
+        [string]$DomainFQDN
     )
 
-    if ($DomainName.Contains('.')) {
-        $length=$DomainName.IndexOf('.')
+    if ($DomainFQDN.Contains('.')) {
+        $length=$DomainFQDN.IndexOf('.')
         if ( $length -ge 16) {
             $length=15
         }
-        return $DomainName.Substring(0,$length)
+        return $DomainFQDN.Substring(0,$length)
     }
     else {
-        if ($DomainName.Length -gt 15) {
-            return $DomainName.Substring(0,15)
+        if ($DomainFQDN.Length -gt 15) {
+            return $DomainFQDN.Substring(0,15)
         }
         else {
-            return $DomainName
+            return $DomainFQDN
         }
     }
 } 

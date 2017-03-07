@@ -25,12 +25,14 @@ configuration ConfigureSPVM
         [System.Management.Automation.PSCredential]$SPAppPoolCreds,
 
         [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SPPassphraseCreds
+        [System.Management.Automation.PSCredential]$SPPassphraseCreds,
+
+        [String]$SPTrustedSitesName = "SPSites"
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration
+    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer
 
-    $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
+    $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
     [System.Management.Automation.PSCredential]$DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential]$SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
@@ -40,6 +42,7 @@ configuration ConfigureSPVM
     [String]$SPDBPrefix = "SP16DSC_"
 	[Int]$RetryCount = 30
     [Int]$RetryIntervalSec = 30
+    $ComputerName = Get-Content env:computername
 
     Node localhost
     {
@@ -64,12 +67,8 @@ configuration ConfigureSPVM
             DriveLetter = "F"
             DependsOn = "[xWaitforDisk]Disk2"
         }
-        WindowsFeature ADPS
-        {
-            Name = "RSAT-AD-PowerShell"
-            Ensure = "Present"
-            DependsOn = "[cDiskNoRestart]SPDataDisk"
-        }
+        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[cDiskNoRestart]SPDataDisk" }
+        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[cDiskNoRestart]SPDataDisk"  }
         xDnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
@@ -95,7 +94,7 @@ configuration ConfigureSPVM
 
         xComputer DomainJoin
         {
-            Name = $env:COMPUTERNAME
+            Name = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
             DependsOn = "[xWaitForADDomain]DscForestWait"
@@ -110,7 +109,20 @@ configuration ConfigureSPVM
             ValueName = "DisableLoopbackCheck"
             ValueData = "1"
             ValueType = "Dword"
+            DependsOn = "[xComputer]DomainJoin"
         }
+        
+        <#
+        xDnsRecord AddTrustedSiteDNS {
+            Name = $SPTrustedSitesName
+            Zone = $DomainFQDN
+            DnsServer = "DC"
+            Target = $ComputerName
+            Type = "CName"
+            Ensure = "Present"
+            DependsOn = "[xComputer]DomainJoin"
+        }
+        #>
 
         xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
         xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
@@ -187,12 +199,23 @@ configuration ConfigureSPVM
         #**********************************************************
         # Download binaries and install SharePoint CU
         #**********************************************************
+        File CopyCertificatesFromDC
+        {
+            Ensure = "Present"
+            Type = "Directory"
+            Recurse = $true
+            SourcePath = "\\DC\F$\Setup"
+            DestinationPath = "F:\Setup\Certificates"
+            Credential = $DomainAdminCredsQualified
+            DependsOn = "[File]AccountsProvisioned"
+        }
+
         xRemoteFile DownloadLdapcp 
         {  
             Uri             = "https://ldapcp.codeplex.com/downloads/get/557616"
             DestinationPath = "F:\Setup\LDAPCP.wsp"
             DependsOn = "[File]AccountsProvisioned"
-        }
+        }        
 
         <#
         xRemoteFile Download201612CU
@@ -317,6 +340,7 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPCreateFarm]CreateSPFarm"
         }
+
         SPManagedAccount CreateSPAppPoolManagedAccount
         {
             AccountName          = $SPAppPoolCredsQualified.UserName
@@ -336,7 +360,7 @@ configuration ConfigureSPVM
         SPStateServiceApp StateServiceApp
         {
             Name                 = "State Service Application"
-            DatabaseName         = $SPDBPrefix + "_StateService"
+            DatabaseName         = $SPDBPrefix + "StateService"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPCreateFarm]CreateSPFarm"
         }
@@ -362,6 +386,31 @@ configuration ConfigureSPVM
             DependsOn = "[SPDistributedCacheService]EnableDistributedCache"
         }
 
+        SPTrustedIdentityTokenIssuer CreateSPTrust
+        {
+            Name                         = "$DomainFQDN"
+            Description                  = "Federation with $DomainFQDN"
+            Realm                        = "https://spsites.$DomainFQDN"
+            SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
+            IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+            ClaimsMappings               = @(
+                MSFT_SPClaimTypeMapping{
+                    Name = "Email"
+                    IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                }
+                MSFT_SPClaimTypeMapping{
+                    Name = "Role"
+                    IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                }
+            )
+            SigningCertificateThumbPrintOrFilePath = "F:\Setup\Certificates\ADFS Signing.cer"
+            ClaimProviderName            = "LDAPCP"
+            ProviderSignOutUri           = "https://adfs.$DomainFQDN/adfs/ls/"
+            Ensure                       = "Present"
+            DependsOn = "[SPFarmSolution]InstallLdapcp"
+            PsDscRunAsCredential         = $SPSetupCredsQualified
+        }
+        
         SPWebApplication MainWebApp
         {
             Name                   = "SharePoint Sites"
@@ -372,19 +421,70 @@ configuration ConfigureSPVM
             DatabaseName           = $SPDBPrefix + "Content_80"
             Url                    = "http://sp"
             Port                   = 80
-            Ensure = "Present"
+            Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[SPFarmSolution]InstallLdapcp"
+            DependsOn              = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
+        }
+
+        SPSite DevSite
+        {
+            Url                      = "http://sp"
+            OwnerAlias               = $DomainAdminCredsQualified.UserName
+            Name                     = "Developer site"
+            Template                 = "DEV#0"
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            DependsOn                = "[SPWebApplication]MainWebApp"
         }
 
         SPSite TeamSite
         {
-            Url                      = "http://sp"
+            Url                      = "http://sp/sites/team"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             Name                     = "Team site"
             Template                 = "STS#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
             DependsOn                = "[SPWebApplication]MainWebApp"
+        }
+
+        SPSite MySiteHost
+        {
+            Url                      = "http://sp/sites/my"
+            OwnerAlias               = $DomainAdminCredsQualified.UserName
+            Name                     = "MySite host"
+            Template                 = "SPSMSITEHOST#0"
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            DependsOn                = "[SPWebApplication]MainWebApp"
+        }
+
+        $serviceAppPoolName = "SharePoint Service Applications"
+        SPServiceAppPool MainServiceAppPool
+        {
+            Name                 = $serviceAppPoolName
+            ServiceAccount       = $SPSvcCredsQualified.UserName
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+        }
+
+        SPServiceInstance UPAServiceInstance
+        {  
+            Name                 = "User Profile Service"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+        }
+
+        SPUserProfileServiceApp UserProfileServiceApp
+        {
+            Name                 = "User Profile Service Application"
+            ApplicationPool      = $serviceAppPoolName
+            MySiteHostLocation   = "http://sp/sites/my"
+            ProfileDBName        = $SPDBPrefix + "Profiles"
+            SocialDBName         = $SPDBPrefix + "Social"
+            SyncDBName           = $SPDBPrefix + "Sync"
+            EnableNetBIOS        = $false
+            FarmAccount          = $SPFarmCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPSite]MySiteHost"
         }
     }
 }
@@ -420,7 +520,6 @@ function Get-SPDSCInstalledProductVersion
     return (Get-Command $fullPath).FileVersionInfo
 }
 
-
 <#
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
 # Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
@@ -438,6 +537,7 @@ $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 
 ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+Set-DscLocalConfigurationManager -Path "C:\Data\output\"
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
 #>

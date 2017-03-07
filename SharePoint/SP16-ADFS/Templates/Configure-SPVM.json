@@ -99,7 +99,7 @@
           },
           "configurationArguments": {
             "DNSServer": "[parameters('dnsServer')]",
-            "DomainFQDN": "[parameters('domainFQDN')]"
+            "DomainFQDN": "[parameters('domainFQDN')]",
           },
           "privacy": {
             "dataCollection": "enable"
