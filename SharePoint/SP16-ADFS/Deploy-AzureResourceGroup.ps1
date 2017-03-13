@@ -9,7 +9,7 @@ $resourceDeploymentName = 'yd-sp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
-$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
+#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 $dscSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, "DSC"))
@@ -27,9 +27,15 @@ $passwords['spSvcPassword'] = $securePassword
 $passwords['spAppPoolPassword'] = $securePassword
 $passwords['spPassphrase'] = $securePassword
 
-# Additional settings
+# Those parameters must be unique
 $optionalParameters = New-Object -TypeName HashTable
 $optionalParameters['vaultName'] = "ydsp16adfsvault"
+$optionalParameters['templatePrefix'] = "ydsp16adfs"
+$optionalParameters['vmDCPublicIPDnsName'] = "ydsp16adfs-dc"
+$optionalParameters['vmSQLPublicIPDnsName'] = "ydsp16adfs-sql"
+$optionalParameters['vmSPPublicIPDnsName'] = "ydsp16adfs-sp"
+
+# Additional settings
 $overrideTemplateParametersFile = $false
 if ($overrideTemplateParametersFile -eq $true) {
     $optionalParameters['baseurl'] = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"

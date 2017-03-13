@@ -9,13 +9,14 @@
     },
     "templatePrefix": {
       "type": "string",
-      "defaultValue": "ydsp16adfs",
       "minLength": 1
     },
     "vaultName": {
       "type": "string",
-      "defaultValue": "ydsp16adfsvault",
-      "minLength": 1
+      "minLength": 1,
+      "metadata": {
+        "description": "The name of the key vault used for storing the Username and Password combinations"
+      }
     },
     "storageAccountType": {
       "type": "array",
@@ -28,13 +29,6 @@
       "metadata": {
         "description": "FQDN of the AD forest to create"
       }
-    },
-    "keyVaultName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the key vault used for storing the Username and Password combinations"
-      },
-      "defaultValue": "ydsp16adfsvault"
     },
     "adminUserName": {
       "type": "string",
@@ -118,7 +112,6 @@
     },
     "vmDCPublicIPDnsName": {
       "type": "string",
-      "defaultValue": "ydsp16adfs-dc",
       "minLength": 1
     },
     "vmSQLName": {
@@ -128,7 +121,6 @@
     },
     "vmSQLPublicIPDnsName": {
       "type": "string",
-      "defaultValue": "ydsp16adfs-sql",
       "minLength": 1
     },
     "vmSPName": {
@@ -138,7 +130,6 @@
     },
     "vmSPPublicIPDnsName": {
       "type": "string",
-      "defaultValue": "ydsp16adfs-sp",
       "minLength": 1
     },
     "dscDCTemplateURL": {
