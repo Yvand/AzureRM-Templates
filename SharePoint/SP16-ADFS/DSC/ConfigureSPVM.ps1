@@ -403,7 +403,7 @@ configuration ConfigureSPVM
                     IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 }
             )
-            SigningCertificateThumbPrintOrFilePath = "F:\Setup\Certificates\ADFS Signing.cer"
+            SigningCertificateFilePath = "F:\Setup\Certificates\ADFS Signing.cer"
             ClaimProviderName            = "LDAPCP"
             ProviderSignOutUri           = "https://adfs.$DomainFQDN/adfs/ls/"
             Ensure                       = "Present"

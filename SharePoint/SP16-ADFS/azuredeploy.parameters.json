@@ -1,6 +1,33 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
-    "contentVersion": "1.0.0.0",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
   "parameters": {
+    "templatePrefix": {
+      "value": "ydsp16adfs"
+    },
+    "vaultName": {
+      "value": "ydsp16adfsvault"
+    },
+    "baseurl": {
+      "value": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/Dev/SharePoint/SP16-ADFS"
+    },
+    "dscDCTemplateURL": {
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
+    },
+    "dscSQLTemplateURL": {
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
+    },
+    "dscSPTemplateURL": {
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
+    },
+    "vmDCPublicIPDnsName": {
+      "value": "ydsp16adfs-dc"
+    },
+    "vmSQLPublicIPDnsName": {
+      "value": "ydsp16adfs-sql"
+    },
+    "vmSPPublicIPDnsName": {
+      "value": "ydsp16adfs-sp"
+    }
   }
 }
