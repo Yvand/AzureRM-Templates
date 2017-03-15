@@ -1,4 +1,5 @@
-﻿### Shutdown VMs
+﻿$resourceGroupName = 'yd-sp16adfs'
+### Shutdown VMs
 {
 Stop-AzureRmVM -ResourceGroupName $resourceGroupName -Name "SP" -Force
 Stop-AzureRmVM -ResourceGroupName $resourceGroupName -Name "SQL" -Force

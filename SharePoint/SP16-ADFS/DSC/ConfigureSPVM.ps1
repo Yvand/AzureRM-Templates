@@ -418,7 +418,7 @@ configuration ConfigureSPVM
             ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
             AllowAnonymous         = $false
             AuthenticationMethod   = "NTLM"
-            DatabaseName           = $SPDBPrefix + "_Content_80"
+            DatabaseName           = $SPDBPrefix + "Content_80"
             Url                    = "http://$ComputerName/"
             Port                   = 80
             Ensure                 = "Present"
@@ -433,11 +433,12 @@ configuration ConfigureSPVM
                 $ComputerName = $using:ComputerName
                 $SPTrustedSitesName = $using:SPTrustedSitesName
                 $DomainFQDN = $using:DomainFQDN
-                Get-SPWebApplication http://$ComputerName/ | New-SPWebApplicationExtension -Name "SharePoint - 443" -SecureSocketsLayer -Zone "Intranet" -URL "https://$SPTrustedSitesName.$DomainFQDN"
 
+                Add-PSSnapin "Microsoft.SharePoint.PowerShell"
+                Get-SPWebApplication "http://$ComputerName/" | New-SPWebApplicationExtension -Name "SharePoint - 443" -SecureSocketsLayer -Zone "Intranet" -URL "https://$SPTrustedSitesName.$DomainFQDN"
                 $winAp = New-SPAuthenticationProvider -UseWindowsIntegratedAuthentication
                 $trust = Get-SPTrustedIdentityTokenIssuer $DomainFQDN
-                Get-SPWebApplication "https://$SPTrustedSitesName.$DomainFQDN" | Set-SPWebApplication -Zone Intranet -AuthenticationProvider $trust, $winAp 
+                Get-SPWebApplication "http://$ComputerName/" | Set-SPWebApplication -Zone Intranet -AuthenticationProvider $trust, $winAp 
             }
             GetScript =  
             {
