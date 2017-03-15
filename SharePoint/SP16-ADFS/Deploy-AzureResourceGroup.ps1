@@ -70,7 +70,7 @@ if ($azurecontext -eq $null){
 $generateDscArchives = $false
 if ($generateDscArchives) {
     if (Test-Path $dscSourceFolder) {
-        $dscSourceFilePaths = @(Get-ChildItem $dscSourceFolder -File -Filter "*VM.ps1" | ForEach-Object -Process {$_.FullName})
+        $dscSourceFilePaths = @(Get-ChildItem $dscSourceFolder -File -Filter "*SPVM.ps1" | ForEach-Object -Process {$_.FullName})
         foreach ($dscSourceFilePath in $dscSourceFilePaths) {
             $dscArchiveFilePath = $dscSourceFilePath.Substring(0, $dscSourceFilePath.Length - 4) + ".zip"
             Publish-AzureRmVMDscConfiguration $dscSourceFilePath -OutputArchivePath $dscArchiveFilePath -Force -Verbose

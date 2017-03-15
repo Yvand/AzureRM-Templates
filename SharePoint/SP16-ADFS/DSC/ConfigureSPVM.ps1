@@ -388,7 +388,7 @@ configuration ConfigureSPVM
 
         SPTrustedIdentityTokenIssuer CreateSPTrust
         {
-            Name                         = "$DomainFQDN"
+            Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
             Realm                        = "https://spsites.$DomainFQDN"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
@@ -413,17 +413,42 @@ configuration ConfigureSPVM
         
         SPWebApplication MainWebApp
         {
-            Name                   = "SharePoint Sites"
-            ApplicationPool        = "SharePoint Sites - 80"
+            Name                   = "SharePoint - 80"
+            ApplicationPool        = "SharePoint - 80"
             ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
             AllowAnonymous         = $false
             AuthenticationMethod   = "NTLM"
-            DatabaseName           = $SPDBPrefix + "Content_80"
-            Url                    = "http://sp"
+            DatabaseName           = $SPDBPrefix + "_Content_80"
+            Url                    = "http://$ComputerName/"
             Port                   = 80
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
             DependsOn              = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
+        }
+
+        xScript ExtendWebApp
+        {
+            SetScript = 
+            {
+                Get-SPWebApplication http://$ComputerName/ | New-SPWebApplicationExtension -Name "SharePoint - 443" -SecureSocketsLayer -Zone "Intranet" -URL "https://$SPTrustedSitesName.$DomainFQDN"  
+
+                $winAp = New-SPAuthenticationProvider -UseWindowsIntegratedAuthentication
+                $trust = Get-SPTrustedIdentityTokenIssuer $DomainFQDN
+                Get-SPWebApplication "https://$SPTrustedSitesName.$DomainFQDN" | Set-SPWebApplication -Zone Intranet -AuthenticationProvider $trust, $winAp 
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                $result = "false"
+                return @{ "Result" = $result }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                return $false
+            }
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = '[SPWebApplication]MainWebApp'
         }
 
         SPSite DevSite
@@ -433,7 +458,7 @@ configuration ConfigureSPVM
             Name                     = "Developer site"
             Template                 = "DEV#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
+            DependsOn                = "[xScript]ExtendWebApp"
         }
 
         SPSite TeamSite
@@ -443,7 +468,7 @@ configuration ConfigureSPVM
             Name                     = "Team site"
             Template                 = "STS#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
+            DependsOn                = "[xScript]ExtendWebApp"
         }
 
         SPSite MySiteHost
@@ -453,7 +478,7 @@ configuration ConfigureSPVM
             Name                     = "MySite host"
             Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
+            DependsOn                = "[xScript]ExtendWebApp"
         }
 
         $serviceAppPoolName = "SharePoint Service Applications"
