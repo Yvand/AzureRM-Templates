@@ -430,7 +430,10 @@ configuration ConfigureSPVM
         {
             SetScript = 
             {
-                Get-SPWebApplication http://$ComputerName/ | New-SPWebApplicationExtension -Name "SharePoint - 443" -SecureSocketsLayer -Zone "Intranet" -URL "https://$SPTrustedSitesName.$DomainFQDN"  
+                $ComputerName = $using:ComputerName
+                $SPTrustedSitesName = $using:SPTrustedSitesName
+                $DomainFQDN = $using:DomainFQDN
+                Get-SPWebApplication http://$ComputerName/ | New-SPWebApplicationExtension -Name "SharePoint - 443" -SecureSocketsLayer -Zone "Intranet" -URL "https://$SPTrustedSitesName.$DomainFQDN"
 
                 $winAp = New-SPAuthenticationProvider -UseWindowsIntegratedAuthentication
                 $trust = Get-SPTrustedIdentityTokenIssuer $DomainFQDN
@@ -453,7 +456,7 @@ configuration ConfigureSPVM
 
         SPSite DevSite
         {
-            Url                      = "http://sp"
+            Url                      = "http://$ComputerName"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             Name                     = "Developer site"
             Template                 = "DEV#0"
@@ -463,7 +466,7 @@ configuration ConfigureSPVM
 
         SPSite TeamSite
         {
-            Url                      = "http://sp/sites/team"
+            Url                      = "http://$ComputerName/sites/team"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             Name                     = "Team site"
             Template                 = "STS#0"
@@ -473,7 +476,7 @@ configuration ConfigureSPVM
 
         SPSite MySiteHost
         {
-            Url                      = "http://sp/sites/my"
+            Url                      = "http://$ComputerName/sites/my"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             Name                     = "MySite host"
             Template                 = "SPSMSITEHOST#0"
@@ -502,10 +505,10 @@ configuration ConfigureSPVM
         {
             Name                 = "User Profile Service Application"
             ApplicationPool      = $serviceAppPoolName
-            MySiteHostLocation   = "http://sp/sites/my"
-            ProfileDBName        = $SPDBPrefix + "Profiles"
-            SocialDBName         = $SPDBPrefix + "Social"
-            SyncDBName           = $SPDBPrefix + "Sync"
+            MySiteHostLocation   = "http://$ComputerName/sites/my"
+            ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
+            SocialDBName         = $SPDBPrefix + "UPA_Social"
+            SyncDBName           = $SPDBPrefix + "UPA_Sync"
             EnableNetBIOS        = $false
             FarmAccount          = $SPFarmCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified

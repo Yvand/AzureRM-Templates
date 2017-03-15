@@ -92,6 +92,9 @@ if ($vault -eq $null) {
     $vault = New-AzureRmKeyVault -VaultName $azureKeyVaultName -ResourceGroupName $resourceGroupName -Location $resourceGroupLocation -EnabledForTemplateDeployment
     Write-Host "Created Azure key vault $($vault.VaultName) with ResourceId $($vault.ResourceId)" -ForegroundColor Green
 }
+else {
+    Write-Host "Azure key vault $($vault.VaultName) already exists, adding secrets..." -ForegroundColor Green
+}
 
 ### Create one key per password and overrride password with the key vault secret
 $vaultSecrets = New-Object -TypeName HashTable
