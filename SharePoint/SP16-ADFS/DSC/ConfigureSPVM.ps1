@@ -30,7 +30,7 @@ configuration ConfigureSPVM
         [String]$SPTrustedSitesName = "SPSites"
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer
+    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate
 
     $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
@@ -426,7 +426,7 @@ configuration ConfigureSPVM
             DependsOn              = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
         }
 
-        xScript ExtendWebApp
+        <#xScript ExtendWebApp
         {
             SetScript = 
             {
@@ -434,11 +434,14 @@ configuration ConfigureSPVM
                 $SPTrustedSitesName = $using:SPTrustedSitesName
                 $DomainFQDN = $using:DomainFQDN
 
-                Add-PSSnapin "Microsoft.SharePoint.PowerShell"
-                Get-SPWebApplication "http://$ComputerName/" | New-SPWebApplicationExtension -Name "SharePoint - 443" -SecureSocketsLayer -Zone "Intranet" -URL "https://$SPTrustedSitesName.$DomainFQDN"
-                $winAp = New-SPAuthenticationProvider -UseWindowsIntegratedAuthentication
-                $trust = Get-SPTrustedIdentityTokenIssuer $DomainFQDN
-                Get-SPWebApplication "http://$ComputerName/" | Set-SPWebApplication -Zone Intranet -AuthenticationProvider $trust, $winAp 
+                $result = Invoke-SPDSCCommand -Credential $using:SPSetupCredsQualified -ScriptBlock {
+                    Get-SPWebApplication "http://$ComputerName/" | New-SPWebApplicationExtension -Name "SharePoint - 443" -SecureSocketsLayer -Zone "Intranet" -URL "https://$SPTrustedSitesName.$DomainFQDN" -Port 443
+                    $winAp = New-SPAuthenticationProvider -UseWindowsIntegratedAuthentication
+                    $trust = Get-SPTrustedIdentityTokenIssuer $DomainFQDN
+                    Get-SPWebApplication "http://$ComputerName/" | Set-SPWebApplication -Zone Intranet -AuthenticationProvider $trust, $winAp 
+                                     
+                    return "success"
+                }
             }
             GetScript =  
             {
@@ -453,6 +456,38 @@ configuration ConfigureSPVM
             }
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn = '[SPWebApplication]MainWebApp'
+        }#>
+
+        xCertReq SPSSiteCert
+        {
+            CARootName                = "$DomainNetbiosName-DC-CA"
+            CAServerFQDN              = "DC.$DomainFQDN"
+            Subject                   = "spsites.$DomainFQDN"
+            KeyLength                 = '2048'
+            Exportable                = $true
+            ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                       = '1.3.6.1.5.5.7.3.1'
+            KeyUsage                  = '0xa0'
+            CertificateTemplate       = 'WebServer'
+            AutoRenew                 = $true
+            Credential                = $DomainAdminCredsQualified
+            DependsOn = '[SPWebApplication]MainWebApp'
+        }
+
+        SPWebApplicationExtension ExtendWebApp
+        {
+            WebAppUrl              = "http://$ComputerName/"
+            Name                   = "SharePoint - 443"
+            AllowAnonymous         = $false
+            AuthenticationMethod   = "Claims"
+            AuthenticationProvider = $DomainFQDN
+            Url                    = "https://spsites.$DomainFQDN"
+            Zone                   = "Intranet"
+            UseSSL                 = $true
+            Port                   = 443
+            Ensure                 = "Present"
+            PsDscRunAsCredential   = $SPSetupCredsQualified
+            DependsOn = '[xCertReq]SPSSiteCert'
         }
 
         SPSite DevSite
@@ -462,7 +497,7 @@ configuration ConfigureSPVM
             Name                     = "Developer site"
             Template                 = "DEV#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[xScript]ExtendWebApp"
+            DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
         }
 
         SPSite TeamSite
@@ -472,7 +507,7 @@ configuration ConfigureSPVM
             Name                     = "Team site"
             Template                 = "STS#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[xScript]ExtendWebApp"
+            DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
         }
 
         SPSite MySiteHost
@@ -482,7 +517,7 @@ configuration ConfigureSPVM
             Name                     = "MySite host"
             Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[xScript]ExtendWebApp"
+            DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
         }
 
         $serviceAppPoolName = "SharePoint Service Applications"
