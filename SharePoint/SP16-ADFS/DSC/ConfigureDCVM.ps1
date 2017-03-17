@@ -134,27 +134,6 @@
             DependsOn = "[WindowsFeature]AddCertAuthority"
         }
 
-        xScript CreateLocalProfile
-        {
-            SetScript = 
-            {
-                Start-Process cmd.exe /c -LoadUserProfile -Credential $using:DomainCredsNetbios -Wait
-            }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                $result = "false"
-                return @{ "Result" = $result }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                return $false
-            }
-            #PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = '[xADCSCertificationAuthority]ADCS'
-        }
-        
         #**********************************************************
         # Configure AD FS
         #**********************************************************
@@ -294,7 +273,7 @@ c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccou
 => issue(
 store = "Active Directory", 
 types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"), 
-query = ";mail,tokenGroups(domainQualifiedName);{0}", 
+query = ";mail,tokenGroups(longDomainQualifiedName);{0}", 
 param = c.Value);
 "@
             ProtocolProfile = "WsFed-SAML"
@@ -447,8 +426,9 @@ help ConfigureDCVM
 $Admincreds = Get-Credential -Credential "yvand"
 $AdfsSvcCreds = Get-Credential -Credential "adfssvc"
 $DomainFQDN = "contoso.local"
+$PrivateIP = "10.0.1.4"
 
-ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainName $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
 Set-DscLocalConfigurationManager -Path "C:\Data\output\"
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
