@@ -499,6 +499,7 @@ configuration ConfigureSPVM
         {
             Url                      = "http://$ComputerName"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
+            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "Developer site"
             Template                 = "DEV#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
@@ -509,6 +510,7 @@ configuration ConfigureSPVM
         {
             Url                      = "http://$ComputerName/sites/team"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
+            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "Team site"
             Template                 = "STS#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
@@ -519,6 +521,7 @@ configuration ConfigureSPVM
         {
             Url                      = "http://$ComputerName/sites/my"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
+            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
             Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
@@ -606,7 +609,7 @@ $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 $DCName = "DC"
 
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
 Set-DscLocalConfigurationManager -Path "C:\Data\output\"
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
