@@ -43,6 +43,8 @@ configuration ConfigureSPVM
 	[Int]$RetryCount = 30
     [Int]$RetryIntervalSec = 30
     $ComputerName = Get-Content env:computername
+    # $DCName will be valid only after computer joined domain, which is fine since it will trigger a restart and var won't be used before
+    $DCName = [regex]::match([environment]::GetEnvironmentVariable("LOGONSERVER","Process"),"[A-Za-z0-9-]+").Groups[0].Value
 
     Node localhost
     {
@@ -112,17 +114,17 @@ configuration ConfigureSPVM
             DependsOn = "[xComputer]DomainJoin"
         }
         
-        <#
-        xDnsRecord AddTrustedSiteDNS {
+        xDnsRecord AddTrustedSiteDNS 
+        {
             Name = $SPTrustedSitesName
             Zone = $DomainFQDN
-            DnsServer = "DC"
-            Target = $ComputerName
+            DnsServer = $DCName
+            Target = "$ComputerName.$DomainFQDN"
             Type = "CName"
             Ensure = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[xComputer]DomainJoin"
         }
-        #>
 
         xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
         xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
@@ -204,7 +206,7 @@ configuration ConfigureSPVM
             Ensure = "Present"
             Type = "Directory"
             Recurse = $true
-            SourcePath = "\\DC\F$\Setup"
+            SourcePath = "\\$DCName\F$\Setup"
             DestinationPath = "F:\Setup\Certificates"
             Credential = $DomainAdminCredsQualified
             DependsOn = "[File]AccountsProvisioned"
@@ -390,7 +392,7 @@ configuration ConfigureSPVM
         {
             Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
-            Realm                        = "https://spsites.$DomainFQDN"
+            Realm                        = "https://$SPTrustedSitesName.$DomainFQDN"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
             IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
             ClaimsMappings               = @(
@@ -460,9 +462,9 @@ configuration ConfigureSPVM
 
         xCertReq SPSSiteCert
         {
-            CARootName                = "$DomainNetbiosName-DC-CA"
-            CAServerFQDN              = "DC.$DomainFQDN"
-            Subject                   = "spsites.$DomainFQDN"
+            CARootName                = "$DomainNetbiosName-$DCName-CA"
+            CAServerFQDN              = "$DCName.$DomainFQDN"
+            Subject                   = "$SPTrustedSitesName.$DomainFQDN"
             KeyLength                 = '2048'
             Exportable                = $true
             ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
@@ -481,7 +483,7 @@ configuration ConfigureSPVM
             AllowAnonymous         = $false
             AuthenticationMethod   = "Claims"
             AuthenticationProvider = $DomainFQDN
-            Url                    = "https://spsites.$DomainFQDN"
+            Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
             Zone                   = "Intranet"
             UseSSL                 = $true
             Port                   = 443
