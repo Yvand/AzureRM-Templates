@@ -10,6 +10,9 @@ configuration ConfigureSPVM
         [String]$DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN),
 
         [Parameter(Mandatory)]
+        [String]$DCName,
+
+        [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$DomainAdminCreds,
 
         [Parameter(Mandatory)]
@@ -44,7 +47,7 @@ configuration ConfigureSPVM
     [Int]$RetryIntervalSec = 30
     $ComputerName = Get-Content env:computername
     # $DCName will be valid only after computer joined domain, which is fine since it will trigger a restart and var won't be used before
-    $DCName = [regex]::match([environment]::GetEnvironmentVariable("LOGONSERVER","Process"),"[A-Za-z0-9-]+").Groups[0].Value
+    #$DCName = [regex]::match([environment]::GetEnvironmentVariable("LOGONSERVER","Process"),"[A-Za-z0-9-]+").Groups[0].Value
 
     Node localhost
     {
@@ -601,6 +604,7 @@ $SPAppPoolCreds = Get-Credential -Credential "spapppool"
 $SPPassphraseCreds = Get-Credential -Credential "Passphrase"
 $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
+$DCName = "DC"
 
 ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
 Set-DscLocalConfigurationManager -Path "C:\Data\output\"
