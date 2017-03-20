@@ -495,6 +495,23 @@ configuration ConfigureSPVM
             DependsOn = '[xCertReq]SPSSiteCert'
         }
 
+        <#xWebsite SetHTTPSCertificate
+        {
+            Name            = "SharePoint - 443"
+            BindingInfo     = MSFT_xWebBindingInformation
+            {
+                Protocol              = 'https'
+                Port                  = '443'
+                CertificateStoreName  = 'WebHosting'
+                CertificateThumbprint = 'BB84DE3EC423DDDE90C08AB3C5A828692089493C'
+                HostName              = ""
+                IPAddress             = '*'
+                SSLFlags              = '0'
+            }
+            Ensure          = "Present"
+            DependsOn = '[SPWebApplicationExtension]ExtendWebApp'
+        }#>
+
         SPSite DevSite
         {
             Url                      = "http://$ComputerName"
