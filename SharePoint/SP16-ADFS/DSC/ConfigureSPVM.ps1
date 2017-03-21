@@ -537,6 +537,9 @@ configuration ConfigureSPVM
                     certificateHash = $properties.certificateHash
                 } -Force -ErrorAction Stop
 
+                if (!(Get-Item IIS:\SslBindings\*!443)) {
+                    New-Item IIS:\SslBindings\*!443 -value $siteCert
+                }
             }
             GetScript =  
             {
