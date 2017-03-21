@@ -1,0 +1,7 @@
+{
+  "itemDisplayName": "Deploy a SharePoint 2016 environment configured to use federated authentication with ADFS",
+  "description": "This template deploys 3 new Azure VMs, each with its public IP address, one VM is a new AD domain with AD CS and AD FS configured, one is SQL Server and one is SharePoint 2016, configured with 1 web application and 2 zones, default zone is using Windows authentication and Intranet zone is using federated authentication",
+  "summary": "Deploy a SharePoint 2016 environment configured to use federated authentication with ADFS",
+  "githubUsername": "yvand",
+  "dateUpdated": "2017-03-22"
+}

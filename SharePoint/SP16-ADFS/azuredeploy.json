@@ -186,7 +186,7 @@
       "vmsStorageAccountContainerName": "vhds"
     },
     "vmDC": {
-      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/CreateAndConfigure-DCVM.json')]",
+      "templateLocation": "[concat(parameters('baseUrl'),'/nested/CreateAndConfigure-DCVM.json')]",
       "vmImagePublisher": "MicrosoftWindowsServer",
       "vmImageOffer": "WindowsServer",
       "vmImageSKU": "2016-Datacenter",
@@ -199,7 +199,7 @@
       "nicPrivateIPAddress": "10.0.1.4"
     },
     "vmSQL": {
-      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Create-GenericVM.json')]",
+      "templateLocation": "[concat(parameters('baseUrl'),'/nested/Create-GenericVM.json')]",
       "vmImagePublisher": "MicrosoftSQLServer",
       "vmImageOffer": "SQL2016SP1-WS2016",
       "vmImageSKU": "Standard",
@@ -212,7 +212,7 @@
       "vmPublicIPName": "vmSQL-PublicIP"
     },
     "vmSP": {
-      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Create-GenericVM.json')]",
+      "templateLocation": "[concat(parameters('baseUrl'),'/nested/Create-GenericVM.json')]",
       "vmImagePublisher": "MicrosoftSharePoint",
       "vmImageOffer": "MicrosoftSharePointServer",
       "vmImageSKU": "2016",
@@ -229,13 +229,13 @@
       "function": "ConfigureDCVM"
     },
     "dscConfigureSQLVM": {
-      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Configure-SQLVM.json')]",
+      "templateLocation": "[concat(parameters('baseUrl'),'/nested/Configure-SQLVM.json')]",
       "url": "[parameters('dscSQLTemplateURL')]",
       "script": "ConfigureSQLVM.ps1",
       "function": "ConfigureSQLVM"
     },
     "dscConfigureSPVM": {
-      "templateLocation": "[concat(parameters('baseUrl'),'/Templates/Configure-SPVM.json')]",
+      "templateLocation": "[concat(parameters('baseUrl'),'/nested/Configure-SPVM.json')]",
       "url": "[parameters('dscSPTemplateURL')]",
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM"
@@ -762,6 +762,9 @@
           },
           "domainFQDN": {
             "value": "[parameters('domainFQDN')]"
+          },
+          "DCName": {
+            "value": "[parameters('vmDCName')]"
           },
           "domainAdminUserName": {
             "value": "[parameters('adminUsername')]"

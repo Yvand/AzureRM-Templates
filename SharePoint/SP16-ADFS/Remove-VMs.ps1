@@ -24,15 +24,15 @@ ForEach ($vmToDelete in $vmsToDelete) {
     $disksNames+=$vm.StorageProfile.OsDisk.Name
     $vm.StorageProfile.DataDisks| %{$disksNames+=$_.Name}
     
-    Write-Host "Removing VM $vmToDelete..."
+    Write-Output "Removing VM $vmToDelete..."
     Remove-AzureRmVM -ResourceGroupName $resourceGroupName -Name $vmToDelete -Force
 
     #Get-AzureStorageContainer -Name $blobStorageContainer | Get-AzureStorageBlob | ft Name
     $disksNames| Foreach-Object -Process {
-        Write-Host "Removing disk $_..."
+        Write-Output "Removing disk $_..."
         Remove-AzureStorageBlob -Container $blobStorageContainer -Blob $_".vhd"
     }
-    Write-Host "VM $vmToDelete deleted."
+    Write-Output "VM $vmToDelete deleted."
 }
 
 ### DELETE PARALLEL
@@ -54,15 +54,15 @@ ForEach ($vmToDelete in $vmsToDelete) {
         $disksNames+=$vm.StorageProfile.OsDisk.Name
         $vm.StorageProfile.DataDisks| %{$disksNames+=$_.Name}
     
-        Write-Host "Removing VM $vmToDelete..."
+        Write-Output "Removing VM $vmToDelete..."
         Remove-AzureRmVM -ResourceGroupName $resourceGroupName -Name $vmToDelete -Force
 
         #Get-AzureStorageContainer -Name $blobStorageContainer | Get-AzureStorageBlob | ft Name
         $disksNames| Foreach-Object -Process {
-            Write-Host "Removing disk $_..."
+            Write-Output "Removing disk $_..."
             Remove-AzureStorageBlob -Container $blobStorageContainer -Blob $_".vhd"
         }
-        Write-Host "VM $vmToDelete deleted."
+        Write-Output "VM $vmToDelete deleted."
     }
     Start-Job -scriptblock $scriptBlockDeleteVM -ArgumentList $vmToDelete, $resourceGroupName, $blobStorageContainer, $StorageAccountName
 
@@ -71,4 +71,4 @@ Get-Job | Wait-Job
 Get-Job | Receive-Job 
 }
 
-Write-Host "Finished."
+Write-Output "Finished."
