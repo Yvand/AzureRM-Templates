@@ -495,7 +495,8 @@ configuration ConfigureSPVM
             DependsOn = '[xCertReq]SPSSiteCert'
         }
 
-        <#xWebsite SetHTTPSCertificate
+        <# Not working because there is no way to get CertificateThumbprint dynamically (created by a previous resource)
+        xWebsite SetHTTPSCertificate
         {
             Name            = "SharePoint - 443"
             BindingInfo     = MSFT_xWebBindingInformation
@@ -512,6 +513,45 @@ configuration ConfigureSPVM
             DependsOn = '[SPWebApplicationExtension]ExtendWebApp'
         }#>
 
+        xScript SetHTTPSCertificate
+        {
+            SetScript = 
+            {
+                $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:SPTrustedSitesName.$using:DomainFQDN"
+
+                $website = Get-WebConfiguration -Filter '/system.applicationHost/sites/site' |
+                    Where-Object -FilterScript {$_.Name -eq "SharePoint - 443"}
+
+                $properties = @{
+                    protocol = "https"
+                    bindingInformation = ":443:"
+                    certificateStoreName = "MY"
+                    certificateHash = $siteCert.Thumbprint
+                }
+
+                Clear-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Force -ErrorAction Stop
+                Add-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Value @{
+                    protocol = $properties.protocol
+                    bindingInformation = $properties.bindingInformation
+                    certificateStoreName = $properties.certificateStoreName
+                    certificateHash = $properties.certificateHash
+                } -Force -ErrorAction Stop
+
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            PsDscRunAsCredential     = $DomainAdminCredsQualified
+            DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
+        }
+
         SPSite DevSite
         {
             Url                      = "http://$ComputerName"
@@ -520,7 +560,7 @@ configuration ConfigureSPVM
             Name                     = "Developer site"
             Template                 = "DEV#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
+            DependsOn                = "[xScript]SetHTTPSCertificate"
         }
 
         SPSite TeamSite
@@ -531,7 +571,7 @@ configuration ConfigureSPVM
             Name                     = "Team site"
             Template                 = "STS#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
+            DependsOn                = "[xScript]SetHTTPSCertificate"
         }
 
         SPSite MySiteHost
@@ -542,7 +582,7 @@ configuration ConfigureSPVM
             Name                     = "MySite host"
             Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
+            DependsOn                = "[xScript]SetHTTPSCertificate"
         }
 
         $serviceAppPoolName = "SharePoint Service Applications"

@@ -84,6 +84,7 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
         -Name $resourceGroupName `
         -Location $resourceGroupLocation `
         -Verbose -Force
+    Write-Host "Created resource group $resourceGroupName." -ForegroundColor Green
 }
 
 ### Configure Azure key vault
