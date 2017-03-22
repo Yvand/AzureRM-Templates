@@ -9,7 +9,7 @@ $resourceDeploymentName = 'yd-sp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
-#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
+$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 $dscSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, "dsc"))
@@ -87,31 +87,12 @@ if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction
     Write-Host "Created resource group $resourceGroupName." -ForegroundColor Green
 }
 
-### Configure Azure key vault
-$vault = Get-AzureRmKeyVault -VaultName $azureKeyVaultName -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue
-if ($vault -eq $null) {
-    $vault = New-AzureRmKeyVault -VaultName $azureKeyVaultName -ResourceGroupName $resourceGroupName -Location $resourceGroupLocation -EnabledForTemplateDeployment
-    Write-Host "Created Azure key vault $($vault.VaultName) with ResourceId $($vault.ResourceId)" -ForegroundColor Green
-}
-else {
-    Write-Host "Azure key vault $($vault.VaultName) already exists, adding secrets..." -ForegroundColor Green
-}
-
-### Create one key per password and overrride password with the key vault secret
-$vaultSecrets = New-Object -TypeName HashTable
-foreach ($password in $passwords.GetEnumerator()) {
-    $secret = Set-AzureKeyVaultSecret -VaultName $azureKeyVaultName -Name $password.Name -SecretValue $password.Value
-    $key = $secret.Name + "KeyName"
-    $vaultSecrets[$key] = $secret.Name
-    Write-Host "Created secret $($secret.Name) in Azure key vault $($vault.VaultName)" -ForegroundColor Green
-}
-
 ### Test template and deploy if it is valid, otherwise display error details
 $checkTemplate = Test-AzureRmResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
     -TemplateParameterFile $templateParametersFile `
-    @vaultSecrets `
+    @passwords `
     -Verbose
 
 if ($checkTemplate.Count -eq 0) {
@@ -121,7 +102,7 @@ if ($checkTemplate.Count -eq 0) {
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $TemplateFile `
         -TemplateParameterFile $templateParametersFile `
-        @vaultSecrets `
+        @passwords `
         -Verbose -Force
 
     $result
