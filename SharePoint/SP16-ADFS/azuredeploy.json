@@ -870,17 +870,19 @@
           }
         },
         "protectedSettings": {
-          "DomainAdminCreds": {
-            "UserName": "[parameters('adminUsername')]",
-            "Password": "[parameters('adminPassword')]"
-          },
-          "SqlSvcCreds": {
-            "UserName": "[parameters('sqlSvcUserName')]",
-            "Password": "[parameters('sqlSvcPassword')]"
-          },
-          "SPSetupCreds": {
-            "UserName": "[parameters('spSetupUserName')]",
-            "Password": "[parameters('spSetupPassword')]"
+          "configurationArguments": {
+            "DomainAdminCreds": {
+              "UserName": "[parameters('adminUsername')]",
+              "Password": "[parameters('adminPassword')]"
+            },
+            "SqlSvcCreds": {
+              "UserName": "[parameters('sqlSvcUserName')]",
+              "Password": "[parameters('sqlSvcPassword')]"
+            },
+            "SPSetupCreds": {
+              "UserName": "[parameters('spSetupUserName')]",
+              "Password": "[parameters('spSetupPassword')]"
+            }
           }
         }
       }
@@ -921,29 +923,31 @@
           }
         },
         "protectedSettings": {
-          "DomainAdminCreds": {
-            "UserName": "[parameters('adminUsername')]",
-            "Password": "[parameters('adminPassword')]"
-          },
-          "SPSetupCreds": {
-            "UserName": "[parameters('spSetupUserName')]",
-            "Password": "[parameters('spSetupPassword')]"
-          },
-          "SPFarmCreds": {
-            "UserName": "[parameters('spFarmUserName')]",
-            "Password": "[parameters('spFarmPassword')]"
-          },
-          "SPSvcCreds": {
-            "UserName": "[parameters('spSvcUserName')]",
-            "Password": "[parameters('spSvcPassword')]"
-          },
-          "SPAppPoolCreds": {
-            "UserName": "[parameters('spAppPoolUserName')]",
-            "Password": "[parameters('spAppPoolPassword')]"
-          },
-          "SPPassphraseCreds": {
-            "UserName": "Passphrase",
-            "Password": "[parameters('spPassphrase')]"
+          "configurationArguments": {
+            "DomainAdminCreds": {
+              "UserName": "[parameters('adminUsername')]",
+              "Password": "[parameters('adminPassword')]"
+            },
+            "SPSetupCreds": {
+              "UserName": "[parameters('spSetupUserName')]",
+              "Password": "[parameters('spSetupPassword')]"
+            },
+            "SPFarmCreds": {
+              "UserName": "[parameters('spFarmUserName')]",
+              "Password": "[parameters('spFarmPassword')]"
+            },
+            "SPSvcCreds": {
+              "UserName": "[parameters('spSvcUserName')]",
+              "Password": "[parameters('spSvcPassword')]"
+            },
+            "SPAppPoolCreds": {
+              "UserName": "[parameters('spAppPoolUserName')]",
+              "Password": "[parameters('spAppPoolPassword')]"
+            },
+            "SPPassphraseCreds": {
+              "UserName": "Passphrase",
+              "Password": "[parameters('spPassphrase')]"
+            }
           }
         }
       }
