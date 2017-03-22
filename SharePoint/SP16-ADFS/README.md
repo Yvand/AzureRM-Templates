@@ -12,7 +12,7 @@ This template deploys 3 new Azure VMs, each with its own public IP address and s
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-> **Note:** The deployment cannot be made directly from Azure portal because it relies on PowerShell script [Deploy-AzureResourceGroup.ps1](https://github.com/Yvand/AzureRM-Templates/blob/master/SharePoint/SP16-ADFS/Deploy-AzureResourceGroup.ps1) to create the Azure key vault, create secrets and pass secrets to the template.
+> **Note:** The template cannot be deployed directly from Azure portal because it relies on PowerShell script [Deploy-AzureResourceGroup.ps1](https://github.com/Yvand/AzureRM-Templates/blob/master/SharePoint/SP16-ADFS/Deploy-AzureResourceGroup.ps1) to create the Azure key vault, create secrets and pass secrets to the template.
 
 ## Changelog
 ### March 2017 v2 release
