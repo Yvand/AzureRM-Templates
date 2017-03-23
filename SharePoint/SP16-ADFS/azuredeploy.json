@@ -4,24 +4,28 @@
   "parameters": {
     "templatePrefix": {
       "type": "string",
-      "minLength": 1
+      "minLength": 3,
+      "metadata": {
+        "description": "Value used as a prefix to generate name of various objects like the virtual network or the storage account."
+      }
     },
     "vaultName": {
       "type": "string",
-      "minLength": 1,
+      "minLength": 3,
       "metadata": {
-        "description": "The name of the key vault used for storing the Username and Password combinations"
+        "description": "Name of the Azure key vault service that will store passwords"
       }
     },
     "tenantId": {
       "type": "string",
-      "minLength": 1
+      "metadata": {
+        "description": "GUID of the tenant, used to create Azure key vault. Get it using Get-AzureRmTenant cmdlet"
+      }
     },
     "objectId": {
       "type": "string",
-      "minLength": 1,
       "metadata": {
-        "description": "Object Id of the AAD user to create the Azure key vault. Get using Get-AzureRmADUser or Get-AzureRmADServicePrincipal cmdlets"
+        "description": "Property ObjectId of the AAD user that will have access to secrets in Azure key vault. Get it using Get-AzureRmADUser or Get-AzureRmADServicePrincipal cmdlets"
       }
     },
     "storageAccountType": {
@@ -31,7 +35,7 @@
     "domainFQDN": {
       "type": "string",
       "defaultValue": "contoso.local",
-      "minLength": 1,
+      "minLength": 5,
       "metadata": {
         "description": "FQDN of the AD forest to create"
       }
@@ -39,7 +43,10 @@
     "adminUserName": {
       "type": "string",
       "defaultValue": "yvand",
-      "minLength": 1
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the AD and SharePoint administrator"
+      }
     },
     "adminPassword": {
       "type": "securestring",
@@ -51,15 +58,17 @@
     "adminPasswordKeyName": {
       "type": "string",
       "defaultValue": "adminPassword",
-      "minLength": 1,
       "metadata": {
-        "description": "The key name to get password of admin account stored in Azure key vault"
+        "description": "The name of the secret that will store value of adminPassword in Azure key vault"
       }
     },
     "adfsSvcUserName": {
       "type": "string",
       "defaultValue": "adfssvc",
-      "minLength": 1
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the service account that will run ADFS"
+      }
     },
     "adfsSvcPassword": {
       "type": "securestring",
@@ -71,15 +80,17 @@
     "adfsSvcPasswordKeyName": {
       "type": "string",
       "defaultValue": "adfsSvcPassword",
-      "minLength": 1,
       "metadata": {
-        "description": "The adfs account password secret key name"
+        "description": "The name of the secret that will store value of adfsSvcPassword in Azure key vault"
       }
     },
     "sqlSvcUserName": {
       "type": "string",
       "defaultValue": "sqlsvc",
-      "minLength": 1
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the service account that will run SQL Server instance"
+      }
     },
     "sqlSvcPassword": {
       "type": "securestring",
@@ -88,15 +99,17 @@
     "sqlSvcPasswordKeyName": {
       "type": "string",
       "defaultValue": "sqlSvcPassword",
-      "minLength": 1,
       "metadata": {
-        "description": "The adfs account password secret key name"
+        "description": "The name of the secret that will store value of sqlSvcPassword in Azure key vault"
       }
     },
     "spSetupUserName": {
       "type": "string",
       "defaultValue": "spsetup",
-      "minLength": 1
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the service account that will create and configure the SharePoint farm"
+      }
     },
     "spSetupPassword": {
       "type": "securestring",
@@ -105,7 +118,9 @@
     "spSetupPasswordKeyName": {
       "type": "string",
       "defaultValue": "spSetupPassword",
-      "minLength": 1
+      "metadata": {
+        "description": "The name of the secret that will store value of spSetupPassword in Azure key vault"
+      }
     },
     "spFarmUserName": {
       "type": "string",
@@ -114,16 +129,25 @@
     },
     "spFarmPassword": {
       "type": "securestring",
-      "minLength": 1
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the service account that will run SharePoint central administration and Timer services"
+      }
     },
     "spFarmPasswordKeyName": {
       "type": "string",
-      "defaultValue": "spFarmPassword"
+      "defaultValue": "spFarmPassword",
+      "metadata": {
+        "description": "The name of the secret that will store value of spFarmPassword in Azure key vault"
+      }
     },
     "spSvcUserName": {
       "type": "string",
       "defaultValue": "spsvc",
-      "minLength": 1
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the service account that will run SharePoint service applications"
+      }
     },
     "spSvcPassword": {
       "type": "securestring",
@@ -131,12 +155,18 @@
     },
     "spSvcPasswordKeyName": {
       "type": "string",
-      "defaultValue": "spSvcPassword"
+      "defaultValue": "spSvcPassword",
+      "metadata": {
+        "description": "The name of the secret that will store value of spSvcPassword in Azure key vault"
+      }
     },
     "spAppPoolUserName": {
       "type": "string",
       "defaultValue": "spapppool",
-      "minLength": 1
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the service account that will run SharePoint web applications"
+      }
     },
     "spAppPoolPassword": {
       "type": "securestring",
@@ -144,47 +174,73 @@
     },
     "spAppPoolPasswordKeyName": {
       "type": "string",
-      "defaultValue": "spAppPoolPassword"
+      "defaultValue": "spAppPoolPassword",
+      "metadata": {
+        "description": "The name of the secret that will store value of spAppPoolPassword in Azure key vault"
+      }
     },
     "spPassphraseKeyName": {
       "type": "string",
-      "defaultValue": "spPassphrase"
+      "defaultValue": "spPassphrase",
+      "metadata": {
+        "description": "The name of the secret that will store value of spPassphrase in Azure key vault"
+      }
     },
     "spPassphrase": {
       "type": "securestring",
-      "minLength": 1
+      "minLength": 1,
+      "metadata": {
+        "description": "Passphrase of the SharePoint farm"
+      }
     },
     "vmDCName": {
       "type": "string",
       "defaultValue": "DC",
-      "minLength": 1
+      "minLength": 2,
+      "metadata": {
+        "description": "Name of DC VM"
+      }
     },
     "vmDCPublicIPDnsName": {
       "type": "string",
-      "minLength": 1
+      "minLength": 2,
+      "metadata": {
+        "description": "Unique short DNS name associated to the public IP of DC VM"
+      }
     },
     "vmSQLName": {
       "type": "string",
       "defaultValue": "SQL",
-      "minLength": 1
+      "minLength": 2,
+      "metadata": {
+        "description": "Name of SQL VM"
+      }
     },
     "vmSQLPublicIPDnsName": {
       "type": "string",
-      "minLength": 1
+      "minLength": 2,
+      "metadata": {
+        "description": "Unique short DNS name associated to the public IP of SQL VM"
+      }
     },
     "vmSPName": {
       "type": "string",
       "defaultValue": "SP",
-      "minLength": 1
+      "minLength": 2,
+      "metadata": {
+        "description": "Name of SP VM"
+      }
     },
     "vmSPPublicIPDnsName": {
       "type": "string",
-      "minLength": 1
+      "minLength": 2,
+      "metadata": {
+        "description": "Unique short DNS name associated to the public IP of SP VM"
+      }
     },
     "dscDCTemplateURL": {
       "type": "string",
       "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip",
-      "minLength": 1
     },
     "dscDCUpdateTagVersion": {
       "type": "string",
@@ -196,7 +252,6 @@
     "dscSQLTemplateURL": {
       "type": "string",
       "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
-      "minLength": 1
     },
     "dscSQLUpdateTagVersion": {
       "type": "string",
@@ -208,7 +263,6 @@
     "dscSPTemplateURL": {
       "type": "string",
       "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip",
-      "minLength": 1
     },
     "dscSPUpdateTagVersion": {
       "type": "string",
