@@ -6,6 +6,8 @@ This template deploys 3 new Azure VMs, each with its own public IP address and s
 * A SharePoint 2016 standalone farm, configured with 1 web application and 2 zones. Default zone is using Windows authentication and Intranet zone is using federated authentication with ADFS. Latest version of claims provider [LDAPCP](https://ldapcp.codeplex.com/) is installed and configured.
 All passwords are stored in Azure key vault service, created by the template.
 
+It also provisions a key vault to store passwords and SharePoint passphrase.
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fmaster%2FSharePoint%2FSP16-ADFS%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
