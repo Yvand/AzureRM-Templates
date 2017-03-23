@@ -4,17 +4,20 @@ This template deploys 3 new Azure VMs, each with its own public IP address and s
 * A new AD domain with a root certification authority (AD CS) and AD FS configured
 * A SQL Server 2016
 * A SharePoint 2016 standalone farm, configured with 1 web application and 2 zones. Default zone is using Windows authentication and Intranet zone is using federated authentication with ADFS. Latest version of claims provider [LDAPCP](https://ldapcp.codeplex.com/) is installed and configured.
+All passwords are stored in Azure key vault service, created by the template.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fmaster%2FSharePoint%2FSP16-ADFS%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2FYvand%2FAzureRM-Templates%2Fraw%2FDev%2FSharePoint%2FSP16-ADFS%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fmaster%2FSharePoint%2FSP16-ADFS%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fgithub.com%2FYvand%2FAzureRM-Templates%2Fraw%2FDev%2FSharePoint%2FSP16-ADFS%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-> **Note:** The template cannot be deployed directly from Azure portal because it relies on PowerShell script [Deploy-AzureResourceGroup.ps1](https://github.com/Yvand/AzureRM-Templates/blob/master/SharePoint/SP16-ADFS/Deploy-AzureResourceGroup.ps1) to create the Azure key vault, create secrets and pass secrets to the template.
-
 ## Changelog
+### March 2017 v3 release
+* Azure key vault and its secrets are now created by the deployment script itself, removing the dependency to the PowerShell deployment script
+* Removed nested templates
+
 ### March 2017 v2 release
 * Optimizations in PowerShell deployment script
 * Parameters that must be unique in Azure were moved to parameters file and are no more set with a default value
