@@ -9,7 +9,7 @@ $resourceDeploymentName = 'yd-sp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
-$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
+#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 $dscSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, "dsc"))
@@ -35,22 +35,6 @@ if ($JsonParameters -eq $null) {
 }
 else {
     $JsonParameters = $JsonContent.parameters
-}
-
-### Retrieve required properties from parameters file
-$azureKeyVaultPropertyName = "vaultName"
-$azureKeyVaultName = ""
-$JsonParameters | Get-Member -Type NoteProperty | ForEach-Object {
-    $ParameterValue = $JsonParameters | Select-Object -ExpandProperty $_.Name
-
-    if ($_.Name -eq $azureKeyVaultPropertyName) {
-        $azureKeyVaultName = $ParameterValue.value
-    }
-}
-
-if (!$azureKeyVaultName) {
-    Write-Host "Property $azureKeyVaultPropertyName must be set in parameters file $templateParametersFile" -ForegroundColor Red
-    return
 }
 
 ### Ensure connection to Azure RM
