@@ -259,7 +259,7 @@
     }
   },
   "variables": {
-    "storageAccountNamePrefix": "[concat(parameters('templatePrefix'), 'st')]",
+    "storageAccountName": "[concat(parameters('templatePrefix'), 'st')]",
     "vNetPrivateName": "[concat(parameters('templatePrefix'), '-vnet')]",
     "generalSettings": {
       "vmsStorageAccountContainerName": "vhds",
@@ -352,7 +352,7 @@
         "accessPolicies": [
           {
             "tenantId": "[parameters('tenantId')]",
-            "userObjectId": "[parameters('userObjectId')]",
+            "objectId": "[parameters('userObjectId')]",
             "permissions": {
               "keys": [ "get", "create", "delete", "list", "update", "import", "backup", "restore" ],
               "secrets": [ "all" ]
@@ -470,13 +470,13 @@
       }
     },
     {
-      "name": "[variables('storageAccountNamePrefix')]",
+      "name": "[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [],
       "tags": {
-        "displayName": "[variables('storageAccountNamePrefix')]"
+        "displayName": "[variables('storageAccountName')]"
       },
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
@@ -571,7 +571,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
       ],
       "tags": {
@@ -596,7 +596,7 @@
           "osDisk": {
             "name": "[variables('vmDC').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmOSDiskName, '.vhd')]"
+              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmOSDiskName, '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -604,7 +604,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmDataDiskName, '.vhd')]"
+                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmDataDiskName, '.vhd')]"
               },
               "name": "[variables('vmDC').vmDataDiskName]",
               "caching": "None",
@@ -722,7 +722,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
       ],
       "tags": {
@@ -747,7 +747,7 @@
           "osDisk": {
             "name": "[variables('vmSQL').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmOSDiskName, '.vhd')]"
+              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmOSDiskName, '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -755,7 +755,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmDataDiskName, '.vhd')]"
+                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmDataDiskName, '.vhd')]"
               },
               "name": "[variables('vmSQL').vmDataDiskName]",
               "caching": "None",
@@ -828,7 +828,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
       ],
       "tags": {
@@ -853,7 +853,7 @@
           "osDisk": {
             "name": "[variables('vmSP').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName, '.vhd')]"
+              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName, '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -861,7 +861,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName, '.vhd')]"
+                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName, '.vhd')]"
               },
               "name": "[variables('vmSP').vmDataDiskName]",
               "caching": "None",
