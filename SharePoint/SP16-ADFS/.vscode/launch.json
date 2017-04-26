@@ -4,6 +4,15 @@
         {
             "type": "PowerShell",
             "request": "launch",
+            "name": "Deploy template",
+            "script": "${workspaceRoot}/Deploy-AzureResourceGroup.ps1",
+            "args": [],
+            "cwd": "${workspaceRoot}",
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
             "name": "Build DSC archive for all VMs",
             "script": "${workspaceRoot}/Scripts/Generate-DSCArchive.ps1",
             "args": ["-VM *"],
@@ -16,7 +25,8 @@
             "name": "Build DSC archive for SP VM",
             "script": "${workspaceRoot}/Scripts/Generate-DSCArchive.ps1",
             "args": ["-VM *SPVM"],
-            "cwd": "${workspaceRoot}"
+            "cwd": "${workspaceRoot}",
+            "internalConsoleOptions": "openOnFirstSessionStart"
         },
         {
             "type": "PowerShell",
