@@ -15,7 +15,7 @@ It also provisions a key vault to store passwords and SharePoint passphrase.
 </a>
 
 ## Changelog
-### May 2017 v3 release
+### May 2017 release
 * Simplified parameters passed to template
 * Fixed a bug in SP DSC
 
