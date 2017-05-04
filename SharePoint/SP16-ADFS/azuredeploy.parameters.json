@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "templatePrefix": {
-      "value": "ydsp16adfsdev"
+      "value": "ydsp16adfs"
     },
     "tenantId": {
       "value": "72f988bf-86f1-41af-91ab-2d7cd011db47"
@@ -12,23 +12,13 @@
       "value": "c331fcc6-7478-417d-84d1-ca42e9e18735"
     },
     "vmDCPublicIPDnsName": {
-      "value": "ydsp16adfsdev-dc"
+      "value": "ydsp16adfs-dc"
     },
     "vmSQLPublicIPDnsName": {
-      "value": "ydsp16adfsdev-sql"
+      "value": "ydsp16adfs-sql"
     },
     "vmSPPublicIPDnsName": {
-      "value": "ydsp16adfsdev-sp"
-    },
-    "dscDCTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
-    },
-    "dscSQLTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
-    },
-    "dscSPTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
-    },
-    "domainFQDN": { "value": "mydomain.com" }
+      "value": "ydsp16adfs-sp"
+    }
   }
 }

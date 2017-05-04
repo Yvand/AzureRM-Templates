@@ -7,14 +7,18 @@ This template deploys 3 new Azure VMs, each with its own public IP address and s
 
 It also provisions a key vault to store passwords and SharePoint passphrase.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2FYvand%2FAzureRM-Templates%2Fraw%2FDev%2FSharePoint%2FSP16-ADFS%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fmaster%2FSharePoint%2FSP16-ADFS%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fgithub.com%2FYvand%2FAzureRM-Templates%2Fraw%2FDev%2FSharePoint%2FSP16-ADFS%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fmaster%2FSharePoint%2FSP16-ADFS%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
 ## Changelog
+### May 2017 release
+* Simplified parameters passed to template
+* Fixed a bug in SP DSC
+
 ### March 2017 v3 release
 * Azure key vault and its secrets are now created by the deployment script itself, removing the dependency to the PowerShell deployment script
 * Removed nested templates
