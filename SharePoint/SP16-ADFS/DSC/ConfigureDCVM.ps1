@@ -21,7 +21,7 @@
         [String]$ADFSSiteName = "ADFS"
     ) 
     
-    Import-DscResource -ModuleName xActiveDirectory,xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
+    Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
     [System.Management.Automation.PSCredential]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
     $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -226,7 +226,7 @@
                 New-Item F:\Setup -Type directory -ErrorAction SilentlyContinue
                 $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:ADFSSiteName.Signing"
                 $signingCert| Export-Certificate -FilePath "F:\Setup\ADFS Signing.cer"
-                Get-ChildItem -Path "cert:\LocalMachine\Root\" | ?{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath "F:\Setup\ADFS Signing issuer.cer"
+                Get-ChildItem -Path "cert:\LocalMachine\Root\" | Where-Object{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath "F:\Setup\ADFS Signing issuer.cer"
                 Write-Verbose -Message "Public key of certificates successfully exported"
             }
             GetScript =  
