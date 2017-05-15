@@ -1,0 +1,30 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "templatePrefix": {
+      "value": "dvs01sp16"
+    },
+    "vaultName": {
+      "value": "dvs01sp16vlt"
+    },
+    "tenantId": {
+      "value": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+    },
+    "objectId": {
+      "value": "26ed65c4-5a3c-4a1d-a99d-256f26e8bf7a"
+    },
+    "vmDCPublicIPDnsName": {
+      "value": "dvs01sp16-dc"
+    },
+    "vmSQLPublicIPDnsName": {
+      "value": "dvs01sp16-sql"
+    },
+    "vmSPPublicIPDnsName": {
+      "value": "dvs01sp16-sp"
+    },
+    "vmFEPublicIPDnsName": {
+      "value": "dvs01sp16-fe"
+    }
+  }
+}
