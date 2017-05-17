@@ -12,6 +12,8 @@ if ($azurecontext -eq $null){
 
 ### Shutdown VMs
 {
+Write-Output "Stopping FE..."
+Stop-AzureRmVM -ResourceGroupName $resourceGroupName -Name "FE" -Force
 Write-Output "Stopping SP..."
 Stop-AzureRmVM -ResourceGroupName $resourceGroupName -Name "SP" -Force
 Write-Output "Stopping SQL..."
@@ -28,4 +30,6 @@ Write-Output "Starting SQL..."
 Start-AzureRmVM -ResourceGroupName $resourceGroupName -Name "SQL"
 Write-Output "Starting SP..."
 Start-AzureRmVM -ResourceGroupName $resourceGroupName -Name "SP"
+Write-Output "Starting FE..."
+Start-AzureRmVM -ResourceGroupName $resourceGroupName -Name "FE"
 }
