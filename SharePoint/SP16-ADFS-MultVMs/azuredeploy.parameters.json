@@ -3,28 +3,25 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "templatePrefix": {
-      "value": "dvs01sp16"
-    },
-    "vaultName": {
-      "value": "dvs01sp16vlt"
+      "value": "xydsp16adfs"
     },
     "tenantId": {
       "value": "72f988bf-86f1-41af-91ab-2d7cd011db47"
     },
-    "objectId": {
-      "value": "26ed65c4-5a3c-4a1d-a99d-256f26e8bf7a"
+    "userObjectId": {
+      "value": "c331fcc6-7478-417d-84d1-ca42e9e18735"
     },
     "vmDCPublicIPDnsName": {
-      "value": "dvs01sp16-dc"
+      "value": "xydsp16adfs-dc"
     },
     "vmSQLPublicIPDnsName": {
-      "value": "dvs01sp16-sql"
+      "value": "xydsp16adfs-sql"
     },
     "vmSPPublicIPDnsName": {
-      "value": "dvs01sp16-sp"
+      "value": "xydsp16adfs-sp"
     },
     "vmFEPublicIPDnsName": {
-      "value": "dvs01sp16-fe"
+      "value": "xydsp16adfs-fe"
     }
   }
 }

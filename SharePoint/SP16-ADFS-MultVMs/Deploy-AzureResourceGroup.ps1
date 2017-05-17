@@ -4,12 +4,14 @@
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
-$resourceGroupName = 'yd-sp16adfs'
-$resourceDeploymentName = 'yd-sp16adfs-deployment'
+$resourceGroupName = 'yd-sp16adfs-2VM'
+$resourceGroupName = 'xyd-sp16adfs-2VM'
+$resourceDeploymentName = 'yd-sp16adfs-2VM-deployment'
+$resourceDeploymentName = 'xyd-sp16adfs-2VM-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
-#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS"
+#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SP16-ADFS-MultVMs"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 $dscSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, "dsc"))
