@@ -634,7 +634,7 @@ function Get-LatestGitHubRelease
         [string]$artifact
     )
     # Found in https://blog.markvincze.com/download-artifacts-from-a-latest-github-release-in-sh-and-powershell/
-    $latestRelease = Invoke-WebRequest https://github.com/$repo/releases/latest -Headers @{"Accept"="application/json"}
+    $latestRelease = Invoke-WebRequest https://github.com/$repo/releases/latest -Headers @{"Accept"="application/json"} -UseBasicParsing
     $json = $latestRelease.Content | ConvertFrom-Json
     $latestVersion = $json.tag_name
     $url = "https://github.com/$repo/releases/download/$latestVersion/$artifact"

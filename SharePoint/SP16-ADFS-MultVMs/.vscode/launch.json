@@ -13,7 +13,7 @@
         {
             "type": "PowerShell",
             "request": "launch",
-            "name": "Build DSC archive for all VMs",
+            "name": "DSC for all VMs",
             "script": "${workspaceRoot}/Scripts/Generate-DSCArchive.ps1",
             "args": ["-VM *"],
             "cwd": "${workspaceRoot}",
@@ -22,7 +22,7 @@
         {
             "type": "PowerShell",
             "request": "launch",
-            "name": "Build DSC archive for SP VM",
+            "name": "DSC for SP VM",
             "script": "${workspaceRoot}/Scripts/Generate-DSCArchive.ps1",
             "args": ["-VM *SPVM"],
             "cwd": "${workspaceRoot}",
@@ -31,7 +31,7 @@
         {
             "type": "PowerShell",
             "request": "launch",
-            "name": "Build DSC archive for a specific VM",
+            "name": "DSC for specific VM",
             "script": "${workspaceRoot}/Scripts/Generate-DSCArchive.ps1",
             "args": [ "${command:SpecifyScriptArgs}" ],
             "cwd": "${workspaceRoot}",
