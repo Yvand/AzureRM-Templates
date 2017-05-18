@@ -49,6 +49,7 @@ configuration ConfigureSPVM
 	[Int]$RetryCount = 30
     [Int]$RetryIntervalSec = 30
     $ComputerName = Get-Content env:computername
+    $LdapcpLink = (Get-LatestGitHubRelease -repo "Yvand/LDAPCP" -artifact "LDAPCP.wsp")
     # $DCName will be valid only after computer joined domain, which is fine since it will trigger a restart and var won't be used before
     #$DCName = [regex]::match([environment]::GetEnvironmentVariable("LOGONSERVER","Process"),"[A-Za-z0-9-]+").Groups[0].Value
 
@@ -220,7 +221,8 @@ configuration ConfigureSPVM
 
         xRemoteFile DownloadLdapcp 
         {  
-            Uri             = "https://ldapcp.codeplex.com/downloads/get/557616"
+            #Uri             = "https://ldapcp.codeplex.com/downloads/get/557616"
+            Uri             = $LdapcpLink
             DestinationPath = "F:\Setup\LDAPCP.wsp"
             DependsOn = "[File]AccountsProvisioned"
         }        
@@ -622,6 +624,21 @@ configuration ConfigureSPVM
             DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPSite]MySiteHost"
         }
     }
+}
+
+function Get-LatestGitHubRelease
+{
+    [OutputType([string])]
+    param(
+        [string]$repo,
+        [string]$artifact
+    )
+    # Found in https://blog.markvincze.com/download-artifacts-from-a-latest-github-release-in-sh-and-powershell/
+    $latestRelease = Invoke-WebRequest https://github.com/$repo/releases/latest -Headers @{"Accept"="application/json"}
+    $json = $latestRelease.Content | ConvertFrom-Json
+    $latestVersion = $json.tag_name
+    $url = "https://github.com/$repo/releases/download/$latestVersion/$artifact"
+    return $url
 }
 
 function Get-NetBIOSName
