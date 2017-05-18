@@ -115,6 +115,7 @@
             Password = $Admincreds
             EmailAddress = $Admincreds.UserName + "@" + $DomainFQDN
             PasswordAuthentication = 'Negotiate'
+            PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xPendingReboot]Reboot1"
         }
@@ -194,6 +195,7 @@
             Password = $AdfsSvcCreds
             Ensure = "Present"
             PasswordAuthentication = 'Negotiate'
+            PasswordNeverExpires = $true
             DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert"
         }
 

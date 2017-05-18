@@ -150,6 +150,7 @@ configuration ConfigureSPVM
             DomainName = $DomainFQDN
             UserName = $SPSetupCreds.UserName
             Password = $SPSetupCreds
+            PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
@@ -170,6 +171,7 @@ configuration ConfigureSPVM
             DomainName = $DomainFQDN
             UserName = $SPFarmCreds.UserName
             Password = $SPFarmCreds
+            PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
@@ -180,6 +182,7 @@ configuration ConfigureSPVM
             DomainName = $DomainFQDN
             UserName = $SPSvcCreds.UserName
             Password = $SPSvcCreds
+            PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
@@ -190,6 +193,7 @@ configuration ConfigureSPVM
             DomainName = $DomainFQDN
             UserName = $SPAppPoolCreds.UserName
             Password = $SPAppPoolCreds
+            PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }

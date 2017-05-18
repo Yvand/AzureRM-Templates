@@ -116,6 +116,7 @@
             EmailAddress = $Admincreds.UserName + "@" + $DomainFQDN
             PasswordAuthentication = 'Negotiate'
             Ensure = "Present"
+            PasswordNeverExpires = $true
             DependsOn = "[xPendingReboot]Reboot1"
         }
         WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
@@ -194,6 +195,7 @@
             Password = $AdfsSvcCreds
             Ensure = "Present"
             PasswordAuthentication = 'Negotiate'
+            PasswordNeverExpires = $true
             DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert"
         }
 

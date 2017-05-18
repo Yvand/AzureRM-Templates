@@ -13,6 +13,9 @@ configuration ConfigureSPVM
         [String]$DCName,
 
         [Parameter(Mandatory)]
+        [String]$SQLName,
+
+        [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$DomainAdminCreds,
 
         [Parameter(Mandatory)]
@@ -46,6 +49,7 @@ configuration ConfigureSPVM
 	[Int]$RetryCount = 30
     [Int]$RetryIntervalSec = 30
     $ComputerName = Get-Content env:computername
+    $LdapcpLink = (Get-LatestGitHubRelease -repo "Yvand/LDAPCP" -artifact "LDAPCP.wsp")
     # $DCName will be valid only after computer joined domain, which is fine since it will trigger a restart and var won't be used before
     #$DCName = [regex]::match([environment]::GetEnvironmentVariable("LOGONSERVER","Process"),"[A-Za-z0-9-]+").Groups[0].Value
 
@@ -146,6 +150,7 @@ configuration ConfigureSPVM
             DomainName = $DomainFQDN
             UserName = $SPSetupCreds.UserName
             Password = $SPSetupCreds
+            PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
@@ -166,6 +171,7 @@ configuration ConfigureSPVM
             DomainName = $DomainFQDN
             UserName = $SPFarmCreds.UserName
             Password = $SPFarmCreds
+            PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
@@ -176,6 +182,7 @@ configuration ConfigureSPVM
             DomainName = $DomainFQDN
             UserName = $SPSvcCreds.UserName
             Password = $SPSvcCreds
+            PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
@@ -186,6 +193,7 @@ configuration ConfigureSPVM
             DomainName = $DomainFQDN
             UserName = $SPAppPoolCreds.UserName
             Password = $SPAppPoolCreds
+            PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
@@ -424,7 +432,7 @@ configuration ConfigureSPVM
             AllowAnonymous         = $false
             AuthenticationMethod   = "NTLM"
             DatabaseName           = $SPDBPrefix + "Content_80"
-            Url                    = "http://$ComputerName/"
+            Url                    = "http://$SPTrustedSitesName/"
             Port                   = 80
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
@@ -481,7 +489,7 @@ configuration ConfigureSPVM
 
         SPWebApplicationExtension ExtendWebApp
         {
-            WebAppUrl              = "http://$ComputerName/"
+            WebAppUrl              = "http://$SPTrustedSitesName/"
             Name                   = "SharePoint - 443"
             AllowAnonymous         = $false
             AuthenticationMethod   = "Claims"
@@ -557,7 +565,7 @@ configuration ConfigureSPVM
 
         SPSite DevSite
         {
-            Url                      = "http://$ComputerName"
+            Url                      = "http://$SPTrustedSitesName/"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "Developer site"
@@ -568,7 +576,7 @@ configuration ConfigureSPVM
 
         SPSite TeamSite
         {
-            Url                      = "http://$ComputerName/sites/team"
+            Url                      = "http://$SPTrustedSitesName/sites/team"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "Team site"
@@ -579,7 +587,7 @@ configuration ConfigureSPVM
 
         SPSite MySiteHost
         {
-            Url                      = "http://$ComputerName/sites/my"
+            Url                      = "http://$SPTrustedSitesName/sites/my"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
@@ -609,7 +617,7 @@ configuration ConfigureSPVM
         {
             Name                 = "User Profile Service Application"
             ApplicationPool      = $serviceAppPoolName
-            MySiteHostLocation   = "http://$ComputerName/sites/my"
+            MySiteHostLocation   = "http://$SPTrustedSitesName/sites/my"
             ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
             SocialDBName         = $SPDBPrefix + "UPA_Social"
             SyncDBName           = $SPDBPrefix + "UPA_Sync"
@@ -619,6 +627,21 @@ configuration ConfigureSPVM
             DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPSite]MySiteHost"
         }
     }
+}
+
+function Get-LatestGitHubRelease
+{
+    [OutputType([string])]
+    param(
+        [string]$repo,
+        [string]$artifact
+    )
+    # Found in https://blog.markvincze.com/download-artifacts-from-a-latest-github-release-in-sh-and-powershell/
+    $latestRelease = Invoke-WebRequest https://github.com/$repo/releases/latest -Headers @{"Accept"="application/json"} -UseBasicParsing
+    $json = $latestRelease.Content | ConvertFrom-Json
+    $latestVersion = $json.tag_name
+    $url = "https://github.com/$repo/releases/download/$latestVersion/$artifact"
+    return $url
 }
 
 function Get-NetBIOSName

@@ -110,6 +110,7 @@ configuration ConfigureSQLVM
             DomainName = $DomainFQDN
             UserName = $SqlSvcCreds.UserName
             Password = $SQLCreds
+            PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }
@@ -120,6 +121,7 @@ configuration ConfigureSQLVM
             DomainName = $DomainFQDN
             UserName = $SPSetupCreds.UserName
             Password = $SPSCreds
+            PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
         }

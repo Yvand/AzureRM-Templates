@@ -12,7 +12,7 @@ $StorageAccountName = "xydsp16adfs2vmst"
 $blobStorageContainer = "vhds"
 $vmsToDelete = @("SP", "SQL", "DC")
 $vmsToDelete = @("SP", "SQL")
-$vmsToDelete = @("FE", "SP")
+$vmsToDelete = @("FE", "SP", "SQL")
 Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccountName 
 Get-AzureRmContext
 
@@ -36,7 +36,7 @@ ForEach ($vmToDelete in $vmsToDelete) {
     Write-Output "VM $vmToDelete deleted."
 }
 
-### DELETE PARALLEL
+### DELETE PARALLEL (NOT WORKING)
 {
 ForEach ($vmToDelete in $vmsToDelete) {
     $scriptBlockDeleteVM = {

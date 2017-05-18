@@ -49,6 +49,7 @@ configuration ConfigureFEVM
 	[Int]$RetryCount = 30
     [Int]$RetryIntervalSec = 30
     $ComputerName = Get-Content env:computername
+    $LdapcpLink = (Get-LatestGitHubRelease -repo "Yvand/LDAPCP" -artifact "LDAPCP.wsp")
     # $DCName will be valid only after computer joined domain, which is fine since it will trigger a restart and var won't be used before
     #$DCName = [regex]::match([environment]::GetEnvironmentVariable("LOGONSERVER","Process"),"[A-Za-z0-9-]+").Groups[0].Value
 
@@ -142,70 +143,6 @@ configuration ConfigureFEVM
         xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
         xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
         xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[xComputer]DomainJoin"}
-
-        #**********************************************************
-        # Provision required accounts for SharePoint
-        #**********************************************************
-        <#xADUser CreateSPSetupAccount
-        {
-            DomainAdministratorCredential = $DomainAdminCredsQualified
-            DomainName = $DomainFQDN
-            UserName = $SPSetupCreds.UserName
-            Password = $SPSetupCreds
-            Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
-        }
-
-        Group AddSPSetupAccountToAdminGroup
-        {
-            GroupName='Administrators'   
-            Ensure= 'Present'             
-            MembersToInclude= $SPSetupCredsQualified.UserName
-            Credential = $DomainAdminCredsQualified    
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[xADUser]CreateSPSetupAccount"
-        }
-
-        xADUser CreateSParmAccount
-        {
-            DomainAdministratorCredential = $DomainAdminCredsQualified
-            DomainName = $DomainFQDN
-            UserName = $SPFarmCreds.UserName
-            Password = $SPFarmCreds
-            Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
-        }
-
-        xADUser CreateSPSvcAccount
-        {
-            DomainAdministratorCredential = $DomainAdminCredsQualified
-            DomainName = $DomainFQDN
-            UserName = $SPSvcCreds.UserName
-            Password = $SPSvcCreds
-            Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
-        }
-
-        xADUser CreateSPAppPoolAccount
-        {
-            DomainAdministratorCredential = $DomainAdminCredsQualified
-            DomainName = $DomainFQDN
-            UserName = $SPAppPoolCreds.UserName
-            Password = $SPAppPoolCreds
-            Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
-        }
-
-        File AccountsProvisioned
-        {
-            DestinationPath = "F:\Logs\DSC1.txt"
-            PsDscRunAsCredential = $SPSetupCredential
-            Contents = "AccountsProvisioned"
-            Type = 'File'
-            Force = $true
-            DependsOn = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount", "[xADUser]CreateSPSvcAccount", "[xADUser]CreateSPAppPoolAccount"
-        }#>
-
         
         #**********************************************************
         # Download binaries and install SharePoint CU
@@ -224,11 +161,12 @@ configuration ConfigureFEVM
 
         xRemoteFile DownloadLdapcp 
         {  
-            Uri             = "https://ldapcp.codeplex.com/downloads/get/557616"
+            #Uri             = "https://ldapcp.codeplex.com/downloads/get/557616"
+            Uri             = $LdapcpLink
             DestinationPath = "F:\Setup\LDAPCP.wsp"
-            # DependsOn = "[File]AccountsProvisioned"
+            #DependsOn = "[File]AccountsProvisioned"
             DependsOn = "[xComputer]DomainJoin"
-        }        
+        }
 
         <#
         xRemoteFile Download201612CU
@@ -576,6 +514,22 @@ configuration ConfigureFEVM
         }#>
     }
 }
+
+function Get-LatestGitHubRelease
+{
+    [OutputType([string])]
+    param(
+        [string]$repo,
+        [string]$artifact
+    )
+    # Found in https://blog.markvincze.com/download-artifacts-from-a-latest-github-release-in-sh-and-powershell/
+    $latestRelease = Invoke-WebRequest https://github.com/$repo/releases/latest -Headers @{"Accept"="application/json"} -UseBasicParsing
+    $json = $latestRelease.Content | ConvertFrom-Json
+    $latestVersion = $json.tag_name
+    $url = "https://github.com/$repo/releases/download/$latestVersion/$artifact"
+    return $url
+}
+
 
 function Get-NetBIOSName
 {
