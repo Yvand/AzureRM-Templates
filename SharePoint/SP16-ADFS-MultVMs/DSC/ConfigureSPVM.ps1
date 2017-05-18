@@ -427,7 +427,7 @@ configuration ConfigureSPVM
             AllowAnonymous         = $false
             AuthenticationMethod   = "NTLM"
             DatabaseName           = $SPDBPrefix + "Content_80"
-            Url                    = "http://$SPTrustedSitesName.$DomainFQDN/"
+            Url                    = "http://$SPTrustedSitesName/"
             Port                   = 80
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
@@ -484,7 +484,7 @@ configuration ConfigureSPVM
 
         SPWebApplicationExtension ExtendWebApp
         {
-            WebAppUrl              = "http://$SPTrustedSitesName.$DomainFQDN/"
+            WebAppUrl              = "http://$SPTrustedSitesName/"
             Name                   = "SharePoint - 443"
             AllowAnonymous         = $false
             AuthenticationMethod   = "Claims"
@@ -560,7 +560,7 @@ configuration ConfigureSPVM
 
         SPSite DevSite
         {
-            Url                      = "http://$SPTrustedSitesName.$DomainFQDN"
+            Url                      = "http://$SPTrustedSitesName"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "Developer site"
@@ -571,7 +571,7 @@ configuration ConfigureSPVM
 
         SPSite TeamSite
         {
-            Url                      = "http://$SPTrustedSitesName.$DomainFQDN/sites/team"
+            Url                      = "http://$SPTrustedSitesName/sites/team"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "Team site"
@@ -582,7 +582,7 @@ configuration ConfigureSPVM
 
         SPSite MySiteHost
         {
-            Url                      = "http://$SPTrustedSitesName.$DomainFQDN/sites/my"
+            Url                      = "http://$SPTrustedSitesName/sites/my"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
@@ -612,7 +612,7 @@ configuration ConfigureSPVM
         {
             Name                 = "User Profile Service Application"
             ApplicationPool      = $serviceAppPoolName
-            MySiteHostLocation   = "http://$SPTrustedSitesName.$DomainFQDN/sites/my"
+            MySiteHostLocation   = "http://$SPTrustedSitesName/sites/my"
             ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
             SocialDBName         = $SPDBPrefix + "UPA_Social"
             SyncDBName           = $SPDBPrefix + "UPA_Sync"

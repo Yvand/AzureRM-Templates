@@ -7,7 +7,7 @@ if ($azurecontext -eq $null) {
 $subscriptionId = $azurecontext.Subscription.SubscriptionId
 $resourceGroupLocation = 'westeurope'
 $resourceGroupName = 'yd-sp16adfs'
-$StorageAccountName = "ydsp16adfsst0"
+$StorageAccountName = "ydsp16adfsst"
 $blobStorageContainer = "vhds"
 $vmsToDelete = @("SP", "SQL", "DC")
 $vmsToDelete = @("SP", "SQL")

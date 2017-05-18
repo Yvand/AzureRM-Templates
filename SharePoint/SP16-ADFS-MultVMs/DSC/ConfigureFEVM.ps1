@@ -146,7 +146,7 @@ configuration ConfigureFEVM
         #**********************************************************
         # Provision required accounts for SharePoint
         #**********************************************************
-        xADUser CreateSPSetupAccount
+        <#xADUser CreateSPSetupAccount
         {
             DomainAdministratorCredential = $DomainAdminCredsQualified
             DomainName = $DomainFQDN
@@ -204,13 +204,13 @@ configuration ConfigureFEVM
             Type = 'File'
             Force = $true
             DependsOn = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount", "[xADUser]CreateSPSvcAccount", "[xADUser]CreateSPAppPoolAccount"
-        }
+        }#>
 
         
         #**********************************************************
         # Download binaries and install SharePoint CU
         #**********************************************************
-        File CopyCertificatesFromDC
+        <#File CopyCertificatesFromDC
         {
             Ensure = "Present"
             Type = "Directory"
@@ -219,13 +219,15 @@ configuration ConfigureFEVM
             DestinationPath = "F:\Setup\Certificates"
             Credential = $DomainAdminCredsQualified
             DependsOn = "[File]AccountsProvisioned"
-        }
+            DependsOn = "[xComputer]DomainJoin"
+        }#>
 
         xRemoteFile DownloadLdapcp 
         {  
             Uri             = "https://ldapcp.codeplex.com/downloads/get/557616"
             DestinationPath = "F:\Setup\LDAPCP.wsp"
-            DependsOn = "[File]AccountsProvisioned"
+            # DependsOn = "[File]AccountsProvisioned"
+            DependsOn = "[xComputer]DomainJoin"
         }        
 
         <#
@@ -340,7 +342,7 @@ configuration ConfigureFEVM
             DependsOn = "[xRemoteFile]DownloadLdapcp"
         }
 
-        SPManagedAccount CreateSPSvcManagedAccount
+        <#SPManagedAccount CreateSPSvcManagedAccount
         {
             AccountName          = $SPSvcCredsQualified.UserName
             Account              = $SPSvcCredsQualified
@@ -381,9 +383,9 @@ configuration ConfigureFEVM
             InstallAccount       = $SPSetupCredsQualified
             Ensure               = "Present"
             DependsOn            = "[SPJoinFarm]JoinFarm"
-        }
+        }#>
 
-        SPFarmSolution InstallLdapcp 
+        <#SPFarmSolution InstallLdapcp 
         {
             LiteralPath = "F:\Setup\LDAPCP.wsp"
             Name = "LDAPCP.wsp"
@@ -431,38 +433,6 @@ configuration ConfigureFEVM
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
             DependsOn              = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
-        }
-
-        <#xScript ExtendWebApp
-        {
-            SetScript = 
-            {
-                $ComputerName = $using:ComputerName
-                $SPTrustedSitesName = $using:SPTrustedSitesName
-                $DomainFQDN = $using:DomainFQDN
-
-                $result = Invoke-SPDSCCommand -Credential $using:SPSetupCredsQualified -ScriptBlock {
-                    Get-SPWebApplication "http://$ComputerName/" | New-SPWebApplicationExtension -Name "SharePoint - 443" -SecureSocketsLayer -Zone "Intranet" -URL "https://$SPTrustedSitesName.$DomainFQDN" -Port 443
-                    $winAp = New-SPAuthenticationProvider -UseWindowsIntegratedAuthentication
-                    $trust = Get-SPTrustedIdentityTokenIssuer $DomainFQDN
-                    Get-SPWebApplication "http://$ComputerName/" | Set-SPWebApplication -Zone Intranet -AuthenticationProvider $trust, $winAp 
-                                     
-                    return "success"
-                }
-            }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                $result = "false"
-                return @{ "Result" = $result }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                return $false
-            }
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = '[SPWebApplication]MainWebApp'
         }#>
 
         xCertReq SPSSiteCert
@@ -478,10 +448,11 @@ configuration ConfigureFEVM
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
             Credential                = $DomainAdminCredsQualified
-            DependsOn = '[SPWebApplication]MainWebApp'
+            #DependsOn = '[SPWebApplication]MainWebApp'
+            DependsOn            = "[SPJoinFarm]JoinFarm"
         }
 
-        SPWebApplicationExtension ExtendWebApp
+        <#SPWebApplicationExtension ExtendWebApp
         {
             WebAppUrl              = "http://$SPTrustedSitesName.$DomainFQDN/"
             Name                   = "SharePoint - 443"
@@ -495,25 +466,7 @@ configuration ConfigureFEVM
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
             DependsOn = '[xCertReq]SPSSiteCert'
-        }
-
-        <# Not working because there is no way to get CertificateThumbprint dynamically (created by a previous resource)
-        xWebsite SetHTTPSCertificate
-        {
-            Name            = "SharePoint - 443"
-            BindingInfo     = MSFT_xWebBindingInformation
-            {
-                Protocol              = 'https'
-                Port                  = '443'
-                CertificateStoreName  = 'WebHosting'
-                CertificateThumbprint = 'BB84DE3EC423DDDE90C08AB3C5A828692089493C'
-                HostName              = ""
-                IPAddress             = '*'
-                SSLFlags              = '0'
-            }
-            Ensure          = "Present"
-            DependsOn = '[SPWebApplicationExtension]ExtendWebApp'
-        }#>
+        }#>       
 
         xScript SetHTTPSCertificate
         {
@@ -554,10 +507,11 @@ configuration ConfigureFEVM
                return $false
             }
             PsDscRunAsCredential     = $DomainAdminCredsQualified
-            DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
+            #DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
+            DependsOn = '[xCertReq]SPSSiteCert'
         }
 
-        SPSite DevSite
+        <#SPSite DevSite
         {
             Url                      = "http://$SPTrustedSitesName.$DomainFQDN"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
@@ -588,9 +542,9 @@ configuration ConfigureFEVM
             Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
             DependsOn                = "[xScript]SetHTTPSCertificate"
-        }
+        }#>
 
-        $serviceAppPoolName = "SharePoint Service Applications"
+        <#$serviceAppPoolName = "SharePoint Service Applications"
         SPServiceAppPool MainServiceAppPool
         {
             Name                 = $serviceAppPoolName
@@ -619,7 +573,7 @@ configuration ConfigureFEVM
             FarmAccount          = $SPFarmCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPSite]MySiteHost"
-        }
+        }#>
     }
 }
 
