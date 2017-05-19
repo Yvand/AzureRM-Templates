@@ -507,6 +507,26 @@ configuration ConfigureFEVM
             DependsOn                = "[xScript]SetHTTPSCertificate"
         }#>
 
+        SPDistributedCacheService EnableDistributedCache
+        {
+            Name                 = "AppFabricCachingService"
+            CacheSizeInMB        = 8192
+            CreateFirewallRules  = $true
+            ServiceAccount       = $SPSvcCredsQualified.UserName
+            InstallAccount       = $SPSetupCredsQualified
+            Ensure               = "Present"
+            DependsOn            = "[xScript]SetHTTPSCertificate"
+        }
+
+        $serviceAppPoolName = "SharePoint Service Applications"
+        SPServiceAppPool MainServiceAppPool
+        {
+            Name                 = $serviceAppPoolName
+            ServiceAccount       = $SPSvcCredsQualified.UserName
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPDistributedCacheService]EnableDistributedCache"
+        }
+
         <#$serviceAppPoolName = "SharePoint Service Applications"
         SPServiceAppPool MainServiceAppPool
         {
