@@ -335,7 +335,7 @@ configuration ConfigureSPVM
         #**********************************************************
         SPCreateFarm CreateSPFarm
         {
-            DatabaseServer           = "sql"
+            DatabaseServer           = $SQLName
             FarmConfigDatabaseName   = $SPDBPrefix+"Config"
             Passphrase               = $SPPassphraseCreds
             FarmAccount              = $SPFarmCredsQualified

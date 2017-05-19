@@ -225,7 +225,6 @@ configuration ConfigureSPVM
 
         xRemoteFile DownloadLdapcp 
         {  
-            #Uri             = "https://ldapcp.codeplex.com/downloads/get/557616"
             Uri             = $LdapcpLink
             DestinationPath = "F:\Setup\LDAPCP.wsp"
             DependsOn = "[File]AccountsProvisioned"
