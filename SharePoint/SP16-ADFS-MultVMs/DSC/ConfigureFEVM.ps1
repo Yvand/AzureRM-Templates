@@ -145,6 +145,31 @@ configuration ConfigureFEVM
         xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[xComputer]DomainJoin"}
         
         #**********************************************************
+        # Provision required accounts for SharePoint
+        #**********************************************************
+        <#xADUser CreateSPSetupAccount
+        {
+            DomainAdministratorCredential = $DomainAdminCredsQualified
+            DomainName = $DomainFQDN
+            UserName = $SPSetupCreds.UserName
+            Password = $SPSetupCreds
+            PasswordNeverExpires = $true
+            Ensure = "Present"
+            DependsOn = "[xComputer]DomainJoin"
+        }#>
+
+        Group AddSPSetupAccountToAdminGroup
+        {
+            GroupName='Administrators'   
+            Ensure= 'Present'             
+            MembersToInclude= $SPSetupCredsQualified.UserName
+            Credential = $DomainAdminCredsQualified    
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            #DependsOn = "[xADUser]CreateSPSetupAccount"
+            DependsOn = "[xComputer]DomainJoin"
+        }
+
+        #**********************************************************
         # Download binaries and install SharePoint CU
         #**********************************************************
         <#File CopyCertificatesFromDC
@@ -165,7 +190,7 @@ configuration ConfigureFEVM
             Uri             = $LdapcpLink
             DestinationPath = "F:\Setup\LDAPCP.wsp"
             #DependsOn = "[File]AccountsProvisioned"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn = "[Group]AddSPSetupAccountToAdminGroup"
         }
 
         <#
