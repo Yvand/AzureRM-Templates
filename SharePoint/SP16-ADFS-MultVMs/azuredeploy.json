@@ -205,7 +205,7 @@
       "type": "string",
       "defaultValue": "Standard_A8_v2",
       "metadata": {
-        "description": "Size of the SQL VM"
+        "description": "Size of the SP VM"
       }
     },
     "vmSPPublicIPDnsName": {
@@ -215,9 +215,31 @@
         "description": "Unique short DNS name associated to the public IP of SP VM"
       }
     },
+    "vmFEName": {
+      "type": "string",
+      "defaultValue": "FE",
+      "minLength": 2,
+      "metadata": {
+        "description": "Name of FE VM"
+      }
+    },
+    "vmFESize": {
+      "type": "string",
+      "defaultValue": "Standard_A8_v2",
+      "metadata": {
+        "description": "Size of the FE VM"
+      }
+    },
+    "vmFEPublicIPDnsName": {
+      "type": "string",
+      "minLength": 2,
+      "metadata": {
+        "description": "Unique short DNS name associated to the public IP of FE VM"
+      }
+    },
     "dscDCTemplateURL": {
       "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS-MultVMs/DSC/ConfigureDCVM.zip",
       "metadata": {
         "description": "Link to DSC configuration of DC VM"
       }
@@ -231,7 +253,7 @@
     },
     "dscSQLTemplateURL": {
       "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS-MultVMs/DSC/ConfigureSQLVM.zip",
       "metadata": {
         "description": "Link to DSC configuration of SQL VM"
       }
@@ -245,12 +267,26 @@
     },
     "dscSPTemplateURL": {
       "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS-MultVMs/DSC/ConfigureSPVM.zip",
       "metadata": {
         "description": "Link to DSC configuration of SP VM"
       }
     },
     "dscSPUpdateTagVersion": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "This value must be changed from a previous deployment to ensure the extension will run"
+      }
+    },
+    "dscFETemplateURL": {
+      "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS-MultVMs/DSC/ConfigureFEVM.zip",
+      "metadata": {
+        "description": "Link to DSC configuration of SP WFE VM"
+      }
+    },
+    "dscFEUpdateTagVersion": {
       "type": "string",
       "defaultValue": "1.0",
       "metadata": {
@@ -317,6 +353,17 @@
       "vmNicName": "[concat(parameters('vmSPName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmSP-PublicIP"
     },
+    "vmFE": {
+      "vmImagePublisher": "MicrosoftSharePoint",
+      "vmImageOffer": "MicrosoftSharePointServer",
+      "vmImageSKU": "2016",
+      "vmOSDiskName": "vm-FE-OSDisk",
+      "vmDataDiskName": "vm-FE-DataDisk",
+      "vmVmSize": "[parameters('vmFESize')]",
+      "vmSubnetRef": "[concat(variables('generalSettings').vmsVnetID, '/subnets/', variables('generalSettings').vNetPrivateSubnet3Name)]",
+      "vmNicName": "[concat(parameters('vmFEName'), '-', 'nic-0')]",
+      "vmPublicIPName": "vmFE-PublicIP"
+    },
     "dscConfigureDCVM": {
       "url": "[parameters('dscDCTemplateURL')]",
       "script": "ConfigureDCVM.ps1",
@@ -331,6 +378,11 @@
       "url": "[parameters('dscSPTemplateURL')]",
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM"
+    },
+    "dscConfigureFEVM": {
+      "url": "[parameters('dscFETemplateURL')]",
+      "script": "ConfigureFEVM.ps1",
+      "function": "ConfigureFEVM"
     }
   },
   "resources": [
@@ -883,6 +935,111 @@
       ]
     },
     {
+      "name": "[variables('vmFE').vmPublicIPName]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "[variables('vmFE').vmPublicIPName]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('vmFEPublicIPDnsName')]"
+        }
+      }
+    },
+    {
+      "name": "[variables('vmFE').vmNicName]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetPrivateName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmFE').vmPublicIPName)]"
+      ],
+      "tags": {
+        "displayName": "[variables('vmFE').vmNicName]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('vmFE').vmSubnetRef]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmFE').vmPublicIPName)]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('vmFEName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmFE').vmNicName)]"
+      ],
+      "tags": {
+        "displayName": "[parameters('vmFEName')]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmFE').vmVmSize]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmFEName')]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmFE').vmImagePublisher]",
+            "offer": "[variables('vmFE').vmImageOffer]",
+            "sku": "[variables('vmFE').vmImageSKU]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('vmFE').vmOSDiskName]",
+            "vhd": {
+              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmFE').vmOSDiskName, '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "vhd": {
+                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmFE').vmDataDiskName, '.vhd')]"
+              },
+              "name": "[variables('vmFE').vmDataDiskName]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": "100",
+              "lun": 0
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmFE').vmNicName)]"
+            }
+          ]
+        }
+      },
+      "resources": [
+      ]
+    },
+    {
       "name": "[concat(parameters('vmSQLName'),'/ConfigureSQLVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[resourceGroup().location]",
@@ -959,6 +1116,74 @@
             "url": "[variables('dscConfigureSPVM').url]",
             "script": "[variables('dscConfigureSPVM').script]",
             "function": "[variables('dscConfigureSPVM').function]"
+          },
+          "configurationArguments": {
+            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
+            "DomainFQDN": "[parameters('domainFQDN')]",
+            "DCName": "[parameters('vmDCName')]",
+            "SQLName": "[parameters('vmSQLName')]"
+          },
+          "privacy": {
+            "dataCollection": "enable"
+          }
+        },
+        "protectedSettings": {
+          "configurationArguments": {
+            "DomainAdminCreds": {
+              "UserName": "[parameters('adminUsername')]",
+              "Password": "[parameters('adminPassword')]"
+            },
+            "SPSetupCreds": {
+              "UserName": "[parameters('spSetupUserName')]",
+              "Password": "[parameters('spSetupPassword')]"
+            },
+            "SPFarmCreds": {
+              "UserName": "[parameters('spFarmUserName')]",
+              "Password": "[parameters('spFarmPassword')]"
+            },
+            "SPSvcCreds": {
+              "UserName": "[parameters('spSvcUserName')]",
+              "Password": "[parameters('spSvcPassword')]"
+            },
+            "SPAppPoolCreds": {
+              "UserName": "[parameters('spAppPoolUserName')]",
+              "Password": "[parameters('spAppPoolPassword')]"
+            },
+            "SPPassphraseCreds": {
+              "UserName": "Passphrase",
+              "Password": "[parameters('spPassphrase')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('vmFEName'),'/ConfigureFEVM')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDCName'))]",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmDCName'), '/extensions/ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmFEName'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmSPName'))]",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmSPName'), '/extensions/ConfigureSPVM')]"
+      ],
+      "tags": {
+        "displayName": "[concat(parameters('vmFEName'),'/ConfigureFEVM')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.9",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "[parameters('dscFEUpdateTagVersion')]",
+        "settings": {
+          "wmfVersion": "latest",
+          "configuration": {
+            "url": "[variables('dscConfigureFEVM').url]",
+            "script": "[variables('dscConfigureFEVM').script]",
+            "function": "[variables('dscConfigureFEVM').function]"
           },
           "configurationArguments": {
             "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",

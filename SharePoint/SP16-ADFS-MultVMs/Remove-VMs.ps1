@@ -6,12 +6,14 @@ if ($azurecontext -eq $null) {
 }
 $subscriptionId = $azurecontext.Subscription.SubscriptionId
 $resourceGroupLocation = 'westeurope'
-$resourceGroupName = 'yd-sp16adfs'
-$StorageAccountName = "ydsp16adfsst"
+$resourceGroupName = 'YD-SP16ADFS-2VM'
+$resourceGroupName = 'xxYD-SP16ADFS-2VM'
+$StorageAccountName = "xydsp16adfs2vmst"
 $blobStorageContainer = "vhds"
 $vmsToDelete = @("SP", "SQL", "DC")
-#$vmsToDelete = @("SP", "SQL")
-#$vmsToDelete = @("SP")
+$vmsToDelete = @("SP", "SQL")
+$vmsToDelete = @("FE", "SP", "SQL")
+$vmsToDelete = @("FE")
 Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccountName 
 Get-AzureRmContext
 
@@ -35,7 +37,7 @@ ForEach ($vmToDelete in $vmsToDelete) {
     Write-Output "VM $vmToDelete deleted."
 }
 
-### DELETE PARALLEL
+### DELETE PARALLEL (NOT WORKING)
 {
 ForEach ($vmToDelete in $vmsToDelete) {
     $scriptBlockDeleteVM = {
