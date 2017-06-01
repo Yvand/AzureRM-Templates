@@ -333,7 +333,7 @@ configuration ConfigureSPVM
         #**********************************************************
         # SharePoint configuration
         #**********************************************************
-        SPCreateFarm CreateSPFarm
+        SPFarm CreateSPFarm
         {
             DatabaseServer           = $SQLName
             FarmConfigDatabaseName   = $SPDBPrefix+"Config"
@@ -342,6 +342,8 @@ configuration ConfigureSPVM
             PsDscRunAsCredential     = $SPSetupCredsQualified
             AdminContentDatabaseName = $SPDBPrefix+"AdminContent"
             CentralAdministrationPort = 5000
+            RunCentralAdmin           = $true
+            Ensure                    = "Present"
             #DependsOn = "[xPackage]Install201612CU"
             DependsOn = "[xRemoteFile]DownloadLdapcp"
         }
