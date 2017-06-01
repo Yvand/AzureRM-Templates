@@ -29,6 +29,14 @@
         "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
       }
     },
+    "sharePointVersion": {
+      "type": "string",
+      "defaultValue": "2016",
+      "allowedValues": [ "2013", "2016" ],
+      "metadata": {
+        "description": "Version of SharePoint farm to create."
+      }
+    },
     "domainFQDN": {
       "type": "string",
       "defaultValue": "contoso.local",
@@ -309,7 +317,7 @@
     "vmSP": {
       "vmImagePublisher": "MicrosoftSharePoint",
       "vmImageOffer": "MicrosoftSharePointServer",
-      "vmImageSKU": "2016",
+      "vmImageSKU": "[parameters('sharePointVersion')]",
       "vmOSDiskName": "vm-SP-OSDisk",
       "vmDataDiskName": "vm-SP-DataDisk",
       "vmVmSize": "[parameters('vmSPSize')]",

@@ -6,8 +6,10 @@
 $resourceGroupLocation = 'westeurope'
 $resourceGroupName = 'yd-sp16adfs'
 $resourceGroupName = 'xyd-sp16adfs'
+$resourceGroupName = 'xxyd-sp13adfs'
 $resourceDeploymentName = 'yd-sp16adfs-deployment'
 $resourceDeploymentName = 'xyd-sp16adfs-deployment'
+$resourceDeploymentName = 'xxyd-sp13adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
