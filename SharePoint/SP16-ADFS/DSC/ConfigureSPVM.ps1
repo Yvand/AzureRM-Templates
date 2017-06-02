@@ -353,7 +353,7 @@ configuration ConfigureSPVM
             AccountName          = $SPSvcCredsQualified.UserName
             Account              = $SPSvcCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPManagedAccount CreateSPAppPoolManagedAccount
@@ -361,7 +361,7 @@ configuration ConfigureSPVM
             AccountName          = $SPAppPoolCredsQualified.UserName
             Account              = $SPAppPoolCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
@@ -369,7 +369,7 @@ configuration ConfigureSPVM
             LogPath                                     = "F:\ULS"
             LogSpaceInGB = 20
             PsDscRunAsCredential                        = $SPSetupCredsQualified
-            DependsOn                                   = "[SPCreateFarm]CreateSPFarm"
+            DependsOn                                   = "[SPFarm]CreateSPFarm"
         }
 
         SPStateServiceApp StateServiceApp
@@ -377,7 +377,7 @@ configuration ConfigureSPVM
             Name                 = "State Service Application"
             DatabaseName         = $SPDBPrefix + "StateService"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPDistributedCacheService EnableDistributedCache
@@ -388,7 +388,7 @@ configuration ConfigureSPVM
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
             Ensure               = "Present"
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPFarmSolution InstallLdapcp 
@@ -604,7 +604,7 @@ configuration ConfigureSPVM
             Name                 = $serviceAppPoolName
             ServiceAccount       = $SPSvcCredsQualified.UserName
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPServiceInstance UPAServiceInstance
@@ -612,7 +612,7 @@ configuration ConfigureSPVM
             Name                 = "User Profile Service"
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPUserProfileServiceApp UserProfileServiceApp
