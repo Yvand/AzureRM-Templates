@@ -19,6 +19,15 @@
     },
     "vmSPPublicIPDnsName": {
       "value": "ydsp16adfs-sp"
+    },
+    "dscDCTemplateURL": {
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip"
+    },
+    "dscSQLTemplateURL": {
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip"
+    },
+    "dscSPTemplateURL": {
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip"
     }
   }
 }

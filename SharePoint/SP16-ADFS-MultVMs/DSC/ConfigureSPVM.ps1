@@ -12,7 +12,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)]
         [String]$DCName,
 
-        [Parameter(Mandatory)]
+		[Parameter(Mandatory)]
         [String]$SQLName,
 
         [Parameter(Mandatory)]
@@ -225,7 +225,7 @@ configuration ConfigureSPVM
 
         xRemoteFile DownloadLdapcp 
         {  
-            Uri             = "https://ldapcp.codeplex.com/downloads/get/557616"
+            Uri             = $LdapcpLink
             DestinationPath = "F:\Setup\LDAPCP.wsp"
             DependsOn = "[File]AccountsProvisioned"
         }        
@@ -565,7 +565,7 @@ configuration ConfigureSPVM
 
         SPSite DevSite
         {
-            Url                      = "http://$SPTrustedSitesName/"
+            Url                      = "http://$SPTrustedSitesName"
             OwnerAlias               = $DomainAdminCredsQualified.UserName
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "Developer site"

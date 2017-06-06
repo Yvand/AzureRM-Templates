@@ -15,6 +15,17 @@ It also provisions a key vault to store passwords and SharePoint passphrase.
 </a>
 
 ## Changelog
+### May 2017 v2 release
+* SQL machine name is retrieved dynamically in DSC configuration for SP
+* Changed passwods settings so they never expire
+* LDAPCP is downloaded from GitHub instead of Codeplex
+* Default zone of web app now uses DNS alias too instead of machine name
+* Updated xPSDesiredStateConfiguration from 6.0.0.0 to 6.4.0.0
+
+### May 2017 release
+* Simplified parameters passed to template
+* Fixed a bug in SP DSC
+
 ### March 2017 v3 release
 * Azure key vault and its secrets are now created by the deployment script itself, removing the dependency to the PowerShell deployment script
 * Removed nested templates
