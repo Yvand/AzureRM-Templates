@@ -223,9 +223,9 @@ configuration ConfigureSPVM
             DependsOn = "[File]AccountsProvisioned"
         }
 
-        xRemoteFile DownloadLdapcp 
+        xRemoteFile DownloadLdapcp
         {  
-            Uri             = "https://ldapcp.codeplex.com/downloads/get/557616"
+            Uri             = $LdapcpLink
             DestinationPath = "F:\Setup\LDAPCP.wsp"
             DependsOn = "[File]AccountsProvisioned"
         }        
@@ -333,7 +333,7 @@ configuration ConfigureSPVM
         #**********************************************************
         # SharePoint configuration
         #**********************************************************
-        SPCreateFarm CreateSPFarm
+        SPFarm CreateSPFarm
         {
             DatabaseServer           = $SQLName
             FarmConfigDatabaseName   = $SPDBPrefix+"Config"
@@ -342,6 +342,8 @@ configuration ConfigureSPVM
             PsDscRunAsCredential     = $SPSetupCredsQualified
             AdminContentDatabaseName = $SPDBPrefix+"AdminContent"
             CentralAdministrationPort = 5000
+            RunCentralAdmin           = $true
+            Ensure                    = "Present"
             #DependsOn = "[xPackage]Install201612CU"
             DependsOn = "[xRemoteFile]DownloadLdapcp"
         }
@@ -351,7 +353,7 @@ configuration ConfigureSPVM
             AccountName          = $SPSvcCredsQualified.UserName
             Account              = $SPSvcCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPManagedAccount CreateSPAppPoolManagedAccount
@@ -359,7 +361,7 @@ configuration ConfigureSPVM
             AccountName          = $SPAppPoolCredsQualified.UserName
             Account              = $SPAppPoolCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
@@ -367,7 +369,7 @@ configuration ConfigureSPVM
             LogPath                                     = "F:\ULS"
             LogSpaceInGB = 20
             PsDscRunAsCredential                        = $SPSetupCredsQualified
-            DependsOn                                   = "[SPCreateFarm]CreateSPFarm"
+            DependsOn                                   = "[SPFarm]CreateSPFarm"
         }
 
         SPStateServiceApp StateServiceApp
@@ -375,7 +377,7 @@ configuration ConfigureSPVM
             Name                 = "State Service Application"
             DatabaseName         = $SPDBPrefix + "StateService"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPDistributedCacheService EnableDistributedCache
@@ -386,7 +388,7 @@ configuration ConfigureSPVM
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
             Ensure               = "Present"
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPFarmSolution InstallLdapcp 
@@ -418,7 +420,7 @@ configuration ConfigureSPVM
             )
             SigningCertificateFilePath = "F:\Setup\Certificates\ADFS Signing.cer"
             ClaimProviderName            = "LDAPCP"
-            ProviderSignOutUri           = "https://adfs.$DomainFQDN/adfs/ls/"
+            #ProviderSignOutUri           = "https://adfs.$DomainFQDN/adfs/ls/"
             Ensure                       = "Present"
             DependsOn = "[SPFarmSolution]InstallLdapcp"
             PsDscRunAsCredential         = $SPSetupCredsQualified
@@ -566,7 +568,7 @@ configuration ConfigureSPVM
         SPSite DevSite
         {
             Url                      = "http://$SPTrustedSitesName/"
-            OwnerAlias               = $DomainAdminCredsQualified.UserName
+            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "Developer site"
             Template                 = "DEV#0"
@@ -577,7 +579,7 @@ configuration ConfigureSPVM
         SPSite TeamSite
         {
             Url                      = "http://$SPTrustedSitesName/sites/team"
-            OwnerAlias               = $DomainAdminCredsQualified.UserName
+            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "Team site"
             Template                 = "STS#0"
@@ -588,7 +590,7 @@ configuration ConfigureSPVM
         SPSite MySiteHost
         {
             Url                      = "http://$SPTrustedSitesName/sites/my"
-            OwnerAlias               = $DomainAdminCredsQualified.UserName
+            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
             Template                 = "SPSMSITEHOST#0"
@@ -602,7 +604,7 @@ configuration ConfigureSPVM
             Name                 = $serviceAppPoolName
             ServiceAccount       = $SPSvcCredsQualified.UserName
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPServiceInstance UPAServiceInstance
@@ -610,7 +612,7 @@ configuration ConfigureSPVM
             Name                 = "User Profile Service"
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPCreateFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPUserProfileServiceApp UserProfileServiceApp
@@ -691,8 +693,9 @@ $SPPassphraseCreds = Get-Credential -Credential "Passphrase"
 $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 $DCName = "DC"
+$SQLName = "SQL"
 
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
 Set-DscLocalConfigurationManager -Path "C:\Data\output\"
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 

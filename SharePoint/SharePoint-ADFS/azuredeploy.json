@@ -29,6 +29,14 @@
         "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
       }
     },
+    "sharePointVersion": {
+      "type": "string",
+      "defaultValue": "2016",
+      "allowedValues": [ "2013", "2016" ],
+      "metadata": {
+        "description": "Version of SharePoint farm to create."
+      }
+    },
     "domainFQDN": {
       "type": "string",
       "defaultValue": "contoso.local",
@@ -217,7 +225,7 @@
     },
     "dscDCTemplateURL": {
       "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureDCVM.zip",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureDCVM.zip",
       "metadata": {
         "description": "Link to DSC configuration of DC VM"
       }
@@ -231,7 +239,7 @@
     },
     "dscSQLTemplateURL": {
       "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSQLVM.zip",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureSQLVM.zip",
       "metadata": {
         "description": "Link to DSC configuration of SQL VM"
       }
@@ -245,7 +253,7 @@
     },
     "dscSPTemplateURL": {
       "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SP16-ADFS/DSC/ConfigureSPVM.zip",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureSPVM.zip",
       "metadata": {
         "description": "Link to DSC configuration of SP VM"
       }
@@ -309,7 +317,7 @@
     "vmSP": {
       "vmImagePublisher": "MicrosoftSharePoint",
       "vmImageOffer": "MicrosoftSharePointServer",
-      "vmImageSKU": "2016",
+      "vmImageSKU": "[parameters('sharePointVersion')]",
       "vmOSDiskName": "vm-SP-OSDisk",
       "vmDataDiskName": "vm-SP-DataDisk",
       "vmVmSize": "[parameters('vmSPSize')]",
