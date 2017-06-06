@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "templatePrefix": {
-      "value": "xxydsp13adfs"
+      "value": "ydsp16adfs"
     },
     "tenantId": {
       "value": "72f988bf-86f1-41af-91ab-2d7cd011db47"
@@ -15,13 +15,13 @@
       "value": "2016"
     },
     "vmDCPublicIPDnsName": {
-      "value": "xxydsp13adfs-dc"
+      "value": "ydsp16adfs-dc"
     },
     "vmSQLPublicIPDnsName": {
-      "value": "xxydsp13adfs-sql"
+      "value": "ydsp16adfs-sql"
     },
     "vmSPPublicIPDnsName": {
-      "value": "xxydsp13adfs-sp"
+      "value": "ydsp16adfs-sp"
     },
     "dscDCTemplateURL": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureDCVM.zip"
