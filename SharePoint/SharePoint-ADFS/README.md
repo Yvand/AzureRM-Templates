@@ -1,9 +1,9 @@
-# AzureRM template for SharePoint 2016 with ADFS
+# AzureRM template to create a SharePoint 2016 or 2013 farm configured with ADFS
 ## Description
 This template deploys 3 new Azure VMs, each with its own public IP address and subnet:
 * A new AD Domain Controller with a root certificate authority (AD CS) and AD FS configured
 * A SQL Server 2016
-* A SharePoint 2016 standalone farm, configured with 1 web application and 2 zones. Default zone is using Windows authentication and Intranet zone is using federated authentication with ADFS. Latest version of claims provider [LDAPCP](https://ldapcp.codeplex.com/) is installed and configured.
+* A single running SharePoint 2016 or 2013, configured with 1 web application and 2 zones. Default zone is using Windows authentication and Intranet zone is using federated authentication with ADFS. Latest version of claims provider [LDAPCP](https://ldapcp.codeplex.com/) is installed and configured.
 
 It also provisions a key vault to store passwords and SharePoint passphrase.
 
@@ -15,6 +15,11 @@ It also provisions a key vault to store passwords and SharePoint passphrase.
 </a>
 
 ## Changelog
+### June 2017 release
+* Added ability to choose between SharePoint 2013 or 2016
+* Updated SharePointDsc to 1.7
+* Various improvements in SharePoint DSC configuration
+
 ### May 2017 v2 release
 * SQL machine name is retrieved dynamically in DSC configuration for SP
 * Changed passwods settings so they never expire
