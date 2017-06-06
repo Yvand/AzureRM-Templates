@@ -1,4 +1,4 @@
-# AzureRM template to create a SharePoint 2016 or 2013 farm configured with ADFS
+# AzureRM template for SharePoint 2016 or 2013 configured with ADFS
 ## Description
 This template deploys 3 new Azure VMs, each with its own public IP address and subnet:
 * A new AD Domain Controller with a root certificate authority (AD CS) and AD FS configured
@@ -7,10 +7,10 @@ This template deploys 3 new Azure VMs, each with its own public IP address and s
 
 It also provisions a key vault to store passwords and SharePoint passphrase.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fmaster%2FSharePoint%2FSP16-ADFS%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fmaster%2FSharePoint%2FSharePoint-ADFS%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fmaster%2FSharePoint%2FSP16-ADFS%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fmaster%2FSharePoint%2FSharePoint-ADFS%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
