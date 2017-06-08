@@ -4,9 +4,9 @@
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
-$resourceGroupName = 'yd-sp16adfs'
+$resourceGroupName = 'ydsp15adfs'
 #$resourceGroupName = 'xyd-sp16adfs'
-$resourceDeploymentName = 'yd-sp16adfs-deployment'
+$resourceDeploymentName = 'ydsp15adfs-deployment'
 #$resourceDeploymentName = 'xyd-sp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
