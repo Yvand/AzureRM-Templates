@@ -4,10 +4,10 @@
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
-$resourceGroupName = 'yd-sp16adfs'
-#$resourceGroupName = 'xyd-sp16adfs'
-$resourceDeploymentName = 'yd-sp16adfs-deployment'
-#$resourceDeploymentName = 'xyd-sp16adfs-deployment'
+$resourceGroupName = 'ydsp15adfs'
+#$resourceGroupName = 'xydsp15adfs'
+$resourceDeploymentName = 'ydsp15adfs-deployment'
+#$resourceDeploymentName = 'xydsp15adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
