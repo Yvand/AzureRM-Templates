@@ -15,6 +15,9 @@ It also provisions a key vault to store passwords and SharePoint passphrase.
 </a>
 
 ## Changelog
+### June 2017 release v2
+* Added a custom script in DSC config of SP to ensure SQL is ready before it creates the farm
+
 ### June 2017 release
 * Added ability to choose between SharePoint 2013 or 2016
 * Updated SharePointDsc to 1.7
