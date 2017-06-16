@@ -3,7 +3,7 @@
 This template deploys 3 new Azure VMs, each with its own public IP address and subnet:
 * A new AD Domain Controller with a root certificate authority (AD CS) and AD FS configured
 * A SQL Server 2016
-* A single running SharePoint 2016 or 2013, configured with 1 web application and 2 zones. Default zone is using Windows authentication and Intranet zone is using federated authentication with ADFS. Latest version of claims provider [LDAPCP](https://ldapcp.codeplex.com/) is installed and configured.
+* A single server running a SharePoint 2016 or 2013 farm configured with 1 web application and 2 zones. Default zone is using Windows authentication and Intranet zone is using federated authentication with ADFS. Latest version of claims provider [LDAPCP](https://ldapcp.codeplex.com/) is installed and configured. Some service applications and site collections are also provisionned.
 
 It also provisions a key vault to store passwords and SharePoint passphrase.
 
@@ -15,6 +15,9 @@ It also provisions a key vault to store passwords and SharePoint passphrase.
 </a>
 
 ## Changelog
+### June 2017 release v2
+* Added a custom script in DSC config of SP to ensure SQL is ready before it creates the farm
+
 ### June 2017 release
 * Added ability to choose between SharePoint 2013 or 2016
 * Updated SharePointDsc to 1.7
