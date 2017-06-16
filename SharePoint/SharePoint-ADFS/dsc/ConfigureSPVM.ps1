@@ -336,10 +336,10 @@ configuration ConfigureSPVM
             {
                 $retryCount = $using:RetryIntervalSec
                 $server = $using:SQLName
-                $db="tempdb"
+                $db="master"
                 $retry = $true
                 while ($retry) {
-                    $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=1"
+                    $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
                     try {
                         $sqlConnection.Open()
                         Write-Verbose "Connection to SQL Server $server succeeded"

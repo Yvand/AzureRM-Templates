@@ -18,10 +18,11 @@
         [Int]$RetryCount=20,
         [Int]$RetryIntervalSec=30,
         [String]$SPTrustedSitesName = "SPSites",
-        [String]$ADFSSiteName = "ADFS"
+        [String]$ADFSSiteName = "ADFS",
+        [String]$SystemTimeZone = "Central European Standard Time"
     ) 
     
-    Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
+    Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer, xTimeZone
     [System.Management.Automation.PSCredential]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
     $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -34,6 +35,12 @@
         {
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
+        }
+
+        xTimeZone SetTimeZone
+        {
+            IsSingleInstance = 'Yes'
+            TimeZone         = $SystemTimeZone
         }
 
         Script AddADDSFeature {
