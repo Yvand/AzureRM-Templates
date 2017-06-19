@@ -16,19 +16,21 @@ configuration ConfigureSQLVM
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPSetupCreds,
-        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainFQDN $DomainFQDN),
-        [Int]$RetryCount = 30,
-        [Int]$RetryIntervalSec = 30
+
+        [Int] $RetryCount = 30,
+        [Int] $RetryIntervalSec = 30,
+        [String] $SystemTimeZone = "Central European Standard Time"
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, xSQLServer
+    Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, xSQLServer, xTimeZone
 	
 	WaitForSqlSetup
+    [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
-    [PSCredential]$DomainCreds = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
-    [PSCredential]$SPSCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
-    [PSCredential]$SQLCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
+    [PSCredential] $DomainCreds = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
+    [PSCredential] $SPSCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
+    [PSCredential] $SQLCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
     $ComputerName = Get-Content env:computername
 
     Node localhost
@@ -42,6 +44,12 @@ configuration ConfigureSQLVM
 		#**********************************************************
         # Initialization of VM
         #**********************************************************
+        xTimeZone SetTimeZone
+        {
+            IsSingleInstance = 'Yes'
+            TimeZone         = $SystemTimeZone
+        }
+
 		xWaitforDisk Disk2
         {
             DiskNumber = 2
@@ -148,21 +156,21 @@ configuration ConfigureSQLVM
 
         xSQLServerRole GrantDomainAdminSQLRoles
         {
-            Name = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
+            ServerRoleName = "sysadmin"
+            MembersToInclude = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
             Ensure = "Present"
             SQLServer = $ComputerName
             SQLInstanceName = "MSSQLSERVER"
-            ServerRole = "sysadmin"
             DependsOn = "[xSQLServerLogin]AddDomainAdminLogin"
         }
 
         xSQLServerRole GrantSPSetupSQLRoles
         {
-            Name = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            ServerRoleName = "securityadmin","dbcreator"
+            MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
             Ensure = "Present"
             SQLServer = $ComputerName
             SQLInstanceName = "MSSQLSERVER"
-            ServerRole = "securityadmin","dbcreator"
             DependsOn = "[xSQLServerLogin]AddSPSetupLogin"
         }
 
