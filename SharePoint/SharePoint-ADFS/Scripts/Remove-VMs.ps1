@@ -6,14 +6,14 @@ if ($azurecontext -eq $null) {
 }
 $subscriptionId = $azurecontext.Subscription.SubscriptionId
 $resourceGroupLocation = 'westeurope'
-$resourceGroupName = 'yd-sp16adfs'
-#$resourceGroupName = 'xxyd-sp13adfs'
+$resourceGroupName = 'ydsp16adfs'
+$resourceGroupName = 'xydsp16adfs'
 $StorageAccountName = "ydsp16adfsst"
-#$StorageAccountName = "xxydsp13adfsst"
+$StorageAccountName = "xydsp16adfsst"
 $blobStorageContainer = "vhds"
 $vmsToDelete = @("SP", "SQL", "DC")
-#$vmsToDelete = @("SP", "SQL")
-$vmsToDelete = @("SP")
+$vmsToDelete = @("SP", "SQL")
+#$vmsToDelete = @("SP")
 Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccountName 
 Get-AzureRmContext
 

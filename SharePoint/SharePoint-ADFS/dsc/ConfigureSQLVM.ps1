@@ -154,7 +154,7 @@ configuration ConfigureSQLVM
             DependsOn = "[xADUser]CreateSPSetupAccount"
         }
 
-        xSQLServerRole GrantDomainAdminSQLRoles
+        xSQLServerRole GrantSQLRoleSysadmin
         {
             ServerRoleName = "sysadmin"
             MembersToInclude = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
@@ -164,13 +164,23 @@ configuration ConfigureSQLVM
             DependsOn = "[xSQLServerLogin]AddDomainAdminLogin"
         }
 
-        xSQLServerRole GrantSPSetupSQLRoles
+        xSQLServerRole GrantSQLRoleSecurityAdmin
         {
-            ServerRoleName = "securityadmin","dbcreator"
+            ServerRoleName = "securityadmin"
             MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-            Ensure = "Present"
             SQLServer = $ComputerName
             SQLInstanceName = "MSSQLSERVER"
+            Ensure = "Present"
+            DependsOn = "[xSQLServerLogin]AddSPSetupLogin"
+        }
+
+        xSQLServerRole GrantSQLRoleDBCreator
+        {
+            ServerRoleName = "dbcreator"
+            MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            SQLServer = $ComputerName
+            SQLInstanceName = "MSSQLSERVER"
+            Ensure = "Present"
             DependsOn = "[xSQLServerLogin]AddSPSetupLogin"
         }
 
