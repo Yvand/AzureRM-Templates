@@ -150,7 +150,7 @@
       "defaultValue": "DC",
       "minLength": 2,
       "metadata": {
-        "description": "Name of DC VM"
+        "description": "Internal name of DC VM"
       }
     },
     "vmDCSize": {
@@ -164,7 +164,7 @@
       "type": "string",
       "minLength": 2,
       "metadata": {
-        "description": "Unique short DNS name associated to the public IP of DC VM"
+        "description": "'Input' used to create public DNS name 'Input.region.cloudapp.azure.com' of DC VM"
       }
     },
     "vmSQLName": {
@@ -172,7 +172,7 @@
       "defaultValue": "SQL",
       "minLength": 2,
       "metadata": {
-        "description": "Name of SQL VM"
+        "description": "Internal name of SQL VM"
       }
     },
     "vmSQLSize": {
@@ -186,7 +186,7 @@
       "type": "string",
       "minLength": 2,
       "metadata": {
-        "description": "Unique short DNS name associated to the public IP of SQL VM"
+        "description": "'Input' used to create public DNS name 'Input.region.cloudapp.azure.com' of SQL VM"
       }
     },
     "vmSPName": {
@@ -194,7 +194,7 @@
       "defaultValue": "SP",
       "minLength": 2,
       "metadata": {
-        "description": "Name of SP VM"
+        "description": "Internal name of SP VM"
       }
     },
     "vmSPSize": {
@@ -208,7 +208,7 @@
       "type": "string",
       "minLength": 2,
       "metadata": {
-        "description": "Unique short DNS name associated to the public IP of SP VM"
+        "description": "'Input' used to create public DNS name 'Input.region.cloudapp.azure.com' of SP VM"
       }
     },
     "vmsTimeZone": {
