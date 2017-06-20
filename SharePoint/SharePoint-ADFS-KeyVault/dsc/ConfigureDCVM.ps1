@@ -154,8 +154,7 @@
                 # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
                return $false
             }
-            PsDscRunAsCredential     = $DomainAdminCredsQualified
-            DependsOn = '[xADCSCertificationAuthority]WaitAfterADCSProvisioning'
+            DependsOn = '[xADCSCertificationAuthority]ADCS'
         }
 
         xCertReq ADFSSiteCert
@@ -172,7 +171,7 @@
             AutoRenew                 = $true
 			#SubjectAltName            = "certauth.$ADFSSiteName.$DomainFQDN"
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xScript]WaitForSQL'
+            DependsOn = '[xScript]WaitAfterADCSProvisioning'
         }
 
         xCertReq ADFSSigningCert
