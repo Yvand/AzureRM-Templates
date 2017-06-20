@@ -43,9 +43,9 @@
     },
     "adminPassword": {
       "type": "securestring",
-      "minLength": 1,
+      "minLength": 8,
       "metadata": {
-        "description": "Password of admin account"
+        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
     "adfsSvcUserName": {
@@ -57,10 +57,10 @@
       }
     },
     "adfsSvcPassword": {
-      "type": "securestring",
-      "minLength": 1,
+     "type": "securestring",
+      "minLength": 8,
       "metadata": {
-        "description": "Password of ADFS service account"
+        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
     "sqlSvcUserName": {
@@ -73,9 +73,9 @@
     },
     "sqlSvcPassword": {
       "type": "securestring",
-      "minLength": 1,
+      "minLength": 8,
       "metadata": {
-        "description": "Password of SQL service account"
+        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
     "spSetupUserName": {
@@ -88,9 +88,9 @@
     },
     "spSetupPassword": {
       "type": "securestring",
-      "minLength": 1,
+      "minLength": 8,
       "metadata": {
-        "description": "Password of SharePoint setup account"
+        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
     "spFarmUserName": {
@@ -103,9 +103,9 @@
     },
     "spFarmPassword": {
       "type": "securestring",
-      "minLength": 1,
+      "minLength": 8,
       "metadata": {
-        "description": "Password of SharePoint farm account"
+        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
     "spSvcUserName": {
@@ -118,9 +118,9 @@
     },
     "spSvcPassword": {
       "type": "securestring",
-      "minLength": 1,
+      "minLength": 8,
       "metadata": {
-        "description": "Password of SharePoint service application account"
+        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
     "spAppPoolUserName": {
@@ -133,9 +133,9 @@
     },
     "spAppPoolPassword": {
       "type": "securestring",
-      "minLength": 1,
+      "minLength": 8,
       "metadata": {
-        "description": "Password of SharePoint application pool account"
+        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
     "spPassphrase": {
@@ -209,6 +209,14 @@
       "minLength": 2,
       "metadata": {
         "description": "Unique short DNS name associated to the public IP of SP VM"
+      }
+    },
+    "vmsTimeZone": {
+      "type": "string",
+      "defaultValue": "Central European Standard Time",
+      "minLength": 2,
+      "metadata": {
+        "description": "Time zone of the VMs. Get the list with [System.TimeZoneInfo]::GetSystemTimeZones().Id"
       }
     },
     "dscDCTemplateURL": {
@@ -416,7 +424,10 @@
         "osProfile": {
           "computerName": "[parameters('vmDCName')]",
           "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "timeZone": "[parameters('vmsTimeZone')]"
+          }
         },
         "storageProfile": {
           "imageReference": {
@@ -567,7 +578,10 @@
         "osProfile": {
           "computerName": "[parameters('vmSQLName')]",
           "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "timeZone": "[parameters('vmsTimeZone')]"
+          }
         },
         "storageProfile": {
           "imageReference": {
@@ -673,7 +687,10 @@
         "osProfile": {
           "computerName": "[parameters('vmSPName')]",
           "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "timeZone": "[parameters('vmsTimeZone')]"
+          }
         },
         "storageProfile": {
           "imageReference": {

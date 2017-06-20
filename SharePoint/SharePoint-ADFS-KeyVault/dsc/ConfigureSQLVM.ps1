@@ -18,11 +18,10 @@ configuration ConfigureSQLVM
         [System.Management.Automation.PSCredential]$SPSetupCreds,
 
         [Int] $RetryCount = 30,
-        [Int] $RetryIntervalSec = 30,
-        [String] $SystemTimeZone = "Central European Standard Time"
+        [Int] $RetryIntervalSec = 30
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, xSQLServer, xTimeZone
+    Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, xSQLServer
 	
 	WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
@@ -44,11 +43,6 @@ configuration ConfigureSQLVM
 		#**********************************************************
         # Initialization of VM
         #**********************************************************
-        xTimeZone SetTimeZone
-        {
-            IsSingleInstance = 'Yes'
-            TimeZone         = $SystemTimeZone
-        }
 
 		xWaitforDisk Disk2
         {

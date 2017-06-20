@@ -17,11 +17,10 @@
         [Int] $RetryCount=20,
         [Int] $RetryIntervalSec=30,
         [String] $SPTrustedSitesName = "SPSites",
-        [String] $ADFSSiteName = "ADFS",
-        [String] $SystemTimeZone = "Central European Standard Time"
+        [String] $ADFSSiteName = "ADFS"
     ) 
     
-    Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer, xTimeZone
+    Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
@@ -35,12 +34,6 @@
         {
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
-        }
-
-        xTimeZone SetTimeZone
-        {
-            IsSingleInstance = 'Yes'
-            TimeZone         = $SystemTimeZone
         }
 
         Script AddADDSFeature {
