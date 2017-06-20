@@ -6,7 +6,7 @@
       "type": "string",
       "minLength": 3,
       "metadata": {
-        "description": "Value used as a prefix to generate name of various objects like the virtual network or the storage account. It must contain only numbers and lowercase letters"
+        "description": "Value used as a prefix to generate name of various objects like the vnet or the storage account. IT MUST CONTAIN ONLY NUMBERS AND lowercase LETTERS"
       }
     },
     "tenantId": {
