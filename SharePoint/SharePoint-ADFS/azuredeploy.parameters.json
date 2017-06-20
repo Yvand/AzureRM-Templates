@@ -5,12 +5,6 @@
     "templatePrefix": {
       "value": "xydsp16adfs"
     },
-    "tenantId": {
-      "value": "72f988bf-86f1-41af-91ab-2d7cd011db47"
-    },
-    "userObjectId": {
-      "value": "c331fcc6-7478-417d-84d1-ca42e9e18735"
-    },
     "sharePointVersion": {
       "value": "2016"
     },
