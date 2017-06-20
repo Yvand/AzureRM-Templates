@@ -138,6 +138,26 @@
         #**********************************************************
         # Configure AD FS
         #**********************************************************
+        xScript WaitAfterADCSProvisioning
+        {
+            SetScript = 
+            {
+                Start-Sleep -s 30
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            PsDscRunAsCredential     = $DomainAdminCredsQualified
+            DependsOn = '[xADCSCertificationAuthority]WaitAfterADCSProvisioning'
+        }
+
         xCertReq ADFSSiteCert
         {
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
@@ -152,7 +172,7 @@
             AutoRenew                 = $true
 			#SubjectAltName            = "certauth.$ADFSSiteName.$DomainFQDN"
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xADCSCertificationAuthority]ADCS'
+            DependsOn = '[xScript]WaitForSQL'
         }
 
         xCertReq ADFSSigningCert

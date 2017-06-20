@@ -216,7 +216,7 @@
       "defaultValue": "Central European Standard Time",
       "minLength": 2,
       "metadata": {
-        "description": "Time zone of the VMs. Get the list with [System.TimeZoneInfo]::GetSystemTimeZones().Id"
+        "description": "Time zone of the VMs. Get the list with '[System.TimeZoneInfo]::GetSystemTimeZones().Id'. Note that 'UTC' works but 'UTC+xx' does NOT work."
       }
     },
     "dscDCTemplateURL": {

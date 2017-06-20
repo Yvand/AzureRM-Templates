@@ -17,6 +17,9 @@
     "vmSPPublicIPDnsName": {
       "value": "xydsp16adfs-sp"
     },
+    "vmsTimeZone": {
+      "value": "UTC"
+    },
     "dscDCTemplateURL": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureDCVM.zip"
     },
