@@ -3,34 +3,28 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "templatePrefix": {
-      "value": "ydsp16adfs"
-    },
-    "tenantId": {
-      "value": "72f988bf-86f1-41af-91ab-2d7cd011db47"
-    },
-    "userObjectId": {
-      "value": "c331fcc6-7478-417d-84d1-ca42e9e18735"
+      "value": "xydsp16adfs"
     },
     "sharePointVersion": {
       "value": "2016"
     },
     "vmDCPublicIPDnsName": {
-      "value": "ydsp16adfs-dc"
+      "value": "xydsp16adfs-dc"
     },
     "vmSQLPublicIPDnsName": {
-      "value": "ydsp16adfs-sql"
+      "value": "xydsp16adfs-sql"
     },
     "vmSPPublicIPDnsName": {
-      "value": "ydsp16adfs-sp"
+      "value": "xydsp16adfs-sp"
     },
     "dscDCTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureDCVM.zip"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureDCVM.zip"
     },
     "dscSQLTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureSQLVM.zip"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureSQLVM.zip"
     },
     "dscSPTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureSPVM.zip"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureSPVM.zip"
     }
   }
 }

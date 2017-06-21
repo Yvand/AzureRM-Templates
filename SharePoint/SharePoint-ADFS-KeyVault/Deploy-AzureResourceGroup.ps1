@@ -4,14 +4,14 @@
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
-$resourceGroupName = 'xydsp16adfs'
-#$resourceGroupName = 'xydsp16adfs'
-$resourceDeploymentName = 'xydsp16adfs-deployment'
-#$resourceDeploymentName = 'xydsp16adfs-deployment'
+$resourceGroupName = 'xydsp16adfskv'
+#$resourceGroupName = 'xydsp16adfskvst'
+$resourceDeploymentName = 'xydsp16adfskv-deployment'
+#$resourceDeploymentName = 'xydsp16adfskv-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
-#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SharePoint-ADFS"
+#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SharePoint-ADFS-KeyVault"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 $dscSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, "dsc"))

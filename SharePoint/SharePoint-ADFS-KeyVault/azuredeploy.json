@@ -9,6 +9,18 @@
         "description": "Value used as a prefix to generate name of various objects like the vnet or the storage account. IT MUST CONTAIN ONLY NUMBERS AND lowercase LETTERS"
       }
     },
+    "tenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "GUID of the tenant, used to create Azure key vault. Get it using Get-AzureRmTenant cmdlet"
+      }
+    },
+    "userObjectId": {
+      "type": "string",
+      "metadata": {
+        "description": "Property ObjectId of the AAD user that will have access to secrets in Azure key vault. Get the ObjectId using Get-AzureRmADUser -UserPrincipalName 'user@domain' or Get-AzureRmADServicePrincipal cmdlets"
+      }
+    },
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -57,7 +69,7 @@
       }
     },
     "adfsSvcPassword": {
-     "type": "securestring",
+      "type": "securestring",
       "minLength": 8,
       "metadata": {
         "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
@@ -221,21 +233,21 @@
     },
     "dscDCTemplateURL": {
       "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureDCVM.zip",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS-KeyVault/dsc/ConfigureDCVM.zip",
       "metadata": {
         "description": "Link to DSC configuration of DC VM"
       }
     },
     "dscSQLTemplateURL": {
       "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureSQLVM.zip",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS-KeyVault/dsc/ConfigureSQLVM.zip",
       "metadata": {
         "description": "Link to DSC configuration of SQL VM"
       }
     },
     "dscSPTemplateURL": {
       "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureSPVM.zip",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS-KeyVault/dsc/ConfigureSPVM.zip",
       "metadata": {
         "description": "Link to DSC configuration of SP VM"
       }
@@ -254,6 +266,17 @@
       "vNetPrivateSubnet2Prefix": "10.0.2.0/24",
       "vNetPrivateSubnet3Name": "Subnet-3",
       "vNetPrivateSubnet3Prefix": "10.0.3.0/24"
+    },
+    "keyVaultSettings": {
+      "vaultName": "[concat(parameters('templatePrefix'), '-vault')]",
+      "adminPasswordKeyName": "adminPassword",
+      "adfsSvcPasswordKeyName": "adfsSvcPassword",
+      "sqlSvcPasswordKeyName": "sqlSvcPassword",
+      "spSetupPasswordKeyName": "spSetupPassword",
+      "spFarmPasswordKeyName": "spFarmPassword",
+      "spSvcPasswordKeyName": "spSvcPassword",
+      "spAppPoolPasswordKeyName": "spAppPoolPassword",
+      "spPassphraseKeyName": "spPassphrase"
     },
     "vmDC": {
       "vmImagePublisher": "MicrosoftWindowsServer",
@@ -309,6 +332,141 @@
     }
   },
   "resources": [
+    {
+      "name": "[variables('keyVaultSettings').vaultName]",
+      "type": "Microsoft.KeyVault/vaults",
+      "comments": "Generalized from resource: '/subscriptions/3c497a87-7ec4-4e9c-b227-a733be37d602/resourceGroups/yd-sp16adfs/providers/Microsoft.KeyVault/vaults/ydsp16adfsvault'.",
+      "apiVersion": "2015-06-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "[variables('keyVaultSettings').vaultName]"
+      },
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[parameters('tenantId')]",
+        "accessPolicies": [
+          {
+            "tenantId": "[parameters('tenantId')]",
+            "objectId": "[parameters('userObjectId')]",
+            "permissions": {
+              "keys": [ "get", "create", "delete", "list", "update", "import", "backup", "restore" ],
+              "secrets": [ "all" ]
+            }
+          }
+        ],
+        "enabledForDeployment": true,
+        "enabledForTemplateDeployment": true
+      },
+      "dependsOn": []
+    },
+    {
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').adminPasswordKeyName)]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
+      ],
+      "tags": {
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').adminPasswordKeyName)]"
+      },
+      "properties": {
+        "value": "[parameters('adminPassword')]"
+      }
+    },
+    {
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').adfsSvcPasswordKeyName)]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
+      ],
+      "tags": {
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').adfsSvcPasswordKeyName)]"
+      },
+      "properties": {
+        "value": "[parameters('adfsSvcPassword')]"
+      }
+    },
+    {
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').sqlSvcPasswordKeyName)]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
+      ],
+      "tags": {
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').sqlSvcPasswordKeyName)]"
+      },
+      "properties": {
+        "value": "[parameters('sqlSvcPassword')]"
+      }
+    },
+    {
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spSetupPasswordKeyName)]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
+      ],
+      "tags": {
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spSetupPasswordKeyName)]"
+      },
+      "properties": {
+        "value": "[parameters('spSetupPassword')]"
+      }
+    },
+    {
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spSvcPasswordKeyName)]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
+      ],
+      "tags": {
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spSvcPasswordKeyName)]"
+      },
+      "properties": {
+        "value": "[parameters('spSvcPassword')]"
+      }
+    },
+    {
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spAppPoolPasswordKeyName)]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
+      ],
+      "tags": {
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spAppPoolPasswordKeyName)]"
+      },
+      "properties": {
+        "value": "[parameters('spAppPoolPassword')]"
+      }
+    },
+    {
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spPassphraseKeyName)]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
+      ],
+      "tags": {
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spPassphraseKeyName)]"
+      },
+      "properties": {
+        "value": "[parameters('spPassphrase')]"
+      }
+    },
     {
       "name": "[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
