@@ -4,9 +4,9 @@
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
-$resourceGroupName = 'xydsp16adfskv'
+$resourceGroupName = 'ydsp16adfskv'
 #$resourceGroupName = 'xydsp16adfskvst'
-$resourceDeploymentName = 'xydsp16adfskv-deployment'
+$resourceDeploymentName = 'ydsp16adfskv-deployment'
 #$resourceDeploymentName = 'xydsp16adfskv-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
@@ -14,7 +14,6 @@ $scriptRoot = $PSScriptRoot
 #$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SharePoint-ADFS-KeyVault"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
-$dscSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, "dsc"))
 
 ### Define passwords
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force

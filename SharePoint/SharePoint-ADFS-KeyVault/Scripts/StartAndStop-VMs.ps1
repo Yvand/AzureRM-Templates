@@ -1,4 +1,4 @@
-﻿$resourceGroupName = 'yd-sp16adfs'
+﻿$resourceGroupName = 'ydsp16adfskv'
 $azurecontext = $null
 $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 if ($azurecontext -eq $null) {
