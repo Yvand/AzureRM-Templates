@@ -1,7 +1,7 @@
 param(
     [string[]] $VMsToDelete = @("SP", "SQL", "DC"),
     [string] $ResourceGroupLocation = "westeurope",
-    [string] $StorageAccountName = "xydsp16adfsst",
+    [string] $StorageAccountName = "ydsp16adfsst",
     [string] $BlobStorageContainer = "vhds"
 )
 
