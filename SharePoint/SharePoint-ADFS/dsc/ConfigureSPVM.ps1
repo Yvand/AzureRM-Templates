@@ -452,8 +452,7 @@ configuration ConfigureSPVM
             Name = "LDAPCP.wsp"
             Deployed = $true
             Ensure = "Present"
-            InstallAccount = 
-            PsDscRunAsCredential  = $SPSetupCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn = "[xScript]RestartSPTimer"
         }
 
