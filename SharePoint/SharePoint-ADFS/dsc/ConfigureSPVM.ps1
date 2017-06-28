@@ -442,7 +442,7 @@ configuration ConfigureSPVM
                 # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
                return $false
             }
-            PsDscRunAsCredential     = $DomainAdminCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPDistributedCacheService]EnableDistributedCache"
         }
 

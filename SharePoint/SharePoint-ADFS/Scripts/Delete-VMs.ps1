@@ -1,7 +1,7 @@
 param(
     [string[]] $VMsToDelete = @("SP", "SQL", "DC"),
     [string] $ResourceGroupLocation = "westeurope",
-    [string] $StorageAccountName = "ydsp16adfsst",
+    [string] $StorageAccount,
     [string] $BlobStorageContainer = "vhds"
 )
 
@@ -9,8 +9,8 @@ param(
 $ResourceGroupLocation = 'westeurope'
 $resourceGroupName = 'ydsp16adfs'
 $resourceGroupName = 'xydsp16adfs'
-$StorageAccountName = "ydsp16adfsst"
-$StorageAccountName = "xydsp16adfsst"
+$StorageAccount = "ydsp16adfsst"
+$StorageAccount = "xydsp16adfsst"
 $BlobStorageContainer = "vhds"
 $VMsToDelete = @("SP", "SQL", "DC")
 $VMsToDelete = @("SP", "SQL")
@@ -24,7 +24,7 @@ if ($azurecontext -eq $null) {
     $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 }
 
-Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccountName 
+Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccount 
 Get-AzureRmContext
 
 <#
