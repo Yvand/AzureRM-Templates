@@ -1,13 +1,12 @@
 #Requires -Version 3.0
 #Requires -Module AzureRM.Resources
-#Requires -Module Azure.Storage
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
 $resourceGroupName = 'ydsp16adfs'
-#$resourceGroupName = 'xydsp16adfs'
+$resourceGroupName = 'xydsp16adfs'
 $resourceDeploymentName = 'ydsp16adfs-deployment'
-#$resourceDeploymentName = 'xydsp16adfs-deployment'
+$resourceDeploymentName = 'xydsp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
@@ -42,11 +41,12 @@ else {
 Import-Module Azure -ErrorAction SilentlyContinue
 $azurecontext = $null
 $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
-if ($azurecontext -eq $null) {
+if ($azurecontext -eq $null -or $azurecontext.Account -eq $null) {
+    Write-Host "Waiting for authentication on Azure." -ForegroundColor Green
     Login-AzureRmAccount
     $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 }
-if ($azurecontext -eq $null){ 
+if ($azurecontext -eq $null -or $azurecontext.Account -eq $null ){ 
     Write-Host "Unable to get a valid context." -ForegroundColor Red
     return
 }
