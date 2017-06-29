@@ -42,7 +42,7 @@ Import-Module Azure -ErrorAction SilentlyContinue
 $azurecontext = $null
 $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 if ($azurecontext -eq $null -or $azurecontext.Account -eq $null) {
-    Write-Host "Waiting for authentication on Azure." -ForegroundColor Green
+    Write-Host "Launching Azure authentication prompt..." -ForegroundColor Green
     Login-AzureRmAccount
     $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 }

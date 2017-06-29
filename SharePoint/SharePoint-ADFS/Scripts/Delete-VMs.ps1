@@ -19,9 +19,14 @@ $VMsToDelete = @("SP", "SQL")
 
 Import-Module Azure -ErrorAction SilentlyContinue
 $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
-if ($azurecontext -eq $null) {
+if ($azurecontext -eq $null -or $azurecontext.Account -eq $null) {
+    Write-Host "Launching Azure authentication prompt..." -ForegroundColor Green
     Login-AzureRmAccount
     $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
+}
+if ($azurecontext -eq $null -or $azurecontext.Account -eq $null ){ 
+    Write-Host "Unable to get a valid context." -ForegroundColor Red
+    return
 }
 
 Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccount 
