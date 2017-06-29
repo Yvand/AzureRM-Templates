@@ -1,7 +1,7 @@
 param(
     [string[]] $VMsToDelete = @("SP", "SQL", "DC"),
     [string] $ResourceGroupLocation = "westeurope",
-    [string] $StorageAccountName = "ydsp16adfsst",
+    [string] $StorageAccount,
     [string] $BlobStorageContainer = "vhds"
 )
 
@@ -9,8 +9,8 @@ param(
 $ResourceGroupLocation = 'westeurope'
 $resourceGroupName = 'ydsp16adfs'
 $resourceGroupName = 'xydsp16adfs'
-$StorageAccountName = "ydsp16adfsst"
-$StorageAccountName = "xydsp16adfsst"
+$StorageAccount = "ydsp16adfsst"
+$StorageAccount = "xydsp16adfsst"
 $BlobStorageContainer = "vhds"
 $VMsToDelete = @("SP", "SQL", "DC")
 $VMsToDelete = @("SP", "SQL")
@@ -19,12 +19,17 @@ $VMsToDelete = @("SP", "SQL")
 
 Import-Module Azure -ErrorAction SilentlyContinue
 $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
-if ($azurecontext -eq $null) {
+if ($azurecontext -eq $null -or $azurecontext.Account -eq $null) {
+    Write-Host "Launching Azure authentication prompt..." -ForegroundColor Green
     Login-AzureRmAccount
     $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 }
+if ($azurecontext -eq $null -or $azurecontext.Account -eq $null ){ 
+    Write-Host "Unable to get a valid context." -ForegroundColor Red
+    return
+}
 
-Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccountName 
+Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccount 
 Get-AzureRmContext
 
 <#

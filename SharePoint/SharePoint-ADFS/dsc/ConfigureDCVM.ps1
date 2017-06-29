@@ -142,6 +142,7 @@
         {
             SetScript = 
             {
+                # Add a timer to mitigate issue https://github.com/PowerShell/xCertificate/issues/73
                 Start-Sleep -s 30
             }
             GetScript =  

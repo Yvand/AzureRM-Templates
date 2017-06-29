@@ -24,7 +24,7 @@
             "request": "launch",
             "name": "DSC for SP VM",
             "script": "${workspaceRoot}/Scripts/Generate-DSCArchive.ps1",
-            "args": ["-VM *SPVM"],
+            "args": ["-VM SP"],
             "cwd": "${workspaceRoot}",
             "internalConsoleOptions": "openOnFirstSessionStart"
         },
