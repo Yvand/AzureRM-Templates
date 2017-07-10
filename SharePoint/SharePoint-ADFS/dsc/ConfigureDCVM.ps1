@@ -138,7 +138,7 @@
         #**********************************************************
         # Configure AD FS
         #**********************************************************
-        xScript WaitAfterADCSProvisioning
+        <#xScript WaitAfterADCSProvisioning
         {
             SetScript = 
             {
@@ -156,6 +156,14 @@
                return $false
             }
             DependsOn = '[xADCSCertificationAuthority]ADCS'
+        }#>
+
+        xWaitForCertificateServices WaitAfterADCSProvisioning
+        {
+            CAServerFQDN = "$ComputerName.$DomainFQDN"
+            CARootName = "$DomainNetbiosName-$ComputerName-CA"
+            DependsOn = '[xADCSCertificationAuthority]ADCS'
+            PsDscRunAsCredential = $DomainCredsNetbios
         }
 
         xCertReq ADFSSiteCert
@@ -172,7 +180,7 @@
             AutoRenew                 = $true
 			#SubjectAltName            = "certauth.$ADFSSiteName.$DomainFQDN"
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xScript]WaitAfterADCSProvisioning'
+            DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
         xCertReq ADFSSigningCert
