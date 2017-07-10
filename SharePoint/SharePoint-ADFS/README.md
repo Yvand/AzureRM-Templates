@@ -13,6 +13,9 @@ This template deploys 3 new Azure VMs, each with its own public IP address and s
 </a>
 
 ## Changelog
+### June 2017 release v3
+* Improved reliability of SharePoint solution deployment
+
 ### June 2017 release v2
 * Added a custom script in DSC config of SP to ensure SQL is ready before it creates the farm
 
