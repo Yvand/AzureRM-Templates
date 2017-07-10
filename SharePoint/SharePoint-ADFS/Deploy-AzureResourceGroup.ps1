@@ -14,6 +14,7 @@ $scriptRoot = $PSScriptRoot
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 
+Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 ### Define passwords
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 if ($securePassword -eq $null) { $securePassword = Read-Host "Enter the password" -AsSecureString }
