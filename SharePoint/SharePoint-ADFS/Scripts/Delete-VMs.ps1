@@ -6,6 +6,7 @@ param(
 )
 
 <#
+-VMsToDelete @("SP") -StorageAccount "xxydsp16adfsst"
 $ResourceGroupLocation = 'westeurope'
 $resourceGroupName = 'ydsp16adfs'
 $resourceGroupName = 'xydsp16adfs'
