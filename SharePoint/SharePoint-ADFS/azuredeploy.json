@@ -162,7 +162,7 @@
     },
     "vmDCPublicIPDnsName": {
       "type": "string",
-      "minLength": 2,
+      "minLength": 3,
       "metadata": {
         "description": "'Input' used to create public DNS name 'Input.region.cloudapp.azure.com' of DC VM"
       }
@@ -184,7 +184,7 @@
     },
     "vmSQLPublicIPDnsName": {
       "type": "string",
-      "minLength": 2,
+      "minLength": 3,
       "metadata": {
         "description": "'Input' used to create public DNS name 'Input.region.cloudapp.azure.com' of SQL VM"
       }
@@ -206,7 +206,7 @@
     },
     "vmSPPublicIPDnsName": {
       "type": "string",
-      "minLength": 2,
+      "minLength": 3,
       "metadata": {
         "description": "'Input' used to create public DNS name 'Input.region.cloudapp.azure.com' of SP VM"
       }
@@ -242,7 +242,7 @@
     }
   },
   "variables": {
-    "storageAccountName": "[concat(parameters('templatePrefix'), 'st')]",
+    "storageAccountName": "[concat('Storage', uniqueString(resourceGroup().id))]",
     "vNetPrivateName": "[concat(parameters('templatePrefix'), '-vnet')]",
     "generalSettings": {
       "vmsStorageAccountContainerName": "vhds",
