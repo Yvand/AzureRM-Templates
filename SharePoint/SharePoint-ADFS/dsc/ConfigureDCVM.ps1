@@ -171,6 +171,7 @@
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
             Subject                   = "$ADFSSiteName.$DomainFQDN"
+            FriendlyName              = "$ADFSSiteName.$DomainFQDN site certificate"
             KeyLength                 = '2048'
             Exportable                = $true
             ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
@@ -188,6 +189,7 @@
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
             Subject                   = "$ADFSSiteName.Signing"
+            FriendlyName              = "$ADFSSiteName Signing"
             KeyLength                 = '2048'
             Exportable                = $true
             ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
@@ -204,6 +206,7 @@
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
             Subject                   = "$ADFSSiteName.Decryption"
+            FriendlyName              = "$ADFSSiteName Decryption"
             KeyLength                 = '2048'
             Exportable                = $true
             ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
