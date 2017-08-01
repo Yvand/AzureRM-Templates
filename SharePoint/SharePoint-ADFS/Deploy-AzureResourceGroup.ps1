@@ -4,9 +4,9 @@
 ### Define variables
 $resourceGroupLocation = 'westeurope'
 $resourceGroupName = 'ydsp16adfs'
-#$resourceGroupName = 'xydsp16adfs'
+$resourceGroupName = 'xydsp16adfs'
 $resourceDeploymentName = 'ydsp16adfs-deployment'
-#$resourceDeploymentName = 'xydsp16adfs-deployment'
+$resourceDeploymentName = 'xydsp16adfs-deployment'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
@@ -14,6 +14,7 @@ $scriptRoot = $PSScriptRoot
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 
+Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 ### Define passwords
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 if ($securePassword -eq $null) { $securePassword = Read-Host "Enter the password" -AsSecureString }
@@ -87,4 +88,5 @@ if ($checkTemplate.Count -eq 0) {
 else {
     # Template is not valid, display errors
     $checkTemplate[0].Details
+    $checkTemplate[0].Details.Details
 }
