@@ -6,13 +6,13 @@
       "value": "2016"
     },
     "dscDCTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureDCVM.zip"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureDCVM.zip"
     },
     "dscSQLTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureSQLVM.zip"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureSQLVM.zip"
     },
     "dscSPTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureSPVM.zip"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/dsc/ConfigureSPVM.zip"
     }
   }
 }
