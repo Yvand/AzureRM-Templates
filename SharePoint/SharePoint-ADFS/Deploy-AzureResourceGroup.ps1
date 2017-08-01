@@ -88,4 +88,5 @@ if ($checkTemplate.Count -eq 0) {
 else {
     # Template is not valid, display errors
     $checkTemplate[0].Details
+    $checkTemplate[0].Details.Details
 }
