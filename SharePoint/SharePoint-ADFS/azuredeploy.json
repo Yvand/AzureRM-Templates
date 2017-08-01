@@ -414,7 +414,7 @@
           "osDisk": {
             "name": "[variables('vmDC').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmOSDiskName, '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmOSDiskName,'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -422,7 +422,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmDataDiskName, '.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmDataDiskName,'.vhd')]"
               },
               "name": "[variables('vmDC').vmDataDiskName]",
               "caching": "None",
@@ -568,7 +568,7 @@
           "osDisk": {
             "name": "[variables('vmSQL').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmOSDiskName, '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmOSDiskName,'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -576,7 +576,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmDataDiskName, '.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmDataDiskName,'.vhd')]"
               },
               "name": "[variables('vmSQL').vmDataDiskName]",
               "caching": "None",
@@ -677,7 +677,7 @@
           "osDisk": {
             "name": "[variables('vmSP').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName, '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName,'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -685,7 +685,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName, '.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName,'.vhd')]"
               },
               "name": "[variables('vmSP').vmDataDiskName]",
               "caching": "None",
