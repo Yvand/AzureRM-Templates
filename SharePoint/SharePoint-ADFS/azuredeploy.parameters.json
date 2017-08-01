@@ -2,20 +2,8 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "templatePrefix": {
-      "value": "xxydsp16adfs"
-    },
     "sharePointVersion": {
       "value": "2016"
-    },
-    "vmDCPublicIPDnsName": {
-      "value": "xxydsp16adfs-dc"
-    },
-    "vmSQLPublicIPDnsName": {
-      "value": "xxydsp16adfs-sql"
-    },
-    "vmSPPublicIPDnsName": {
-      "value": "xxydsp16adfs-sp"
     },
     "dscDCTemplateURL": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureDCVM.zip"

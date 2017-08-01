@@ -131,6 +131,25 @@
             DependsOn = '[xADCSCertificationAuthority]ADCS'
             PsDscRunAsCredential = $DomainCredsNetbios
         }
+        <#xScript WaitAfterADCSProvisioning
+        {
+            SetScript = 
+            {
+                # Add a timer to mitigate issue https://github.com/PowerShell/xCertificate/issues/73
+                Start-Sleep -s 30
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            DependsOn = '[xADCSCertificationAuthority]ADCS'
+        }#>
 
         xCertReq ADFSSiteCert
         {
@@ -164,7 +183,7 @@
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xADCSCertificationAuthority]ADCS'
+            DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
         }
         
         xCertReq ADFSDecryptionCert
@@ -181,7 +200,7 @@
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xADCSCertificationAuthority]ADCS'
+            DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
         xADUser CreateAdfsSvcAccount
