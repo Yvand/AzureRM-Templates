@@ -69,6 +69,7 @@ $checkTemplate = Test-AzureRmResourceGroupDeployment `
 
 if ($checkTemplate.Count -eq 0) {
     # Template is valid, deploy it
+    $startTime = $(Get-Date)
     $result = New-AzureRmResourceGroupDeployment `
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
@@ -79,7 +80,8 @@ if ($checkTemplate.Count -eq 0) {
 
     $result
     if ($result.ProvisioningState -eq "Succeeded") {
-        Write-Host "Deployment completed successfully." -ForegroundColor Green
+        $elapsedTime = New-TimeSpan $startTime $(get-date)
+        Write-Host "Deployment completed successfully in $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Green
     }
 
 }
