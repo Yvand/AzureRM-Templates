@@ -13,6 +13,12 @@ This template deploys 3 new Azure VMs, each with its own public IP address and s
 </a>
 
 ## Changelog
+### August 2017 release
+* Removed parameter templatePrefix as now name of storage and vnet resources are set from resource group name/id in the template
+* Removed parameters to set public DNS name as they are now set from resource group name in the template
+* Updated SharePointDsc to 1.8.0.0
+* Updated xCertificate to 2.8.0.0 and replaced script timer with resource xWaitForCertificateServices
+
 ### June 2017 release v3
 * Improved reliability of SharePoint solution deployment
 
