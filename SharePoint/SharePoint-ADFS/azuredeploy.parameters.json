@@ -5,14 +5,8 @@
     "sharePointVersion": {
       "value": "2016"
     },
-    "dscDCTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureDCVM.zip"
-    },
-    "dscSQLTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureSQLVM.zip"
-    },
-    "dscSPTemplateURL": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/dsc/ConfigureSPVM.zip"
+    "_artifactsLocation": {
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/"
     }
   }
 }
