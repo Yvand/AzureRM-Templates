@@ -667,6 +667,26 @@ configuration ConfigureSPVM
             DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPSite]MySiteHost"
         }
 
+        xScript WaitAfterUPAProvisioning
+        {
+            SetScript = 
+            {
+                # Add a timer to avoid update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
+                Start-Sleep -s 10
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
+        }
+
         # Grant spsvc full control to UPA to allow newsfeeds to work properly
         $upaAdminToInclude = @( 
             MSFT_SPServiceAppSecurityEntry {
@@ -679,7 +699,7 @@ configuration ConfigureSPVM
             SecurityType         = "SharingPermissions"
             MembersToInclude     = $upaAdminToInclude
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
+            DependsOn = "[xScript]WaitAfterUPAProvisioning"
         }
     }
 }
