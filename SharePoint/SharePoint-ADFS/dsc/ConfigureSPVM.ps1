@@ -652,9 +652,10 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
+        $upaServiceName = "User Profile Service Application"
         SPUserProfileServiceApp UserProfileServiceApp
         {
-            Name                 = "User Profile Service Application"
+            Name                 = $upaServiceName
             ApplicationPool      = $serviceAppPoolName
             MySiteHostLocation   = "http://$SPTrustedSitesName/sites/my"
             ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
@@ -664,6 +665,21 @@ configuration ConfigureSPVM
             FarmAccount          = $SPFarmCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPSite]MySiteHost"
+        }
+
+        # Grant spsvc full control to UPA to allow newsfeeds to work properly
+        $upaAdminToInclude = @( 
+            MSFT_SPServiceAppSecurityEntry {
+                Username    = $SPSvcCredsQualified.UserName
+                AccessLevel = "Full Control"
+            } )
+        SPServiceAppSecurity UserProfileServiceSecurity
+        {
+            ServiceAppName       = $upaServiceName
+            SecurityType         = "SharingPermissions"
+            MembersToInclude     = $upaAdminToInclude
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
         }
     }
 }

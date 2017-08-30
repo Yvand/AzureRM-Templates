@@ -30,6 +30,7 @@ function New-VM($VMName) {
     #$VNetAddressPrefix = "10.0.0.0/16"
     #$VNetSubnetAddressPrefix = "10.0.3.0/24"
     $Subnet1Name = "Subnet-3"
+    $dnsServer = "10.0.1.4"
     
     ## Compute
     $VMName = "$VMName"
@@ -46,7 +47,7 @@ function New-VM($VMName) {
     $PIp = Get-AzureRmPublicIpAddress -Name $publicIpName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
     if ($PIp -eq $null) { $PIp = New-AzureRmPublicIpAddress -Name $publicIpName -ResourceGroupName $ResourceGroupName -Location $ResourceGroupLocation -AllocationMethod Dynamic }
     $Interface = Get-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
-    if ($Interface -eq $null) { $Interface = New-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $ResourceGroupName -Location $ResourceGroupLocation -SubnetId $SubnetConfig.Id -PublicIpAddressId $PIp.Id }
+    if ($Interface -eq $null) { $Interface = New-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $ResourceGroupName -Location $ResourceGroupLocation -SubnetId $SubnetConfig.Id -PublicIpAddressId $PIp.Id -DnsServer $dnsServer }
     
     # Compute
     ## Setup local VM object
