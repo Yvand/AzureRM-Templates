@@ -5,6 +5,9 @@
     "sharePointVersion": {
       "value": "2016"
     },
+    "dnsPrefix": {
+      "value": "xydspadfs"
+    },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/"
     }
