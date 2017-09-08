@@ -5,7 +5,7 @@
     "sharePointVersion": {
       "value": "2016"
     },
-    "dnsPrefix": {
+    "dnsLabelPrefix": {
       "value": "ydspadfs"
     },
     "_artifactsLocation": {
