@@ -6,10 +6,10 @@
       "value": "2016"
     },
     "dnsPrefix": {
-      "value": "xydspadfs"
+      "value": "ydspadfs"
     },
     "_artifactsLocation": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/Dev/SharePoint/SharePoint-ADFS/"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/"
     }
   }
 }
