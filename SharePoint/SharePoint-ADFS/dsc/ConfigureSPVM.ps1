@@ -88,6 +88,29 @@ configuration ConfigureSPVM
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" } 
         xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
+        xScript RestartWSManService
+        {
+            SetScript = 
+            {
+                # 1 deployment failed because of this error:
+                # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
+                # The root cause was that SPNs WSMAN/SP and WSMAN/sp.contoso.local were missing in computer account contoso\SP
+                # Those SPNs are created by WSMan when it (re)starts
+                Restart-Service winrm
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            DependsOn="[xCredSSP]CredSSPClient"
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
@@ -97,7 +120,7 @@ configuration ConfigureSPVM
             DomainUserCredential= $DomainAdminCredsQualified
             RetryCount = $RetryCount
             RetryIntervalSec = $RetryIntervalSec
-            DependsOn="[xCredSSP]CredSSPClient"
+            DependsOn="[xScript]RestartWSManService"
         }
 
         xComputer DomainJoin
