@@ -2,7 +2,7 @@ configuration ConfigureSPVM
 {
     param
     (
-		[Parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [String]$DNSServer,
 
         [Parameter(Mandatory)]
@@ -19,7 +19,7 @@ configuration ConfigureSPVM
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPSetupCreds,
-        
+
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPFarmCreds,
 
@@ -46,7 +46,7 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [String] $SPDBPrefix = "SP16DSC_"
-	[Int] $RetryCount = 30
+    [Int] $RetryCount = 30
     [Int] $RetryIntervalSec = 30
     $ComputerName = Get-Content env:computername
     $LdapcpLink = (Get-LatestGitHubRelease -repo "Yvand/LDAPCP" -artifact "LDAPCP.wsp")
@@ -59,11 +59,11 @@ configuration ConfigureSPVM
             RebootNodeIfNeeded = $true
         }
 
-		#**********************************************************
+        #**********************************************************
         # Initialization of VM
         #**********************************************************
 
-		xWaitforDisk Disk2
+        xWaitforDisk Disk2
         {
             DiskNumber = 2
             RetryIntervalSec = $RetryIntervalSec
@@ -85,7 +85,7 @@ configuration ConfigureSPVM
             DependsOn="[WindowsFeature]ADPS"
         }
 
-		xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" } 
+        xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" } 
         xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
         #**********************************************************
@@ -652,9 +652,10 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
+        $upaServiceName = "User Profile Service Application"
         SPUserProfileServiceApp UserProfileServiceApp
         {
-            Name                 = "User Profile Service Application"
+            Name                 = $upaServiceName
             ApplicationPool      = $serviceAppPoolName
             MySiteHostLocation   = "http://$SPTrustedSitesName/sites/my"
             ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
@@ -664,6 +665,41 @@ configuration ConfigureSPVM
             FarmAccount          = $SPFarmCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPSite]MySiteHost"
+        }
+
+        xScript WaitAfterUPAProvisioning
+        {
+            SetScript = 
+            {
+                # Add a timer to avoid update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
+                Start-Sleep -s 10
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
+        }
+
+        # Grant spsvc full control to UPA to allow newsfeeds to work properly
+        $upaAdminToInclude = @( 
+            MSFT_SPServiceAppSecurityEntry {
+                Username    = $SPSvcCredsQualified.UserName
+                AccessLevel = "Full Control"
+            } )
+        SPServiceAppSecurity UserProfileServiceSecurity
+        {
+            ServiceAppName       = $upaServiceName
+            SecurityType         = "SharingPermissions"
+            MembersToInclude     = $upaAdminToInclude
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[xScript]WaitAfterUPAProvisioning"
         }
     }
 }

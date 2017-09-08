@@ -3,7 +3,7 @@
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
-$resourceGroupName = 'ydsp16adfs'
+$resourceGroupName = 'xydspadfs'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
@@ -70,6 +70,7 @@ $checkTemplate = Test-AzureRmResourceGroupDeployment `
 if ($checkTemplate.Count -eq 0) {
     # Template is valid, deploy it
     $startTime = $(Get-Date)
+    Write-Host "Starting template deployment..." -ForegroundColor Green
     $result = New-AzureRmResourceGroupDeployment `
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
@@ -83,10 +84,9 @@ if ($checkTemplate.Count -eq 0) {
         $elapsedTime = New-TimeSpan $startTime $(get-date)
         Write-Host "Deployment completed successfully in $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Green
     }
-
 }
 else {
-    # Template is not valid, display errors
+    Write-Host "Template validation failed: $($checkTemplate[0].Message)" -ForegroundColor Red
     $checkTemplate[0].Details
     $checkTemplate[0].Details.Details
 }
