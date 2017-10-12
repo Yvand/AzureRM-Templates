@@ -8,6 +8,9 @@
     "dnsLabelPrefix": {
       "value": "xydspadfs"
     },
+    "join2ndServerToFarm": {
+      "value": "Yes"
+    },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SharePoint-ADFS/"
     }

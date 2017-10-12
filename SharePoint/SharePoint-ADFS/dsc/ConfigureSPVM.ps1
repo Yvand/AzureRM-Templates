@@ -2,50 +2,31 @@ configuration ConfigureSPVM
 {
     param
     (
-        [Parameter(Mandatory)]
-        [String]$DNSServer,
-
-        [Parameter(Mandatory)]
-        [String]$DomainFQDN,
-
-        [Parameter(Mandatory)]
-        [String]$DCName,
-
-        [Parameter(Mandatory)]
-        [String]$SQLName,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$DomainAdminCreds,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SPSetupCreds,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SPFarmCreds,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SPSvcCreds,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SPAppPoolCreds,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SPPassphraseCreds,
-
-        [String] $SPTrustedSitesName = "SPSites"
+        [Parameter(Mandatory)] [String]$DNSServer,
+        [Parameter(Mandatory)] [String]$DomainFQDN,
+        [Parameter(Mandatory)] [String]$DCName,
+        [Parameter(Mandatory)] [String]$SQLName,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSvcCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPAppPoolCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
+        [Parameter(Mandatory)] [bool]$IsCAServer
     )
 
     Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
-    $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
-    $InterfaceAlias=$($Interface.Name)
+    $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
+    $InterfaceAlias = $($Interface.Name)
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [String] $SPDBPrefix = "SP16DSC_"
+    [String] $SPTrustedSitesName = "SPSites"
     [Int] $RetryCount = 30
     [Int] $RetryIntervalSec = 30
     $ComputerName = Get-Content env:computername
@@ -88,6 +69,26 @@ configuration ConfigureSPVM
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" } 
         xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
+        #**********************************************************
+        # Join AD forest
+        #**********************************************************
+        xWaitForADDomain DscForestWait
+        {
+            DomainName = $DomainFQDN
+            DomainUserCredential= $DomainAdminCredsQualified
+            RetryCount = $RetryCount
+            RetryIntervalSec = $RetryIntervalSec
+            DependsOn="[xCredSSP]CredSSPClient"
+        }
+
+        xComputer DomainJoin
+        {
+            Name = $ComputerName
+            DomainName = $DomainFQDN
+            Credential = $DomainAdminCredsQualified
+            DependsOn = "[xWaitForADDomain]DscForestWait"
+        }
+
         xScript RestartWSManService
         {
             SetScript = 
@@ -108,27 +109,7 @@ configuration ConfigureSPVM
                 # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
                return $false
             }
-            DependsOn="[xCredSSP]CredSSPClient"
-        }
-
-        #**********************************************************
-        # Join AD forest
-        #**********************************************************
-        xWaitForADDomain DscForestWait
-        {
-            DomainName = $DomainFQDN
-            DomainUserCredential= $DomainAdminCredsQualified
-            RetryCount = $RetryCount
-            RetryIntervalSec = $RetryIntervalSec
-            DependsOn="[xScript]RestartWSManService"
-        }
-
-        xComputer DomainJoin
-        {
-            Name = $ComputerName
-            DomainName = $DomainFQDN
-            Credential = $DomainAdminCredsQualified
-            DependsOn = "[xWaitForADDomain]DscForestWait"
+            DependsOn="[xComputer]DomainJoin"
         }
 
         #**********************************************************
@@ -140,7 +121,7 @@ configuration ConfigureSPVM
             ValueName = "DisableLoopbackCheck"
             ValueData = "1"
             ValueType = "Dword"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn = "[xScript]RestartWSManService"
         }
         
         xDnsRecord AddTrustedSiteDNS 
@@ -400,7 +381,7 @@ configuration ConfigureSPVM
             PsDscRunAsCredential     = $SPSetupCredsQualified
             AdminContentDatabaseName = $SPDBPrefix+"AdminContent"
             CentralAdministrationPort = 5000
-            RunCentralAdmin           = $true
+            RunCentralAdmin           = $IsCAServer
             Ensure                    = "Present"
             DependsOn                 = "[xScript]WaitForSQL"
         }
