@@ -943,6 +943,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
         "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
+        "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmSPName, '/extensions/ConfigureSPVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSP2Name)]"
       ],
       "tags": {

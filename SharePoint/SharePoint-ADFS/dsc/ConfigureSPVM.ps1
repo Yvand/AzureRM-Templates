@@ -89,6 +89,7 @@ configuration ConfigureSPVM
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
+        <#
         xScript RestartWSManService
         {
             SetScript = 
@@ -111,6 +112,7 @@ configuration ConfigureSPVM
             }
             DependsOn="[xComputer]DomainJoin"
         }
+        #>
 
         #**********************************************************
         # Do some cleanup and preparation for SharePoint
@@ -121,7 +123,7 @@ configuration ConfigureSPVM
             ValueName = "DisableLoopbackCheck"
             ValueData = "1"
             ValueType = "Dword"
-            DependsOn = "[xScript]RestartWSManService"
+            DependsOn="[xComputer]DomainJoin"
         }
         
         xDnsRecord AddTrustedSiteDNS 
