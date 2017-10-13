@@ -967,7 +967,7 @@
             "DomainFQDN": "[parameters('domainFQDN')]",
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
-            "IsCAServer": "[if(equals(parameters('join2ndServerToFarm'), 'Yes'), 'false', 'true')]"
+            "IsCAServer": false
           },
           "privacy": {
             "dataCollection": "enable"

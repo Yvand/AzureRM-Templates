@@ -673,12 +673,12 @@ configuration ConfigureSPVM
             DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPSite]MySiteHost"
         }
 
-        xScript WaitAfterUPAProvisioning
+        xScript RestartSPTimerAfterUPAProvisioning
         {
             SetScript = 
             {
                 # Add a timer to avoid update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
-                Start-Sleep -s 10
+                Restart-Service SPTimerV4
             }
             GetScript =  
             {
@@ -705,7 +705,7 @@ configuration ConfigureSPVM
             SecurityType         = "SharingPermissions"
             MembersToInclude     = $upaAdminToInclude
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[xScript]WaitAfterUPAProvisioning"
+            DependsOn = "[xScript]RestartSPTimerAfterUPAProvisioning"
         }
     }
 }
@@ -773,8 +773,9 @@ $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
+$IsCAServer = $false
 
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -IsCAServer $IsCAServer -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
 Set-DscLocalConfigurationManager -Path "C:\Data\output\"
 Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
 
