@@ -30,7 +30,7 @@ configuration ConfigureSPVM
     [Int] $RetryCount = 30
     [Int] $RetryIntervalSec = 30
     [String] $ComputerName = Get-Content env:computername
-    [String] $LdapcpLink = (Get-LatestGitHubRelease -repo "Yvand/LDAPCP" -artifact "LDAPCP.wsp")
+    [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
     [String] $PresentIfIsCaServer = (Get-PresentIfIsCaServer -IsCAServer $IsCAServer)
 
     Node localhost
@@ -716,14 +716,14 @@ function Get-LatestGitHubRelease
 {
     [OutputType([string])]
     param(
-        [string]$repo,
-        [string]$artifact
+        [string] $Repo,
+        [string] $Artifact
     )
     # Found in https://blog.markvincze.com/download-artifacts-from-a-latest-github-release-in-sh-and-powershell/
-    $latestRelease = Invoke-WebRequest https://github.com/$repo/releases/latest -Headers @{"Accept"="application/json"} -UseBasicParsing
+    $latestRelease = Invoke-WebRequest https://github.com/$Repo/releases/latest -Headers @{"Accept"="application/json"} -UseBasicParsing
     $json = $latestRelease.Content | ConvertFrom-Json
     $latestVersion = $json.tag_name
-    $url = "https://github.com/$repo/releases/download/$latestVersion/$artifact"
+    $url = "https://github.com/$Repo/releases/download/$latestVersion/$Artifact"
     return $url
 }
 
