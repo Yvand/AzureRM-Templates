@@ -29,9 +29,9 @@ configuration ConfigureSPVM
     [String] $SPTrustedSitesName = "SPSites"
     [Int] $RetryCount = 30
     [Int] $RetryIntervalSec = 30
-    $ComputerName = Get-Content env:computername
-    $LdapcpLink = (Get-LatestGitHubRelease -repo "Yvand/LDAPCP" -artifact "LDAPCP.wsp")
-    $PresentIfIsCaServer = if ($IsCAServer -eq $true) { return "Present" } else { return "Absent" }
+    [String] $ComputerName = Get-Content env:computername
+    [String] $LdapcpLink = (Get-LatestGitHubRelease -repo "Yvand/LDAPCP" -artifact "LDAPCP.wsp")
+    [String] $PresentIfIsCaServer = (Get-PresentIfIsCaServer -IsCAServer $IsCAServer)
 
     Node localhost
     {
@@ -758,6 +758,15 @@ function Get-SPDSCInstalledProductVersion
     return (Get-Command $fullPath).FileVersionInfo
 }
 
+function Get-PresentIfIsCaServer
+{
+    [OutputType([string])]
+    param(
+        [bool]$IsCAServer
+    )
+    if ($IsCAServer -eq $true) { return "Present" } else { return "Absent" }
+}
+
 <#
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
 # Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
@@ -777,8 +786,8 @@ $DCName = "DC"
 $SQLName = "SQL"
 $IsCAServer = $false
 
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -IsCAServer $IsCAServer -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
-Set-DscLocalConfigurationManager -Path "C:\Data\output\"
-Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -IsCAServer $IsCAServer -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM" -Wait -Verbose -Force
 
 #>
