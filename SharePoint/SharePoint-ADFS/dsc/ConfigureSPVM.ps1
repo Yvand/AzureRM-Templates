@@ -31,6 +31,7 @@ configuration ConfigureSPVM
     [Int] $RetryIntervalSec = 30
     $ComputerName = Get-Content env:computername
     $LdapcpLink = (Get-LatestGitHubRelease -repo "Yvand/LDAPCP" -artifact "LDAPCP.wsp")
+    $PresentIfIsCaServer = if ($IsCAServer -eq $true) { return "Present" } else { return "Absent" }
 
     Node localhost
     {
@@ -376,13 +377,14 @@ configuration ConfigureSPVM
         #**********************************************************
         SPFarm CreateSPFarm
         {
-            DatabaseServer           = $SQLName
-            FarmConfigDatabaseName   = $SPDBPrefix+"Config"
-            Passphrase               = $SPPassphraseCreds
-            FarmAccount              = $SPFarmCredsQualified
-            PsDscRunAsCredential     = $SPSetupCredsQualified
-            AdminContentDatabaseName = $SPDBPrefix+"AdminContent"
+            DatabaseServer            = $SQLName
+            FarmConfigDatabaseName    = $SPDBPrefix + "Config"
+            Passphrase                = $SPPassphraseCreds
+            FarmAccount               = $SPFarmCredsQualified
+            PsDscRunAsCredential      = $SPSetupCredsQualified
+            AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
             CentralAdministrationPort = 5000
+            # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
             RunCentralAdmin           = $IsCAServer
             Ensure                    = "Present"
             DependsOn                 = "[xScript]WaitForSQL"
@@ -427,7 +429,7 @@ configuration ConfigureSPVM
             CreateFirewallRules  = $true
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
-            Ensure               = "Present"
+            Ensure               = $PresentIfIsCaServer
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
