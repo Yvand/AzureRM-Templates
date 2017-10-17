@@ -382,9 +382,8 @@
       "name": "[variables('generalSettings').vmDCName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('generalSettings').storageAccountName)]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
       ],
       "tags": {
@@ -410,20 +409,10 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('vmDC').vmOSDiskName]",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('generalSettings').storageAccountName), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmOSDiskName,'.vhd')]"
-            },
-            "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('generalSettings').storageAccountName), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmDataDiskName,'.vhd')]"
-              },
-              "name": "[variables('vmDC').vmDataDiskName]",
-              "caching": "None",
               "createOption": "Empty",
               "diskSizeGB": "100",
               "lun": 0
@@ -536,7 +525,7 @@
       "name": "[variables('generalSettings').vmSQLName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('generalSettings').storageAccountName)]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
@@ -564,20 +553,10 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('vmSQL').vmOSDiskName]",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('generalSettings').storageAccountName), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmOSDiskName,'.vhd')]"
-            },
-            "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('generalSettings').storageAccountName), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmDataDiskName,'.vhd')]"
-              },
-              "name": "[variables('vmSQL').vmDataDiskName]",
-              "caching": "None",
               "createOption": "Empty",
               "diskSizeGB": "100",
               "lun": 0
@@ -645,7 +624,7 @@
       "name": "[variables('generalSettings').vmSPName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('generalSettings').storageAccountName)]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
@@ -673,20 +652,10 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('vmSP').vmOSDiskName]",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('generalSettings').storageAccountName), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName,'.vhd')]"
-            },
-            "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('generalSettings').storageAccountName), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName,'.vhd')]"
-              },
-              "name": "[variables('vmSP').vmDataDiskName]",
-              "caching": "None",
               "createOption": "Empty",
               "diskSizeGB": "100",
               "lun": 0
@@ -875,7 +844,7 @@
       "name": "[variables('generalSettings').vmSP2Name]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('generalSettings').storageAccountName)]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP2').vmNicName)]"
@@ -888,7 +857,7 @@
           "vmSize": "[variables('vmSP').vmVmSize]"
         },
         "osProfile": {
-          "computerName": "[variables('generalSettings').vmSPName]",
+          "computerName": "[variables('generalSettings').vmSP2Name]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -903,20 +872,10 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('vmSP2').vmOSDiskName]",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('generalSettings').storageAccountName), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP2').vmOSDiskName,'.vhd')]"
-            },
-            "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('generalSettings').storageAccountName), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP2').vmDataDiskName,'.vhd')]"
-              },
-              "name": "[variables('vmSP2').vmDataDiskName]",
-              "caching": "None",
               "createOption": "Empty",
               "diskSizeGB": "100",
               "lun": 0
