@@ -429,7 +429,7 @@ configuration ConfigureSPVM
             CreateFirewallRules  = $true
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
-            Ensure               = $PresentIfIsCaServer
+            Ensure               = "Present"
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
@@ -674,24 +674,29 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPSite]MySiteHost"
         }
-
-        xScript RestartSPTimerAfterUPAProvisioning
+        
+        # Added that to avoid the update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
+        # Error message avoided: UpdatedConcurrencyException: The object UserProfileApplication Name=User Profile Service Application was updated by another user.  Determine if these changes will conflict, resolve any differences, and reapply the second change.  This error may also indicate a programming error caused by obtaining two copies of the same object in a single thread. Previous update information: User: CONTOSO\spfarm Process:wsmprovhost (8632) Machine:SP Time:October 17, 2017 11:25:01.0000 Stack trace (Thread [16] CorrelationId [2c50ced7-4721-0003-b7f3-502c2147d301]):  Current update information: User: CONTOSO\spsetup Process:wsmprovhost (696) Machine:SP Time:October 17, 2017 11:25:06.0252 Stack trace (Thread [62] CorrelationId [37bd239e-a854-f0e6-ee90-b0567bfec821]):  
+        xScript RefreshLocalConfigCache
         {
             SetScript = 
             {
-                # Add a timer to avoid update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
-                Restart-Service SPTimerV4
+                $methodName = "get_Local"
+                $assembly = [Reflection.Assembly]::LoadWithPartialName("Microsoft.SharePoint")
+                $SPConfigurationDBType = $assembly.GetType("Microsoft.SharePoint.Administration.SPConfigurationDatabase")
+
+                $bindingFlags = [Reflection.BindingFlags] "Public, Static"
+                $localProp = [System.Reflection.MethodInfo] $SPConfigurationDBType.GetMethod($methodName, $bindingFlags)
+                $SPConfigurationDBObject = $localProp.Invoke($null, $null)
+
+                $methodName = "FlushCache"  # method RefreshCache() does not fix the UpdatedConcurrencyException, so use FlushCache instead
+                $bindingFlags = [Reflection.BindingFlags] "NonPublic, Instance"
+                $localProp = [System.Reflection.MethodInfo] $SPConfigurationDBType.GetMethod($methodName, $bindingFlags)
+                $localProp.Invoke($SPConfigurationDBObject, $null)
             }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-               return $false
-            }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
         }
 
@@ -707,7 +712,8 @@ configuration ConfigureSPVM
             SecurityType         = "SharingPermissions"
             MembersToInclude     = $upaAdminToInclude
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[xScript]RestartSPTimerAfterUPAProvisioning"
+            DependsOn = "[xScript]RefreshLocalConfigCache"
+            #DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
         }
     }
 }
