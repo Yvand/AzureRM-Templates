@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sharePointVersion": {
-      "value": "2013"
+      "value": "2016"
     },
     "dnsLabelPrefix": {
       "value": "xydspadfs"

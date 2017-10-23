@@ -231,7 +231,8 @@
       "vmNicName": "[concat(variables('generalSettings').vmDCName, '-', 'nic-0')]",
       "nicPrivateIPAddress": "10.0.1.4",
       "vmPublicIPName": "vmDC-PublicIP",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmDCName), '_', '-'))]"
+      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmDCName), '_', '-'))]",
+      "shutdownResourceName": "[concat('Auto-shutdown-VM-', variables('generalSettings').vmDCName)]"
     },
     "vmSQL": {
       "vmImagePublisher": "MicrosoftSQLServer",
@@ -282,19 +283,6 @@
     }
   },
   "resources": [
-    {
-      "name": "[variables('generalSettings').storageAccountName]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
-      "tags": {
-        "displayName": "[variables('generalSettings').storageAccountName]"
-      },
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
     {
       "name": "[variables('vNetSettings').vNetPrivateName]",
       "type": "Microsoft.Network/virtualNetworks",
@@ -409,15 +397,15 @@
             "version": "latest"
           },
           "osDisk": {
-            "createOption": "FromImage"
-          },
-          "dataDisks": [
-            {
-              "createOption": "Empty",
-              "diskSizeGB": "100",
-              "lun": 0
+            "name": "[variables('vmDC').vmOSDiskName]",
+            "caching": "ReadWrite",
+            "osType": "Windows",
+            "createOption": "FromImage",
+            "diskSizeGB": 128,
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageAccountType')]"
             }
-          ]
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -527,7 +515,6 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2017-03-30",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('generalSettings').storageAccountName)]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
       ],
       "tags": {
@@ -553,15 +540,15 @@
             "version": "latest"
           },
           "osDisk": {
-            "createOption": "FromImage"
-          },
-          "dataDisks": [
-            {
-              "createOption": "Empty",
-              "diskSizeGB": "100",
-              "lun": 0
+            "name": "[variables('vmSQL').vmOSDiskName]",
+            "caching": "ReadWrite",
+            "osType": "Windows",
+            "createOption": "FromImage",
+            "diskSizeGB": 128,
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageAccountType')]"
             }
-          ]
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -621,13 +608,28 @@
       }
     },
     {
+      "name": "[variables('vmSP').vmDataDiskName]",
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "properties": {
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": 128
+      }
+    },
+    {
       "name": "[variables('generalSettings').vmSPName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
       "apiVersion": "2017-03-30",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('generalSettings').storageAccountName)]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]",
+        "[resourceId('Microsoft.Compute/disks', variables('vmSP').vmDataDiskName)]"
       ],
       "tags": {
         "displayName": "[variables('generalSettings').vmSPName]"
@@ -652,13 +654,22 @@
             "version": "latest"
           },
           "osDisk": {
-            "createOption": "FromImage"
+            "name": "[variables('vmSP').vmOSDiskName]",
+            "caching": "ReadWrite",
+            "osType": "Windows",
+            "createOption": "FromImage",
+            "diskSizeGB": 128,
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageAccountType')]"
+            }
           },
           "dataDisks": [
             {
+              "lun": 0,
               "createOption": "Empty",
-              "diskSizeGB": "100",
-              "lun": 0
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks/', variables('vmSP').vmDataDiskName)]"
+              }
             }
           ]
         },
@@ -841,13 +852,29 @@
     },
     {
       "condition": "[equals(parameters('join2ndServerToFarm'), 'Yes')]",
+      "name": "[variables('vmSP2').vmDataDiskName]",
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "properties": {
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": 128
+      }
+    },
+    {
+      "condition": "[equals(parameters('join2ndServerToFarm'), 'Yes')]",
       "name": "[variables('generalSettings').vmSP2Name]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
       "apiVersion": "2017-03-30",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('generalSettings').storageAccountName)]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP2').vmNicName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP2').vmNicName)]",
+        "[resourceId('Microsoft.Compute/disks', variables('vmSP2').vmDataDiskName)]"
       ],
       "tags": {
         "displayName": "[variables('generalSettings').vmSP2Name]"
@@ -872,13 +899,22 @@
             "version": "latest"
           },
           "osDisk": {
-            "createOption": "FromImage"
+            "name": "[variables('vmSP2').vmOSDiskName]",
+            "caching": "ReadWrite",
+            "osType": "Windows",
+            "createOption": "FromImage",
+            "diskSizeGB": 128,
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageAccountType')]"
+            }
           },
           "dataDisks": [
             {
+              "lun": 0,
               "createOption": "Empty",
-              "diskSizeGB": "100",
-              "lun": 0
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks/', variables('vmSP2').vmDataDiskName)]"
+              }
             }
           ]
         },
@@ -959,6 +995,31 @@
             }
           }
         }
+      }
+    },
+    {
+      "type": "Microsoft.DevTestLab/schedules",
+      "name": "[variables('vmDC').shutdownResourceName]",
+      "apiVersion": "2016-05-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
+      ],
+      "scale": null,
+      "properties": {
+        "status": "Enabled",
+        "taskType": "ComputeVmShutdownTask",
+        "dailyRecurrence": {
+          "time": "1900"
+        },
+        "timeZoneId": "Romance Standard Time",
+        "notificationSettings": {
+          "status": "Disabled",
+          "timeInMinutes": 30
+        },
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
+        "provisioningState": "Succeeded",
+        "uniqueIdentifier": "97a90873-b255-4b11-b695-e0cf366326ba"
       }
     }
   ],
