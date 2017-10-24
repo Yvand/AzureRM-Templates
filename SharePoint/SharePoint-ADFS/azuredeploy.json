@@ -243,7 +243,8 @@
       "vmVmSize": "[parameters('vmSQLSize')]",
       "vmNicName": "[concat(variables('generalSettings').vmSQLName, '-', 'nic-0')]",
       "vmPublicIPName": "vmSQL-PublicIP",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSQLName), '_', '-'))]"
+      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSQLName), '_', '-'))]",
+      "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSQLName)]"
     },
     "vmSP": {
       "vmImagePublisher": "MicrosoftSharePoint",
@@ -254,14 +255,16 @@
       "vmVmSize": "[parameters('vmSPSize')]",
       "vmNicName": "[concat(variables('generalSettings').vmSPName, '-', 'nic-0')]",
       "vmPublicIPName": "vmSP-PublicIP",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSPName), '_', '-'))]"
+      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSPName), '_', '-'))]",
+      "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSPName)]"
     },
     "vmSP2": {
       "vmOSDiskName": "vm-SP2-OSDisk",
       "vmDataDiskName": "vm-SP2-DataDisk",
       "vmNicName": "[concat(variables('generalSettings').vmSP2Name, '-', 'nic-0')]",
       "vmPublicIPName": "vmSP2-PublicIP",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSP2Name), '_', '-'))]"
+      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSP2Name), '_', '-'))]",
+      "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSP2Name)]"
     },
     "dscConfigureDCVM": {
       "fileName": "ConfigureDCVM.zip",
@@ -1021,9 +1024,77 @@
           "status": "Disabled",
           "timeInMinutes": 30
         },
-        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "provisioningState": "Succeeded",
-        "uniqueIdentifier": "97a90873-b255-4b11-b695-e0cf366326ba"
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
+      }
+    },
+    {
+      "type": "Microsoft.DevTestLab/schedules",
+      "name": "[variables('vmSQL').shutdownResourceName]",
+      "apiVersion": "2016-05-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
+      ],
+      "scale": null,
+      "properties": {
+        "status": "Enabled",
+        "taskType": "ComputeVmShutdownTask",
+        "dailyRecurrence": {
+          "time": "1900"
+        },
+        "timeZoneId": "Romance Standard Time",
+        "notificationSettings": {
+          "status": "Disabled",
+          "timeInMinutes": 30
+        },
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
+      }
+    },
+    {
+      "type": "Microsoft.DevTestLab/schedules",
+      "name": "[variables('vmSP').shutdownResourceName]",
+      "apiVersion": "2016-05-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
+      ],
+      "scale": null,
+      "properties": {
+        "status": "Enabled",
+        "taskType": "ComputeVmShutdownTask",
+        "dailyRecurrence": {
+          "time": "1900"
+        },
+        "timeZoneId": "Romance Standard Time",
+        "notificationSettings": {
+          "status": "Disabled",
+          "timeInMinutes": 30
+        },
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('join2ndServerToFarm'), 'Yes')]",
+      "type": "Microsoft.DevTestLab/schedules",
+      "name": "[variables('vmSP2').shutdownResourceName]",
+      "apiVersion": "2016-05-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSP2Name)]"
+      ],
+      "scale": null,
+      "properties": {
+        "status": "Enabled",
+        "taskType": "ComputeVmShutdownTask",
+        "dailyRecurrence": {
+          "time": "1900"
+        },
+        "timeZoneId": "Romance Standard Time",
+        "notificationSettings": {
+          "status": "Disabled",
+          "timeInMinutes": 30
+        },
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSP2Name)]"
       }
     }
   ],

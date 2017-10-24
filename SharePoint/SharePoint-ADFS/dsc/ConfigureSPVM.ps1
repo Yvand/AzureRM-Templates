@@ -223,7 +223,7 @@ configuration ConfigureSPVM
             Ensure = "Present"
             Type = "Directory"
             Recurse = $true
-            SourcePath = "\\$DCName\F$\Setup"
+            SourcePath = "\\$DCName\C$\Setup"
             DestinationPath = "F:\Setup\Certificates"
             Credential = $DomainAdminCredsQualified
             DependsOn = "[File]AccountsProvisioned"
