@@ -232,7 +232,7 @@
       "nicPrivateIPAddress": "10.0.1.4",
       "vmPublicIPName": "vmDC-PublicIP",
       "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmDCName), '_', '-'))]",
-      "shutdownResourceName": "[concat('Auto-shutdown-VM-', variables('generalSettings').vmDCName)]"
+      "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmDCName)]"
     },
     "vmSQL": {
       "vmImagePublisher": "MicrosoftSQLServer",
@@ -913,7 +913,7 @@
           "dataDisks": [
             {
               "lun": 0,
-              "name": "[variables('vmSP').vmDataDiskName]",
+              "name": "[variables('vmSP2').vmDataDiskName]",
               "createOption": "Attach",
               "caching": "ReadWrite",
               "managedDisk": {

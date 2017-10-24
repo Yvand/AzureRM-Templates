@@ -65,9 +65,9 @@
             DomainName = $DomainFQDN
             DomainAdministratorCredential = $DomainCredsNetbios
             SafemodeAdministratorPassword = $DomainCredsNetbios
-            DatabasePath = "F:\NTDS"
-            LogPath = "F:\NTDS"
-            SysvolPath = "F:\SYSVOL"
+            DatabasePath = "C:\NTDS"
+            LogPath = "C:\NTDS"
+            SysvolPath = "C:\SYSVOL"
             DependsOn = "[xDnsServerAddress]DnsServerAddress"
         }
 
