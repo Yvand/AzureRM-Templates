@@ -60,19 +60,6 @@
             DependsOn = "[WindowsFeature]DNS"
         }
 
-        xWaitforDisk Disk2
-        {
-             DiskNumber = 2
-             RetryIntervalSec =$RetryIntervalSec
-             RetryCount = $RetryCount
-        }
-
-        cDiskNoRestart ADDataDisk
-        {
-            DiskNumber = 2
-            DriveLetter = "F"
-        }
-
         xADDomain FirstDS
         {
             DomainName = $DomainFQDN
@@ -81,7 +68,7 @@
             DatabasePath = "F:\NTDS"
             LogPath = "F:\NTDS"
             SysvolPath = "F:\SYSVOL"
-            DependsOn = "[cDiskNoRestart]ADDataDisk"
+            DependsOn = "[xDnsServerAddress]DnsServerAddress"
         }
 
         xPendingReboot Reboot1

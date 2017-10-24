@@ -666,7 +666,9 @@
           "dataDisks": [
             {
               "lun": 0,
-              "createOption": "Empty",
+              "name": "[variables('vmSP').vmDataDiskName]",
+              "createOption": "Attach",
+              "caching": "ReadWrite",
               "managedDisk": {
                 "id": "[resourceId('Microsoft.Compute/disks/', variables('vmSP').vmDataDiskName)]"
               }
@@ -911,7 +913,9 @@
           "dataDisks": [
             {
               "lun": 0,
-              "createOption": "Empty",
+              "name": "[variables('vmSP').vmDataDiskName]",
+              "createOption": "Attach",
+              "caching": "ReadWrite",
               "managedDisk": {
                 "id": "[resourceId('Microsoft.Compute/disks/', variables('vmSP2').vmDataDiskName)]"
               }

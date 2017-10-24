@@ -43,19 +43,6 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Initialization of VM
         #**********************************************************
-
-        xWaitforDisk Disk2
-        {
-            DiskNumber = 2
-            RetryIntervalSec =$RetryIntervalSec
-            RetryCount = $RetryCount
-        }
-        cDiskNoRestart SQLDataDisk
-        {
-            DiskNumber = 2
-            DriveLetter = "F"
-            DependsOn="[xWaitForDisk]Disk2"
-        }
         xFirewall DatabaseEngineFirewallRule
         {
             Direction = "Inbound"
@@ -72,7 +59,7 @@ configuration ConfigureSQLVM
         {
             Name = "RSAT-AD-PowerShell"
             Ensure = "Present"
-            DependsOn = "[cDiskNoRestart]SQLDataDisk"
+            DependsOn = "[xFirewall]DatabaseEngineFirewallRule"
 
         }
         xDnsServerAddress DnsServerAddress
