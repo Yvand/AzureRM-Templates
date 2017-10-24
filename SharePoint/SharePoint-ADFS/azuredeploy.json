@@ -1012,7 +1012,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
       ],
-      "scale": null,
       "properties": {
         "status": "Enabled",
         "taskType": "ComputeVmShutdownTask",
@@ -1035,7 +1034,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
       ],
-      "scale": null,
       "properties": {
         "status": "Enabled",
         "taskType": "ComputeVmShutdownTask",
@@ -1058,7 +1056,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
       ],
-      "scale": null,
       "properties": {
         "status": "Enabled",
         "taskType": "ComputeVmShutdownTask",
@@ -1082,7 +1079,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSP2Name)]"
       ],
-      "scale": null,
       "properties": {
         "status": "Enabled",
         "taskType": "ComputeVmShutdownTask",
