@@ -27,6 +27,7 @@
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     $ComputerName = Get-Content env:computername
+    [String] $AppDomainFQDN = "$($DomainNetbiosName)Apps.local"
 
     Node localhost
     {
@@ -289,6 +290,13 @@ param = c.Value);
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[cADFSFarm]CreateADFSFarm"
         }
+
+        xDnsServerPrimaryZone CreateAppsDnsZone
+        {
+            Name = $AppDomainFQDN
+            Ensure= 'Present'
+            DependsOn = "[cADFSRelyingPartyTrust]CreateADFSRelyingParty"
+        }
    }
 }
 
@@ -337,9 +345,9 @@ $AdfsSvcCreds = Get-Credential -Credential "adfssvc"
 $DomainFQDN = "contoso.local"
 $PrivateIP = "10.0.1.4"
 
-ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
-Set-DscLocalConfigurationManager -Path "C:\Data\output\"
-Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
+ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
+Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
+Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM" -Wait -Verbose -Force
 
 https://github.com/PowerShell/xActiveDirectory/issues/27
 Uninstall-WindowsFeature "ADFS-Federation"

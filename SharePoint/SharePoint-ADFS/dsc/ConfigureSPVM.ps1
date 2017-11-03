@@ -32,6 +32,8 @@ configuration ConfigureSPVM
     [String] $ComputerName = Get-Content env:computername
     [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
     [String] $PresentIfIsCaServer = (Get-PresentIfIsCaServer -IsCAServer $IsCAServer)
+    [String] $ServiceAppPoolName = "SharePoint Service Applications"
+    [String] $AppDomainFQDN = "$($DomainNetbiosName)Apps.local"
 
     Node localhost
     {
@@ -373,7 +375,7 @@ configuration ConfigureSPVM
         }
 
         #**********************************************************
-        # SharePoint configuration
+        # Basic SharePoint configuration
         #**********************************************************
         SPFarm CreateSPFarm
         {
@@ -643,10 +645,9 @@ configuration ConfigureSPVM
             DependsOn                = "[xScript]SetHTTPSCertificate"
         }
 
-        $serviceAppPoolName = "SharePoint Service Applications"
         SPServiceAppPool MainServiceAppPool
         {
-            Name                 = $serviceAppPoolName
+            Name                 = $ServiceAppPoolName
             ServiceAccount       = $SPSvcCredsQualified.UserName
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPFarm]CreateSPFarm"
@@ -664,7 +665,7 @@ configuration ConfigureSPVM
         SPUserProfileServiceApp UserProfileServiceApp
         {
             Name                 = $upaServiceName
-            ApplicationPool      = $serviceAppPoolName
+            ApplicationPool      = $ServiceAppPoolName
             MySiteHostLocation   = "http://$SPTrustedSitesName/sites/my"
             ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
             SocialDBName         = $SPDBPrefix + "UPA_Social"
@@ -715,6 +716,64 @@ configuration ConfigureSPVM
             DependsOn = "[xScript]RefreshLocalConfigCache"
             #DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
         }
+
+        #**********************************************************
+        # Addins configuration
+        #**********************************************************
+        xDnsRecord AddAddinDNSWildcard {
+            Name = "*"
+            Zone = $AppDomainFQDN
+            Target = "$ComputerName.$DomainFQDN"
+            Type = "CName"
+            Ensure = "Present"
+            DependsOn = "[SPServiceAppSecurity]UserProfileServiceSecurity"
+        }
+
+        SPServiceInstance StartSubscriptionSettingsServiceInstance
+        {  
+            Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[xDnsRecord]AddAddinDNSWildcard"
+        }
+
+        SPSubscriptionSettingsServiceApp CreateSubscriptionSettingsServiceApp
+        {
+            Name                 = "Subscription Settings Service Application"
+            ApplicationPool      = $ServiceAppPoolName
+            DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
+            PsDscRunAsCredential = $SPSetupCredsQualified  
+            DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
+        }
+
+        SPServiceInstance StartAppManagementServiceInstance
+        {  
+            Name                 = "App Management Service"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[SPSubscriptionSettingsServiceApp]CreateSubscriptionSettingsServiceApp"
+        }
+
+        SPAppManagementServiceApp CreateAppManagementServiceApp
+        {
+            Name                 = "App Management Service Application"
+            ApplicationPool      = $ServiceAppPoolName
+            DatabaseName         = "$($SPDBPrefix)AppManagement"
+            PsDscRunAsCredential = $SPSetupCredsQualified  
+            DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
+        }
+
+        SPAppDomain ConfigureLocalFarmAppUrls
+        {
+            AppDomain            = $AppDomainFQDN
+            Prefix               = "addin"
+            PsDscRunAsCredential = $SPSetupCredsQualified  
+            DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
+        }
+
+        # TODO: $serviceConfig = Get-SPSecurityTokenServiceConfig
+        # $serviceConfig.AllowOAuthOverHttp = $true
+        # $serviceConfig.Update()
     }
 }
 
