@@ -79,10 +79,13 @@ if ($checkTemplate.Count -eq 0) {
         @passwords `
         -Verbose -Force
 
+    $elapsedTime = New-TimeSpan $startTime $(get-date)
     $result
     if ($result.ProvisioningState -eq "Succeeded") {
-        $elapsedTime = New-TimeSpan $startTime $(get-date)
         Write-Host "Deployment completed successfully in $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Green
+    }
+    else {
+        Write-Host "Deployment failed after $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Red
     }
 }
 else {

@@ -212,7 +212,7 @@
             DependsOn = "[xADUser]CreateAdfsSvcAccount"
         }
 
-        WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
+        WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
 
         xDnsRecord AddADFSHostDNS {
             Name = $ADFSSiteName

@@ -182,10 +182,18 @@
       "defaultValue": "Central European Standard Time",
       "minLength": 2,
       "metadata": {
-        "description": "Time zone of the VMs. Get the list with '[System.TimeZoneInfo]::GetSystemTimeZones().Id'. Note that 'UTC' works but 'UTC+xx' does NOT work."
+        "description": "Time zone of the VMs. Type '[System.TimeZoneInfo]::GetSystemTimeZones().Id' to get the list. Note that 'UTC' works but 'UTC+xx' does NOT work."
       }
     },
-
+    "vmsAutoShutdownTime": {
+      "type": "string",
+      "defaultValue": "1900",
+      "minLength": 4,
+      "maxLength": 4,
+      "metadata": {
+        "description": "The time at which VMs will be automatically shutdown (24h HHmm format). Set value to '0000' to deactivate the auto shutdown."
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -203,8 +211,6 @@
   },
   "variables": {
     "generalSettings": {
-      "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
-      "vmsStorageAccountContainerName": "vhds",
       "dscScriptsFolder": "dsc",
       "vmDCName": "DC",
       "vmSQLName": "SQL",
@@ -1005,6 +1011,7 @@
       }
     },
     {
+      "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '0000'))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmDC').shutdownResourceName]",
       "apiVersion": "2016-05-15",
@@ -1016,9 +1023,9 @@
         "status": "Enabled",
         "taskType": "ComputeVmShutdownTask",
         "dailyRecurrence": {
-          "time": "1900"
+          "time": "[parameters('vmsAutoShutdownTime')]"
         },
-        "timeZoneId": "Romance Standard Time",
+        "timeZoneId": "[parameters('vmsTimeZone')]",
         "notificationSettings": {
           "status": "Disabled",
           "timeInMinutes": 30
@@ -1027,6 +1034,7 @@
       }
     },
     {
+      "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '0000'))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmSQL').shutdownResourceName]",
       "apiVersion": "2016-05-15",
@@ -1038,9 +1046,9 @@
         "status": "Enabled",
         "taskType": "ComputeVmShutdownTask",
         "dailyRecurrence": {
-          "time": "1900"
+          "time": "[parameters('vmsAutoShutdownTime')]"
         },
-        "timeZoneId": "Romance Standard Time",
+        "timeZoneId": "[parameters('vmsTimeZone')]",
         "notificationSettings": {
           "status": "Disabled",
           "timeInMinutes": 30
@@ -1049,6 +1057,7 @@
       }
     },
     {
+      "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '0000'))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmSP').shutdownResourceName]",
       "apiVersion": "2016-05-15",
@@ -1060,9 +1069,9 @@
         "status": "Enabled",
         "taskType": "ComputeVmShutdownTask",
         "dailyRecurrence": {
-          "time": "1900"
+          "time": "[parameters('vmsAutoShutdownTime')]"
         },
-        "timeZoneId": "Romance Standard Time",
+        "timeZoneId": "[parameters('vmsTimeZone')]",
         "notificationSettings": {
           "status": "Disabled",
           "timeInMinutes": 30
@@ -1071,7 +1080,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('join2ndServerToFarm'), 'Yes')]",
+      "condition": "[and(equals(parameters('join2ndServerToFarm'), 'Yes'), not(equals(parameters('vmsAutoShutdownTime'), '0000')))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmSP2').shutdownResourceName]",
       "apiVersion": "2016-05-15",
@@ -1083,9 +1092,9 @@
         "status": "Enabled",
         "taskType": "ComputeVmShutdownTask",
         "dailyRecurrence": {
-          "time": "1900"
+          "time": "[parameters('vmsAutoShutdownTime')]"
         },
-        "timeZoneId": "Romance Standard Time",
+        "timeZoneId": "[parameters('vmsTimeZone')]",
         "notificationSettings": {
           "status": "Disabled",
           "timeInMinutes": 30

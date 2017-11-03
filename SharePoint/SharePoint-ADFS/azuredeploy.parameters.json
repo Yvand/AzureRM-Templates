@@ -8,6 +8,9 @@
     "dnsLabelPrefix": {
       "value": "xydspadfs"
     },
+    "vmsTimeZone": {
+      "value": "Romance Standard Time"
+    },
     "join2ndServerToFarm": {
       "value": "Yes"
     },
