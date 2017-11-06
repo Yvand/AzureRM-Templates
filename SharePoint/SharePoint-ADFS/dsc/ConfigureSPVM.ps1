@@ -725,7 +725,9 @@ configuration ConfigureSPVM
             Zone = $AppDomainFQDN
             Target = "$ComputerName.$DomainFQDN"
             Type = "CName"
+            DnsServer = "$DCName.$DomainFQDN"
             Ensure = "Present"
+            PsDscRunAsCredential = $DomainAdminCreds
             DependsOn = "[SPServiceAppSecurity]UserProfileServiceSecurity"
         }
 

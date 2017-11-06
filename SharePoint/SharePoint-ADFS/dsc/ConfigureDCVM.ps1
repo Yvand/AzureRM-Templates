@@ -78,6 +78,13 @@
             DependsOn = "[xADDomain]FirstDS"
         }
 
+        xDnsServerPrimaryZone CreateAppsDnsZone
+        {
+            Name = $AppDomainFQDN
+            Ensure= 'Present'
+            DependsOn = "[xPendingReboot]Reboot1"
+        }
+
         #**********************************************************
         # Misc: Set email of AD domain admin and add remote AD tools
         #**********************************************************
@@ -290,14 +297,7 @@ param = c.Value);
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[cADFSFarm]CreateADFSFarm"
         }
-
-        xDnsServerPrimaryZone CreateAppsDnsZone
-        {
-            Name = $AppDomainFQDN
-            Ensure= 'Present'
-            DependsOn = "[cADFSRelyingPartyTrust]CreateADFSRelyingParty"
-        }
-   }
+    }
 }
 
 function Get-NetBIOSName
