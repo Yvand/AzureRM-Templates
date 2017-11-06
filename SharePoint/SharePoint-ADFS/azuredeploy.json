@@ -217,15 +217,18 @@
       "vmSPName": "SP",
       "vmSP2Name": "SP2"
     },
-    "vNetSettings": {
+    "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
       "vNetPrivatePrefix": "10.0.0.0/16",
-      "vNetPrivateSubnet1Name": "Subnet-1",
-      "vNetPrivateSubnet1Prefix": "10.0.1.0/24",
-      "vNetPrivateSubnet2Name": "Subnet-2",
-      "vNetPrivateSubnet2Prefix": "10.0.2.0/24",
-      "vNetPrivateSubnet3Name": "Subnet-3",
-      "vNetPrivateSubnet3Prefix": "10.0.3.0/24"
+      "vNetPrivateSubnetDCName": "Subnet-1",
+      "vNetPrivateSubnetDCPrefix": "10.0.1.0/24",
+      "vNetPrivateSubnetSQLName": "Subnet-2",
+      "vNetPrivateSubnetSQLPrefix": "10.0.2.0/24",
+      "vNetPrivateSubnetSPName": "Subnet-3",
+      "vNetPrivateSubnetSPPrefix": "10.0.3.0/24",
+      "nsgDCVNetName": "NSG-VNet-DC",
+      "nsgSQLVNetName": "NSG-VNet-SQL",
+      "nsgSPVNetName": "NSG-VNet-SP"
     },
     "vmDC": {
       "vmImagePublisher": "MicrosoftWindowsServer",
@@ -293,37 +296,190 @@
   },
   "resources": [
     {
-      "name": "[variables('vNetSettings').vNetPrivateName]",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('networkSettings').nsgDCVNetName]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "[variables('networkSettings').nsgDCVNetName]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-rdp-rule",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "block-internet-rule",
+            "properties": {
+              "description": "Block Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Deny",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          }
+
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('networkSettings').nsgSQLVNetName]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "[variables('networkSettings').nsgSQLVNetName]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-sql-from-sp-vnet-rule",
+            "properties": {
+              "description": "Allow FE Subnet",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1433",
+              "sourceAddressPrefix": "[variables('networkSettings').vNetPrivateSubnetSPPrefix]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-rdp-rule",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "block-internet-rule",
+            "properties": {
+              "description": "Block Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Deny",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          }
+
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('networkSettings').nsgSPVNetName]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "[variables('networkSettings').nsgSPVNetName]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-rdp-rule",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "block-internet-rule",
+            "properties": {
+              "description": "Block Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Deny",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          }
+
+        ]
+      }
+    },
+    {
+      "name": "[variables('networkSettings').vNetPrivateName]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
+      "apiVersion": "2017-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgDCVNetName)]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSQLVNetName)]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSPVNetName)]"
+      ],
       "tags": {
-        "displayName": "[variables('vNetSettings').vNetPrivateName]"
+        "displayName": "[variables('networkSettings').vNetPrivateName]"
       },
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('vNetSettings').vNetPrivatePrefix]"
+            "[variables('networkSettings').vNetPrivatePrefix]"
           ]
         },
         "subnets": [
           {
-            "name": "[variables('vNetSettings').vNetPrivateSubnet1Name]",
+            "name": "[variables('networkSettings').vNetPrivateSubnetDCName]",
             "properties": {
-              "addressPrefix": "[variables('vNetSettings').vNetPrivateSubnet1Prefix]"
+              "addressPrefix": "[variables('networkSettings').vNetPrivateSubnetDCPrefix]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgDCVNetName)]"
+              }
             }
           },
           {
-            "name": "[variables('vNetSettings').vNetPrivateSubnet2Name]",
+            "name": "[variables('networkSettings').vNetPrivateSubnetSQLName]",
             "properties": {
-              "addressPrefix": "[variables('vNetSettings').vNetPrivateSubnet2Prefix]"
+              "addressPrefix": "[variables('networkSettings').vNetPrivateSubnetSQLPrefix]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSQLVNetName)]"
+              }
             }
           },
           {
-            "name": "[variables('vNetSettings').vNetPrivateSubnet3Name]",
+            "name": "[variables('networkSettings').vNetPrivateSubnetSPName]",
             "properties": {
-              "addressPrefix": "[variables('vNetSettings').vNetPrivateSubnet3Prefix]"
+              "addressPrefix": "[variables('networkSettings').vNetPrivateSubnetSPPrefix]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSPVNetName)]"
+              }
             }
           }
         ]
@@ -351,7 +507,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetSettings').vNetPrivateName)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
       ],
       "tags": {
@@ -365,7 +521,7 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[variables('vmDC').nicPrivateIPAddress]",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetSettings').vNetPrivateName, variables('vNetSettings').vNetPrivateSubnet1Name)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetDCName)]"
               },
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
@@ -495,7 +651,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetSettings').vNetPrivateName)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)]"
       ],
       "tags": {
@@ -508,7 +664,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetSettings').vNetPrivateName, variables('vNetSettings').vNetPrivateSubnet2Name)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSQLName)]"
               },
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)]"
@@ -593,7 +749,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetSettings').vNetPrivateName)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
       ],
       "tags": {
@@ -606,7 +762,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetSettings').vNetPrivateName, variables('vNetSettings').vNetPrivateSubnet3Name)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSPName)]"
               },
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
@@ -838,7 +994,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetSettings').vNetPrivateName)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP2').vmPublicIPName)]"
       ],
       "tags": {
@@ -851,7 +1007,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetSettings').vNetPrivateName, variables('vNetSettings').vNetPrivateSubnet3Name)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSPName)]"
               },
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP2').vmPublicIPName)]"
