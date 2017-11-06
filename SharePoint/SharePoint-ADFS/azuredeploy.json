@@ -199,7 +199,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/"
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -318,22 +318,7 @@
               "priority": 100,
               "direction": "Inbound"
             }
-          },
-          {
-            "name": "block-internet-rule",
-            "properties": {
-              "description": "Block Internet",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "Internet",
-              "access": "Deny",
-              "priority": 200,
-              "direction": "Outbound"
-            }
           }
-
         ]
       }
     },
@@ -374,22 +359,7 @@
               "priority": 101,
               "direction": "Inbound"
             }
-          },
-          {
-            "name": "block-internet-rule",
-            "properties": {
-              "description": "Block Internet",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "Internet",
-              "access": "Deny",
-              "priority": 200,
-              "direction": "Outbound"
-            }
           }
-
         ]
       }
     },
@@ -416,22 +386,7 @@
               "priority": 100,
               "direction": "Inbound"
             }
-          },
-          {
-            "name": "block-internet-rule",
-            "properties": {
-              "description": "Block Internet",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "Internet",
-              "access": "Deny",
-              "priority": 200,
-              "direction": "Outbound"
-            }
           }
-
         ]
       }
     },
