@@ -840,7 +840,7 @@ function Get-AppDomain
         [string]$DomainFQDN
     )
 
-    $appDomain
+    $appDomain = [String]::Empty
     if ($DomainFQDN.Contains('.')) {
         $domainParts = $DomainFQDN.Split('.')
         $appDomain = $domainParts[0]
