@@ -33,6 +33,7 @@ configuration ConfigureSPVM
     [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
     [String] $PresentIfIsCaServer = (Get-PresentIfIsCaServer -IsCAServer $IsCAServer)
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
+    [String] $UpaServiceName = "User Profile Service Application"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN)
 
     Node localhost
@@ -661,10 +662,9 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
-        $upaServiceName = "User Profile Service Application"
         SPUserProfileServiceApp UserProfileServiceApp
         {
-            Name                 = $upaServiceName
+            Name                 = $UpaServiceName
             ApplicationPool      = $ServiceAppPoolName
             MySiteHostLocation   = "http://$SPTrustedSitesName/sites/my"
             ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
@@ -709,7 +709,7 @@ configuration ConfigureSPVM
             } )
         SPServiceAppSecurity UserProfileServiceSecurity
         {
-            ServiceAppName       = $upaServiceName
+            ServiceAppName       = $UpaServiceName
             SecurityType         = "SharingPermissions"
             MembersToInclude     = $upaAdminToInclude
             PsDscRunAsCredential = $SPSetupCredsQualified
@@ -791,6 +791,24 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $SPSetupCredsQualified  
             DependsOn = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
+
+        SPSite AppCatalog
+        {
+            Url                      = "http://$SPTrustedSitesName/sites/AppCatalog"
+            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                     = "AppCatalog"
+            Template                 = "APPCATALOG#0"
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            DependsOn                = "[Script]ConfigureSTS"
+        }
+
+        <#SPAppCatalog MainAppCatalog
+        {
+            SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
+            PsDscRunAsCredential = $SPFarmCredsQualified
+            DependsOn            = "[SPSite]AppCatalog"
+        }#>
     }
 }
 
