@@ -33,7 +33,7 @@ configuration ConfigureSPVM
     [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
     [String] $PresentIfIsCaServer = (Get-PresentIfIsCaServer -IsCAServer $IsCAServer)
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
-    [String] $AppDomainFQDN = "$($DomainNetbiosName)Apps.local"
+    [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN)
 
     Node localhost
     {
@@ -773,9 +773,24 @@ configuration ConfigureSPVM
             DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
         }
 
-        # TODO: $serviceConfig = Get-SPSecurityTokenServiceConfig
-        # $serviceConfig.AllowOAuthOverHttp = $true
-        # $serviceConfig.Update()
+        Script ConfigureSTS 
+        {
+            GetScript = {
+                return @{}
+            }
+            SetScript = {
+                Invoke-SPDscCommand -ScriptBlock {
+                    $serviceConfig = Get-SPSecurityTokenServiceConfig
+                    $serviceConfig.AllowOAuthOverHttp = $true
+                    $serviceConfig.Update()
+                }
+            }
+            TestScript = {
+                return $false
+            }
+            PsDscRunAsCredential = $SPSetupCredsQualified  
+            DependsOn = "[SPAppDomain]ConfigureLocalFarmAppUrls"
+        }
     }
 }
 
@@ -816,6 +831,23 @@ function Get-NetBIOSName
             return $DomainFQDN
         }
     }
+}
+
+function Get-AppDomain
+{
+    [OutputType([string])]
+    param(
+        [string]$DomainFQDN
+    )
+
+    $appDomain
+    if ($DomainFQDN.Contains('.')) {
+        $domainParts = $DomainFQDN.Split('.')
+        $appDomain = $domainParts[0]
+        $appDomain += "Apps."
+        $appDomain += $domainParts[1]
+    }
+    return $appDomain
 }
 
 function Get-SPDSCInstalledProductVersion

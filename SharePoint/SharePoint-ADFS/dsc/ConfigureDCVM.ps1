@@ -27,7 +27,7 @@
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     $ComputerName = Get-Content env:computername
-    [String] $AppDomainFQDN = "$($DomainNetbiosName)Apps.local"
+    [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN)
 
     Node localhost
     {
@@ -322,7 +322,24 @@ function Get-NetBIOSName
             return $DomainFQDN
         }
     }
-} 
+}
+
+function Get-AppDomain
+{
+    [OutputType([string])]
+    param(
+        [string]$DomainFQDN
+    )
+
+    $appDomain
+    if ($DomainFQDN.Contains('.')) {
+        $domainParts = $DomainFQDN.Split('.')
+        $appDomain = $domainParts[0]
+        $appDomain += "Apps."
+        $appDomain += $domainParts[1]
+    }
+    return $appDomain
+}
 
 <#
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
