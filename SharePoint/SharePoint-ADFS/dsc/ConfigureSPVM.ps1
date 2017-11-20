@@ -34,7 +34,8 @@ configuration ConfigureSPVM
     [String] $PresentIfIsCaServer = (Get-PresentIfIsCaServer -IsCAServer $IsCAServer)
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
     [String] $UpaServiceName = "User Profile Service Application"
-    [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN)
+    [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
+    [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
 
     Node localhost
     {
@@ -732,12 +733,23 @@ configuration ConfigureSPVM
             DependsOn = "[SPServiceAppSecurity]UserProfileServiceSecurity"
         }
 
+        xDnsRecord AddAddinDNSWildcardInIntranetZone {
+            Name = "*"
+            Zone = $AppDomainIntranetFQDN
+            Target = "$ComputerName.$DomainFQDN"
+            Type = "CName"
+            DnsServer = "$DCName.$DomainFQDN"
+            Ensure = "Present"
+            PsDscRunAsCredential = $DomainAdminCreds
+            DependsOn = "[xDnsRecord]AddAddinDNSWildcard"
+        }
+
         SPServiceInstance StartSubscriptionSettingsServiceInstance
         {  
             Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[xDnsRecord]AddAddinDNSWildcard"
+            DependsOn = "[xDnsRecord]AddAddinDNSWildcardInIntranetZone"
         }
 
         SPSubscriptionSettingsServiceApp CreateSubscriptionSettingsServiceApp
@@ -774,7 +786,7 @@ configuration ConfigureSPVM
             DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
         }
 
-        Script ConfigureSTS 
+        <#Script ConfigureSTSAndMultipleZones
         {
             GetScript = {
                 return @{}
@@ -784,6 +796,13 @@ configuration ConfigureSPVM
                     $serviceConfig = Get-SPSecurityTokenServiceConfig
                     $serviceConfig.AllowOAuthOverHttp = $true
                     $serviceConfig.Update()
+
+                    $webAppUrl = "http://$using:SPTrustedSitesName/"
+                    $appDomainDefaultZone = $using:AppDomainFQDN
+                    $appDomainIntranetZone = $using:AppDomainIntranetFQDN
+                    New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone
+                    New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone
+                    
                 }
             }
             TestScript = {
@@ -791,9 +810,49 @@ configuration ConfigureSPVM
             }
             PsDscRunAsCredential = $SPSetupCredsQualified  
             DependsOn = "[SPAppDomain]ConfigureLocalFarmAppUrls"
-        }
+        }#>
 
-        SPSite AppCatalog
+        <#Script ConfigureSTSAndMultipleZones
+        {
+            GetScript = {
+                return @{}
+            }
+            SetScript = {
+                $waValue = $using:SPTrustedSitesName
+                $argumentList = @()
+                #$argumentList += ("-wa", "`"$waValue`"")
+                $argumentList += ("-wa `"$waValue`"")
+                Invoke-SPDscCommand -Credential $SPSetupCredsQualified -Arguments @argumentList -ScriptBlock {
+                     function TESTFUNC
+                        {
+                     param(
+                        [string]$wa
+                    )
+                    $serviceConfig = Get-SPSecurityTokenServiceConfig
+                    $serviceConfig.AllowOAuthOverHttp = $true
+                    $serviceConfig.Update()
+
+                    #$webAppUrl = "http://$using:SPTrustedSitesName/"
+                    $webAppUrl = "http://$wa/"
+                    (Get-SPWebApplication $webAppUrl).Url
+                    #$appDomainDefaultZone = $using:AppDomainFQDN
+                    #$appDomainIntranetZone = $using:AppDomainIntranetFQDN
+                    #New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone
+                    #New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone
+
+                    # Update-SPAppCatalogConfiguration -Site "http://SPSites/sites/AppCatalog" -Confirm:$false 
+                    }
+                    TESTFUNC $PSBoundParameters
+                }
+            }
+            TestScript = {
+                return $false
+            }
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            #DependsOn = "[SPAppDomain]ConfigureLocalFarmAppUrls"
+        }#>
+
+        <#SPSite AppCatalog
         {
             Url                      = "http://$SPTrustedSitesName/sites/AppCatalog"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
@@ -801,13 +860,14 @@ configuration ConfigureSPVM
             Name                     = "AppCatalog"
             Template                 = "APPCATALOG#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[Script]ConfigureSTS"
-        }
+            DependsOn                = "[Script]ConfigureSTSAndMultipleZones"
+        }#>
 
         <#SPAppCatalog MainAppCatalog
         {
             SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
-            PsDscRunAsCredential = $SPFarmCredsQualified
+            InstallAccount       = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]AppCatalog"
         }#>
     }
@@ -856,14 +916,15 @@ function Get-AppDomain
 {
     [OutputType([string])]
     param(
-        [string]$DomainFQDN
+        [string]$DomainFQDN,
+        [string]$Suffix
     )
 
     $appDomain = [String]::Empty
     if ($DomainFQDN.Contains('.')) {
         $domainParts = $DomainFQDN.Split('.')
         $appDomain = $domainParts[0]
-        $appDomain += "Apps."
+        $appDomain += "$Suffix."
         $appDomain += $domainParts[1]
     }
     return $appDomain

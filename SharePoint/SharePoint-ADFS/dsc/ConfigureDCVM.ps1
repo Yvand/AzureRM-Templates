@@ -27,7 +27,8 @@
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     $ComputerName = Get-Content env:computername
-    [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN)
+    [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
+    [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
 
     Node localhost
     {
@@ -83,6 +84,13 @@
             Name = $AppDomainFQDN
             Ensure= 'Present'
             DependsOn = "[xPendingReboot]Reboot1"
+        }
+
+        xDnsServerPrimaryZone CreateAppsIntranetDnsZone
+        {
+            Name = $AppDomainIntranetFQDN
+            Ensure= 'Present'
+            DependsOn = "[xDnsServerPrimaryZone]CreateAppsDnsZone"
         }
 
         #**********************************************************
@@ -328,14 +336,15 @@ function Get-AppDomain
 {
     [OutputType([string])]
     param(
-        [string]$DomainFQDN
+        [string]$DomainFQDN,
+        [string]$Suffix
     )
 
     $appDomain = [String]::Empty
     if ($DomainFQDN.Contains('.')) {
         $domainParts = $DomainFQDN.Split('.')
         $appDomain = $domainParts[0]
-        $appDomain += "Apps."
+        $appDomain += "$Suffix."
         $appDomain += $domainParts[1]
     }
     return $appDomain
