@@ -544,7 +544,7 @@ configuration ConfigureSPVM
             CARootName                = "$DomainNetbiosName-$DCName-CA"
             CAServerFQDN              = "$DCName.$DomainFQDN"
             Subject                   = "$SPTrustedSitesName.$DomainFQDN"
-            SubjectAltName            = "$SPTrustedSitesName.$DomainFQDN"
+            SubjectAltName            = "dns=$SPTrustedSitesName.$DomainFQDN"
             KeyLength                 = '2048'
             Exportable                = $true
             ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
