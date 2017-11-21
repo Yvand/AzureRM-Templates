@@ -786,73 +786,7 @@ configuration ConfigureSPVM
             DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
         }
 
-        <#Script ConfigureSTSAndMultipleZones
-        {
-            GetScript = {
-                return @{}
-            }
-            SetScript = {
-                Invoke-SPDscCommand -ScriptBlock {
-                    $serviceConfig = Get-SPSecurityTokenServiceConfig
-                    $serviceConfig.AllowOAuthOverHttp = $true
-                    $serviceConfig.Update()
-
-                    $webAppUrl = "http://$using:SPTrustedSitesName/"
-                    $appDomainDefaultZone = $using:AppDomainFQDN
-                    $appDomainIntranetZone = $using:AppDomainIntranetFQDN
-                    New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone
-                    New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone
-                    
-                }
-            }
-            TestScript = {
-                return $false
-            }
-            PsDscRunAsCredential = $SPSetupCredsQualified  
-            DependsOn = "[SPAppDomain]ConfigureLocalFarmAppUrls"
-        }#>
-
-        <#Script ConfigureSTSAndMultipleZones
-        {
-            GetScript = {
-                return @{}
-            }
-            SetScript = {
-                $waValue = $using:SPTrustedSitesName
-                $argumentList = @()
-                #$argumentList += ("-wa", "`"$waValue`"")
-                $argumentList += ("-wa `"$waValue`"")
-                Invoke-SPDscCommand -Credential $SPSetupCredsQualified -Arguments @argumentList -ScriptBlock {
-                     function TESTFUNC
-                        {
-                     param(
-                        [string]$wa
-                    )
-                    $serviceConfig = Get-SPSecurityTokenServiceConfig
-                    $serviceConfig.AllowOAuthOverHttp = $true
-                    $serviceConfig.Update()
-
-                    #$webAppUrl = "http://$using:SPTrustedSitesName/"
-                    $webAppUrl = "http://$wa/"
-                    (Get-SPWebApplication $webAppUrl).Url
-                    #$appDomainDefaultZone = $using:AppDomainFQDN
-                    #$appDomainIntranetZone = $using:AppDomainIntranetFQDN
-                    #New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone
-                    #New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone
-
-                    # Update-SPAppCatalogConfiguration -Site "http://SPSites/sites/AppCatalog" -Confirm:$false 
-                    }
-                    TESTFUNC $PSBoundParameters
-                }
-            }
-            TestScript = {
-                return $false
-            }
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            #DependsOn = "[SPAppDomain]ConfigureLocalFarmAppUrls"
-        }#>
-
-        <#SPSite AppCatalog
+        SPSite AppCatalog
         {
             Url                      = "http://$SPTrustedSitesName/sites/AppCatalog"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
@@ -860,9 +794,56 @@ configuration ConfigureSPVM
             Name                     = "AppCatalog"
             Template                 = "APPCATALOG#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[Script]ConfigureSTSAndMultipleZones"
-        }#>
+            DependsOn                = "[SPAppDomain]ConfigureLocalFarmAppUrls"
+        }
 
+        Script ConfigureSTSAndMultipleZones
+        {
+            GetScript = { return @{} }
+            SetScript = {
+                $argumentList = @(@{ "webAppUrl" = "http://$using:SPTrustedSitesName"; "AppDomainFQDN" = "$using:AppDomainFQDN"; "AppDomainIntranetFQDN" = "$using:AppDomainIntranetFQDN" })
+                Invoke-SPDscCommand -Credential $DomainAdminCredsQualified -Arguments @argumentList -ScriptBlock {
+                    $params = $args[0]
+                    
+                    # Configure STS
+                    $serviceConfig = Get-SPSecurityTokenServiceConfig
+                    $serviceConfig.AllowOAuthOverHttp = $true
+                    $serviceConfig.Update()
+
+                    # Configure app domains in zones of the web application
+                    $webAppUrl = $params.webAppUrl
+                    $appDomainDefaultZone = $params.AppDomainFQDN
+                    $appDomainIntranetZone = $params.AppDomainIntranetFQDN
+
+                    $defaultZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default
+                    if($defaultZoneConfig -eq $null) {
+                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
+                    }
+                    elseif ($defaultZoneConfig.AppDomain -notlike $appDomainDefaultZone) {
+                        $defaultZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
+                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
+                    }
+
+                    $IntranetZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet
+                    if($IntranetZoneConfig -eq $null) {
+                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
+                    }
+                    elseif ($IntranetZoneConfig.AppDomain -notlike $appDomainIntranetZone) {
+                        $IntranetZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
+                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
+                    }
+
+                    # Configure app catalog
+                    # throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
+                    #Update-SPAppCatalogConfiguration -Site "$webAppUrl/sites/AppCatalog" -Confirm:$false
+                }
+            }
+            TestScript = { return $false }
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[SPSite]AppCatalog"
+        }        
+
+        # throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
         <#SPAppCatalog MainAppCatalog
         {
             SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
