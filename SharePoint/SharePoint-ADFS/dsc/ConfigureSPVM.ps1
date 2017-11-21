@@ -663,20 +663,23 @@ configuration ConfigureSPVM
         {
             GetScript = { return @{} }
             SetScript = {
-                $argumentList = @(@{ "sitesToUpdate" = @("http://$using:SPTrustedSitesName", "http://$using:SPTrustedSitesName/sites/team"); "owner1" = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"; "owner2" = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN" })
+                $argumentList = @(@{ "sitesToUpdate" = @("http://$using:SPTrustedSitesName", "http://$using:SPTrustedSitesName/sites/team"); 
+                                     "owner1"        = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"; 
+                                     "owner2"        = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN" })
                 Invoke-SPDscCommand -Credential $DomainAdminCredsQualified -Arguments @argumentList -ScriptBlock {
+                    # Create members/visitors/owners groups in team sites
                     $params = $args[0]
-                    #$sitesToUpdate = Get-SPSite                    
+                    #$sitesToUpdate = Get-SPSite
                     $sitesToUpdate = $params.sitesToUpdate
-                    $owner1="i:0#.w|contoso\yvand"
-                    $owner2="i:05.t|contoso.local|yvand@contoso.local"
+                    $owner1 = $params.owner1
+                    $owner2 = $params.owner2
                     
                     foreach ($spsite in $sitesToUpdate) {
                         if ($spsite.RootWeb.WebTemplate -like "STS") {
                             $teamsite.RootWeb.CreateDefaultAssociatedGroups($owner1, $owner2, $teamsite.Title);
                             $teamsite.RootWeb.Update();
                         }
-                    }                    
+                    }
                 }
             }
             TestScript = { return $false }
@@ -744,7 +747,7 @@ configuration ConfigureSPVM
             MSFT_SPServiceAppSecurityEntry {
                 Username    = $SPSvcCredsQualified.UserName
                 AccessLevel = "Full Control"
-            } )
+        })
         SPServiceAppSecurity UserProfileServiceSecurity
         {
             ServiceAppName       = $UpaServiceName
@@ -752,7 +755,6 @@ configuration ConfigureSPVM
             MembersToInclude     = $upaAdminToInclude
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn = "[xScript]RefreshLocalConfigCache"
-            #DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
         }
 
         #**********************************************************
@@ -837,7 +839,9 @@ configuration ConfigureSPVM
         {
             GetScript = { return @{} }
             SetScript = {
-                $argumentList = @(@{ "webAppUrl" = "http://$using:SPTrustedSitesName"; "AppDomainFQDN" = "$using:AppDomainFQDN"; "AppDomainIntranetFQDN" = "$using:AppDomainIntranetFQDN" })
+                $argumentList = @(@{ "webAppUrl"             = "http://$using:SPTrustedSitesName"; 
+                                     "AppDomainFQDN"         = "$using:AppDomainFQDN"; 
+                                     "AppDomainIntranetFQDN" = "$using:AppDomainIntranetFQDN" })
                 Invoke-SPDscCommand -Credential $DomainAdminCredsQualified -Arguments @argumentList -ScriptBlock {
                     $params = $args[0]
                     
@@ -870,7 +874,7 @@ configuration ConfigureSPVM
                     }
 
                     # Configure app catalog
-                    # throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
+                    # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
                     #Update-SPAppCatalogConfiguration -Site "$webAppUrl/sites/AppCatalog" -Confirm:$false
                 }
             }
@@ -879,7 +883,7 @@ configuration ConfigureSPVM
             DependsOn = "[SPSite]AppCatalog"
         }
 
-        # throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
+        # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
         <#SPAppCatalog MainAppCatalog
         {
             SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
