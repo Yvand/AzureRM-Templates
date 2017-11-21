@@ -615,9 +615,20 @@ configuration ConfigureSPVM
             DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
         }
 
-        SPSite DevSite
+        SPSite RootTeamSite
         {
             Url                      = "http://$SPTrustedSitesName/"
+            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                     = "Team site"
+            Template                 = "STS#0"
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            DependsOn                = "[xScript]SetHTTPSCertificate"
+        }
+
+        SPSite DevSite
+        {
+            Url                      = "http://$SPTrustedSitesName/sites/dev"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "Developer site"
@@ -646,6 +657,31 @@ configuration ConfigureSPVM
             Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
             DependsOn                = "[xScript]SetHTTPSCertificate"
+        }
+
+        xScript CreateDefaultGroupsInTeamSites
+        {
+            GetScript = { return @{} }
+            SetScript = {
+                $argumentList = @(@{ "sitesToUpdate" = @("http://$using:SPTrustedSitesName", "http://$using:SPTrustedSitesName/sites/team"); "owner1" = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"; "owner2" = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN" })
+                Invoke-SPDscCommand -Credential $DomainAdminCredsQualified -Arguments @argumentList -ScriptBlock {
+                    $params = $args[0]
+                    #$sitesToUpdate = Get-SPSite                    
+                    $sitesToUpdate = $params.sitesToUpdate
+                    $owner1="i:0#.w|contoso\yvand"
+                    $owner2="i:05.t|contoso.local|yvand@contoso.local"
+                    
+                    foreach ($spsite in $sitesToUpdate) {
+                        if ($spsite.RootWeb.WebTemplate -like "STS") {
+                            $teamsite.RootWeb.CreateDefaultAssociatedGroups($owner1, $owner2, $teamsite.Title);
+                            $teamsite.RootWeb.Update();
+                        }
+                    }                    
+                }
+            }
+            TestScript = { return $false }
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn = "[SPSite]RootTeamSite", "[SPSite]TeamSite"
         }
 
         SPServiceAppPool MainServiceAppPool
@@ -841,7 +877,7 @@ configuration ConfigureSPVM
             TestScript = { return $false }
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn = "[SPSite]AppCatalog"
-        }        
+        }
 
         # throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
         <#SPAppCatalog MainAppCatalog
