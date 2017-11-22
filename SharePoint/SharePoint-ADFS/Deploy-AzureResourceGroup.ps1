@@ -3,7 +3,7 @@
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
-$resourceGroupLocation = 'northeurope'
+#$resourceGroupLocation = 'northeurope'
 $resourceGroupName = 'xydspadfs'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'

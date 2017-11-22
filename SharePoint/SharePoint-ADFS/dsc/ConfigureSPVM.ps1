@@ -633,7 +633,7 @@ configuration ConfigureSPVM
                 $argumentList = @(@{ "sitesToUpdate" = @("http://$using:SPTrustedSitesName", "http://$using:SPTrustedSitesName/sites/team"); 
                                      "owner1"        = "i:0#.w|$using:DomainNetbiosName\$($using:DomainAdminCreds.UserName)"; 
                                      "owner2"        = "i:05.t|$using:DomainFQDN|$($using:DomainAdminCreds.UserName)@$using:DomainFQDN" })
-                Invoke-SPDscCommand -Credential $DomainAdminCredsQualified -Arguments @argumentList -ScriptBlock {
+                Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
                     # Create members/visitors/owners groups in team sites
                     $params = $args[0]
                     #$sitesToUpdate = Get-SPSite
@@ -734,7 +734,7 @@ configuration ConfigureSPVM
             Type = "CName"
             DnsServer = "$DCName.$DomainFQDN"
             Ensure = "Present"
-            PsDscRunAsCredential = $DomainAdminCreds
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPServiceAppPool]MainServiceAppPool"
         }
 
@@ -745,7 +745,7 @@ configuration ConfigureSPVM
             Type = "CName"
             DnsServer = "$DCName.$DomainFQDN"
             Ensure = "Present"
-            PsDscRunAsCredential = $DomainAdminCreds
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPServiceAppPool]MainServiceAppPool"
         }
 
@@ -762,7 +762,7 @@ configuration ConfigureSPVM
             Name                 = "Subscription Settings Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
-            PsDscRunAsCredential = $SPSetupCredsQualified  
+            PsDscRunAsCredential = $DomainAdminCredsQualified  
             DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
         }
 
@@ -779,7 +779,7 @@ configuration ConfigureSPVM
             Name                 = "App Management Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)AppManagement"
-            PsDscRunAsCredential = $SPSetupCredsQualified  
+            PsDscRunAsCredential = $DomainAdminCredsQualified  
             DependsOn = "[SPServiceInstance]StartAppManagementServiceInstance"
         }
 
@@ -809,7 +809,7 @@ configuration ConfigureSPVM
                 $argumentList = @(@{ "webAppUrl"             = "http://$using:SPTrustedSitesName"; 
                                      "AppDomainFQDN"         = "$using:AppDomainFQDN"; 
                                      "AppDomainIntranetFQDN" = "$using:AppDomainIntranetFQDN" })
-                Invoke-SPDscCommand -Credential $DomainAdminCredsQualified -Arguments @argumentList -ScriptBlock {
+                Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
                     $params = $args[0]
                     
                     # Configure STS
@@ -846,7 +846,7 @@ configuration ConfigureSPVM
                 }
             }
             TestScript = { return $false }
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPSite]AppCatalog", "[xDnsRecord]AddAddinDNSWildcard", "[xDnsRecord]AddAddinDNSWildcardInIntranetZone"
         }
 
