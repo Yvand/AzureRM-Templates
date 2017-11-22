@@ -217,7 +217,6 @@ configuration ConfigureSPVM
             Force = $true
             DependsOn = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount", "[xADUser]CreateSPSvcAccount", "[xADUser]CreateSPAppPoolAccount"
         }
-
         
         #**********************************************************
         # Download binaries and install SharePoint CU
@@ -441,7 +440,7 @@ configuration ConfigureSPVM
         {
             SetScript = 
             {
-                # The deployment of the solution is made in owstimer.exe tends to fail very often, so restart the service before to mitigate this risk
+                # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
                 Restart-Service SPTimerV4
             }
             GetScript =  
@@ -485,11 +484,11 @@ configuration ConfigureSPVM
                     IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 }
             )
-            SigningCertificateFilePath = "F:\Setup\Certificates\ADFS Signing.cer"
+            SigningCertificateFilePath   = "F:\Setup\Certificates\ADFS Signing.cer"
             ClaimProviderName            = "LDAPCP"
-            #ProviderSignOutUri           = "https://adfs.$DomainFQDN/adfs/ls/"
+            #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
             Ensure                       = "Present"
-            DependsOn = "[SPFarmSolution]InstallLdapcp"
+            DependsOn                    = "[SPFarmSolution]InstallLdapcp"
             PsDscRunAsCredential         = $SPSetupCredsQualified
         }
         
@@ -507,38 +506,6 @@ configuration ConfigureSPVM
             PsDscRunAsCredential   = $SPSetupCredsQualified
             DependsOn              = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
         }
-
-        <#xScript ExtendWebApp
-        {
-            SetScript = 
-            {
-                $ComputerName = $using:ComputerName
-                $SPTrustedSitesName = $using:SPTrustedSitesName
-                $DomainFQDN = $using:DomainFQDN
-
-                $result = Invoke-SPDSCCommand -Credential $using:SPSetupCredsQualified -ScriptBlock {
-                    Get-SPWebApplication "http://$ComputerName/" | New-SPWebApplicationExtension -Name "SharePoint - 443" -SecureSocketsLayer -Zone "Intranet" -URL "https://$SPTrustedSitesName.$DomainFQDN" -Port 443
-                    $winAp = New-SPAuthenticationProvider -UseWindowsIntegratedAuthentication
-                    $trust = Get-SPTrustedIdentityTokenIssuer $DomainFQDN
-                    Get-SPWebApplication "http://$ComputerName/" | Set-SPWebApplication -Zone Intranet -AuthenticationProvider $trust, $winAp 
-                                     
-                    return "success"
-                }
-            }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                $result = "false"
-                return @{ "Result" = $result }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                return $false
-            }
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = '[SPWebApplication]MainWebApp'
-        }#>
 
         xCertReq SPSSiteCert
         {
@@ -623,7 +590,7 @@ configuration ConfigureSPVM
             Name                     = "Team site"
             Template                 = "STS#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[xScript]SetHTTPSCertificate"
+            DependsOn                = "[SPWebApplication]MainWebApp"
         }
 
         SPSite DevSite
@@ -634,7 +601,7 @@ configuration ConfigureSPVM
             Name                     = "Developer site"
             Template                 = "DEV#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[xScript]SetHTTPSCertificate"
+            DependsOn                = "[SPWebApplication]MainWebApp"
         }
 
         SPSite TeamSite
@@ -645,7 +612,7 @@ configuration ConfigureSPVM
             Name                     = "Team site"
             Template                 = "STS#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[xScript]SetHTTPSCertificate"
+            DependsOn                = "[SPWebApplication]MainWebApp"
         }
 
         SPSite MySiteHost
@@ -656,7 +623,7 @@ configuration ConfigureSPVM
             Name                     = "MySite host"
             Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[xScript]SetHTTPSCertificate"
+            DependsOn                = "[SPWebApplication]MainWebApp"
         }
 
         xScript CreateDefaultGroupsInTeamSites
@@ -768,7 +735,7 @@ configuration ConfigureSPVM
             DnsServer = "$DCName.$DomainFQDN"
             Ensure = "Present"
             PsDscRunAsCredential = $DomainAdminCreds
-            DependsOn = "[SPServiceAppSecurity]UserProfileServiceSecurity"
+            DependsOn = "[SPServiceAppPool]MainServiceAppPool"
         }
 
         xDnsRecord AddAddinDNSWildcardInIntranetZone {
@@ -779,7 +746,7 @@ configuration ConfigureSPVM
             DnsServer = "$DCName.$DomainFQDN"
             Ensure = "Present"
             PsDscRunAsCredential = $DomainAdminCreds
-            DependsOn = "[xDnsRecord]AddAddinDNSWildcard"
+            DependsOn = "[SPServiceAppPool]MainServiceAppPool"
         }
 
         SPServiceInstance StartSubscriptionSettingsServiceInstance
@@ -787,7 +754,7 @@ configuration ConfigureSPVM
             Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[xDnsRecord]AddAddinDNSWildcardInIntranetZone"
+            DependsOn = "[SPServiceAppPool]MainServiceAppPool"
         }
 
         SPSubscriptionSettingsServiceApp CreateSubscriptionSettingsServiceApp
@@ -813,7 +780,7 @@ configuration ConfigureSPVM
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)AppManagement"
             PsDscRunAsCredential = $SPSetupCredsQualified  
-            DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
+            DependsOn = "[SPServiceInstance]StartAppManagementServiceInstance"
         }
 
         SPAppDomain ConfigureLocalFarmAppUrls
@@ -821,7 +788,7 @@ configuration ConfigureSPVM
             AppDomain            = $AppDomainFQDN
             Prefix               = "addin"
             PsDscRunAsCredential = $SPSetupCredsQualified  
-            DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
+            DependsOn = "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }
 
         SPSite AppCatalog
@@ -832,7 +799,7 @@ configuration ConfigureSPVM
             Name                     = "AppCatalog"
             Template                 = "APPCATALOG#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPAppDomain]ConfigureLocalFarmAppUrls"
+            DependsOn                = "[SPWebApplication]MainWebApp"
         }
 
         Script ConfigureSTSAndMultipleZones
@@ -880,7 +847,7 @@ configuration ConfigureSPVM
             }
             TestScript = { return $false }
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[SPSite]AppCatalog"
+            DependsOn = "[SPSite]AppCatalog", "[xDnsRecord]AddAddinDNSWildcard", "[xDnsRecord]AddAddinDNSWildcardInIntranetZone"
         }
 
         # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"

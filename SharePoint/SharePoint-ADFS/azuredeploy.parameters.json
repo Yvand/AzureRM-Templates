@@ -5,6 +5,9 @@
     "sharePointVersion": {
       "value": "2016"
     },
+    "storageAccountType": {
+      "value": "Premium_LRS"
+    },
     "dnsLabelPrefix": {
       "value": "xydspadfs"
     },
