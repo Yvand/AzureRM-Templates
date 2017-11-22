@@ -631,8 +631,8 @@ configuration ConfigureSPVM
             GetScript = { return @{} }
             SetScript = {
                 $argumentList = @(@{ "sitesToUpdate" = @("http://$using:SPTrustedSitesName", "http://$using:SPTrustedSitesName/sites/team"); 
-                                     "owner1"        = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"; 
-                                     "owner2"        = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN" })
+                                     "owner1"        = "i:0#.w|$using:DomainNetbiosName\$($using:DomainAdminCreds.UserName)"; 
+                                     "owner2"        = "i:05.t|$using:DomainFQDN|$($using:DomainAdminCreds.UserName)@$using:DomainFQDN" })
                 Invoke-SPDscCommand -Credential $DomainAdminCredsQualified -Arguments @argumentList -ScriptBlock {
                     # Create members/visitors/owners groups in team sites
                     $params = $args[0]

@@ -2,14 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
-      "metadata": {
-        "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
-      }
-    },
     "sharePointVersion": {
       "type": "string",
       "defaultValue": "2016",
@@ -156,6 +148,14 @@
         "description": "Passphrase of the SharePoint farm"
       }
     },
+    "vmDCStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
+      "metadata": {
+        "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
+      }
+    },
     "vmDCSize": {
       "type": "string",
       "defaultValue": "Standard_F4",
@@ -163,11 +163,27 @@
         "description": "Size of the DC VM"
       }
     },
+    "vmSQLStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
+      "metadata": {
+        "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
+      }
+    },
     "vmSQLSize": {
       "type": "string",
       "defaultValue": "Standard_A4_v2",
       "metadata": {
         "description": "Size of the SQL VM"
+      }
+    },
+    "vmSPStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
+      "metadata": {
+        "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
       }
     },
     "vmSPSize": {
@@ -523,7 +539,7 @@
             "createOption": "FromImage",
             "diskSizeGB": 128,
             "managedDisk": {
-              "storageAccountType": "[parameters('storageAccountType')]"
+              "storageAccountType": "[parameters('vmDCStorageAccountType')]"
             }
           }
         },
@@ -666,7 +682,7 @@
             "createOption": "FromImage",
             "diskSizeGB": 128,
             "managedDisk": {
-              "storageAccountType": "[parameters('storageAccountType')]"
+              "storageAccountType": "[parameters('vmSQLStorageAccountType')]"
             }
           }
         },
@@ -733,7 +749,7 @@
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "sku": {
-        "name": "[parameters('storageAccountType')]"
+        "name": "[parameters('vmSPStorageAccountType')]"
       },
       "properties": {
         "creationData": {
@@ -780,7 +796,7 @@
             "createOption": "FromImage",
             "diskSizeGB": 128,
             "managedDisk": {
-              "storageAccountType": "[parameters('storageAccountType')]"
+              "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
           "dataDisks": [
@@ -979,7 +995,7 @@
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "sku": {
-        "name": "[parameters('storageAccountType')]"
+        "name": "[parameters('vmSPStorageAccountType')]"
       },
       "properties": {
         "creationData": {
@@ -1027,7 +1043,7 @@
             "createOption": "FromImage",
             "diskSizeGB": 128,
             "managedDisk": {
-              "storageAccountType": "[parameters('storageAccountType')]"
+              "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
           "dataDisks": [

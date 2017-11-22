@@ -5,8 +5,11 @@
     "sharePointVersion": {
       "value": "2016"
     },
-    "storageAccountType": {
+    "vmSPStorageAccountType": {
       "value": "Premium_LRS"
+    },
+    "vmSPSize": {
+      "value": "Standard_DS3_v2_Promo"
     },
     "dnsLabelPrefix": {
       "value": "xydspadfs"
