@@ -105,16 +105,8 @@ configuration ConfigureSPVM
                 # Those SPNs are created by WSMan when it (re)starts
                 Restart-Service winrm
             }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-               return $false
-            }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             DependsOn="[xComputer]DomainJoin"
         }
         #>
@@ -335,8 +327,6 @@ configuration ConfigureSPVM
             ReturnCode = @( 0, 1641, 3010, 17025 )
             DependsOn = "[xPendingReboot]RebootAfterInstall201612CU"
         }
-
-        # TODO: implement stupid workaround documented in https://technet.microsoft.com/en-us/library/mt723354(v=office.16).aspx until SP2016 image is fixed
         #>
 
         xScript WaitForSQL
@@ -361,16 +351,8 @@ configuration ConfigureSPVM
                     }
                 }
             }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-               return $false
-            }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential     = $DomainAdminCredsQualified
             DependsOn = "[xRemoteFile]DownloadLdapcp"
         }
@@ -443,16 +425,8 @@ configuration ConfigureSPVM
                 # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
                 Restart-Service SPTimerV4
             }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-               return $false
-            }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPDistributedCacheService]EnableDistributedCache"
         }
@@ -568,16 +542,8 @@ configuration ConfigureSPVM
                     New-Item IIS:\SslBindings\*!443 -value $siteCert
                 }
             }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-               return $false
-            }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential     = $DomainAdminCredsQualified
             DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
         }
@@ -626,9 +592,8 @@ configuration ConfigureSPVM
             DependsOn                = "[SPWebApplication]MainWebApp"
         }
 
-        xScript CreateDefaultGroupsInTeamSites
+        <#xScript CreateDefaultGroupsInTeamSites
         {
-            GetScript = { return @{} }
             SetScript = {
                 $argumentList = @(@{ "sitesToUpdate" = @("http://$using:SPTrustedSitesName", "http://$using:SPTrustedSitesName/sites/team"); 
                                      "owner1"        = "i:0#.w|$using:DomainNetbiosName\$($using:DomainAdminCreds.UserName)"; 
@@ -641,18 +606,23 @@ configuration ConfigureSPVM
                     $owner1 = $params.owner1
                     $owner2 = $params.owner2
                     
-                    foreach ($spsite in $sitesToUpdate) {
+                    foreach ($siteUrl in $sitesToUpdate) {
+                        $spsite = Get-SPSite $siteUrl
+                        $spsite| fl *| Out-File f:\setup\test.txt
+                        Write-Verbose -Message "site $($spsite.Title) has template $($spsite.RootWeb.WebTemplate)"
                         if ($spsite.RootWeb.WebTemplate -like "STS") {
-                            $teamsite.RootWeb.CreateDefaultAssociatedGroups($owner1, $owner2, $teamsite.Title);
-                            $teamsite.RootWeb.Update();
+                            Write-Verbose -Message "Updating site $siteUrl with $owner1 and $($spsite.Url)"
+                            $spsite.RootWeb.CreateDefaultAssociatedGroups($owner1, $owner2, $spsite.Title);
+                            $spsite.RootWeb.Update();
                         }
                     }
                 }
             }
-            TestScript = { return $false }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPSite]RootTeamSite", "[SPSite]TeamSite"
-        }
+        }#>
 
         SPServiceAppPool MainServiceAppPool
         {
@@ -705,7 +675,7 @@ configuration ConfigureSPVM
             }
             GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
         }
 
@@ -762,7 +732,7 @@ configuration ConfigureSPVM
             Name                 = "Subscription Settings Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
-            PsDscRunAsCredential = $DomainAdminCredsQualified  
+            InstallAccount       = $DomainAdminCredsQualified
             DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
         }
 
@@ -779,7 +749,7 @@ configuration ConfigureSPVM
             Name                 = "App Management Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)AppManagement"
-            PsDscRunAsCredential = $DomainAdminCredsQualified  
+            InstallAccount       = $DomainAdminCredsQualified
             DependsOn = "[SPServiceInstance]StartAppManagementServiceInstance"
         }
 
@@ -804,7 +774,6 @@ configuration ConfigureSPVM
 
         Script ConfigureSTSAndMultipleZones
         {
-            GetScript = { return @{} }
             SetScript = {
                 $argumentList = @(@{ "webAppUrl"             = "http://$using:SPTrustedSitesName"; 
                                      "AppDomainFQDN"         = "$using:AppDomainFQDN"; 
@@ -845,7 +814,8 @@ configuration ConfigureSPVM
                     #Update-SPAppCatalogConfiguration -Site "$webAppUrl/sites/AppCatalog" -Confirm:$false
                 }
             }
-            TestScript = { return $false }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPSite]AppCatalog", "[xDnsRecord]AddAddinDNSWildcard", "[xDnsRecord]AddAddinDNSWildcardInIntranetZone"
         }
@@ -953,8 +923,8 @@ $DCName = "DC"
 $SQLName = "SQL"
 $IsCAServer = $false
 
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -IsCAServer $IsCAServer -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM" -Wait -Verbose -Force
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -IsCAServer $IsCAServer -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.7121.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.7121.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.7121.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM" -Wait -Verbose -Force
 
 #>
