@@ -410,7 +410,7 @@ configuration ConfigureSPVM
         SPDistributedCacheService EnableDistributedCache
         {
             Name                 = "AppFabricCachingService"
-            CacheSizeInMB        = 8192
+            CacheSizeInMB        = 6000
             CreateFirewallRules  = $true
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
@@ -727,6 +727,14 @@ configuration ConfigureSPVM
             DependsOn = "[SPServiceAppPool]MainServiceAppPool"
         }
 
+        SPServiceInstance StartAppManagementServiceInstance
+        {  
+            Name                 = "App Management Service"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[SPServiceAppPool]MainServiceAppPool"
+        }
+
         SPSubscriptionSettingsServiceApp CreateSubscriptionSettingsServiceApp
         {
             Name                 = "Subscription Settings Service Application"
@@ -734,15 +742,7 @@ configuration ConfigureSPVM
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
             InstallAccount       = $DomainAdminCredsQualified
             DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
-        }
-
-        SPServiceInstance StartAppManagementServiceInstance
-        {  
-            Name                 = "App Management Service"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[SPSubscriptionSettingsServiceApp]CreateSubscriptionSettingsServiceApp"
-        }
+        }        
 
         SPAppManagementServiceApp CreateAppManagementServiceApp
         {
