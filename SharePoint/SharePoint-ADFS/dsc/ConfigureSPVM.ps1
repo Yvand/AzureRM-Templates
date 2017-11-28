@@ -48,30 +48,19 @@ configuration ConfigureSPVM
         #**********************************************************
         # Initialization of VM
         #**********************************************************
-
-        xWaitforDisk Disk2
-        {
-            DiskNumber = 2
-            RetryIntervalSec = $RetryIntervalSec
-            RetryCount = $RetryCount
-        }
-        cDiskNoRestart SPDataDisk
-        {
-            DiskNumber = 2
-            DriveLetter = "F"
-            DependsOn = "[xWaitforDisk]Disk2"
-        }
-        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[cDiskNoRestart]SPDataDisk" }
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[cDiskNoRestart]SPDataDisk"  }
+        xWaitforDisk WaitForDataDisk   { DiskNumber = 2; RetryIntervalSec = $RetryIntervalSec; RetryCount = $RetryCount }
+        cDiskNoRestart PrepareDataDisk { DiskNumber = 2; DriveLetter = "F" ; DependsOn   = "[xWaitforDisk]WaitForDataDisk" }
+        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[cDiskNoRestart]PrepareDataDisk" }
+        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[cDiskNoRestart]PrepareDataDisk"  }
         xDnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
             InterfaceAlias = $InterfaceAlias
             AddressFamily  = 'IPv4'
-            DependsOn="[WindowsFeature]ADPS"
+            DependsOn      ="[WindowsFeature]ADPS"
         }
 
-        xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" } 
+        xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" }
         xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
         #**********************************************************
@@ -79,16 +68,16 @@ configuration ConfigureSPVM
         #**********************************************************
         xWaitForADDomain DscForestWait
         {
-            DomainName = $DomainFQDN
-            DomainUserCredential= $DomainAdminCredsQualified
-            RetryCount = $RetryCount
-            RetryIntervalSec = $RetryIntervalSec
-            DependsOn="[xCredSSP]CredSSPClient"
+            DomainName           = $DomainFQDN
+            RetryCount           = $RetryCount
+            RetryIntervalSec     = $RetryIntervalSec
+            DomainUserCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xCredSSP]CredSSPClient"
         }
 
         xComputer DomainJoin
         {
-            Name = $ComputerName
+            Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
             DependsOn = "[xWaitForADDomain]DscForestWait"
@@ -97,7 +86,7 @@ configuration ConfigureSPVM
         <#
         xScript RestartWSManService
         {
-            SetScript = 
+            SetScript =
             {
                 # 1 deployment failed because of this error:
                 # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
@@ -114,25 +103,26 @@ configuration ConfigureSPVM
         #**********************************************************
         # Do some cleanup and preparation for SharePoint
         #**********************************************************
-        Registry DisableLoopBackCheck {
-            Ensure = "Present"
-            Key = "HKLM:\System\CurrentControlSet\Control\Lsa"
+        Registry DisableLoopBackCheck
+        {
+            Key       = "HKLM:\System\CurrentControlSet\Control\Lsa"
             ValueName = "DisableLoopbackCheck"
             ValueData = "1"
             ValueType = "Dword"
-            DependsOn="[xComputer]DomainJoin"
+            Ensure    = "Present"
+            DependsOn ="[xComputer]DomainJoin"
         }
-        
-        xDnsRecord AddTrustedSiteDNS 
+
+        xDnsRecord AddTrustedSiteDNS
         {
-            Name = $SPTrustedSitesName
-            Zone = $DomainFQDN
-            DnsServer = $DCName
-            Target = "$ComputerName.$DomainFQDN"
-            Type = "CName"
-            Ensure = "Present"
+            Name                 = $SPTrustedSitesName
+            Zone                 = $DomainFQDN
+            DnsServer            = $DCName
+            Target               = "$ComputerName.$DomainFQDN"
+            Type                 = "CName"
+            Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn            = "[xComputer]DomainJoin"
         }
 
         xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
@@ -148,92 +138,92 @@ configuration ConfigureSPVM
         #**********************************************************
         xADUser CreateSPSetupAccount
         {
+            DomainName                    = $DomainFQDN
+            UserName                      = $SPSetupCreds.UserName
+            Password                      = $SPSetupCreds
+            PasswordNeverExpires          = $true
+            Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
-            DomainName = $DomainFQDN
-            UserName = $SPSetupCreds.UserName
-            Password = $SPSetupCreds
-            PasswordNeverExpires = $true
-            Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn                     = "[xComputer]DomainJoin"
         }
 
         Group AddSPSetupAccountToAdminGroup
         {
-            GroupName='Administrators'   
-            Ensure= 'Present'             
-            MembersToInclude= $SPSetupCredsQualified.UserName
-            Credential = $DomainAdminCredsQualified    
+            GroupName            ='Administrators'
+            Ensure               = 'Present'
+            MembersToInclude     = $SPSetupCredsQualified.UserName
+            Credential           = $DomainAdminCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[xADUser]CreateSPSetupAccount"
+            DependsOn            = "[xADUser]CreateSPSetupAccount"
         }
 
         xADUser CreateSParmAccount
         {
+            DomainName                    = $DomainFQDN
+            UserName                      = $SPFarmCreds.UserName
+            Password                      = $SPFarmCreds
+            PasswordNeverExpires          = $true
+            Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
-            DomainName = $DomainFQDN
-            UserName = $SPFarmCreds.UserName
-            Password = $SPFarmCreds
-            PasswordNeverExpires = $true
-            Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn                     = "[xComputer]DomainJoin"
         }
 
         xADUser CreateSPSvcAccount
         {
+            DomainName                    = $DomainFQDN
+            UserName                      = $SPSvcCreds.UserName
+            Password                      = $SPSvcCreds
+            PasswordNeverExpires          = $true
+            Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
-            DomainName = $DomainFQDN
-            UserName = $SPSvcCreds.UserName
-            Password = $SPSvcCreds
-            PasswordNeverExpires = $true
-            Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn                     = "[xComputer]DomainJoin"
         }
 
         xADUser CreateSPAppPoolAccount
         {
+            DomainName                    = $DomainFQDN
+            UserName                      = $SPAppPoolCreds.UserName
+            Password                      = $SPAppPoolCreds
+            PasswordNeverExpires          = $true
+            Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
-            DomainName = $DomainFQDN
-            UserName = $SPAppPoolCreds.UserName
-            Password = $SPAppPoolCreds
-            PasswordNeverExpires = $true
-            Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn                     = "[xComputer]DomainJoin"
         }
 
         File AccountsProvisioned
         {
-            DestinationPath = "F:\Logs\DSC1.txt"
+            DestinationPath      = "F:\Logs\DSC1.txt"
+            Contents             = "AccountsProvisioned"
+            Type                 = 'File'
+            Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
-            Contents = "AccountsProvisioned"
-            Type = 'File'
-            Force = $true
-            DependsOn = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount", "[xADUser]CreateSPSvcAccount", "[xADUser]CreateSPAppPoolAccount"
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount", "[xADUser]CreateSPSvcAccount", "[xADUser]CreateSPAppPoolAccount"
         }
-        
-        #**********************************************************
-        # Download binaries and install SharePoint CU
-        #**********************************************************
+
+        #****************************************************************
+        # Copy solutions and certificates that will be used in SharePoint
+        #****************************************************************
         File CopyCertificatesFromDC
         {
-            Ensure = "Present"
-            Type = "Directory"
-            Recurse = $true
-            SourcePath = "\\$DCName\C$\Setup"
+            Ensure          = "Present"
+            Type            = "Directory"
+            Recurse         = $true
+            SourcePath      = "\\$DCName\C$\Setup"
             DestinationPath = "F:\Setup\Certificates"
-            Credential = $DomainAdminCredsQualified
-            DependsOn = "[File]AccountsProvisioned"
+            Credential      = $DomainAdminCredsQualified
+            DependsOn       = "[File]AccountsProvisioned"
         }
 
         xRemoteFile DownloadLdapcp
-        {  
+        {
             Uri             = $LdapcpLink
             DestinationPath = "F:\Setup\LDAPCP.wsp"
-            DependsOn = "[File]AccountsProvisioned"
-        }        
+            DependsOn       = "[File]AccountsProvisioned"
+        }
 
         <#
         xRemoteFile Download201612CU
-        {  
+        {
             Uri             = "https://download.microsoft.com/download/D/0/4/D04FD356-E140-433E-94F6-472CF45FD591/sts2016-kb3128014-fullfile-x64-glb.exe"
             DestinationPath = "F:\Setup\sts2016-kb3128014-fullfile-x64-glb.exe"
             MatchSource = $false
@@ -242,13 +232,13 @@ configuration ConfigureSPVM
 
         xScript Install201612CU
         {
-            SetScript = 
+            SetScript =
             {
                 $cuBuildNUmber = "16.0.4471.1000"
                 $updateLocation = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe"
                 $cuInstallLogPath = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe.install.log"
                 $setup = Start-Process -FilePath $updateLocation -ArgumentList "/log:`"$CuInstallLogPath`" /quiet /passive /norestart" -Wait -PassThru
- 
+
                 if ($setup.ExitCode -eq 0) {
                     Write-Verbose -Message "SharePoint cumulative update $cuBuildNUmber installation complete"
                 }
@@ -258,7 +248,7 @@ configuration ConfigureSPVM
                     throw "SharePoint cumulative update install failed, exit code was $($setup.ExitCode)"
                 }
             }
-            GetScript =  
+            GetScript =
             {
                 # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                 $cuBuildNUmber = "16.0.4471.1000"
@@ -280,7 +270,7 @@ configuration ConfigureSPVM
 
                 return @{ "Result" = $result }
             }
-            TestScript = 
+            TestScript =
             {
                 # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
                 $cuBuildNUmber = "16.0.4471.1000"
@@ -307,7 +297,7 @@ configuration ConfigureSPVM
         }
 
         xPendingReboot RebootAfterInstall201612CU
-        { 
+        {
             Name = 'RebootAfterInstall201612CU'
             DependsOn = "[xScript]Install201612CU"
         }
@@ -331,7 +321,7 @@ configuration ConfigureSPVM
 
         xScript WaitForSQL
         {
-            SetScript = 
+            SetScript =
             {
                 $retryCount = $using:RetryIntervalSec
                 $server = $using:SQLName
@@ -351,14 +341,14 @@ configuration ConfigureSPVM
                     }
                 }
             }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential     = $DomainAdminCredsQualified
-            DependsOn = "[xRemoteFile]DownloadLdapcp"
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xRemoteFile]DownloadLdapcp"
         }
 
         #**********************************************************
-        # Basic SharePoint configuration
+        # Create SharePoint farm
         #**********************************************************
         SPFarm CreateSPFarm
         {
@@ -420,25 +410,25 @@ configuration ConfigureSPVM
 
         xScript RestartSPTimer
         {
-            SetScript = 
+            SetScript =
             {
                 # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
                 Restart-Service SPTimerV4
             }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[SPDistributedCacheService]EnableDistributedCache"
+            DependsOn            = "[SPDistributedCacheService]EnableDistributedCache"
         }
 
-        SPFarmSolution InstallLdapcp 
+        SPFarmSolution InstallLdapcp
         {
-            LiteralPath = "F:\Setup\LDAPCP.wsp"
-            Name = "LDAPCP.wsp"
-            Deployed = $true
-            Ensure = "Present"
+            LiteralPath          = "F:\Setup\LDAPCP.wsp"
+            Name                 = "LDAPCP.wsp"
+            Deployed             = $true
+            Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[xScript]RestartSPTimer"
+            DependsOn            = "[xScript]RestartSPTimer"
         }
 
         SPTrustedIdentityTokenIssuer CreateSPTrust
@@ -466,6 +456,10 @@ configuration ConfigureSPVM
             PsDscRunAsCredential         = $SPSetupCredsQualified
         }
 
+        #**********************************************************
+        # Service instances are started at the beginning of the deployment to give some time between this and creation of service applications
+        # This makes deployment a lot more reliable and avoids errors related to concurrency update of persisted objects, or service instance not found...
+        #**********************************************************
         SPServiceAppPool MainServiceAppPool
         {
             Name                 = $ServiceAppPoolName
@@ -475,7 +469,7 @@ configuration ConfigureSPVM
         }
 
         SPServiceInstance UPAServiceInstance
-        {  
+        {
             Name                 = "User Profile Service"
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
@@ -483,7 +477,7 @@ configuration ConfigureSPVM
         }
 
         SPServiceInstance StartSubscriptionSettingsServiceInstance
-        {  
+        {
             Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
@@ -491,13 +485,13 @@ configuration ConfigureSPVM
         }
 
         SPServiceInstance StartAppManagementServiceInstance
-        {  
+        {
             Name                 = "App Management Service"
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
-        
+
         SPWebApplication MainWebApp
         {
             Name                   = "SharePoint - 80"
@@ -515,19 +509,19 @@ configuration ConfigureSPVM
 
         xCertReq SPSSiteCert
         {
-            CARootName                = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN              = "$DCName.$DomainFQDN"
-            Subject                   = "$SPTrustedSitesName.$DomainFQDN"
-            SubjectAltName            = "dns=$SPTrustedSitesName.$DomainFQDN"
-            KeyLength                 = '2048'
-            Exportable                = $true
-            ProviderName              = '"Microsoft RSA SChannel Cryptographic Provider"'
-            OID                       = '1.3.6.1.5.5.7.3.1'
-            KeyUsage                  = '0xa0'
-            CertificateTemplate       = 'WebServer'
-            AutoRenew                 = $true
-            Credential                = $DomainAdminCredsQualified
-            DependsOn = '[SPWebApplication]MainWebApp'
+            CARootName             = "$DomainNetbiosName-$DCName-CA"
+            CAServerFQDN           = "$DCName.$DomainFQDN"
+            Subject                = "$SPTrustedSitesName.$DomainFQDN"
+            SubjectAltName         = "dns=$SPTrustedSitesName.$DomainFQDN"
+            KeyLength              = '2048'
+            Exportable             = $true
+            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                    = '1.3.6.1.5.5.7.3.1'
+            KeyUsage               = '0xa0'
+            CertificateTemplate    = 'WebServer'
+            AutoRenew              = $true
+            Credential             = $DomainAdminCredsQualified
+            DependsOn              = '[SPWebApplication]MainWebApp'
         }
 
         SPWebApplicationExtension ExtendWebApp
@@ -543,12 +537,12 @@ configuration ConfigureSPVM
             Port                   = 443
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn = '[xCertReq]SPSSiteCert'
+            DependsOn              = '[xCertReq]SPSSiteCert'
         }
-        
+
         xScript SetHTTPSCertificate
         {
-            SetScript = 
+            SetScript =
             {
                 $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:SPTrustedSitesName.$using:DomainFQDN"
 
@@ -574,32 +568,35 @@ configuration ConfigureSPVM
                     New-Item IIS:\SslBindings\*!443 -value $siteCert
                 }
             }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential     = $DomainAdminCredsQualified
-            DependsOn                = "[SPWebApplicationExtension]ExtendWebApp"
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
         }
 
         SPSite RootTeamSite
         {
-            Url                      = "http://$SPTrustedSitesName/"
-            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                     = "Team site"
-            Template                 = "STS#0"
-            PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
+            Url                  = "http://$SPTrustedSitesName/"
+            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                 = "Team site"
+            Template             = "STS#0"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplication]MainWebApp"
         }
 
+        #**********************************************************
+        # Additional configuration
+        #**********************************************************
         SPSite MySiteHost
         {
-            Url                      = "http://$SPTrustedSitesName/sites/my"
-            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                     = "MySite host"
-            Template                 = "SPSMSITEHOST#0"
-            PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
+            Url                  = "http://$SPTrustedSitesName/sites/my"
+            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                 = "MySite host"
+            Template             = "SPSMSITEHOST#0"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplication]MainWebApp"
         }
 
         SPUserProfileServiceApp UserProfileServiceApp
@@ -613,36 +610,36 @@ configuration ConfigureSPVM
             EnableNetBIOS        = $false
             FarmAccount          = $SPFarmCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]MySiteHost"
+            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]MySiteHost"
         }
 
         SPSite DevSite
         {
-            Url                      = "http://$SPTrustedSitesName/sites/dev"
-            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                     = "Developer site"
-            Template                 = "DEV#0"
-            PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
+            Url                  = "http://$SPTrustedSitesName/sites/dev"
+            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                 = "Developer site"
+            Template             = "DEV#0"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplication]MainWebApp"
         }
 
         SPSite TeamSite
         {
-            Url                      = "http://$SPTrustedSitesName/sites/team"
-            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                     = "Team site"
-            Template                 = "STS#0"
-            PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
+            Url                  = "http://$SPTrustedSitesName/sites/team"
+            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                 = "Team site"
+            Template             = "STS#0"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplication]MainWebApp"
         }
 
         <#xScript CreateDefaultGroupsInTeamSites
         {
             SetScript = {
-                $argumentList = @(@{ "sitesToUpdate" = @("http://$using:SPTrustedSitesName", "http://$using:SPTrustedSitesName/sites/team"); 
-                                     "owner1"        = "i:0#.w|$using:DomainNetbiosName\$($using:DomainAdminCreds.UserName)"; 
+                $argumentList = @(@{ "sitesToUpdate" = @("http://$using:SPTrustedSitesName", "http://$using:SPTrustedSitesName/sites/team");
+                                     "owner1"        = "i:0#.w|$using:DomainNetbiosName\$($using:DomainAdminCreds.UserName)";
                                      "owner2"        = "i:05.t|$using:DomainFQDN|$($using:DomainAdminCreds.UserName)@$using:DomainFQDN" })
                 Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
                     # Create members/visitors/owners groups in team sites
@@ -651,7 +648,7 @@ configuration ConfigureSPVM
                     $sitesToUpdate = $params.sitesToUpdate
                     $owner1 = $params.owner1
                     $owner2 = $params.owner2
-                    
+
                     foreach ($siteUrl in $sitesToUpdate) {
                         $spsite = Get-SPSite $siteUrl
                         $spsite| fl *| Out-File f:\setup\test.txt
@@ -669,12 +666,12 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPSite]RootTeamSite", "[SPSite]TeamSite"
         }#>
-        
+
         # Added that to avoid the update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
-        # Error message avoided: UpdatedConcurrencyException: The object UserProfileApplication Name=User Profile Service Application was updated by another user.  Determine if these changes will conflict, resolve any differences, and reapply the second change.  This error may also indicate a programming error caused by obtaining two copies of the same object in a single thread. Previous update information: User: CONTOSO\spfarm Process:wsmprovhost (8632) Machine:SP Time:October 17, 2017 11:25:01.0000 Stack trace (Thread [16] CorrelationId [2c50ced7-4721-0003-b7f3-502c2147d301]):  Current update information: User: CONTOSO\spsetup Process:wsmprovhost (696) Machine:SP Time:October 17, 2017 11:25:06.0252 Stack trace (Thread [62] CorrelationId [37bd239e-a854-f0e6-ee90-b0567bfec821]):  
+        # Error message avoided: UpdatedConcurrencyException: The object UserProfileApplication Name=User Profile Service Application was updated by another user.  Determine if these changes will conflict, resolve any differences, and reapply the second change.  This error may also indicate a programming error caused by obtaining two copies of the same object in a single thread. Previous update information: User: CONTOSO\spfarm Process:wsmprovhost (8632) Machine:SP Time:October 17, 2017 11:25:01.0000 Stack trace (Thread [16] CorrelationId [2c50ced7-4721-0003-b7f3-502c2147d301]):  Current update information: User: CONTOSO\spsetup Process:wsmprovhost (696) Machine:SP Time:October 17, 2017 11:25:06.0252 Stack trace (Thread [62] CorrelationId [37bd239e-a854-f0e6-ee90-b0567bfec821]):
         <#xScript RefreshLocalConfigCache
         {
-            SetScript = 
+            SetScript =
             {
                 $methodName = "get_Local"
                 $assembly = [Reflection.Assembly]::LoadWithPartialName("Microsoft.SharePoint")
@@ -696,18 +693,17 @@ configuration ConfigureSPVM
         }#>
 
         # Grant spsvc full control to UPA to allow newsfeeds to work properly
-        $upaAdminToInclude = @( 
-            MSFT_SPServiceAppSecurityEntry {
-                Username    = $SPSvcCredsQualified.UserName
-                AccessLevel = "Full Control"
-        })
         SPServiceAppSecurity UserProfileServiceSecurity
         {
             ServiceAppName       = $UpaServiceName
             SecurityType         = "SharingPermissions"
-            MembersToInclude     = $upaAdminToInclude
+            MembersToInclude     =  @(
+                MSFT_SPServiceAppSecurityEntry {
+                    Username    = $SPSvcCredsQualified.UserName
+                    AccessLevel = "Full Control"
+            })
             PsDscRunAsCredential = $SPSetupCredsQualified
-            #DependsOn            = "[xScript]RefreshLocalConfigCache"
+            #DependsOn           = "[xScript]RefreshLocalConfigCache"
             DependsOn            = "[SPUserProfileServiceApp]UserProfileServiceApp"
         }
 
@@ -717,7 +713,7 @@ configuration ConfigureSPVM
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
             InstallAccount       = $DomainAdminCredsQualified
-            DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
+            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
         }
 
         SPAppManagementServiceApp CreateAppManagementServiceApp
@@ -726,10 +722,10 @@ configuration ConfigureSPVM
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)AppManagement"
             InstallAccount       = $DomainAdminCredsQualified
-            DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
+            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
         }
 
-        xDnsRecord AddAddinDNSWildcard 
+        xDnsRecord AddAddinDNSWildcard
         {
             Name                 = "*"
             Zone                 = $AppDomainFQDN
@@ -741,7 +737,7 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
-        xDnsRecord AddAddinDNSWildcardInIntranetZone 
+        xDnsRecord AddAddinDNSWildcardInIntranetZone
         {
             Name                 = "*"
             Zone                 = $AppDomainIntranetFQDN
@@ -757,30 +753,30 @@ configuration ConfigureSPVM
         {
             AppDomain            = $AppDomainFQDN
             Prefix               = "addin"
-            PsDscRunAsCredential = $SPSetupCredsQualified  
+            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSubscriptionSettingsServiceApp]CreateSubscriptionSettingsServiceApp", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }
 
         SPSite AppCatalog
         {
-            Url                      = "http://$SPTrustedSitesName/sites/AppCatalog"
-            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                     = "AppCatalog"
-            Template                 = "APPCATALOG#0"
-            PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
+            Url                  = "http://$SPTrustedSitesName/sites/AppCatalog"
+            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                 = "AppCatalog"
+            Template             = "APPCATALOG#0"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplication]MainWebApp"
         }
 
         Script ConfigureSTSAndMultipleZones
         {
             SetScript = {
-                $argumentList = @(@{ "webAppUrl"             = "http://$using:SPTrustedSitesName"; 
-                                     "AppDomainFQDN"         = "$using:AppDomainFQDN"; 
+                $argumentList = @(@{ "webAppUrl"             = "http://$using:SPTrustedSitesName";
+                                     "AppDomainFQDN"         = "$using:AppDomainFQDN";
                                      "AppDomainIntranetFQDN" = "$using:AppDomainIntranetFQDN" })
                 Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
                     $params = $args[0]
-                    
+
                     # Configure STS
                     $serviceConfig = Get-SPSecurityTokenServiceConfig
                     $serviceConfig.AllowOAuthOverHttp = $true
@@ -814,10 +810,10 @@ configuration ConfigureSPVM
                     #Update-SPAppCatalogConfiguration -Site "$webAppUrl/sites/AppCatalog" -Confirm:$false
                 }
             }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[SPAppDomain]ConfigureLocalFarmAppUrls"
+            DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
 
         # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
