@@ -465,6 +465,38 @@ configuration ConfigureSPVM
             DependsOn                    = "[SPFarmSolution]InstallLdapcp"
             PsDscRunAsCredential         = $SPSetupCredsQualified
         }
+
+        SPServiceAppPool MainServiceAppPool
+        {
+            Name                 = $ServiceAppPoolName
+            ServiceAccount       = $SPSvcCredsQualified.UserName
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
+        }
+
+        SPServiceInstance UPAServiceInstance
+        {  
+            Name                 = "User Profile Service"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
+        }
+
+        SPServiceInstance StartSubscriptionSettingsServiceInstance
+        {  
+            Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
+        }
+
+        SPServiceInstance StartAppManagementServiceInstance
+        {  
+            Name                 = "App Management Service"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
+        }
         
         SPWebApplication MainWebApp
         {
@@ -592,6 +624,20 @@ configuration ConfigureSPVM
             DependsOn                = "[SPWebApplication]MainWebApp"
         }
 
+        SPUserProfileServiceApp UserProfileServiceApp
+        {
+            Name                 = $UpaServiceName
+            ApplicationPool      = $ServiceAppPoolName
+            MySiteHostLocation   = "http://$SPTrustedSitesName/sites/my"
+            ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
+            SocialDBName         = $SPDBPrefix + "UPA_Social"
+            SyncDBName           = $SPDBPrefix + "UPA_Sync"
+            EnableNetBIOS        = $false
+            FarmAccount          = $SPFarmCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]MySiteHost"
+        }
+
         <#xScript CreateDefaultGroupsInTeamSites
         {
             SetScript = {
@@ -624,39 +670,13 @@ configuration ConfigureSPVM
             DependsOn = "[SPSite]RootTeamSite", "[SPSite]TeamSite"
         }#>
 
-        SPServiceAppPool MainServiceAppPool
-        {
-            Name                 = $ServiceAppPoolName
-            ServiceAccount       = $SPSvcCredsQualified.UserName
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        
 
-        SPServiceInstance UPAServiceInstance
-        {  
-            Name                 = "User Profile Service"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
-
-        SPUserProfileServiceApp UserProfileServiceApp
-        {
-            Name                 = $UpaServiceName
-            ApplicationPool      = $ServiceAppPoolName
-            MySiteHostLocation   = "http://$SPTrustedSitesName/sites/my"
-            ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
-            SocialDBName         = $SPDBPrefix + "UPA_Social"
-            SyncDBName           = $SPDBPrefix + "UPA_Sync"
-            EnableNetBIOS        = $false
-            FarmAccount          = $SPFarmCredsQualified
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPSite]MySiteHost"
-        }
+        
         
         # Added that to avoid the update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
         # Error message avoided: UpdatedConcurrencyException: The object UserProfileApplication Name=User Profile Service Application was updated by another user.  Determine if these changes will conflict, resolve any differences, and reapply the second change.  This error may also indicate a programming error caused by obtaining two copies of the same object in a single thread. Previous update information: User: CONTOSO\spfarm Process:wsmprovhost (8632) Machine:SP Time:October 17, 2017 11:25:01.0000 Stack trace (Thread [16] CorrelationId [2c50ced7-4721-0003-b7f3-502c2147d301]):  Current update information: User: CONTOSO\spsetup Process:wsmprovhost (696) Machine:SP Time:October 17, 2017 11:25:06.0252 Stack trace (Thread [62] CorrelationId [37bd239e-a854-f0e6-ee90-b0567bfec821]):  
-        xScript RefreshLocalConfigCache
+        <#xScript RefreshLocalConfigCache
         {
             SetScript = 
             {
@@ -684,20 +704,40 @@ configuration ConfigureSPVM
             MSFT_SPServiceAppSecurityEntry {
                 Username    = $SPSvcCredsQualified.UserName
                 AccessLevel = "Full Control"
-        })
+        })#>
         SPServiceAppSecurity UserProfileServiceSecurity
         {
             ServiceAppName       = $UpaServiceName
             SecurityType         = "SharingPermissions"
             MembersToInclude     = $upaAdminToInclude
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[xScript]RefreshLocalConfigCache"
+            #DependsOn            = "[xScript]RefreshLocalConfigCache"
+            DependsOn            = "[SPUserProfileServiceApp]UserProfileServiceApp"
         }
 
         #**********************************************************
         # Addins configuration
         #**********************************************************
-        xDnsRecord AddAddinDNSWildcard {
+        SPSubscriptionSettingsServiceApp CreateSubscriptionSettingsServiceApp
+        {
+            Name                 = "Subscription Settings Service Application"
+            ApplicationPool      = $ServiceAppPoolName
+            DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
+            InstallAccount       = $DomainAdminCredsQualified
+            DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
+        }
+
+        SPAppManagementServiceApp CreateAppManagementServiceApp
+        {
+            Name                 = "App Management Service Application"
+            ApplicationPool      = $ServiceAppPoolName
+            DatabaseName         = "$($SPDBPrefix)AppManagement"
+            InstallAccount       = $DomainAdminCredsQualified
+            DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
+        }
+
+        xDnsRecord AddAddinDNSWildcard 
+        {
             Name = "*"
             Zone = $AppDomainFQDN
             Target = "$ComputerName.$DomainFQDN"
@@ -708,7 +748,8 @@ configuration ConfigureSPVM
             DependsOn = "[SPServiceAppPool]MainServiceAppPool"
         }
 
-        xDnsRecord AddAddinDNSWildcardInIntranetZone {
+        xDnsRecord AddAddinDNSWildcardInIntranetZone 
+        {
             Name = "*"
             Zone = $AppDomainIntranetFQDN
             Target = "$ComputerName.$DomainFQDN"
@@ -719,46 +760,12 @@ configuration ConfigureSPVM
             DependsOn = "[SPServiceAppPool]MainServiceAppPool"
         }
 
-        SPServiceInstance StartSubscriptionSettingsServiceInstance
-        {  
-            Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[SPServiceAppPool]MainServiceAppPool"
-        }
-
-        SPServiceInstance StartAppManagementServiceInstance
-        {  
-            Name                 = "App Management Service"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn = "[SPServiceAppPool]MainServiceAppPool"
-        }
-
-        SPSubscriptionSettingsServiceApp CreateSubscriptionSettingsServiceApp
-        {
-            Name                 = "Subscription Settings Service Application"
-            ApplicationPool      = $ServiceAppPoolName
-            DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
-            InstallAccount       = $DomainAdminCredsQualified
-            DependsOn = "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
-        }        
-
-        SPAppManagementServiceApp CreateAppManagementServiceApp
-        {
-            Name                 = "App Management Service Application"
-            ApplicationPool      = $ServiceAppPoolName
-            DatabaseName         = "$($SPDBPrefix)AppManagement"
-            InstallAccount       = $DomainAdminCredsQualified
-            DependsOn = "[SPServiceInstance]StartAppManagementServiceInstance"
-        }
-
         SPAppDomain ConfigureLocalFarmAppUrls
         {
             AppDomain            = $AppDomainFQDN
             Prefix               = "addin"
             PsDscRunAsCredential = $SPSetupCredsQualified  
-            DependsOn = "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
+            DependsOn = "[SPSubscriptionSettingsServiceApp]CreateSubscriptionSettingsServiceApp", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }
 
         SPSite AppCatalog
