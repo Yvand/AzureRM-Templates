@@ -510,7 +510,7 @@ configuration ConfigureSPVM
             Port                   = 80
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
+            DependsOn              = "[SPFarm]CreateSPFarm"
         }
 
         xCertReq SPSSiteCert
@@ -697,14 +697,14 @@ configuration ConfigureSPVM
             TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
-        }
+        }#>
 
         # Grant spsvc full control to UPA to allow newsfeeds to work properly
         $upaAdminToInclude = @( 
             MSFT_SPServiceAppSecurityEntry {
                 Username    = $SPSvcCredsQualified.UserName
                 AccessLevel = "Full Control"
-        })#>
+        })
         SPServiceAppSecurity UserProfileServiceSecurity
         {
             ServiceAppName       = $UpaServiceName
