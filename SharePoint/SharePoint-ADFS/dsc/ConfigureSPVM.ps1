@@ -676,7 +676,7 @@ configuration ConfigureSPVM
         
         # Added that to avoid the update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
         # Error message avoided: UpdatedConcurrencyException: The object UserProfileApplication Name=User Profile Service Application was updated by another user.  Determine if these changes will conflict, resolve any differences, and reapply the second change.  This error may also indicate a programming error caused by obtaining two copies of the same object in a single thread. Previous update information: User: CONTOSO\spfarm Process:wsmprovhost (8632) Machine:SP Time:October 17, 2017 11:25:01.0000 Stack trace (Thread [16] CorrelationId [2c50ced7-4721-0003-b7f3-502c2147d301]):  Current update information: User: CONTOSO\spsetup Process:wsmprovhost (696) Machine:SP Time:October 17, 2017 11:25:06.0252 Stack trace (Thread [62] CorrelationId [37bd239e-a854-f0e6-ee90-b0567bfec821]):  
-        <#xScript RefreshLocalConfigCache
+        xScript RefreshLocalConfigCache
         {
             SetScript = 
             {
@@ -697,7 +697,7 @@ configuration ConfigureSPVM
             TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
-        }#>
+        }
 
         # Grant spsvc full control to UPA to allow newsfeeds to work properly
         $upaAdminToInclude = @( 
@@ -711,8 +711,8 @@ configuration ConfigureSPVM
             SecurityType         = "SharingPermissions"
             MembersToInclude     = $upaAdminToInclude
             PsDscRunAsCredential = $SPSetupCredsQualified
-            #DependsOn            = "[xScript]RefreshLocalConfigCache"
-            DependsOn            = "[SPUserProfileServiceApp]UserProfileServiceApp"
+            DependsOn            = "[xScript]RefreshLocalConfigCache"
+            #DependsOn            = "[SPUserProfileServiceApp]UserProfileServiceApp"
         }
 
         #**********************************************************
