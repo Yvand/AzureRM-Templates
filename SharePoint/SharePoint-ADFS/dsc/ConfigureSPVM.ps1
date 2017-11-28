@@ -591,28 +591,6 @@ configuration ConfigureSPVM
             DependsOn                = "[SPWebApplication]MainWebApp"
         }
 
-        SPSite DevSite
-        {
-            Url                      = "http://$SPTrustedSitesName/sites/dev"
-            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                     = "Developer site"
-            Template                 = "DEV#0"
-            PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
-        }
-
-        SPSite TeamSite
-        {
-            Url                      = "http://$SPTrustedSitesName/sites/team"
-            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                     = "Team site"
-            Template                 = "STS#0"
-            PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
-        }
-
         SPSite MySiteHost
         {
             Url                      = "http://$SPTrustedSitesName/sites/my"
@@ -636,6 +614,28 @@ configuration ConfigureSPVM
             FarmAccount          = $SPFarmCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]MySiteHost"
+        }
+
+        SPSite DevSite
+        {
+            Url                      = "http://$SPTrustedSitesName/sites/dev"
+            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                     = "Developer site"
+            Template                 = "DEV#0"
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            DependsOn                = "[SPWebApplication]MainWebApp"
+        }
+
+        SPSite TeamSite
+        {
+            Url                      = "http://$SPTrustedSitesName/sites/team"
+            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                     = "Team site"
+            Template                 = "STS#0"
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            DependsOn                = "[SPWebApplication]MainWebApp"
         }
 
         <#xScript CreateDefaultGroupsInTeamSites
@@ -669,14 +669,10 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPSite]RootTeamSite", "[SPSite]TeamSite"
         }#>
-
-        
-
-        
         
         # Added that to avoid the update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
         # Error message avoided: UpdatedConcurrencyException: The object UserProfileApplication Name=User Profile Service Application was updated by another user.  Determine if these changes will conflict, resolve any differences, and reapply the second change.  This error may also indicate a programming error caused by obtaining two copies of the same object in a single thread. Previous update information: User: CONTOSO\spfarm Process:wsmprovhost (8632) Machine:SP Time:October 17, 2017 11:25:01.0000 Stack trace (Thread [16] CorrelationId [2c50ced7-4721-0003-b7f3-502c2147d301]):  Current update information: User: CONTOSO\spsetup Process:wsmprovhost (696) Machine:SP Time:October 17, 2017 11:25:06.0252 Stack trace (Thread [62] CorrelationId [37bd239e-a854-f0e6-ee90-b0567bfec821]):  
-        xScript RefreshLocalConfigCache
+        <#xScript RefreshLocalConfigCache
         {
             SetScript = 
             {
@@ -697,7 +693,7 @@ configuration ConfigureSPVM
             TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
-        }
+        }#>
 
         # Grant spsvc full control to UPA to allow newsfeeds to work properly
         $upaAdminToInclude = @( 
@@ -711,13 +707,10 @@ configuration ConfigureSPVM
             SecurityType         = "SharingPermissions"
             MembersToInclude     = $upaAdminToInclude
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RefreshLocalConfigCache"
-            #DependsOn            = "[SPUserProfileServiceApp]UserProfileServiceApp"
+            #DependsOn            = "[xScript]RefreshLocalConfigCache"
+            DependsOn            = "[SPUserProfileServiceApp]UserProfileServiceApp"
         }
 
-        #**********************************************************
-        # Addins configuration
-        #**********************************************************
         SPSubscriptionSettingsServiceApp CreateSubscriptionSettingsServiceApp
         {
             Name                 = "Subscription Settings Service Application"
@@ -738,26 +731,26 @@ configuration ConfigureSPVM
 
         xDnsRecord AddAddinDNSWildcard 
         {
-            Name = "*"
-            Zone = $AppDomainFQDN
-            Target = "$ComputerName.$DomainFQDN"
-            Type = "CName"
-            DnsServer = "$DCName.$DomainFQDN"
-            Ensure = "Present"
+            Name                 = "*"
+            Zone                 = $AppDomainFQDN
+            Target               = "$ComputerName.$DomainFQDN"
+            Type                 = "CName"
+            DnsServer            = "$DCName.$DomainFQDN"
+            Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[SPServiceAppPool]MainServiceAppPool"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         xDnsRecord AddAddinDNSWildcardInIntranetZone 
         {
-            Name = "*"
-            Zone = $AppDomainIntranetFQDN
-            Target = "$ComputerName.$DomainFQDN"
-            Type = "CName"
-            DnsServer = "$DCName.$DomainFQDN"
-            Ensure = "Present"
+            Name                 = "*"
+            Zone                 = $AppDomainIntranetFQDN
+            Target               = "$ComputerName.$DomainFQDN"
+            Type                 = "CName"
+            DnsServer            = "$DCName.$DomainFQDN"
+            Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[SPServiceAppPool]MainServiceAppPool"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPAppDomain ConfigureLocalFarmAppUrls
@@ -765,7 +758,7 @@ configuration ConfigureSPVM
             AppDomain            = $AppDomainFQDN
             Prefix               = "addin"
             PsDscRunAsCredential = $SPSetupCredsQualified  
-            DependsOn = "[SPSubscriptionSettingsServiceApp]CreateSubscriptionSettingsServiceApp", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
+            DependsOn            = "[SPSubscriptionSettingsServiceApp]CreateSubscriptionSettingsServiceApp", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }
 
         SPSite AppCatalog
@@ -824,7 +817,7 @@ configuration ConfigureSPVM
             GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[SPSite]AppCatalog", "[xDnsRecord]AddAddinDNSWildcard", "[xDnsRecord]AddAddinDNSWildcardInIntranetZone"
+            DependsOn = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
 
         # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
