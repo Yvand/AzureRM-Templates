@@ -87,7 +87,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                # 1 deployment failed because of this error:
+                # A few times, deployment failed because of this error:
                 # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
                 # The root cause was that SPNs WSMAN/SP and WSMAN/sp.contoso.local were missing in computer account contoso\SP
                 # Those SPNs are created by WSMan when it (re)starts
@@ -95,19 +95,24 @@ configuration ConfigureSPVM
                 # Restart-Service winrm
 
                 # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
+                $domainFQDN = $using:DomainFQDN
                 $computerName = $using:ComputerName
+                Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
+                setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
             GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript = 
             {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
                 $computerName = $using:ComputerName
-                if ((Get-ADComputer -Filter {(SamAccountName -eq "$computerName$")} -property serviceprincipalname| select-object serviceprincipalname | where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
-                    return $true 
+                $samAccountName = "$computerName$"
+                if ((Get-ADComputer -Filter {(SamAccountName -eq $samAccountName)} -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
+                    # SPN is present
+                    return $true
                 }
-                else { 
-                    return $false 
+                else {
+                    # SPN is missing and must be created
+                    return $false
                 }
             }
             DependsOn="[xComputer]DomainJoin"
@@ -524,7 +529,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                # CA root cert must be added or xCertReq resource may fail to generate HTTPS site certificate with this error:
+                # CA root cert must be added to trusted root authorities, otherwise xCertReq resource may fail to generate HTTPS site certificate with this error:
                 # Certificate Request Processor: A certificate chain processed, but terminated in a root certificate which is not trusted by the trust provider. 0x800b0109
                 $file = ( Get-ChildItem -Path "F:\Setup\Certificates\ADFS Signing issuer.cer" )
                 $file | Import-Certificate -CertStoreLocation "cert:\LocalMachine\Root"
