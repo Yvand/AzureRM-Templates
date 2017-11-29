@@ -83,8 +83,7 @@ configuration ConfigureSPVM
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
-        <#
-        xScript RestartWSManService
+        xScript CreateWSManSPNsIfNeeded
         {
             SetScript =
             {
@@ -92,13 +91,27 @@ configuration ConfigureSPVM
                 # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
                 # The root cause was that SPNs WSMAN/SP and WSMAN/sp.contoso.local were missing in computer account contoso\SP
                 # Those SPNs are created by WSMan when it (re)starts
-                Restart-Service winrm
+                # Restarting service causes an error, so creates SPNs manually instead
+                # Restart-Service winrm
+
+                # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
+                $computerName = $using:ComputerName
+                setspn.exe -S "WSMAN/$computerName" "$computerName"
             }
             GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                $computerName = $using:ComputerName
+                if ((Get-ADComputer -Filter {(SamAccountName -eq "$computerName$")} -property serviceprincipalname| select-object serviceprincipalname | where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
+                    return $true 
+                }
+                else { 
+                    return $false 
+                }
+            }
             DependsOn="[xComputer]DomainJoin"
         }
-        #>
 
         #**********************************************************
         # Do some cleanup and preparation for SharePoint
@@ -507,6 +520,21 @@ configuration ConfigureSPVM
             DependsOn              = "[SPFarm]CreateSPFarm"
         }
 
+        xScript TrustCACertAsTrustedRootAuthority
+        {
+            SetScript =
+            {
+                # CA root cert must be added or xCertReq resource may fail to generate HTTPS site certificate with this error:
+                # Certificate Request Processor: A certificate chain processed, but terminated in a root certificate which is not trusted by the trust provider. 0x800b0109
+                $file = ( Get-ChildItem -Path "F:\Setup\Certificates\ADFS Signing issuer.cer" )
+                $file | Import-Certificate -CertStoreLocation "cert:\LocalMachine\Root"
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = '[SPWebApplication]MainWebApp'
+        }
+
         xCertReq SPSSiteCert
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
@@ -521,7 +549,7 @@ configuration ConfigureSPVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = '[SPWebApplication]MainWebApp'
+            DependsOn              = '[xScript]TrustCACertAsTrustedRootAuthority'
         }
 
         SPWebApplicationExtension ExtendWebApp

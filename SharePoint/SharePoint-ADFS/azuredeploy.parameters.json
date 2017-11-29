@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sharePointVersion": {
-      "value": "2016"
+      "value": "2013"
     },
     "vmSQLStorageAccountType": {
       "value": "Premium_LRS"
@@ -18,7 +18,7 @@
       "value": "Standard_DS3_v2_Promo"
     },
     "dnsLabelPrefix": {
-      "value": "xydspadfs"
+      "value": "xxydspadfs"
     },
     "vmsTimeZone": {
       "value": "Romance Standard Time"
