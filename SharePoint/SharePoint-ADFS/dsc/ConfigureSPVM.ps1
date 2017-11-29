@@ -531,8 +531,13 @@ configuration ConfigureSPVM
             {
                 # CA root cert must be added to trusted root authorities, otherwise xCertReq resource may fail to generate HTTPS site certificate with this error:
                 # Certificate Request Processor: A certificate chain processed, but terminated in a root certificate which is not trusted by the trust provider. 0x800b0109
-                $file = ( Get-ChildItem -Path "F:\Setup\Certificates\ADFS Signing issuer.cer" )
-                $file | Import-Certificate -CertStoreLocation "cert:\LocalMachine\Root"
+                try {
+                    $file = ( Get-ChildItem -Path "F:\Setup\Certificates\ADFS Signing issuer.cer" )
+                    $file | Import-Certificate -CertStoreLocation "cert:\LocalMachine\Root" -ErrorAction SilentlyContinue
+                } catch {
+                    # It may fail with following error: System.InvalidOperationException: The set script threw an error. ---> System.UnauthorizedAccessException: Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))
+                    # But the certificate is successfully added anyway
+                }
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
