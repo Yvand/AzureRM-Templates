@@ -550,7 +550,7 @@ configuration ConfigureSPVM
             CARootName             = "$DomainNetbiosName-$DCName-CA"
             CAServerFQDN           = "$DCName.$DomainFQDN"
             Subject                = "$SPTrustedSitesName.$DomainFQDN"
-            SubjectAltName         = "dns=$SPTrustedSitesName.$DomainFQDN"
+            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
             KeyLength              = '2048'
             Exportable             = $true
             ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
@@ -582,7 +582,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:SPTrustedSitesName.$using:DomainFQDN"
+                $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "*.$using:DomainFQDN"
 
                 $website = Get-WebConfiguration -Filter '/system.applicationHost/sites/site' |
                     Where-Object -FilterScript {$_.Name -eq "SharePoint - 443"}
@@ -605,6 +605,14 @@ configuration ConfigureSPVM
                 if (!(Get-Item IIS:\SslBindings\*!443)) {
                     New-Item IIS:\SslBindings\*!443 -value $siteCert
                 }
+
+                <# To implement only when the TestScript will be implemented and will determine that current config must be overwritten
+                # Otherwise, assume the right certificate is already used and binding doesn't need to be recreated
+                if ((Get-Item IIS:\SslBindings\*!443)) {
+                    Remove-Item IIS:\SslBindings\*!443 -Confirm:$false
+                }
+                New-Item IIS:\SslBindings\*!443 -value $siteCert
+                #>
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
