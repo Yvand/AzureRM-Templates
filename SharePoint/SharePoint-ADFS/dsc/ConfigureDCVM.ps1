@@ -27,6 +27,8 @@
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     $ComputerName = Get-Content env:computername
+    [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
+    [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
 
     Node localhost
     {
@@ -60,34 +62,35 @@
             DependsOn = "[WindowsFeature]DNS"
         }
 
-        xWaitforDisk Disk2
-        {
-             DiskNumber = 2
-             RetryIntervalSec =$RetryIntervalSec
-             RetryCount = $RetryCount
-        }
-
-        cDiskNoRestart ADDataDisk
-        {
-            DiskNumber = 2
-            DriveLetter = "F"
-        }
-
         xADDomain FirstDS
         {
             DomainName = $DomainFQDN
             DomainAdministratorCredential = $DomainCredsNetbios
             SafemodeAdministratorPassword = $DomainCredsNetbios
-            DatabasePath = "F:\NTDS"
-            LogPath = "F:\NTDS"
-            SysvolPath = "F:\SYSVOL"
-            DependsOn = "[cDiskNoRestart]ADDataDisk"
+            DatabasePath = "C:\NTDS"
+            LogPath = "C:\NTDS"
+            SysvolPath = "C:\SYSVOL"
+            DependsOn = "[xDnsServerAddress]DnsServerAddress"
         }
 
         xPendingReboot Reboot1
         {
             Name = "RebootServer"
             DependsOn = "[xADDomain]FirstDS"
+        }
+
+        xDnsServerPrimaryZone CreateAppsDnsZone
+        {
+            Name = $AppDomainFQDN
+            Ensure= 'Present'
+            DependsOn = "[xPendingReboot]Reboot1"
+        }
+
+        xDnsServerPrimaryZone CreateAppsIntranetDnsZone
+        {
+            Name = $AppDomainIntranetFQDN
+            Ensure= 'Present'
+            DependsOn = "[xDnsServerPrimaryZone]CreateAppsDnsZone"
         }
 
         #**********************************************************
@@ -164,7 +167,7 @@
             KeyUsage                  = '0xa0'
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
-            #SubjectAltName            = "certauth.$ADFSSiteName.$DomainFQDN"
+            SubjectAltName            = "dns=certauth.$ADFSSiteName.$DomainFQDN&dns=$ADFSSiteName.$DomainFQDN"
             Credential                = $DomainCredsNetbios
             DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
         }
@@ -225,7 +228,7 @@
             DependsOn = "[xADUser]CreateAdfsSvcAccount"
         }
 
-        WindowsFeature AddADFS          { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
+        WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
 
         xDnsRecord AddADFSHostDNS {
             Name = $ADFSSiteName
@@ -240,12 +243,15 @@
         {
             SetScript = 
             {
-                Write-Verbose -Message "Exporting public key of certificates..."
-                New-Item F:\Setup -Type directory -ErrorAction SilentlyContinue
+                $destinationPath = "C:\Setup"
+                $adfsSigningCertName = "ADFS Signing.cer"
+                $adfsSigningIssuerCertName = "ADFS Signing issuer.cer"
+                Write-Verbose -Message "Exporting public key of ADFS signing / signing issuer certificates..."
+                New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
                 $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:ADFSSiteName.Signing"
-                $signingCert| Export-Certificate -FilePath "F:\Setup\ADFS Signing.cer"
-                Get-ChildItem -Path "cert:\LocalMachine\Root\" | Where-Object{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath "F:\Setup\ADFS Signing issuer.cer"
-                Write-Verbose -Message "Public key of certificates successfully exported"
+                $signingCert| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningCertName))
+                Get-ChildItem -Path "cert:\LocalMachine\Root\"| Where-Object{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningIssuerCertName))
+                Write-Verbose -Message "Public key of ADFS signing / signing issuer certificates successfully exported"
             }
             GetScript =  
             {
@@ -299,7 +305,7 @@ param = c.Value);
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[cADFSFarm]CreateADFSFarm"
         }
-   }
+    }
 }
 
 function Get-NetBIOSName
@@ -324,7 +330,25 @@ function Get-NetBIOSName
             return $DomainFQDN
         }
     }
-} 
+}
+
+function Get-AppDomain
+{
+    [OutputType([string])]
+    param(
+        [string]$DomainFQDN,
+        [string]$Suffix
+    )
+
+    $appDomain = [String]::Empty
+    if ($DomainFQDN.Contains('.')) {
+        $domainParts = $DomainFQDN.Split('.')
+        $appDomain = $domainParts[0]
+        $appDomain += "$Suffix."
+        $appDomain += $domainParts[1]
+    }
+    return $appDomain
+}
 
 <#
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
@@ -347,9 +371,9 @@ $AdfsSvcCreds = Get-Credential -Credential "adfssvc"
 $DomainFQDN = "contoso.local"
 $PrivateIP = "10.0.1.4"
 
-ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
-Set-DscLocalConfigurationManager -Path "C:\Data\output\"
-Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
+ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
+Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
+Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.71.1.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM" -Wait -Verbose -Force
 
 https://github.com/PowerShell/xActiveDirectory/issues/27
 Uninstall-WindowsFeature "ADFS-Federation"

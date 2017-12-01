@@ -5,11 +5,20 @@
     "sharePointVersion": {
       "value": "2016"
     },
+    "vmSPSize": {
+      "value": "Standard_DS3_v2_Promo"
+    },
     "dnsLabelPrefix": {
-      "value": "ydspadfs"
+      "value": "xydspadfs"
+    },
+    "vmsTimeZone": {
+      "value": "Romance Standard Time"
+    },
+    "join2ndServerToFarm": {
+      "value": "No"
     },
     "_artifactsLocation": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SharePoint-ADFS"
     }
   }
 }

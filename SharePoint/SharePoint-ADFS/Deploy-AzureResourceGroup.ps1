@@ -3,7 +3,8 @@
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
-$resourceGroupName = 'ydspadfs'
+#$resourceGroupLocation = 'northeurope'
+$resourceGroupName = 'xydspadfs'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
@@ -79,10 +80,13 @@ if ($checkTemplate.Count -eq 0) {
         @passwords `
         -Verbose -Force
 
+    $elapsedTime = New-TimeSpan $startTime $(get-date)
     $result
     if ($result.ProvisioningState -eq "Succeeded") {
-        $elapsedTime = New-TimeSpan $startTime $(get-date)
         Write-Host "Deployment completed successfully in $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Green
+    }
+    else {
+        Write-Host "Deployment failed after $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Red
     }
 }
 else {
