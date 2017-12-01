@@ -5,15 +5,6 @@
     "sharePointVersion": {
       "value": "2016"
     },
-    "vmSQLStorageAccountType": {
-      "value": "Premium_LRS"
-    },
-    "vmSQLSize": {
-      "value": "Standard_DS2_v2"
-    },
-    "vmSPStorageAccountType": {
-      "value": "Premium_LRS"
-    },
     "vmSPSize": {
       "value": "Standard_DS3_v2_Promo"
     },

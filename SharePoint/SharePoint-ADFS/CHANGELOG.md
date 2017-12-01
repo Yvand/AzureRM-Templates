@@ -1,5 +1,23 @@
 # Change log for AzureRM template for SharePoint 2016 and 2013 configured with ADFS
 
+## December 2017 release
+
+Many Improvements:
+
+* Added network security groups to template, 1 per subnet
+* VMs now use managed disks and can use a different storage account type (Standard_LRS / Standard_GRS / Premium_LRS)
+* Change default size used by SQL and SP VM to improve performance
+* Added option to automatically shutdown VMs at specified time
+* Added option to provision a 2nd SharePoint VM to use as a Front End
+* Added 2 DNS zones to support apps configuration in SharePoint farm
+* Added configuration of apps in SharePoint farm for both default and Intranet zones.
+* HTTPS Certificate of ADFS site now has Subject Alternative Names
+* Replaced dev site in root by a team site, and moved dev site to /sites/dev
+* Many improvements reliability of DSC deployment for SP VM
+* HTTPS Certificate of SharePoint site is now a wildcard with Subject Alternative Names to support DNS domain of Intranet apps
+* Updated SharePointDSC to 1.9.0.0
+* Updated xDnsServer to 1.8.0.0
+
 ## September 2017 release
 
 * Granted spsvc full control to UPA to allow newsfeeds to work properly

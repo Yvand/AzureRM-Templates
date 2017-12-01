@@ -19,10 +19,6 @@ With the default sizes of virtual machines, provisioning of the template takes a
 
 ## Known issues or limitations
 
-### On SQL VM
+### On 2nd SharePoint VM
 
-* SQL DSC module currently doesn't allow to change location of log/data files, so all SQL data/log files are created in their default folders in C drive.
-
-### On SharePoint VM
-
-* Download of 2016-12 CU from download.microsoft.com randomly fails, causing the whole SharePoint configuration to fail, so it is disabled until a reliable solution is found.
+DSC deployment on 2nd SharePoint VM currently fails

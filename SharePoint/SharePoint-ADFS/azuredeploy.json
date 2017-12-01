@@ -165,7 +165,7 @@
     },
     "vmSQLStorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "Premium_LRS",
       "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
       "metadata": {
         "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
@@ -173,14 +173,14 @@
     },
     "vmSQLSize": {
       "type": "string",
-      "defaultValue": "Standard_A4_v2",
+      "defaultValue": "Standard_DS2_v2",
       "metadata": {
         "description": "Size of the SQL VM"
       }
     },
     "vmSPStorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "Premium_LRS",
       "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
       "metadata": {
         "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
@@ -188,7 +188,7 @@
     },
     "vmSPSize": {
       "type": "string",
-      "defaultValue": "Standard_A8_v2",
+      "defaultValue": "Standard_DS3_v2",
       "metadata": {
         "description": "Size of the SQL VM"
       }
