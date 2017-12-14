@@ -12,6 +12,8 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSvcCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPAppPoolCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperUserCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds,
         [Parameter(Mandatory)] [bool]$IsCAServer
     )
 
@@ -25,6 +27,8 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
+    [System.Management.Automation.PSCredential] $SPSuperUserCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSuperUserCreds.UserName)", $SPSuperUserCreds.Password)
+    [System.Management.Automation.PSCredential] $SPSuperReaderCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSuperReaderCreds.UserName)", $SPSuperReaderCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
     [String] $SPTrustedSitesName = "SPSites"
     [Int] $RetryCount = 30
@@ -208,6 +212,28 @@ configuration ConfigureSPVM
             DependsOn                     = "[xComputer]DomainJoin"
         }
 
+        xADUser CreateSPSuperUserAccount
+        {
+            DomainName                    = $DomainFQDN
+            UserName                      = $SPSuperUserCreds.UserName
+            Password                      = $SPSuperUserCreds
+            PasswordNeverExpires          = $true
+            Ensure                        = "Present"
+            DomainAdministratorCredential = $DomainAdminCredsQualified
+            DependsOn                     = "[xComputer]DomainJoin"
+        }
+
+        xADUser CreateSPSuperReaderAccount
+        {
+            DomainName                    = $DomainFQDN
+            UserName                      = $SPSuperReaderCreds.UserName
+            Password                      = $SPSuperReaderCreds
+            PasswordNeverExpires          = $true
+            Ensure                        = "Present"
+            DomainAdministratorCredential = $DomainAdminCredsQualified
+            DependsOn                     = "[xComputer]DomainJoin"
+        }
+
         File AccountsProvisioned
         {
             DestinationPath      = "F:\Logs\DSC1.txt"
@@ -215,7 +241,7 @@ configuration ConfigureSPVM
             Type                 = 'File'
             Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount", "[xADUser]CreateSPSvcAccount", "[xADUser]CreateSPAppPoolAccount"
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount", "[xADUser]CreateSPSvcAccount", "[xADUser]CreateSPAppPoolAccount", "[xADUser]CreateSPSuperUserAccount", "[xADUser]CreateSPSuperReaderAccount"
         }
 
         #****************************************************************
@@ -618,6 +644,15 @@ configuration ConfigureSPVM
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
+        }
+
+        SPCacheAccounts SetCacheAccounts
+        {
+            WebAppUrl            = "http://$SPTrustedSitesName/"
+            SuperUserAlias       = "i:0#.w|$DomainNetbiosName\$($SPSuperUserCreds.UserName)"
+            SuperReaderAlias     = "i:0#.w|$DomainNetbiosName\$($SPSuperReaderCreds.UserName)"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplication]MainWebApp"
         }
 
         SPSite RootTeamSite

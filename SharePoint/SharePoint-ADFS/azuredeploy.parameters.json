@@ -9,13 +9,7 @@
       "value": "Standard_DS3_v2_Promo"
     },
     "dnsLabelPrefix": {
-      "value": "xydspadfs"
-    },
-    "vmsTimeZone": {
-      "value": "Romance Standard Time"
-    },
-    "join2ndServerToFarm": {
-      "value": "No"
+      "value": "axydspadfs"
     },
     "vmsTimeZone": {
       "value": "Romance Standard Time"

@@ -59,26 +59,12 @@
         "description": "Name of the service account that will run ADFS"
       }
     },
-    "adfsSvcPassword": {
-      "type": "securestring",
-      "minLength": 8,
-      "metadata": {
-        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
-      }
-    },
     "sqlSvcUserName": {
       "type": "string",
       "defaultValue": "sqlsvc",
       "minLength": 1,
       "metadata": {
         "description": "Name of the service account that will run SQL Server instance"
-      }
-    },
-    "sqlSvcPassword": {
-      "type": "securestring",
-      "minLength": 8,
-      "metadata": {
-        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
     "spSetupUserName": {
@@ -89,26 +75,12 @@
         "description": "Name of the service account that will create and configure the SharePoint farm"
       }
     },
-    "spSetupPassword": {
-      "type": "securestring",
-      "minLength": 8,
-      "metadata": {
-        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
-      }
-    },
     "spFarmUserName": {
       "type": "string",
       "defaultValue": "spfarm",
       "minLength": 1,
       "metadata": {
         "description": "Name of the service account that will run SharePoint central administration and Timer services"
-      }
-    },
-    "spFarmPassword": {
-      "type": "securestring",
-      "minLength": 8,
-      "metadata": {
-        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
     "spSvcUserName": {
@@ -119,13 +91,6 @@
         "description": "Name of the service account that will run SharePoint service applications"
       }
     },
-    "spSvcPassword": {
-      "type": "securestring",
-      "minLength": 8,
-      "metadata": {
-        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
-      }
-    },
     "spAppPoolUserName": {
       "type": "string",
       "defaultValue": "spapppool",
@@ -134,18 +99,11 @@
         "description": "Name of the service account that will run SharePoint web applications"
       }
     },
-    "spAppPoolPassword": {
+    "serviceAccountsPassword": {
       "type": "securestring",
       "minLength": 8,
       "metadata": {
-        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
-      }
-    },
-    "spPassphrase": {
-      "type": "securestring",
-      "minLength": 1,
-      "metadata": {
-        "description": "Passphrase of the SharePoint farm"
+        "description": "Password for all service account and SharePoint passphrase. It must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
     "vmDCStorageAccountType": {
@@ -231,7 +189,16 @@
       "vmDCName": "DC",
       "vmSQLName": "SQL",
       "vmSPName": "SP",
-      "vmSP2Name": "SP2"
+      "vmSP2Name": "SP2",
+      "spSuperUserName": "spSuperUser",
+      "spSuperReaderName": "spSuperReader",
+      "adfsSvcPassword": "[parameters('serviceAccountsPassword')]",
+      "sqlSvcPassword": "[parameters('serviceAccountsPassword')]",
+      "spSetupPassword": "[parameters('serviceAccountsPassword')]",
+      "spFarmPassword": "[parameters('serviceAccountsPassword')]",
+      "spSvcPassword": "[parameters('serviceAccountsPassword')]",
+      "spAppPoolPassword": "[parameters('serviceAccountsPassword')]",
+      "spPassphrase": "[parameters('serviceAccountsPassword')]"
     },
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
@@ -592,7 +559,7 @@
                 },
                 "AdfsSvcCreds": {
                   "UserName": "[parameters('adfsSvcUserName')]",
-                  "Password": "[parameters('adfsSvcPassword')]"
+                  "Password": "[variables('generalSettings').adfsSvcPassword]"
                 }
               }
             }
@@ -863,11 +830,11 @@
             },
             "SqlSvcCreds": {
               "UserName": "[parameters('sqlSvcUserName')]",
-              "Password": "[parameters('sqlSvcPassword')]"
+              "Password": "[variables('generalSettings').sqlSvcPassword]"
             },
             "SPSetupCreds": {
               "UserName": "[parameters('spSetupUserName')]",
-              "Password": "[parameters('spSetupPassword')]"
+              "Password": "[variables('generalSettings').spSetupPassword]"
             }
           }
         }
@@ -918,23 +885,31 @@
             },
             "SPSetupCreds": {
               "UserName": "[parameters('spSetupUserName')]",
-              "Password": "[parameters('spSetupPassword')]"
+              "Password": "[variables('generalSettings').spSetupPassword]"
             },
             "SPFarmCreds": {
               "UserName": "[parameters('spFarmUserName')]",
-              "Password": "[parameters('spFarmPassword')]"
+              "Password": "[variables('generalSettings').spFarmPassword]"
             },
             "SPSvcCreds": {
               "UserName": "[parameters('spSvcUserName')]",
-              "Password": "[parameters('spSvcPassword')]"
+              "Password": "[variables('generalSettings').spSvcPassword]"
             },
             "SPAppPoolCreds": {
               "UserName": "[parameters('spAppPoolUserName')]",
-              "Password": "[parameters('spAppPoolPassword')]"
+              "Password": "[variables('generalSettings').spAppPoolPassword]"
             },
             "SPPassphraseCreds": {
               "UserName": "Passphrase",
-              "Password": "[parameters('spPassphrase')]"
+              "Password": "[variables('generalSettings').spPassphrase]"
+            },
+            "SPSuperUserCreds": {
+              "UserName": "[variables('generalSettings').spSuperUserName]",
+              "Password": "[parameters('serviceAccountsPassword')]"
+            },
+            "SPSuperReaderCreds": {
+              "UserName": "[variables('generalSettings').spSuperReaderName]",
+              "Password": "[parameters('serviceAccountsPassword')]"
             }
           }
         }
@@ -1114,23 +1089,23 @@
             },
             "SPSetupCreds": {
               "UserName": "[parameters('spSetupUserName')]",
-              "Password": "[parameters('spSetupPassword')]"
+              "Password": "[variables('generalSettings').spSetupPassword]"
             },
             "SPFarmCreds": {
               "UserName": "[parameters('spFarmUserName')]",
-              "Password": "[parameters('spFarmPassword')]"
+              "Password": "[variables('generalSettings').spFarmPassword]"
             },
             "SPSvcCreds": {
               "UserName": "[parameters('spSvcUserName')]",
-              "Password": "[parameters('spSvcPassword')]"
+              "Password": "[variables('generalSettings').spSvcPassword]"
             },
             "SPAppPoolCreds": {
               "UserName": "[parameters('spAppPoolUserName')]",
-              "Password": "[parameters('spAppPoolPassword')]"
+              "Password": "[variables('generalSettings').spAppPoolPassword]"
             },
             "SPPassphraseCreds": {
               "UserName": "Passphrase",
-              "Password": "[parameters('spPassphrase')]"
+              "Password": "[variables('generalSettings').spPassphrase]"
             }
           }
         }

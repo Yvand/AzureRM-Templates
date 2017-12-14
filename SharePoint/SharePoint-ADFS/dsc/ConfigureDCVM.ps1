@@ -2,22 +2,10 @@
 {
     param
     (
-        [Parameter(Mandatory)]
-        [String]$DomainFQDN,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$Admincreds,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$AdfsSvcCreds,
-
-        [Parameter(Mandatory)]
-        [String]$PrivateIP,
-
-        [Int] $RetryCount = 20,
-        [Int] $RetryIntervalSec = 30,
-        [String] $SPTrustedSitesName = "SPSites",
-        [String] $ADFSSiteName = "ADFS"
+        [Parameter(Mandatory)] [String]$DomainFQDN,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$Admincreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds,
+        [Parameter(Mandatory)] [String]$PrivateIP
     )
 
     Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
@@ -27,6 +15,10 @@
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     $ComputerName = Get-Content env:computername
+    [Int] $RetryCount = 20
+    [Int] $RetryIntervalSec = 30
+    [String] $SPTrustedSitesName = "SPSites"
+    [String] $ADFSSiteName = "ADFS"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
 
@@ -108,6 +100,7 @@
             PasswordNeverExpires = $true
             DependsOn = "[xPendingReboot]Reboot1"
         }
+
         WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
         WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
 
