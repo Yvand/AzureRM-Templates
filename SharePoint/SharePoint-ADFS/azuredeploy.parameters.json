@@ -17,6 +17,12 @@
     "join2ndServerToFarm": {
       "value": "No"
     },
+    "vmsTimeZone": {
+      "value": "Romance Standard Time"
+    },
+    "join2ndServerToFarm": {
+      "value": "No"
+    },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SharePoint-ADFS"
     }
