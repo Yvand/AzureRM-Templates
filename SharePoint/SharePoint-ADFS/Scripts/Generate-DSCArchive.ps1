@@ -1,3 +1,6 @@
+#Requires -Version 3.0
+#Requires -Module AzureRM.Compute
+
 param(
     [string]$vmName = "*"
 )
