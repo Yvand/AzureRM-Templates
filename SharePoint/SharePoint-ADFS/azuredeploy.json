@@ -25,7 +25,7 @@
         "description": "FQDN of the AD forest to create"
       }
     },
-    "join2ndServerToFarm": {
+    "addFrontEndToFarm": {
       "type": "string",
       "allowedValues": [
         "Yes",
@@ -33,7 +33,7 @@
       ],
       "defaultValue": "No",
       "metadata": {
-        "description": "Select whether a 2nd SharePoint VM should be provisioned and joined to the farm."
+        "description": "Select whether a SharePoint Front End VM should be provisioned and joined to the farm."
       }
     },
     "adminUserName": {
@@ -721,7 +721,7 @@
         "creationData": {
           "createOption": "Empty"
         },
-        "diskSizeGB": 128
+        "diskSizeGB": 64
       }
     },
     {
@@ -916,7 +916,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('join2ndServerToFarm'), 'Yes')]",
+      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
       "name": "[variables('vmSP2').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[resourceGroup().location]",
@@ -933,7 +933,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('join2ndServerToFarm'), 'Yes')]",
+      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
       "name": "[variables('vmSP2').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
@@ -963,7 +963,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('join2ndServerToFarm'), 'Yes')]",
+      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
       "name": "[variables('vmSP2').vmDataDiskName]",
       "type": "Microsoft.Compute/disks",
       "apiVersion": "2017-03-30",
@@ -975,11 +975,11 @@
         "creationData": {
           "createOption": "Empty"
         },
-        "diskSizeGB": 128
+        "diskSizeGB": 64
       }
     },
     {
-      "condition": "[equals(parameters('join2ndServerToFarm'), 'Yes')]",
+      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
       "name": "[variables('generalSettings').vmSP2Name]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
@@ -1044,7 +1044,7 @@
       ]
     },
     {
-      "condition": "[equals(parameters('join2ndServerToFarm'), 'Yes')]",
+      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
       "name": "[concat(variables('generalSettings').vmSP2Name,'/ConfigureSPVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[resourceGroup().location]",
@@ -1181,7 +1181,7 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('join2ndServerToFarm'), 'Yes'), not(equals(parameters('vmsAutoShutdownTime'), '9999')))]",
+      "condition": "[and(equals(parameters('addFrontEndToFarm'), 'Yes'), not(equals(parameters('vmsAutoShutdownTime'), '9999')))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmSP2').shutdownResourceName]",
       "apiVersion": "2016-05-15",

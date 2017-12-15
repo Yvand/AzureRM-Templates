@@ -9,16 +9,16 @@
       "value": "Standard_DS3_v2_Promo"
     },
     "dnsLabelPrefix": {
-      "value": "xxydspadfs"
+      "value": "ydspadfs"
     },
     "vmsTimeZone": {
       "value": "Romance Standard Time"
     },
-    "join2ndServerToFarm": {
+    "addFrontEndToFarm": {
       "value": "No"
     },
     "_artifactsLocation": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SharePoint-ADFS"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS"
     }
   }
 }
