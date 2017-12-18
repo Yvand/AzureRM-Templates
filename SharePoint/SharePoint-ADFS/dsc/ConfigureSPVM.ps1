@@ -442,7 +442,7 @@ configuration ConfigureSPVM
         SPDistributedCacheService EnableDistributedCache
         {
             Name                 = "AppFabricCachingService"
-            CacheSizeInMB        = 6000
+            CacheSizeInMB        = 2000
             CreateFirewallRules  = $true
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified

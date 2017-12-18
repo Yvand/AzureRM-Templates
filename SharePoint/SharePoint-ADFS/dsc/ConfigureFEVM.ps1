@@ -24,8 +24,6 @@ configuration ConfigureFEVM
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
-    [System.Management.Automation.PSCredential] $SPSuperUserCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSuperUserCreds.UserName)", $SPSuperUserCreds.Password)
-    [System.Management.Automation.PSCredential] $SPSuperReaderCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSuperReaderCreds.UserName)", $SPSuperReaderCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
     [String] $SPTrustedSitesName = "SPSites"
     [Int] $RetryCount = 30
@@ -219,6 +217,17 @@ configuration ConfigureFEVM
             RunCentralAdmin           = $false
             Ensure                    = "Present"
             DependsOn                 = "[Group]AddSPSetupAccountToAdminGroup"
+        }
+
+        SPDistributedCacheService EnableDistributedCache
+        {
+            Name                 = "AppFabricCachingService"
+            CacheSizeInMB        = 2000
+            CreateFirewallRules  = $true
+            ServiceAccount       = $SPSvcCredsQualified.UserName
+            InstallAccount       = $SPSetupCredsQualified
+            Ensure               = "Present"
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         xDnsRecord OverrideDNSRecord
