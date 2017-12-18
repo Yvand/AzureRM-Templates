@@ -189,7 +189,7 @@
       "vmDCName": "DC",
       "vmSQLName": "SQL",
       "vmSPName": "SP",
-      "vmSP2Name": "SP2",
+      "vmFEName": "FE",
       "spSuperUserName": "spSuperUser",
       "spSuperReaderName": "spSuperReader",
       "adfsSvcPassword": "[parameters('serviceAccountsPassword')]",
@@ -250,13 +250,13 @@
       "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSPName), '_', '-'))]",
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSPName)]"
     },
-    "vmSP2": {
-      "vmOSDiskName": "vm-SP2-OSDisk",
-      "vmDataDiskName": "vm-SP2-DataDisk",
-      "vmNicName": "[concat(variables('generalSettings').vmSP2Name, '-', 'nic-0')]",
-      "vmPublicIPName": "vmSP2-PublicIP",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSP2Name), '_', '-'))]",
-      "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSP2Name)]"
+    "vmFE": {
+      "vmOSDiskName": "vm-FE-OSDisk",
+      "vmDataDiskName": "vm-FE-DataDisk",
+      "vmNicName": "[concat(variables('generalSettings').vmFEName, '-', 'nic-0')]",
+      "vmPublicIPName": "vmFE-PublicIP",
+      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmFEName), '_', '-'))]",
+      "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmFEName)]"
     },
     "dscConfigureDCVM": {
       "fileName": "ConfigureDCVM.zip",
@@ -274,6 +274,12 @@
       "fileName": "ConfigureSPVM.zip",
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM",
+      "forceUpdateTag": "1.0"
+    },
+    "dscConfigureFEVM": {
+      "fileName": "ConfigureFEVM.zip",
+      "script": "ConfigureFEVM.ps1",
+      "function": "ConfigureFEVM",
       "forceUpdateTag": "1.0"
     }
   },
@@ -917,33 +923,33 @@
     },
     {
       "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
-      "name": "[variables('vmSP2').vmPublicIPName]",
+      "name": "[variables('vmFE').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [],
       "tags": {
-        "displayName": "[variables('vmSP2').vmPublicIPName]"
+        "displayName": "[variables('vmFE').vmPublicIPName]"
       },
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[variables('vmSP2').vmPublicIPDnsName]"
+          "domainNameLabel": "[variables('vmFE').vmPublicIPDnsName]"
         }
       }
     },
     {
       "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
-      "name": "[variables('vmSP2').vmNicName]",
+      "name": "[variables('vmFE').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP2').vmPublicIPName)]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmFE').vmPublicIPName)]"
       ],
       "tags": {
-        "displayName": "[variables('vmSP2').vmNicName]"
+        "displayName": "[variables('vmFE').vmNicName]"
       },
       "properties": {
         "ipConfigurations": [
@@ -955,7 +961,7 @@
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSPName)]"
               },
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP2').vmPublicIPName)]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmFE').vmPublicIPName)]"
               }
             }
           }
@@ -964,7 +970,7 @@
     },
     {
       "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
-      "name": "[variables('vmSP2').vmDataDiskName]",
+      "name": "[variables('vmFE').vmDataDiskName]",
       "type": "Microsoft.Compute/disks",
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
@@ -980,23 +986,23 @@
     },
     {
       "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
-      "name": "[variables('generalSettings').vmSP2Name]",
+      "name": "[variables('generalSettings').vmFEName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
       "apiVersion": "2017-03-30",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP2').vmNicName)]",
-        "[resourceId('Microsoft.Compute/disks', variables('vmSP2').vmDataDiskName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmFE').vmNicName)]",
+        "[resourceId('Microsoft.Compute/disks', variables('vmFE').vmDataDiskName)]"
       ],
       "tags": {
-        "displayName": "[variables('generalSettings').vmSP2Name]"
+        "displayName": "[variables('generalSettings').vmFEName]"
       },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSP').vmVmSize]"
         },
         "osProfile": {
-          "computerName": "[variables('generalSettings').vmSP2Name]",
+          "computerName": "[variables('generalSettings').vmFEName]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -1011,7 +1017,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('vmSP2').vmOSDiskName]",
+            "name": "[variables('vmFE').vmOSDiskName]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
@@ -1023,11 +1029,11 @@
           "dataDisks": [
             {
               "lun": 0,
-              "name": "[variables('vmSP2').vmDataDiskName]",
+              "name": "[variables('vmFE').vmDataDiskName]",
               "createOption": "Attach",
               "caching": "ReadWrite",
               "managedDisk": {
-                "id": "[resourceId('Microsoft.Compute/disks/', variables('vmSP2').vmDataDiskName)]"
+                "id": "[resourceId('Microsoft.Compute/disks/', variables('vmFE').vmDataDiskName)]"
               }
             }
           ]
@@ -1035,7 +1041,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP2').vmNicName)]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmFE').vmNicName)]"
             }
           ]
         }
@@ -1045,30 +1051,30 @@
     },
     {
       "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
-      "name": "[concat(variables('generalSettings').vmSP2Name,'/ConfigureSPVM')]",
+      "name": "[concat(variables('generalSettings').vmFEName,'/ConfigureFEVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
         "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSP2Name)]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
       ],
       "tags": {
-        "displayName": "[concat(variables('generalSettings').vmSP2Name,'/ConfigureSPVM')]"
+        "displayName": "[concat(variables('generalSettings').vmFEName,'/ConfigureFEVM')]"
       },
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
         "typeHandlerVersion": "2.9",
         "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[variables('dscConfigureSPVM').forceUpdateTag]",
+        "forceUpdateTag": "[variables('dscConfigureFEVM').forceUpdateTag]",
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[concat(parameters('_artifactsLocation'), '/', variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureSPVM').fileName, parameters('_artifactsLocationSasToken'))]",
-            "script": "[variables('dscConfigureSPVM').script]",
-            "function": "[variables('dscConfigureSPVM').function]"
+            "url": "[concat(parameters('_artifactsLocation'), '/', variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureFEVM').fileName, parameters('_artifactsLocationSasToken'))]",
+            "script": "[variables('dscConfigureFEVM').script]",
+            "function": "[variables('dscConfigureFEVM').function]"
           },
           "configurationArguments": {
             "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
@@ -1183,11 +1189,11 @@
     {
       "condition": "[and(equals(parameters('addFrontEndToFarm'), 'Yes'), not(equals(parameters('vmsAutoShutdownTime'), '9999')))]",
       "type": "Microsoft.DevTestLab/schedules",
-      "name": "[variables('vmSP2').shutdownResourceName]",
+      "name": "[variables('vmFE').shutdownResourceName]",
       "apiVersion": "2016-05-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSP2Name)]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
       ],
       "properties": {
         "status": "Enabled",
@@ -1200,7 +1206,7 @@
           "status": "Disabled",
           "timeInMinutes": 30
         },
-        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSP2Name)]"
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
       }
     }
   ],
