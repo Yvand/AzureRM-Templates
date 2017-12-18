@@ -41,7 +41,7 @@
       "defaultValue": "yvand",
       "minLength": 1,
       "metadata": {
-        "description": "Name of the AD and SharePoint administrator"
+        "description": "Name of the AD and SharePoint administrator. 'administrator' is not allowed"
       }
     },
     "adminPassword": {
@@ -111,7 +111,7 @@
       "defaultValue": "Standard_LRS",
       "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
       "metadata": {
-        "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
+        "description": "Type of storage for the managed disks. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
       }
     },
     "vmDCSize": {
@@ -126,7 +126,7 @@
       "defaultValue": "Premium_LRS",
       "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
       "metadata": {
-        "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
+        "description": "Type of storage for the managed disks. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
       }
     },
     "vmSQLSize": {
@@ -141,7 +141,7 @@
       "defaultValue": "Premium_LRS",
       "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
       "metadata": {
-        "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
+        "description": "Type of storage for the managed disks. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
       }
     },
     "vmSPSize": {
@@ -153,10 +153,10 @@
     },
     "vmsTimeZone": {
       "type": "string",
-      "defaultValue": "Central European Standard Time",
+      "defaultValue": "Romance Standard Time",
       "minLength": 2,
       "metadata": {
-        "description": "Time zone of the VMs. Type '[System.TimeZoneInfo]::GetSystemTimeZones().Id' to get the list. Note that 'UTC' works but 'UTC+xx' does NOT work."
+        "description": "Time zone of the VMs. Type '[TimeZoneInfo]::GetSystemTimeZones().Id' in PowerShell to get the list. Note that 'UTC' works but 'UTC+xx' does NOT work."
       }
     },
     "vmsAutoShutdownTime": {

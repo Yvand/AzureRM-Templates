@@ -132,7 +132,7 @@ configuration ConfigureSQLVM
             Ensure = "Present"
             ServerName = $ComputerName
             InstanceName = "MSSQLSERVER"
-            DependsOn = "[xSQLServerLogin]AddDomainAdminLogin"
+            DependsOn = "[SQLServerLogin]AddDomainAdminLogin"
         }
 
         SQLServerRole GrantSQLRoleSecurityAdmin
@@ -142,7 +142,7 @@ configuration ConfigureSQLVM
             ServerName = $ComputerName
             InstanceName = "MSSQLSERVER"
             Ensure = "Present"
-            DependsOn = "[xSQLServerLogin]AddSPSetupLogin"
+            DependsOn = "[SQLServerLogin]AddSPSetupLogin"
         }
 
         SQLServerRole GrantSQLRoleDBCreator
@@ -152,7 +152,7 @@ configuration ConfigureSQLVM
             ServerName = $ComputerName
             InstanceName = "MSSQLSERVER"
             Ensure = "Present"
-            DependsOn = "[xSQLServerLogin]AddSPSetupLogin"
+            DependsOn = "[SQLServerLogin]AddSPSetupLogin"
         }
 
         SQLServerMaxDop ConfigureMaxDOP
