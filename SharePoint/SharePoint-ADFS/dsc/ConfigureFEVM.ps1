@@ -241,6 +241,65 @@ configuration ConfigureFEVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
+
+        xCertReq SPSSiteCert
+        {
+            CARootName             = "$DomainNetbiosName-$DCName-CA"
+            CAServerFQDN           = "$DCName.$DomainFQDN"
+            Subject                = "$SPTrustedSitesName.$DomainFQDN"
+            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
+            KeyLength              = '2048'
+            Exportable             = $true
+            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                    = '1.3.6.1.5.5.7.3.1'
+            KeyUsage               = '0xa0'
+            CertificateTemplate    = 'WebServer'
+            AutoRenew              = $true
+            Credential             = $DomainAdminCredsQualified
+            DependsOn              = "[SPFarm]CreateSPFarm"
+        }
+
+        xScript SetHTTPSCertificate
+        {
+            SetScript =
+            {
+                $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "*.$using:DomainFQDN"
+
+                $website = Get-WebConfiguration -Filter '/system.applicationHost/sites/site' |
+                    Where-Object -FilterScript {$_.Name -eq "SharePoint - 443"}
+
+                $properties = @{
+                    protocol = "https"
+                    bindingInformation = ":443:"
+                    certificateStoreName = "MY"
+                    certificateHash = $siteCert.Thumbprint
+                }
+
+                Clear-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Force -ErrorAction Stop
+                Add-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Value @{
+                    protocol = $properties.protocol
+                    bindingInformation = $properties.bindingInformation
+                    certificateStoreName = $properties.certificateStoreName
+                    certificateHash = $properties.certificateHash
+                } -Force -ErrorAction Stop
+
+                if (!(Get-Item IIS:\SslBindings\*!443)) {
+                    New-Item IIS:\SslBindings\*!443 -value $siteCert
+                }
+
+                <# To implement only when the TestScript will be implemented and will determine that current config must be overwritten
+                # Otherwise, assume the right certificate is already used and binding doesn't need to be recreated
+                if ((Get-Item IIS:\SslBindings\*!443)) {
+                    Remove-Item IIS:\SslBindings\*!443 -Confirm:$false
+                }
+                New-Item IIS:\SslBindings\*!443 -value $siteCert
+                #>
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xCertReq]SPSSiteCert"
+        }
     }
 }
 
@@ -295,7 +354,7 @@ $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 
-ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.73.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
+ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.73.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
 Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.73.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
 Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.73.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM" -Wait -Verbose -Force
 
