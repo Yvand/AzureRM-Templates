@@ -11,9 +11,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSvcCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPAppPoolCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperUserCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
     Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate

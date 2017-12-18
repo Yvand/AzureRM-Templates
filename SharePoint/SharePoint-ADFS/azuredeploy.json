@@ -876,8 +876,7 @@
             "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
             "DCName": "[variables('generalSettings').vmDCName]",
-            "SQLName": "[variables('generalSettings').vmSQLName]",
-            "IsCAServer": true
+            "SQLName": "[variables('generalSettings').vmSQLName]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1080,8 +1079,7 @@
             "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
             "DCName": "[variables('generalSettings').vmDCName]",
-            "SQLName": "[variables('generalSettings').vmSQLName]",
-            "IsCAServer": false
+            "SQLName": "[variables('generalSettings').vmSQLName]"
           },
           "privacy": {
             "dataCollection": "enable"
