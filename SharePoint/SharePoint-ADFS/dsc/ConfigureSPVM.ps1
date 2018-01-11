@@ -540,7 +540,6 @@ configuration ConfigureSPVM
             ApplicationPool        = "SharePoint - 80"
             ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
             AllowAnonymous         = $false
-            AuthenticationMethod   = "NTLM"
             DatabaseName           = $SPDBPrefix + "Content_80"
             Url                    = "http://$SPTrustedSitesName/"
             Port                   = 80
@@ -591,8 +590,6 @@ configuration ConfigureSPVM
             WebAppUrl              = "http://$SPTrustedSitesName/"
             Name                   = "SharePoint - 443"
             AllowAnonymous         = $false
-            AuthenticationMethod   = "Claims"
-            AuthenticationProvider = $DomainFQDN
             Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
             Zone                   = "Intranet"
             UseSSL                 = $true
@@ -600,6 +597,24 @@ configuration ConfigureSPVM
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
             DependsOn              = '[xCertReq]SPSSiteCert'
+        }
+
+        SPWebAppAuthentication ConfigureWebAppAuthentication
+        {
+            WebAppUrl = "http://$SPTrustedSitesName/"
+            Default = @(
+                MSFT_SPWebAppAuthenticationMode {
+                    AuthenticationMethod = "NTLM"
+                }
+            )
+            Intranet = @(
+                MSFT_SPWebAppAuthenticationMode {
+                    AuthenticationMethod = "Federated"
+                    AuthenticationProvider = $DomainFQDN
+                }
+            )
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
         }
 
         xScript SetHTTPSCertificate
@@ -641,7 +656,7 @@ configuration ConfigureSPVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
+            DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
 
         SPCacheAccounts SetCacheAccounts
@@ -687,7 +702,6 @@ configuration ConfigureSPVM
             SocialDBName         = $SPDBPrefix + "UPA_Social"
             SyncDBName           = $SPDBPrefix + "UPA_Sync"
             EnableNetBIOS        = $false
-            FarmAccount          = $SPFarmCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]MySiteHost"
         }

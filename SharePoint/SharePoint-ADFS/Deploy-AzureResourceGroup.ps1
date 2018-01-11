@@ -41,12 +41,12 @@ else {
 Import-Module Azure -ErrorAction SilentlyContinue
 $azurecontext = $null
 $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
-if ($azurecontext -eq $null -or $azurecontext.Account -eq $null) {
+if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontext.Subscription -eq $null) {
     Write-Host "Launching Azure authentication prompt..." -ForegroundColor Green
     Login-AzureRmAccount
     $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 }
-if ($azurecontext -eq $null -or $azurecontext.Account -eq $null ){ 
+if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontext.Subscription -eq $null){ 
     Write-Host "Unable to get a valid context." -ForegroundColor Red
     return
 }

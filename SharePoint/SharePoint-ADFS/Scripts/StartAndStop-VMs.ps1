@@ -1,15 +1,14 @@
 ﻿$resourceGroupName = 'ydsp16adfs'
 $azurecontext = $null
 $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
-if ($azurecontext -eq $null) {
+if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontext.Subscription -eq $null){ 
     Login-AzureRmAccount
     $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 }
-if ($azurecontext -eq $null){ 
+if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontext.Subscription -eq $null){ 
     Write-Host "Unable to get a valid context." -ForegroundColor Red
     return
 }
-
 function Stop-VMs()
 {
     Write-Output "Stopping SP..."
