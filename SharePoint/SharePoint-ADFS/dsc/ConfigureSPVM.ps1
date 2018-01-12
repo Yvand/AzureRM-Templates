@@ -183,7 +183,7 @@ configuration ConfigureSPVM
         {
             GroupName            ='Administrators'
             Ensure               = 'Present'
-            MembersToInclude     = "$($SPSetupCredsQualified.UserName); $($SPFarmCredsQualified.UserName)"
+            MembersToInclude     = @("$($SPSetupCredsQualified.UserName)", "$($SPFarmCredsQualified.UserName)")
             Credential           = $DomainAdminCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[xADUser]CreateSPSetupAccount", "[xADUser]CreateSParmAccount"
