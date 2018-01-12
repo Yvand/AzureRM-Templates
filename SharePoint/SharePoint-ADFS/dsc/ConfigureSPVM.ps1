@@ -165,17 +165,7 @@ configuration ConfigureSPVM
             Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
             DependsOn                     = "[xComputer]DomainJoin"
-        }
-
-        Group AddSPSetupAccountToAdminGroup
-        {
-            GroupName            ='Administrators'
-            Ensure               = 'Present'
-            MembersToInclude     = $SPSetupCredsQualified.UserName
-            Credential           = $DomainAdminCredsQualified
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xADUser]CreateSPSetupAccount"
-        }
+        }        
 
         xADUser CreateSParmAccount
         {
@@ -186,6 +176,17 @@ configuration ConfigureSPVM
             Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
             DependsOn                     = "[xComputer]DomainJoin"
+        }
+
+        <# Temporarily add farm account to admin group to deal with bug in SPUserProfileServiceApp introduced in SharePointDsc 2.0 - https://github.com/PowerShell/SharePointDsc/issues/709 #>
+        Group AddSPSetupAccountToAdminGroup
+        {
+            GroupName            ='Administrators'
+            Ensure               = 'Present'
+            MembersToInclude     = "$($SPSetupCredsQualified.UserName); $($SPFarmCredsQualified.UserName)"
+            Credential           = $DomainAdminCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xADUser]CreateSPSetupAccount", "[xADUser]CreateSParmAccount"
         }
 
         xADUser CreateSPSvcAccount
