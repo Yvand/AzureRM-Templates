@@ -133,41 +133,13 @@ configuration ConfigureFEVM
         xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[xComputer]DomainJoin"}
 
         #********************************************************************
-        # Wait for SQL Server and central admin SharePoint server to be ready
+        # Wait for SQL Server and first SharePoint server to be ready
         #********************************************************************
-        xScript WaitForSQL
-        {
-            SetScript =
-            {
-                $retryCount = $using:RetryIntervalSec
-                $server = $using:SQLName
-                $db="master"
-                $retry = $true
-                while ($retry) {
-                    $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
-                    try {
-                        $sqlConnection.Open()
-                        Write-Verbose "Connection to SQL Server $server succeeded"
-                        $sqlConnection.Close()
-                        $retry = $false
-                    }
-                    catch {
-                        Write-Verbose "SQL connection to $server failed, retry in $retryCount secs..."
-                        Start-Sleep -s $retryCount
-                    }
-                }
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xComputer]DomainJoin"
-        }
-
         xScript WaitForWebAppContentDatabase
         {
             SetScript =
             {
-                $retryCount = $using:RetryIntervalSec
+                $retrySleep = $using:RetryIntervalSec
                 $server = $using:SQLName
                 $db= $using:SPDBPrefix + "Content_80"
                 $retry = $true
@@ -180,15 +152,40 @@ configuration ConfigureFEVM
                         $retry = $false
                     }
                     catch {
-                        Write-Verbose "SQL connection to $server failed, retry in $retryCount secs..."
-                        Start-Sleep -s $retryCount
+                        Write-Verbose "SQL connection to $server failed, retry in $retrySleep secs..."
+                        Start-Sleep -s $retrySleep
                     }
                 }
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]WaitForSQL"
+            DependsOn            = "[xComputer]DomainJoin"
+        }
+
+        # Should not join farm before Intranet zone is created on first server, otherwise web application may not provision correctly in FE
+        xScript WaitForHTTPSSite
+        {
+            SetScript =
+            {
+                $retrySleep = $using:RetryIntervalSec
+                $url = "https://$($using:SPTrustedSitesName).$($using:DomainFQDN)"
+                $retry = $true
+                while ($retry) {
+                    try {
+                        Invoke-WebRequest -Uri $url -UseBasicParsing
+                        $retry = $false
+                    }
+                    catch {
+                        Write-Verbose "Connection to $url failed, retry in $retrySleep secs..."
+                        Start-Sleep -s $retrySleep
+                    }
+                }
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xScript]WaitForWebAppContentDatabase"
         }
 
         #**********************************************************
@@ -201,7 +198,7 @@ configuration ConfigureFEVM
             MembersToInclude     = $SPSetupCredsQualified.UserName
             Credential           = $DomainAdminCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]WaitForWebAppContentDatabase"
+            DependsOn            = "[xScript]WaitForHTTPSSite"
         }
 
         SPFarm CreateSPFarm

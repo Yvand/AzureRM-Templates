@@ -5,6 +5,10 @@ param(
     [string]$vmName = "*"
 )
 
+<#
+-vmName "FE"
+#>
+
 $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontext.Subscription -eq $null) {
     Write-Host "Launching Azure authentication prompt..." -ForegroundColor Green

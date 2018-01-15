@@ -366,7 +366,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                $retryCount = $using:RetryIntervalSec
+                $retrySleep = $using:RetryIntervalSec
                 $server = $using:SQLName
                 $db="master"
                 $retry = $true
@@ -379,8 +379,8 @@ configuration ConfigureSPVM
                         $retry = $false
                     }
                     catch {
-                        Write-Verbose "SQL connection to $server failed, retry in $retryCount secs..."
-                        Start-Sleep -s $retryCount
+                        Write-Verbose "SQL connection to $server failed, retry in $retrySleep secs..."
+                        Start-Sleep -s $retrySleep
                     }
                 }
             }
