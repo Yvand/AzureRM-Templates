@@ -1,20 +1,14 @@
 param(
     [string[]] $VMsToDelete = @("SP", "SQL", "DC"),
-    [string] $ResourceGroupLocation = "westeurope",
-    [Parameter(Mandatory)] [string] $StorageAccount,
-    [string] $BlobStorageContainer = "vhds"
+    [string] $ResourceGroupLocation = "westeurope"
 )
 
 <#
--VMsToDelete @("SP") -StorageAccount "xxydsp16adfsst"
 $ResourceGroupLocation = 'westeurope'
 $resourceGroupName = 'ydsp16adfs'
 $resourceGroupName = 'xydsp16adfs'
-$StorageAccount = "ydsp16adfsst"
-$StorageAccount = "xydsp16adfsst"
-$BlobStorageContainer = "vhds"
 $VMsToDelete = @("SP", "SQL", "DC")
-$VMsToDelete = @("SP", "SQL")
+$VMsToDelete = @("SP", "FE")
 #$VMsToDelete = @("SP")
 #>
 
@@ -30,7 +24,6 @@ if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontex
     return
 }
 
-Set-AzureRmCurrentStorageAccount -ResourceGroupName $resourceGroupName -StorageAccountName $StorageAccount 
 Get-AzureRmContext
 
 <#
@@ -58,17 +51,16 @@ function Delete-VMs($VMsToDelete) {
         $disksNames += $vm.StorageProfile.OsDisk.Name
         $vm.StorageProfile.DataDisks| %{$disksNames += $_.Name}
         
-        Write-Output "Removing VM $vmToDelete..."
+        Write-Host "Removing VM $vmToDelete..." -ForegroundColor Magenta
         Remove-AzureRmVM -ResourceGroupName $resourceGroupName -Name $vmToDelete -Force
 
-        #Get-AzureStorageContainer -Name $BlobStorageContainer | Get-AzureStorageBlob | ft Name
         $disksNames| Foreach-Object -Process {
-            Write-Output "Removing disk $_..."
-            Remove-AzureStorageBlob -Container $BlobStorageContainer -Blob $_".vhd"
+            Write-Host "Removing disk $_..." -ForegroundColor Magenta
+            Remove-AzureRmDisk -ResourceGroupName $resourceGroupName -DiskName "$_" -Force;
         }
-        Write-Output "VM $vmToDelete deleted."
+        Write-Host "VM $vmToDelete deleted." -ForegroundColor Magenta
     }
 }
 
 Delete-VMs $VMsToDelete
-Write-Output "Finished."
+Write-Host "Finished." -ForegroundColor Magenta
