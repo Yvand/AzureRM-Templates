@@ -38,6 +38,7 @@ configuration ConfigureSPVM
     [String] $UpaServiceName = "User Profile Service Application"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
+    [String] $SetupPath = "F:\Setup"
 
     Node localhost
     {
@@ -252,7 +253,7 @@ configuration ConfigureSPVM
             Type            = "Directory"
             Recurse         = $true
             SourcePath      = "\\$DCName\C$\Setup"
-            DestinationPath = "F:\Setup\Certificates"
+            DestinationPath = "$SetupPath\Certificates"
             Credential      = $DomainAdminCredsQualified
             DependsOn       = "[File]AccountsProvisioned"
         }
@@ -260,7 +261,7 @@ configuration ConfigureSPVM
         xRemoteFile DownloadLdapcp
         {
             Uri             = $LdapcpLink
-            DestinationPath = "F:\Setup\LDAPCP.wsp"
+            DestinationPath = "$SetupPath\LDAPCP.wsp"
             DependsOn       = "[File]AccountsProvisioned"
         }
 
@@ -268,7 +269,7 @@ configuration ConfigureSPVM
         xRemoteFile Download201612CU
         {
             Uri             = "https://download.microsoft.com/download/D/0/4/D04FD356-E140-433E-94F6-472CF45FD591/sts2016-kb3128014-fullfile-x64-glb.exe"
-            DestinationPath = "F:\Setup\sts2016-kb3128014-fullfile-x64-glb.exe"
+            DestinationPath = "$SetupPath\sts2016-kb3128014-fullfile-x64-glb.exe"
             MatchSource = $false
             DependsOn = "[File]AccountsProvisioned"
         }
@@ -278,8 +279,8 @@ configuration ConfigureSPVM
             SetScript =
             {
                 $cuBuildNUmber = "16.0.4471.1000"
-                $updateLocation = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe"
-                $cuInstallLogPath = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe.install.log"
+                $updateLocation = "$SetupPath\sts2016-kb3128014-fullfile-x64-glb.exe"
+                $cuInstallLogPath = "$SetupPath\sts2016-kb3128014-fullfile-x64-glb.exe.install.log"
                 $setup = Start-Process -FilePath $updateLocation -ArgumentList "/log:`"$CuInstallLogPath`" /quiet /passive /norestart" -Wait -PassThru
 
                 if ($setup.ExitCode -eq 0) {
@@ -354,7 +355,7 @@ configuration ConfigureSPVM
             InstalledCheckRegKey = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{90160000-1014-0000-1000-0000000FF1CE}_Office16.OSERVER_{ECE043F3-EEF8-4070-AF9B-D805C42A8ED4}"
             InstalledCheckRegValueName = "DisplayName"
             InstalledCheckRegValueData = "Update for Microsoft SharePoint Enterprise Server 2016 (KB3128014) 64-Bit Edition"
-            Path = "F:\setup\sts2016-kb3128014-fullfile-x64-glb.exe"
+            Path = "$SetupPath\sts2016-kb3128014-fullfile-x64-glb.exe"
             Arguments = "/q"
             RunAsCredential = $DomainAdminCredsQualified
             ReturnCode = @( 0, 1641, 3010, 17025 )
@@ -466,7 +467,7 @@ configuration ConfigureSPVM
 
         SPFarmSolution InstallLdapcp
         {
-            LiteralPath          = "F:\Setup\LDAPCP.wsp"
+            LiteralPath          = "$SetupPath\LDAPCP.wsp"
             Name                 = "LDAPCP.wsp"
             Deployed             = $true
             Ensure               = "Present"
@@ -491,7 +492,7 @@ configuration ConfigureSPVM
                     IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 }
             )
-            SigningCertificateFilePath   = "F:\Setup\Certificates\ADFS Signing.cer"
+            SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
             ClaimProviderName            = "LDAPCP"
             #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
             Ensure                       = "Present"
@@ -556,7 +557,7 @@ configuration ConfigureSPVM
                 # CA root cert must be added to trusted root authorities, otherwise xCertReq resource may fail to generate HTTPS site certificate with this error:
                 # Certificate Request Processor: A certificate chain processed, but terminated in a root certificate which is not trusted by the trust provider. 0x800b0109
                 try {
-                    $file = ( Get-ChildItem -Path "F:\Setup\Certificates\ADFS Signing issuer.cer" )
+                    $file = ( Get-ChildItem -Path "$SetupPath\Certificates\ADFS Signing issuer.cer" )
                     $file | Import-Certificate -CertStoreLocation "cert:\LocalMachine\Root" -ErrorAction SilentlyContinue
                 } catch {
                     # It may fail with following error: System.InvalidOperationException: The set script threw an error. ---> System.UnauthorizedAccessException: Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))
@@ -745,7 +746,7 @@ configuration ConfigureSPVM
 
                     foreach ($siteUrl in $sitesToUpdate) {
                         $spsite = Get-SPSite $siteUrl
-                        $spsite| fl *| Out-File f:\setup\test.txt
+                        $spsite| fl *| Out-File $SetupPath\test.txt
                         Write-Verbose -Message "site $($spsite.Title) has template $($spsite.RootWeb.WebTemplate)"
                         if ($spsite.RootWeb.WebTemplate -like "STS") {
                             Write-Verbose -Message "Updating site $siteUrl with $owner1 and $($spsite.Url)"
@@ -918,6 +919,15 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]AppCatalog"
         }#>
+
+        File DirectoryCopy
+        {
+            Type = "File"
+            Contents = "DSC Configuration Finished successfully."
+            DestinationPath = "$SetupPath\Finished.txt"
+            Ensure = "Present"
+            DependsOn = "[Script]ConfigureSTSAndMultipleZones"
+        }
     }
 }
 

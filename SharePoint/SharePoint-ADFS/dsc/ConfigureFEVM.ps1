@@ -53,8 +53,10 @@ configuration ConfigureFEVM
             DependsOn      ="[WindowsFeature]ADPS"
         }
 
+        <# Not needed anymore since SharePointDsc v2.0
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" }
         xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
+        #>
 
         #**********************************************************
         # Join AD forest
@@ -65,7 +67,7 @@ configuration ConfigureFEVM
             RetryCount           = $RetryCount
             RetryIntervalSec     = $RetryIntervalSec
             DomainUserCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xCredSSP]CredSSPClient"
+            DependsOn            = "[xDnsServerAddress]DnsServerAddress"
         }
 
         xComputer DomainJoin
@@ -76,6 +78,7 @@ configuration ConfigureFEVM
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
+        <# Not needed anymore since SharePointDsc v2.0
         xScript CreateWSManSPNsIfNeeded
         {
             SetScript =
@@ -109,7 +112,7 @@ configuration ConfigureFEVM
                 }
             }
             DependsOn="[xComputer]DomainJoin"
-        }
+        }#>
 
         #**********************************************************
         # Do some cleanup and preparation for SharePoint
@@ -131,6 +134,16 @@ configuration ConfigureFEVM
         xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
         xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
         xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[xComputer]DomainJoin"}
+
+        Group AddSPSetupAccountToAdminGroup
+        {
+            GroupName            ='Administrators'
+            Ensure               = 'Present'
+            MembersToInclude     = $SPSetupCredsQualified.UserName
+            Credential           = $DomainAdminCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xComputer]DomainJoin"
+        }
 
         #********************************************************************
         # Wait for SQL Server and first SharePoint server to be ready
@@ -163,7 +176,7 @@ configuration ConfigureFEVM
             DependsOn            = "[xComputer]DomainJoin"
         }
 
-        # Should not join farm before Intranet zone is created on first server, otherwise web application may not provision correctly in FE
+        <# Should not join farm before Intranet zone is created on first server, otherwise web application may not provision correctly in FE
         xScript WaitForHTTPSSite
         {
             SetScript =
@@ -186,22 +199,35 @@ configuration ConfigureFEVM
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[xScript]WaitForWebAppContentDatabase"
+        }#>
+
+        xScript WaitForAppServer
+        {
+            SetScript =
+            {
+                $retry = $true
+                $retrySleep = $using:RetryIntervalSec
+                $spAppServerName = "SP"
+                $fileName = "Finished.txt"
+                $fullPath = "\\$spAppServerName\F$\Setup\$fileName"
+                while ($retry) {
+                    if ((Get-Item $fullPath -ErrorAction SilentlyContinue) -ne $null){   
+                        $retry = $false
+                    }
+                    Write-Verbose "File '$fullPath' not found on server '$spAppServerName', retry in $retrySleep secs..."
+                    Start-Sleep -s $retrySleep
+                }
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xScript]WaitForWebAppContentDatabase"
         }
 
         #**********************************************************
         # Join SharePoint farm
         #**********************************************************
-        Group AddSPSetupAccountToAdminGroup
-        {
-            GroupName            ='Administrators'
-            Ensure               = 'Present'
-            MembersToInclude     = $SPSetupCredsQualified.UserName
-            Credential           = $DomainAdminCredsQualified
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]WaitForHTTPSSite"
-        }
-
-        SPFarm CreateSPFarm
+        SPFarm JoinSPFarm
         {
             DatabaseServer            = $SQLName
             FarmConfigDatabaseName    = $SPDBPrefix + "Config"
@@ -224,7 +250,7 @@ configuration ConfigureFEVM
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
             Ensure               = "Present"
-            DependsOn            = "[SPFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
         xDnsRecord OverrideDNSRecord
@@ -236,7 +262,7 @@ configuration ConfigureFEVM
             Type                 = "CName"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
+            DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
         xCertReq SPSSiteCert
@@ -253,7 +279,7 @@ configuration ConfigureFEVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[SPFarm]CreateSPFarm"
+            DependsOn              = "[SPFarm]JoinSPFarm"
         }
 
         xScript SetHTTPSCertificate
