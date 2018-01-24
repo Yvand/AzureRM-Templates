@@ -53,10 +53,8 @@ configuration ConfigureFEVM
             DependsOn      ="[WindowsFeature]ADPS"
         }
 
-        <# Not needed anymore since SharePointDsc v2.0
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" }
         xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
-        #>
 
         #**********************************************************
         # Join AD forest
@@ -67,7 +65,7 @@ configuration ConfigureFEVM
             RetryCount           = $RetryCount
             RetryIntervalSec     = $RetryIntervalSec
             DomainUserCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xDnsServerAddress]DnsServerAddress"
+            DependsOn            = "[xCredSSP]CredSSPClient"
         }
 
         xComputer DomainJoin
@@ -78,7 +76,6 @@ configuration ConfigureFEVM
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
-        <# Not needed anymore since SharePointDsc v2.0
         xScript CreateWSManSPNsIfNeeded
         {
             SetScript =
@@ -112,7 +109,7 @@ configuration ConfigureFEVM
                 }
             }
             DependsOn="[xComputer]DomainJoin"
-        }#>
+        }
 
         #**********************************************************
         # Do some cleanup and preparation for SharePoint
