@@ -719,17 +719,6 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebApplication]MainWebApp"
         }
 
-        SPSite TeamSite
-        {
-            Url                  = "http://$SPTrustedSitesName/sites/team"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "Team site"
-            Template             = "STS#0"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
-        }
-
         <#xScript CreateDefaultGroupsInTeamSites
         {
             SetScript = {
@@ -818,6 +807,17 @@ configuration ConfigureSPVM
             DatabaseName         = "$($SPDBPrefix)AppManagement"
             InstallAccount       = $DomainAdminCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
+        }
+
+        SPSite TeamSite
+        {
+            Url                  = "http://$SPTrustedSitesName/sites/team"
+            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                 = "Team site"
+            Template             = "STS#0"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplication]MainWebApp"
         }
 
         xDnsRecord AddAddinDNSWildcard
