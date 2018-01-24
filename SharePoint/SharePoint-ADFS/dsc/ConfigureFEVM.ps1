@@ -204,14 +204,14 @@ configuration ConfigureFEVM
             {
                 $retry = $true
                 $retrySleep = $using:RetryIntervalSec
-                $spAppServerName = "SP"
-                $fileName = "Finished.txt"
-                $fullPath = "\\$spAppServerName\F$\Setup\$fileName"
+                $serverName = $using:DCName
+                $fileName = "SPDSCFinished.txt"
+                $fullPath = "\\$serverName\F$\Setup\$fileName"
                 while ($retry) {
                     if ((Get-Item $fullPath -ErrorAction SilentlyContinue) -ne $null){   
                         $retry = $false
                     }
-                    Write-Verbose "File '$fullPath' not found on server '$spAppServerName', retry in $retrySleep secs..."
+                    Write-Verbose "File '$fullPath' not found on server '$serverName', retry in $retrySleep secs..."
                     Start-Sleep -s $retrySleep
                 }
             }

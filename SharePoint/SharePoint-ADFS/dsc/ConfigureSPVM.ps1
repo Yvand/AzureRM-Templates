@@ -39,6 +39,7 @@ configuration ConfigureSPVM
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
     [String] $SetupPath = "F:\Setup"
+    [String] $DCSetupPath = "\\$DCName\C$\Setup"
 
     Node localhost
     {
@@ -252,7 +253,7 @@ configuration ConfigureSPVM
             Ensure          = "Present"
             Type            = "Directory"
             Recurse         = $true
-            SourcePath      = "\\$DCName\C$\Setup"
+            SourcePath      = "$DCSetupPath"
             DestinationPath = "$SetupPath\Certificates"
             Credential      = $DomainAdminCredsQualified
             DependsOn       = "[File]AccountsProvisioned"
@@ -923,8 +924,8 @@ configuration ConfigureSPVM
         File DirectoryCopy
         {
             Type = "File"
-            Contents = "DSC Configuration Finished successfully."
-            DestinationPath = "$SetupPath\Finished.txt"
+            Contents = "DSC Configuration on $ComputerName finished successfully."
+            DestinationPath = "$DCSetupPath\SPDSCFinished.txt"
             Ensure = "Present"
             DependsOn = "[Script]ConfigureSTSAndMultipleZones"
         }
