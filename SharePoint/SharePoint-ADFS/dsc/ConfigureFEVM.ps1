@@ -206,7 +206,7 @@ configuration ConfigureFEVM
                 $retrySleep = $using:RetryIntervalSec
                 $serverName = $using:DCName
                 $fileName = "SPDSCFinished.txt"
-                $fullPath = "\\$serverName\F$\Setup\$fileName"
+                $fullPath = "\\$serverName\C$\Setup\$fileName"
                 while ($retry) {
                     if ((Get-Item $fullPath -ErrorAction SilentlyContinue) -ne $null){   
                         $retry = $false

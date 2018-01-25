@@ -923,11 +923,12 @@ configuration ConfigureSPVM
 
         File DirectoryCopy
         {
-            Type = "File"
-            Contents = "DSC Configuration on $ComputerName finished successfully."
-            DestinationPath = "$DCSetupPath\SPDSCFinished.txt"
-            Ensure = "Present"
-            DependsOn = "[Script]ConfigureSTSAndMultipleZones"
+            Type                 = "File"
+            Contents             = "DSC Configuration on $ComputerName finished successfully."
+            DestinationPath      = "$DCSetupPath\SPDSCFinished.txt"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[Script]ConfigureSTSAndMultipleZones"
         }
     }
 }
