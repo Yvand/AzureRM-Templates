@@ -16,9 +16,3 @@ This template deploys a full SharePoint 2013 or 2016 environment with 3 VMs (DC,
 </a>
 
 With the default sizes of virtual machines, provisioning of the template takes about 1h to complete.
-
-## Known issues or limitations
-
-### On 2nd SharePoint VM
-
-Optionally, a FrontEnd can be added to SharePoint farm, but DSC deployment on this VM currently fails.
