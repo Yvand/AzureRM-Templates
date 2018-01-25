@@ -921,12 +921,20 @@ configuration ConfigureSPVM
             DependsOn            = "[SPSite]AppCatalog"
         }#>
 
-        File DirectoryCopy
+        # DSC resource File throws an access denied when accessing a remote location, so use xScript instead
+        xScript CreateDSCCompletionFile
         {
-            Type                 = "File"
-            Contents             = "DSC Configuration on $ComputerName finished successfully."
-            DestinationPath      = "$DCSetupPath\SPDSCFinished.txt"
-            Ensure               = "Present"
+            SetScript =
+            {
+                $SetupPath = $using:DCSetupPath
+                $ComputerName = $using:ComputerName
+                $DestinationPath = "$SetupPath\SPDSCFinished.txt"
+                $Contents = "DSC Configuration on $ComputerName finished successfully."
+                # Do not overwrite and do not throw an exception if file already exists
+                New-Item $DestinationPath -Type file -Value $Contents -ErrorAction SilentlyContinue
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Script]ConfigureSTSAndMultipleZones"
         }
@@ -1017,8 +1025,8 @@ $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.73.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.73.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.73.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM" -Wait -Verbose -Force
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM" -Wait -Verbose -Force
 
 #>
