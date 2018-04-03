@@ -948,6 +948,8 @@ function Get-LatestGitHubRelease
         [string] $Repo,
         [string] $Artifact
     )
+    # Force protocol TLS 1.2 to avoid TLS/SSL error when downloading from GitHub, as documented in https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-update-1802
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     # Found in https://blog.markvincze.com/download-artifacts-from-a-latest-github-release-in-sh-and-powershell/
     $latestRelease = Invoke-WebRequest https://github.com/$Repo/releases/latest -Headers @{"Accept"="application/json"} -UseBasicParsing
     $json = $latestRelease.Content | ConvertFrom-Json
