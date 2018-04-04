@@ -4,7 +4,7 @@
 ### Define variables
 $resourceGroupLocation = 'westeurope'
 #$resourceGroupLocation = 'northeurope'
-$resourceGroupName = 'xydspadfs'
+$resourceGroupName = 'ydspadfs'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
@@ -16,16 +16,10 @@ $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combin
 Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 ### Define passwords
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
-if ($securePassword -eq $null) { $securePassword = Read-Host "Enter the password" -AsSecureString }
+if ($securePassword -eq $null) { $securePassword = Read-Host "Type the password of admin and service accounts:" -AsSecureString }
 $passwords = New-Object -TypeName HashTable
 $passwords['adminPassword'] = $securePassword
 $passwords['serviceAccountsPassword'] = $securePassword
-<#$passwords['sqlSvcPassword'] = $securePassword
-$passwords['spSetupPassword'] = $securePassword
-$passwords['spFarmPassword'] = $securePassword
-$passwords['spSvcPassword'] = $securePassword
-$passwords['spAppPoolPassword'] = $securePassword
-$passwords['spPassphrase'] = $securePassword#>
 
 ### Parse the parameters file
 $JsonContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
