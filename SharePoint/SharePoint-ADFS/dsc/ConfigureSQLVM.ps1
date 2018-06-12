@@ -15,9 +15,9 @@ configuration ConfigureSQLVM
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
-    [PSCredential] $DomainCreds = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
-    [PSCredential] $SPSCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
-    [PSCredential] $SQLCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
+    [PSCredential] $DomainAdminCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
+    [PSCredential] $SPSetupCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
+    [PSCredential] $SQLCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
     $ComputerName = Get-Content env:computername
     [Int] $RetryCount = 30
     [Int] $RetryIntervalSec = 30
@@ -45,13 +45,14 @@ configuration ConfigureSQLVM
             LocalPort = "1433"
             Ensure = "Present"
         }
+
         WindowsFeature ADPS
         {
             Name = "RSAT-AD-PowerShell"
             Ensure = "Present"
             DependsOn = "[xFirewall]DatabaseEngineFirewallRule"
-
         }
+
         xDnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
@@ -66,7 +67,7 @@ configuration ConfigureSQLVM
         xWaitForADDomain DscForestWait
         {
             DomainName = $DomainFQDN
-            DomainUserCredential= $DomainCreds
+            DomainUserCredential= $DomainAdminCredsQualified
             RetryCount = $RetryCount
             RetryIntervalSec = $RetryIntervalSec
             DependsOn = "[xDnsServerAddress]DnsServerAddress"
@@ -76,7 +77,7 @@ configuration ConfigureSQLVM
         {
             Name = $ComputerName
             DomainName = $DomainFQDN
-            Credential = $DomainCreds
+            Credential = $DomainAdminCredsQualified
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
@@ -85,10 +86,10 @@ configuration ConfigureSQLVM
         #**********************************************************
         xADUser CreateSqlSvcAccount
         {
-            DomainAdministratorCredential = $DomainCreds
+            DomainAdministratorCredential = $DomainAdminCredsQualified
             DomainName = $DomainFQDN
             UserName = $SqlSvcCreds.UserName
-            Password = $SQLCreds
+            Password = $SQLCredsQualified
             PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
@@ -96,10 +97,10 @@ configuration ConfigureSQLVM
 
         xADUser CreateSPSetupAccount
         {
-            DomainAdministratorCredential = $DomainCreds
+            DomainAdministratorCredential = $DomainAdminCredsQualified
             DomainName = $DomainFQDN
             UserName = $SPSetupCreds.UserName
-            Password = $SPSCreds
+            Password = $SPSetupCredsQualified
             PasswordNeverExpires = $true
             Ensure = "Present"
             DependsOn = "[xComputer]DomainJoin"
@@ -157,13 +158,23 @@ configuration ConfigureSQLVM
 
         SQLServerMaxDop ConfigureMaxDOP
         {
-            ServerName = $ComputerName
+            ServerName   = $ComputerName
             InstanceName = "MSSQLSERVER"
-            MaxDop = 1
-            DependsOn = "[xComputer]DomainJoin"
+            MaxDop       = 1
+            DependsOn    = "[xComputer]DomainJoin"
+        }
+
+        SqlServiceAccount SetSqlInstanceServiceAccount
+        {
+            ServerName     = $ComputerName
+            InstanceName   = "MSSQLSERVER"
+            ServiceType    = "DatabaseEngine"
+            ServiceAccount = $SQLCredsQualified
+            RestartService = $true
         }
     }
 }
+
 function Get-NetBIOSName
 {
     [OutputType([string])]
@@ -187,6 +198,7 @@ function Get-NetBIOSName
         }
     }
 }
+
 function WaitForSqlSetup
 {
     # Wait for SQL Server Setup to finish before proceeding.

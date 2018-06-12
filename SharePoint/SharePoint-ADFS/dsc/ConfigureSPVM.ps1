@@ -6,6 +6,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [String]$DomainFQDN,
         [Parameter(Mandatory)] [String]$DCName,
         [Parameter(Mandatory)] [String]$SQLName,
+        [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -16,7 +17,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate
+    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -265,12 +266,23 @@ configuration ConfigureSPVM
             DependsOn       = "[File]AccountsProvisioned"
         }
 
+        SqlAlias AddSqlAlias
+        {
+            Ensure               = "Present"
+            Name                 = "SQLAlias-TCP"
+            ServerName           = $SQLName
+            Protocol             = "TCP"
+            TcpPort              = 1433
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[File]AccountsProvisioned"
+        }
+
         xScript WaitForSQL
         {
             SetScript =
             {
                 $retrySleep = $using:RetryIntervalSec
-                $server = $using:SQLName
+                $server = $using:SQLAlias
                 $db="master"
                 $retry = $true
                 while ($retry) {
@@ -290,7 +302,7 @@ configuration ConfigureSPVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xRemoteFile]DownloadLdapcp"
+            DependsOn            = "[SqlAlias]AddSqlAlias"
         }
 
         #**********************************************************
@@ -298,7 +310,7 @@ configuration ConfigureSPVM
         #**********************************************************
         SPFarm CreateSPFarm
         {
-            DatabaseServer            = $SQLName
+            DatabaseServer            = $SQLAlias
             FarmConfigDatabaseName    = $SPDBPrefix + "Config"
             Passphrase                = $SPPassphraseCreds
             FarmAccount               = $SPFarmCredsQualified
@@ -765,7 +777,17 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebApplication]MainWebApp"
         }
 
-        Script ConfigureSTSAndMultipleZones
+        SPSecurityTokenServiceConfig ConfigureSTS
+        {
+            Name                  = "SecurityTokenServiceManager"
+            UseSessionCookies     = $false
+            AllowOAuthOverHttp    = $true
+            AllowMetadataOverHttp = $true
+            PsDscRunAsCredential  = $SPSetupCredsQualified
+            DependsOn             = "[SPAppDomain]ConfigureLocalFarmAppUrls"
+        }
+
+        Script ConfigureAppDomains
         {
             SetScript = {
                 $argumentList = @(@{ "webAppUrl"             = "http://$using:SPTrustedSitesName";
@@ -774,10 +796,10 @@ configuration ConfigureSPVM
                 Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
                     $params = $args[0]
 
-                    # Configure STS
-                    $serviceConfig = Get-SPSecurityTokenServiceConfig
-                    $serviceConfig.AllowOAuthOverHttp = $true
-                    $serviceConfig.Update()
+                    # # Configure STS
+                    # $serviceConfig = Get-SPSecurityTokenServiceConfig
+                    # $serviceConfig.AllowOAuthOverHttp = $true
+                    # $serviceConfig.Update()
 
                     # Configure app domains in zones of the web application
                     $webAppUrl = $params.webAppUrl
@@ -837,7 +859,7 @@ configuration ConfigureSPVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[Script]ConfigureSTSAndMultipleZones"
+            DependsOn            = "[Script]ConfigureAppDomains"
         }
     }
 }
@@ -927,6 +949,7 @@ $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
+$SQLAlias = "SQLAlias"
 
 ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
 Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
