@@ -180,12 +180,11 @@ configuration ConfigureSPVM
             DependsOn                     = "[xComputer]DomainJoin"
         }
 
-        <# Temporarily add farm account to admin group to deal with bug in SPUserProfileServiceApp introduced in SharePointDsc 2.0 - https://github.com/PowerShell/SharePointDsc/issues/709 #>
         Group AddSPSetupAccountToAdminGroup
         {
-            GroupName            ='Administrators'
-            Ensure               = 'Present'
-            MembersToInclude     = @("$($SPSetupCredsQualified.UserName)", "$($SPFarmCredsQualified.UserName)")
+            GroupName            = "Administrators"
+            Ensure               = "Present"
+            MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
             Credential           = $DomainAdminCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[xADUser]CreateSPSetupAccount", "[xADUser]CreateSParmAccount"
@@ -265,104 +264,6 @@ configuration ConfigureSPVM
             DestinationPath = "$SetupPath\LDAPCP.wsp"
             DependsOn       = "[File]AccountsProvisioned"
         }
-
-        <#
-        xRemoteFile Download201612CU
-        {
-            Uri             = "https://download.microsoft.com/download/D/0/4/D04FD356-E140-433E-94F6-472CF45FD591/sts2016-kb3128014-fullfile-x64-glb.exe"
-            DestinationPath = "$SetupPath\sts2016-kb3128014-fullfile-x64-glb.exe"
-            MatchSource = $false
-            DependsOn = "[File]AccountsProvisioned"
-        }
-
-        xScript Install201612CU
-        {
-            SetScript =
-            {
-                $cuBuildNUmber = "16.0.4471.1000"
-                $updateLocation = "$SetupPath\sts2016-kb3128014-fullfile-x64-glb.exe"
-                $cuInstallLogPath = "$SetupPath\sts2016-kb3128014-fullfile-x64-glb.exe.install.log"
-                $setup = Start-Process -FilePath $updateLocation -ArgumentList "/log:`"$CuInstallLogPath`" /quiet /passive /norestart" -Wait -PassThru
-
-                if ($setup.ExitCode -eq 0) {
-                    Write-Verbose -Message "SharePoint cumulative update $cuBuildNUmber installation complete"
-                }
-                else
-                {
-                    Write-Verbose -Message "SharePoint cumulative update install failed, exit code was $($setup.ExitCode)"
-                    throw "SharePoint cumulative update install failed, exit code was $($setup.ExitCode)"
-                }
-            }
-            GetScript =
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                $cuBuildNUmber = "16.0.4471.1000"
-                $result = "false"
-                Write-Verbose -Message 'Getting Sharepoint buildnumber'
-
-                try
-                {
-                    $spInstall = Get-SPDSCInstalledProductVersion
-                    $build = $spInstall.ProductVersion
-                    if ($build -eq $cuBuildNUmber) {
-                        $result = "true"
-                    }
-                }
-                catch
-                {
-                    Write-Verbose -Message 'Sharepoint not installed, CU installation is going to fail if attempted'
-                }
-
-                return @{ "Result" = $result }
-            }
-            TestScript =
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                $cuBuildNUmber = "16.0.4471.1000"
-                $result = $false
-                try
-                {
-                    Write-Verbose -Message "Getting Sharepoint build number"
-                    $spInstall = Get-SPDSCInstalledProductVersion
-                    $build = $spInstall.ProductVersion
-                    Write-Verbose -Message "Current Sharepoint build number is $build and expected build number is $cuBuildNUmber"
-                    if ($build -eq $cuBuildNUmber) {
-                        $result = $true
-                    }
-                }
-                catch
-                {
-                    Write-Verbose -Message "Sharepoint is not installed, abort installation of CU or it will fail otherwise"
-                    $result = $true
-                }
-                return $result
-            }
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[xRemoteFile]Download201612CU"
-        }
-
-        xPendingReboot RebootAfterInstall201612CU
-        {
-            Name = 'RebootAfterInstall201612CU'
-            DependsOn = "[xScript]Install201612CU"
-        }
-
-        xPackage Install201612CU
-        {
-            Ensure = "Present"
-            Name = "Update for Microsoft SharePoint Enterprise Server 2016 (KB3128014) 64-Bit Edition"
-            ProductId = "{ECE043F3-EEF8-4070-AF9B-D805C42A8ED4}"
-            InstalledCheckRegHive = "LocalMachine"
-            InstalledCheckRegKey = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{90160000-1014-0000-1000-0000000FF1CE}_Office16.OSERVER_{ECE043F3-EEF8-4070-AF9B-D805C42A8ED4}"
-            InstalledCheckRegValueName = "DisplayName"
-            InstalledCheckRegValueData = "Update for Microsoft SharePoint Enterprise Server 2016 (KB3128014) 64-Bit Edition"
-            Path = "$SetupPath\sts2016-kb3128014-fullfile-x64-glb.exe"
-            Arguments = "/q"
-            RunAsCredential = $DomainAdminCredsQualified
-            ReturnCode = @( 0, 1641, 3010, 17025 )
-            DependsOn = "[xPendingReboot]RebootAfterInstall201612CU"
-        }
-        #>
 
         xScript WaitForSQL
         {
@@ -705,7 +606,7 @@ configuration ConfigureSPVM
             SocialDBName         = $SPDBPrefix + "UPA_Social"
             SyncDBName           = $SPDBPrefix + "UPA_Sync"
             EnableNetBIOS        = $false
-            PsDscRunAsCredential = $SPFarmCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]MySiteHost"
         }
 
