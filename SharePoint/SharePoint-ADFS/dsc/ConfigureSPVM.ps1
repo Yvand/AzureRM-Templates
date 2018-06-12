@@ -17,7 +17,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate, SqlServerDsc
+    Import-DscResource -ModuleName xComputerManagement, StorageDsc, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -53,10 +53,10 @@ configuration ConfigureSPVM
         #**********************************************************
         # Initialization of VM
         #**********************************************************
-        xWaitforDisk WaitForDataDisk   { DiskNumber = 2; RetryIntervalSec = $RetryIntervalSec; RetryCount = $RetryCount }
-        cDiskNoRestart PrepareDataDisk { DiskNumber = 2; DriveLetter = "F" ; DependsOn   = "[xWaitforDisk]WaitForDataDisk" }
-        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[cDiskNoRestart]PrepareDataDisk" }
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[cDiskNoRestart]PrepareDataDisk"  }
+        WaitforDisk WaitForDataDisk   { DiskId = 2; RetryIntervalSec = $RetryIntervalSec; RetryCount = $RetryCount }
+        Disk PrepareDataDisk          { DiskId = 2; DriveLetter = "F" ; DependsOn   = "[WaitforDisk]WaitForDataDisk" }
+        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
+        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk"  }
         xDnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer

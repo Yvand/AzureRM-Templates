@@ -8,7 +8,7 @@
         [Parameter(Mandatory)] [String]$PrivateIP
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
+    Import-DscResource -ModuleName xActiveDirectory, xNetworking, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)

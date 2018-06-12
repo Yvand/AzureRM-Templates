@@ -9,7 +9,7 @@ configuration ConfigureSQLVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, SqlServerDsc
+    Import-DscResource -ModuleName xComputerManagement, xNetworking, xActiveDirectory, SqlServerDsc, xPSDesiredStateConfiguration
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
@@ -95,6 +95,39 @@ configuration ConfigureSQLVM
             DependsOn = "[xComputer]DomainJoin"
         }
 
+        xScript UpdateSQLSPNs
+        {
+            SetScript =
+            {
+                $domainFQDN = $using:DomainFQDN
+                $computerName = $using:ComputerName
+                $sqlSvcAccountName = $using:SqlSvcCreds.UserName
+                Write-Verbose -Message "Moving SPNs MSSQLSvc/$computerName.$($domainFQDN):1433 from $computerName to $sqlSvcAccountName"
+                setspn.exe -D "MSSQLSvc/$computerName.$($domainFQDN):1433" "$computerName"
+                setspn.exe -D "MSSQLSvc/$computerName.$domainFQDN" "$computerName"
+
+                setspn.exe -U -S "MSSQLSvc/$computerName.$($domainFQDN):1433" $sqlSvcAccountName
+                setspn.exe -U -S "MSSQLSvc/$computerName.$domainFQDN" $sqlSvcAccountName
+
+            }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript = 
+            {
+                # $computerName = $using:ComputerName
+                # $samAccountName = "$computerName$"
+                # if ((Get-ADComputer -Filter {(SamAccountName -eq $samAccountName)} -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
+                #     # SPN is present
+                #     return $true
+                # }
+                # else {
+                #     # SPN is missing and must be created
+                #     return $false
+                # }
+                return $false
+            }
+            DependsOn="[xADUser]CreateSqlSvcAccount"
+        }
+
         xADUser CreateSPSetupAccount
         {
             DomainAdministratorCredential = $DomainAdminCredsQualified
@@ -171,6 +204,7 @@ configuration ConfigureSQLVM
             ServiceType    = "DatabaseEngine"
             ServiceAccount = $SQLCredsQualified
             RestartService = $true
+            DependsOn      = "[xScript]UpdateSQLSPNs"
         }
     }
 }
