@@ -545,7 +545,7 @@
                   "Password": "[parameters('adminPassword')]"
                 },
                 "AdfsSvcCreds": {
-                  "UserName": "[parameters('adfsSvcUserName')]",
+                  "UserName": "[variables('generalSettings').adfsSvcUserName]",
                   "Password": "[variables('generalSettings').adfsSvcPassword]"
                 }
               }
