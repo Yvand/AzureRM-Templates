@@ -5,7 +5,10 @@
     "sharePointVersion": {
       "type": "string",
       "defaultValue": "2016",
-      "allowedValues": [ "2013", "2016" ],
+      "allowedValues": [
+        "2013",
+        "2016"
+      ],
       "metadata": {
         "description": "Version of SharePoint farm to create."
       }
@@ -109,7 +112,11 @@
     "vmDCStorageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
-      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Premium_LRS"
+      ],
       "metadata": {
         "description": "Type of storage for the managed disks. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
       }
@@ -124,7 +131,11 @@
     "vmSQLStorageAccountType": {
       "type": "string",
       "defaultValue": "Premium_LRS",
-      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Premium_LRS"
+      ],
       "metadata": {
         "description": "Type of storage for the managed disks. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
       }
@@ -139,7 +150,11 @@
     "vmSPStorageAccountType": {
       "type": "string",
       "defaultValue": "Premium_LRS",
-      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Premium_LRS"
+      ],
       "metadata": {
         "description": "Type of storage for the managed disks. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
       }
@@ -180,6 +195,13 @@
       "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation. When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
       }
     }
   },
@@ -285,10 +307,10 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgDCVNetName]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "[variables('networkSettings').nsgDCVNetName]"
       },
@@ -312,10 +334,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSQLVNetName]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "[variables('networkSettings').nsgSQLVNetName]"
       },
@@ -353,10 +375,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSPVNetName]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "[variables('networkSettings').nsgSPVNetName]"
       },
@@ -382,8 +404,8 @@
     {
       "name": "[variables('networkSettings').vNetPrivateName]",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-06-01",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgDCVNetName)]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSQLVNetName)]",
@@ -432,8 +454,8 @@
     {
       "name": "[variables('vmDC').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmDC').vmPublicIPName]"
@@ -448,8 +470,8 @@
     {
       "name": "[variables('vmDC').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
@@ -478,8 +500,8 @@
     {
       "name": "[variables('generalSettings').vmDCName]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
       ],
@@ -528,8 +550,8 @@
         {
           "name": "ConfigureDCVM",
           "type": "extensions",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2015-06-15",
+          "location": "[parameters('location')]",
+          "apiVersion": "2017-12-01",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
           ],
@@ -576,8 +598,8 @@
     {
       "name": "[variables('vmSQL').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmSQL').vmPublicIPName]"
@@ -592,8 +614,8 @@
     {
       "name": "[variables('vmSQL').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)]"
@@ -621,8 +643,8 @@
     {
       "name": "[variables('generalSettings').vmSQLName]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
       ],
@@ -667,14 +689,13 @@
           ]
         }
       },
-      "resources": [
-      ]
+      "resources": []
     },
     {
       "name": "[variables('vmSP').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmSP').vmPublicIPName]"
@@ -689,8 +710,8 @@
     {
       "name": "[variables('vmSP').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
@@ -716,28 +737,12 @@
       }
     },
     {
-      "name": "[variables('vmSP').vmDataDiskName]",
-      "type": "Microsoft.Compute/disks",
-      "apiVersion": "2017-03-30",
-      "location": "[resourceGroup().location]",
-      "sku": {
-        "name": "[parameters('vmSPStorageAccountType')]"
-      },
-      "properties": {
-        "creationData": {
-          "createOption": "Empty"
-        },
-        "diskSizeGB": 64
-      }
-    },
-    {
       "name": "[variables('generalSettings').vmSPName]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]",
-        "[resourceId('Microsoft.Compute/disks', variables('vmSP').vmDataDiskName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
       ],
       "tags": {
         "displayName": "[variables('generalSettings').vmSPName]"
@@ -775,11 +780,10 @@
             {
               "lun": 0,
               "name": "[variables('vmSP').vmDataDiskName]",
-              "createOption": "Attach",
               "caching": "ReadWrite",
-              "managedDisk": {
-                "id": "[resourceId('Microsoft.Compute/disks/', variables('vmSP').vmDataDiskName)]"
-              }
+              "createOption": "Empty",
+              "diskSizeGB": 64,
+              "managedDisk": {}
             }
           ]
         },
@@ -791,14 +795,13 @@
           ]
         }
       },
-      "resources": [
-      ]
+      "resources": []
     },
     {
       "name": "[concat(variables('generalSettings').vmSQLName,'/ConfigureSQLVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
         "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
@@ -849,8 +852,8 @@
     {
       "name": "[concat(variables('generalSettings').vmSPName,'/ConfigureSPVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
         "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
@@ -924,8 +927,8 @@
       "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
       "name": "[variables('vmFE').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmFE').vmPublicIPName]"
@@ -941,8 +944,8 @@
       "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
       "name": "[variables('vmFE').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmFE').vmPublicIPName)]"
@@ -969,29 +972,12 @@
     },
     {
       "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
-      "name": "[variables('vmFE').vmDataDiskName]",
-      "type": "Microsoft.Compute/disks",
-      "apiVersion": "2017-03-30",
-      "location": "[resourceGroup().location]",
-      "sku": {
-        "name": "[parameters('vmSPStorageAccountType')]"
-      },
-      "properties": {
-        "creationData": {
-          "createOption": "Empty"
-        },
-        "diskSizeGB": 64
-      }
-    },
-    {
-      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
       "name": "[variables('generalSettings').vmFEName]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmFE').vmNicName)]",
-        "[resourceId('Microsoft.Compute/disks', variables('vmFE').vmDataDiskName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmFE').vmNicName)]"
       ],
       "tags": {
         "displayName": "[variables('generalSettings').vmFEName]"
@@ -1029,11 +1015,10 @@
             {
               "lun": 0,
               "name": "[variables('vmFE').vmDataDiskName]",
-              "createOption": "Attach",
               "caching": "ReadWrite",
-              "managedDisk": {
-                "id": "[resourceId('Microsoft.Compute/disks/', variables('vmFE').vmDataDiskName)]"
-              }
+              "createOption": "Empty",
+              "diskSizeGB": 64,
+              "managedDisk": {}
             }
           ]
         },
@@ -1045,15 +1030,14 @@
           ]
         }
       },
-      "resources": [
-      ]
+      "resources": []
     },
     {
       "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
       "name": "[concat(variables('generalSettings').vmFEName,'/ConfigureFEVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
         "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
@@ -1120,7 +1104,7 @@
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmDC').shutdownResourceName]",
       "apiVersion": "2016-05-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
       ],
@@ -1143,7 +1127,7 @@
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmSQL').shutdownResourceName]",
       "apiVersion": "2016-05-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
       ],
@@ -1166,7 +1150,7 @@
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmSP').shutdownResourceName]",
       "apiVersion": "2016-05-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
       ],
@@ -1189,7 +1173,7 @@
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmFE').shutdownResourceName]",
       "apiVersion": "2016-05-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
       ],
@@ -1208,6 +1192,5 @@
       }
     }
   ],
-  "outputs": {
-  }
+  "outputs": {}
 }
