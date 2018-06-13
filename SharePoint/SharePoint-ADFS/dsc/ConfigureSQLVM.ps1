@@ -92,7 +92,7 @@ configuration ConfigureSQLVM
             Password = $SQLCredsQualified
             PasswordNeverExpires = $true
             Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn = "[Computer]DomainJoin"
         }
 
         xADServicePrincipalName UpdateSqlSPN1
@@ -165,7 +165,7 @@ configuration ConfigureSQLVM
             Password = $SPSetupCredsQualified
             PasswordNeverExpires = $true
             Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn = "[Computer]DomainJoin"
         }
 
         SQLServerLogin AddDomainAdminLogin
@@ -175,7 +175,7 @@ configuration ConfigureSQLVM
             ServerName = $ComputerName
             InstanceName = "MSSQLSERVER"
             LoginType = "WindowsUser"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn = "[Computer]DomainJoin"
         }
 
         SQLServerLogin AddSPSetupLogin
@@ -223,7 +223,7 @@ configuration ConfigureSQLVM
             ServerName   = $ComputerName
             InstanceName = "MSSQLSERVER"
             MaxDop       = 1
-            DependsOn    = "[xComputer]DomainJoin"
+            DependsOn    = "[Computer]DomainJoin"
         }
     }
 }

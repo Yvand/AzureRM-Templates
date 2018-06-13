@@ -120,7 +120,7 @@ configuration ConfigureSPVM
                     return $false
                 }
             }
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn = "[Computer]DomainJoin"
         }
 
         #**********************************************************
@@ -133,7 +133,7 @@ configuration ConfigureSPVM
             ValueData = "1"
             ValueType = "Dword"
             Ensure    = "Present"
-            DependsOn ="[xComputer]DomainJoin"
+            DependsOn ="[Computer]DomainJoin"
         }
 
         xDnsRecord AddTrustedSiteDNS
@@ -145,16 +145,16 @@ configuration ConfigureSPVM
             Type                 = "CName"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xComputer]DomainJoin"
+            DependsOn            = "[Computer]DomainJoin"
         }
 
-        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[xComputer]DomainJoin"}
+        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[Computer]DomainJoin"}
 
         #**********************************************************
         # Provision required accounts for SharePoint
@@ -167,7 +167,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[xComputer]DomainJoin"
+            DependsOn                     = "[Computer]DomainJoin"
         }        
 
         xADUser CreateSParmAccount
@@ -178,7 +178,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[xComputer]DomainJoin"
+            DependsOn                     = "[Computer]DomainJoin"
         }
 
         Group AddSPSetupAccountToAdminGroup
@@ -199,7 +199,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[xComputer]DomainJoin"
+            DependsOn                     = "[Computer]DomainJoin"
         }
 
         xADUser CreateSPAppPoolAccount
@@ -210,7 +210,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[xComputer]DomainJoin"
+            DependsOn                     = "[Computer]DomainJoin"
         }
 
         xADUser CreateSPSuperUserAccount
@@ -221,7 +221,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[xComputer]DomainJoin"
+            DependsOn                     = "[Computer]DomainJoin"
         }
 
         xADUser CreateSPSuperReaderAccount
@@ -232,7 +232,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             DomainAdministratorCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[xComputer]DomainJoin"
+            DependsOn                     = "[Computer]DomainJoin"
         }
 
         File AccountsProvisioned
