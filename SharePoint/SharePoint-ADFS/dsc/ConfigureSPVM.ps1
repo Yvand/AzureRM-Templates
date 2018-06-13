@@ -120,7 +120,7 @@ configuration ConfigureSPVM
                     return $false
                 }
             }
-            DependsOn="[xComputer]DomainJoin"
+            DependsOn = "[xComputer]DomainJoin"
         }
 
         #**********************************************************

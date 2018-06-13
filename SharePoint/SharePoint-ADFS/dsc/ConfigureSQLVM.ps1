@@ -125,7 +125,8 @@ configuration ConfigureSQLVM
                 # }
                 return $false
             }
-            DependsOn="[xADUser]CreateSqlSvcAccount"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xADUser]CreateSqlSvcAccount"
         }
 
         xADUser CreateSPSetupAccount
