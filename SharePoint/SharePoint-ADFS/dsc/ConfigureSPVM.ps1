@@ -17,7 +17,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, StorageDsc, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -80,7 +80,7 @@ configuration ConfigureSPVM
             DependsOn            = "[xCredSSP]CredSSPClient"
         }
 
-        xComputer DomainJoin
+        Computer DomainJoin
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
