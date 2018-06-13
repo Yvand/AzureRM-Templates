@@ -15,7 +15,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -274,7 +274,7 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        xCertReq SPSSiteCert
+        CertReq SPSSiteCert
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
             CAServerFQDN           = "$DCName.$DomainFQDN"
@@ -330,7 +330,7 @@ configuration ConfigureFEVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xCertReq]SPSSiteCert"
+            DependsOn            = "[CertReq]SPSSiteCert"
         }
     }
 }

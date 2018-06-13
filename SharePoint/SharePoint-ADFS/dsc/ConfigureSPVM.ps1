@@ -17,7 +17,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -259,11 +259,30 @@ configuration ConfigureSPVM
             DependsOn       = "[File]AccountsProvisioned"
         }
 
+        # Set those 2 registry keys to workaround TLS 1.2 issue in xRemoteFile with Windows 2012 R2 (SharePoint 2013 deployment): https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405
+        Registry SchUseStrongCrypto
+        {
+            Key                         = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
+            ValueName                   = 'SchUseStrongCrypto'
+            ValueType                   = 'Dword'
+            ValueData                   =  '1'
+            Ensure                      = 'Present'
+        }
+
+        Registry SchUseStrongCrypto64
+        {
+            Key                         = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'
+            ValueName                   = 'SchUseStrongCrypto'
+            ValueType                   = 'Dword'
+            ValueData                   =  '1'
+            Ensure                      = 'Present'
+        }
+
         xRemoteFile DownloadLdapcp
         {
             Uri             = $LdapcpLink
             DestinationPath = "$SetupPath\LDAPCP.wsp"
-            DependsOn       = "[File]AccountsProvisioned"
+            DependsOn       = "[File]AccountsProvisioned", "[Registry]SchUseStrongCrypto", "[Registry]SchUseStrongCrypto64"
         }
 
         SqlAlias AddSqlAlias
@@ -468,7 +487,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                # CA root cert must be added to trusted root authorities, otherwise xCertReq resource may fail to generate HTTPS site certificate with this error:
+                # CA root cert must be added to trusted root authorities, otherwise CertReq resource may fail to generate HTTPS site certificate with this error:
                 # Certificate Request Processor: A certificate chain processed, but terminated in a root certificate which is not trusted by the trust provider. 0x800b0109
                 try {
                     $file = ( Get-ChildItem -Path "$($using:SetupPath)\Certificates\ADFS Signing issuer.cer" )
@@ -484,7 +503,7 @@ configuration ConfigureSPVM
             DependsOn            = '[SPWebApplication]MainWebApp'
         }
 
-        xCertReq SPSSiteCert
+        CertReq SPSSiteCert
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
             CAServerFQDN           = "$DCName.$DomainFQDN"
@@ -512,7 +531,7 @@ configuration ConfigureSPVM
             Port                   = 443
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = '[xCertReq]SPSSiteCert'
+            DependsOn              = '[CertReq]SPSSiteCert'
         }
 
         SPWebAppAuthentication ConfigureWebAppAuthentication
@@ -533,6 +552,7 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
         }
 
+        # Cannot use resource xWebsite in xWebAdministration because CertificateThumbprint is not known yet
         xScript SetHTTPSCertificate
         {
             SetScript =
