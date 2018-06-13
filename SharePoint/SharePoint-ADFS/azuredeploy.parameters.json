@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sharePointVersion": {
-      "value": "2016"
+      "value": "2013"
     },
     "vmSPSize": {
       "value": "Standard_DS3_v2_Promo"
@@ -15,7 +15,7 @@
       "value": "Romance Standard Time"
     },
     "addFrontEndToFarm": {
-      "value": "No"
+      "value": "Yes"
     },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SharePoint-ADFS"

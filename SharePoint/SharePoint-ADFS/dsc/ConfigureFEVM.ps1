@@ -135,7 +135,7 @@ configuration ConfigureFEVM
 
         Group AddSPSetupAccountToAdminGroup
         {
-            GroupName            ='Administrators'
+            GroupName            = 'Administrators'
             Ensure               = 'Present'
             MembersToInclude     = $SPSetupCredsQualified.UserName
             Credential           = $DomainAdminCredsQualified
@@ -151,7 +151,7 @@ configuration ConfigureFEVM
             Protocol             = "TCP"
             TcpPort              = 1433
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[File]AccountsProvisioned"
+            DependsOn            = "[Computer]DomainJoin"
         }
 
         #********************************************************************
