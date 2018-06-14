@@ -5,7 +5,7 @@
 * Removed SharePoint farm account from local administrators group since this is no longer necessary since SharePointDsc 2.3
 * Removed the manual modification to use TLS 1.2 in resource xRemoteFile and set registry keys in DSC template instead
 * SQL Server DatabaseEngine now runs with the SQL service account instead of the machine account
-* Added a refresh of GPOs to ensure CA root cert is present in "cert:\LocalMachine\Root\" before issuing a certificate request
+* Refresh GPOs to ensure CA root cert is present in "cert:\LocalMachine\Root\" before issuing a certificate request
 * Moved all service accounts names from parameters to variables in order to simplify the form of template deployment
 * Updated SharePointDsc to 2.3
 * Updated SqlServerDsc to 11.2
