@@ -275,11 +275,11 @@ configuration ConfigureFEVM
         }
 
         # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
-        xScript ForceUpdateToRetrieveRootCACert
+        xScript UpdateGPOToTrustRootCACert
         {
             SetScript =
             {
-                Invoke-GPUpdate
+                gpupdate.exe
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false }
@@ -301,7 +301,7 @@ configuration ConfigureFEVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[SPFarm]JoinSPFarm", "[xScript]ForceUpdateToRetrieveRootCACert"
+            DependsOn              = "[SPFarm]JoinSPFarm", "[xScript]UpdateGPOToTrustRootCACert"
         }
 
         xScript SetHTTPSCertificate

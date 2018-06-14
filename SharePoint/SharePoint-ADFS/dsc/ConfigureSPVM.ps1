@@ -483,24 +483,37 @@ configuration ConfigureSPVM
             DependsOn              = "[SPFarm]CreateSPFarm"
         }
 
-        xScript TrustCACertAsTrustedRootAuthority
+        # xScript TrustCACertAsTrustedRootAuthority
+        # {
+        #     SetScript =
+        #     {
+        #         # CA root cert must be added to trusted root authorities, otherwise CertReq resource may fail to generate HTTPS site certificate with this error:
+        #         # Certificate Request Processor: A certificate chain processed, but terminated in a root certificate which is not trusted by the trust provider. 0x800b0109
+        #         try {
+        #             $file = ( Get-ChildItem -Path "$($using:SetupPath)\Certificates\ADFS Signing issuer.cer" )
+        #             $file | Import-Certificate -CertStoreLocation "cert:\LocalMachine\Root" -ErrorAction SilentlyContinue
+        #         } catch {
+        #             # It may fail with following error: System.InvalidOperationException: The set script threw an error. ---> System.UnauthorizedAccessException: Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))
+        #             # But the certificate is successfully added anyway
+        #         }
+        #     }
+        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = '[SPWebApplication]MainWebApp'
+        # }
+
+        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
+        xScript UpdateGPOToTrustRootCACert
         {
             SetScript =
             {
-                # CA root cert must be added to trusted root authorities, otherwise CertReq resource may fail to generate HTTPS site certificate with this error:
-                # Certificate Request Processor: A certificate chain processed, but terminated in a root certificate which is not trusted by the trust provider. 0x800b0109
-                try {
-                    $file = ( Get-ChildItem -Path "$($using:SetupPath)\Certificates\ADFS Signing issuer.cer" )
-                    $file | Import-Certificate -CertStoreLocation "cert:\LocalMachine\Root" -ErrorAction SilentlyContinue
-                } catch {
-                    # It may fail with following error: System.InvalidOperationException: The set script threw an error. ---> System.UnauthorizedAccessException: Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))
-                    # But the certificate is successfully added anyway
-                }
+                gpupdate.exe
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            TestScript           = { return $false }
+            DependsOn            = "[Computer]DomainJoin"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = '[SPWebApplication]MainWebApp'
         }
 
         CertReq SPSSiteCert
@@ -517,7 +530,7 @@ configuration ConfigureSPVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = '[xScript]TrustCACertAsTrustedRootAuthority'
+            DependsOn              = '[xScript]UpdateGPOToTrustRootCACert'
         }
 
         SPWebApplicationExtension ExtendWebApp
