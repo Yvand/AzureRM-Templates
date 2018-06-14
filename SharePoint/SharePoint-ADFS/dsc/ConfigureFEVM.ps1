@@ -274,12 +274,12 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        # Run gpupdate /force to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
+        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
         xScript ForceUpdateToRetrieveRootCACert
         {
             SetScript =
             {
-                Invoke-GPUpdate -Force
+                Invoke-GPUpdate
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false }
