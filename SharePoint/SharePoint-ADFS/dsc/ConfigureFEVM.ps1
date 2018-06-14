@@ -274,6 +274,19 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
+        # Run gpupdate /force to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
+        xScript ForceUpdateToRetrieveRootCACert
+        {
+            SetScript =
+            {
+                Invoke-GPUpdate -Force
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false }
+            DependsOn            = "[Computer]DomainJoin"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
         CertReq SPSSiteCert
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
@@ -288,7 +301,7 @@ configuration ConfigureFEVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[SPFarm]JoinSPFarm"
+            DependsOn              = "[SPFarm]JoinSPFarm", "[xScript]ForceUpdateToRetrieveRootCACert"
         }
 
         xScript SetHTTPSCertificate
