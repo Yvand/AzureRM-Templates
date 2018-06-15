@@ -30,6 +30,7 @@ configuration ConfigureFEVM
     [Int] $RetryCount = 30
     [Int] $RetryIntervalSec = 30
     [String] $ComputerName = Get-Content env:computername
+    [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
 
     Node localhost
     {
@@ -370,6 +371,24 @@ function Get-NetBIOSName
             return $DomainFQDN
         }
     }
+}
+
+function Get-AppDomain
+{
+    [OutputType([string])]
+    param(
+        [string]$DomainFQDN,
+        [string]$Suffix
+    )
+
+    $appDomain = [String]::Empty
+    if ($DomainFQDN.Contains('.')) {
+        $domainParts = $DomainFQDN.Split('.')
+        $appDomain = $domainParts[0]
+        $appDomain += "$Suffix."
+        $appDomain += $domainParts[1]
+    }
+    return $appDomain
 }
 
 function Get-SPDSCInstalledProductVersion
