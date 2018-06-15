@@ -279,7 +279,7 @@ configuration ConfigureFEVM
         {
             SetScript =
             {
-                gpupdate.exe
+                gpupdate.exe /force
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false }
