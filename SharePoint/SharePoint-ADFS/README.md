@@ -5,13 +5,13 @@
 This template deploys SharePoint 2013 or 2016 with following configuration:
 
 * 1 web application with 2 zones: Default zone uses Windows and Intranet zone uses ADFS. A couple of site collections are created
-* Super user / super reader are set
 * User Profiles and Addins service applications are provisioned
-* 2 extra DNS zones are created to support SharePoint apps, and app domains are set in both zones of the web application
+* 2 extra DNS zones are created to support SharePoint apps, and app domains are set in all zones of the web application.
 * Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured
-* A certificate authority (ADCS) is provisioned on the DC and is used for all certificates issued (signing/site certificate of ADFS and certificate of HTTPS site in Intranet zone)
-* ADFS is configured on the DC with a relying party for the SharePoint web application
-* A font-end can be optionally added to the farm
+* A certificate authority (ADCS) is provisioned on the DC and is used for all certificates issued (ADFS and the HTTPS site in Intranet zone)
+* ADFS is configured on the DC with a relying party for SharePoint web application
+* A font-end can be optionnally added to the farm
+* Super user / super reader are set
 
 Each VM has its own public IP address and is in a subnet protected with a Network Security Group.
 
@@ -22,4 +22,6 @@ Each VM has its own public IP address and is in a subnet protected with a Networ
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-With the default sizes of virtual machines, provisioning of the template takes about 1h15 to complete.
+> **Notes:**  
+> With the default sizes of virtual machines, provisioning of the template takes about 1h15 to complete.  
+> The password complexity check in the form is not accurate and may validate a password that will be rejected by Azure when it provisions the VMs. Make sure to use at least 2 special characters for the passwords.
