@@ -113,6 +113,24 @@ configuration ConfigureSQLVM
             DependsOn            = "[xADUser]CreateSqlSvcAccount"
         }
 
+        xADServicePrincipalName UpdateSqlSPN3
+        {
+            Ensure               = "Present"
+            ServicePrincipalName = "MSSQLSvc/$($ComputerName):1433"
+            Account              = $SqlSvcCreds.UserName
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xADUser]CreateSqlSvcAccount"
+        }
+
+        xADServicePrincipalName UpdateSqlSPN4
+        {
+            Ensure               = "Present"
+            ServicePrincipalName = "MSSQLSvc/$ComputerName"
+            Account              = $SqlSvcCreds.UserName
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xADUser]CreateSqlSvcAccount"
+        }
+
         SqlServiceAccount SetSqlInstanceServiceAccount
         {
             ServerName     = $ComputerName
@@ -120,7 +138,7 @@ configuration ConfigureSQLVM
             ServiceType    = "DatabaseEngine"
             ServiceAccount = $SQLCredsQualified
             RestartService = $true
-            DependsOn      = "[xADServicePrincipalName]UpdateSqlSPN1", "[xADServicePrincipalName]UpdateSqlSPN2"
+            DependsOn      = "[xADServicePrincipalName]UpdateSqlSPN1", "[xADServicePrincipalName]UpdateSqlSPN2", "[xADServicePrincipalName]UpdateSqlSPN3", "[xADServicePrincipalName]UpdateSqlSPN4"
         }
 
         xADUser CreateSPSetupAccount
