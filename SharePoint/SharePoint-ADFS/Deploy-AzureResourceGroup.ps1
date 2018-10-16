@@ -37,7 +37,7 @@ $azurecontext = $null
 $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontext.Subscription -eq $null) {
     Write-Host "Launching Azure authentication prompt..." -ForegroundColor Green
-    Login-AzureRmAccount
+    Connect-AzureRmAccount
     $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 }
 if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontext.Subscription -eq $null){ 

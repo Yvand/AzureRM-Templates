@@ -1,5 +1,9 @@
 # Change log for AzureRM template for SharePoint 2016 and 2013 configured with ADFS
 
+## Unreleased
+* Updated SharePointDSC from 2.2 to 2.5
+* Updated xDnsServer from 1.10 to 1.11
+
 ## June 2018 update
 
 * Removed SharePoint farm account from local administrators group as this is no longer necessary since SharePointDsc 2.2

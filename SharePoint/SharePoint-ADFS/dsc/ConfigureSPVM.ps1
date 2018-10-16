@@ -27,8 +27,6 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
-    [System.Management.Automation.PSCredential] $SPSuperUserCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSuperUserCreds.UserName)", $SPSuperUserCreds.Password)
-    [System.Management.Automation.PSCredential] $SPSuperReaderCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSuperReaderCreds.UserName)", $SPSuperReaderCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
     [String] $SPTrustedSitesName = "SPSites"
     [Int] $RetryCount = 30
@@ -41,6 +39,7 @@ configuration ConfigureSPVM
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
     [String] $SetupPath = "F:\Setup"
     [String] $DCSetupPath = "\\$DCName\C$\Setup"
+    [String] $MySiteHostAlias = "OhMy"
 
     Node localhost
     {
@@ -139,6 +138,18 @@ configuration ConfigureSPVM
         xDnsRecord AddTrustedSiteDNS
         {
             Name                 = $SPTrustedSitesName
+            Zone                 = $DomainFQDN
+            DnsServer            = $DCName
+            Target               = "$ComputerName.$DomainFQDN"
+            Type                 = "CName"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[Computer]DomainJoin"
+        }
+
+        xDnsRecord AddMySiteHostDNS
+        {
+            Name                 = $MySiteHostAlias
             Zone                 = $DomainFQDN
             DnsServer            = $DCName
             Target               = "$ComputerName.$DomainFQDN"
@@ -613,13 +624,22 @@ configuration ConfigureSPVM
         #**********************************************************
         SPSite MySiteHost
         {
-            Url                  = "http://$SPTrustedSitesName/sites/my"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "MySite host"
-            Template             = "SPSMSITEHOST#0"
+            Url                      = "http://$MySiteHostAlias/"
+            HostHeaderWebApplication = "http://$SPTrustedSitesName/"
+            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                     = "MySite host"
+            Template                 = "SPSMSITEHOST#0"
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            DependsOn                = "[SPWebApplication]MainWebApp"
+        }
+
+        SPSiteUrl MySiteHostIntranetUrl
+        {
+            Url                  = "http://$MySiteHostAlias/"
+            Intranet             = "https://$MySiteHostAlias.$DomainFQDN"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
+            DependsOn            = "[SPSite]MySiteHost"
         }
 
         SPUserProfileServiceApp UserProfileServiceApp
@@ -849,13 +869,12 @@ configuration ConfigureSPVM
         }
 
         # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
-        <#SPAppCatalog MainAppCatalog
+        SPAppCatalog MainAppCatalog
         {
             SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
-            InstallAccount       = $SPSetupCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]AppCatalog"
-        }#>
+        }
 
         # DSC resource File throws an access denied when accessing a remote location, so use xScript instead
         xScript CreateDSCCompletionFile
