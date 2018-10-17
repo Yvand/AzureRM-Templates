@@ -642,11 +642,21 @@ configuration ConfigureSPVM
             DependsOn            = "[SPSite]MySiteHost"
         }
 
+        SPManagedPath MySiteManagedPath
+        {
+            WebAppUrl            = "http://$SPTrustedSitesName/"
+            RelativeUrl          = "personal"
+            Explicit             = $true
+            HostHeader           = $true
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPSite]MySiteHost"
+        }
+
         SPUserProfileServiceApp UserProfileServiceApp
         {
             Name                 = $UpaServiceName
             ApplicationPool      = $ServiceAppPoolName
-            MySiteHostLocation   = "http://$SPTrustedSitesName/sites/my"
+            MySiteHostLocation   = "http://$MySiteHostAlias/"
             ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
             SocialDBName         = $SPDBPrefix + "UPA_Social"
             SyncDBName           = $SPDBPrefix + "UPA_Sync"
@@ -983,8 +993,8 @@ $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
 
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM" -Wait -Verbose -Force
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM" -Wait -Verbose -Force
 
 #>
