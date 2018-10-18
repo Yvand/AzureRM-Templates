@@ -646,7 +646,7 @@ configuration ConfigureSPVM
         {
             WebAppUrl            = "http://$SPTrustedSitesName/"
             RelativeUrl          = "personal"
-            Explicit             = $true
+            Explicit             = $false
             HostHeader           = $true
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSite]MySiteHost"
