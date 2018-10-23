@@ -14,7 +14,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, NetworkingDsc, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -48,7 +48,7 @@ configuration ConfigureFEVM
         WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
         WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
-        xDnsServerAddress DnsServerAddress
+        DnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
             InterfaceAlias = $InterfaceAlias
@@ -56,7 +56,7 @@ configuration ConfigureFEVM
             DependsOn      ="[WindowsFeature]ADPS"
         }
 
-        xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" }
+        xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]DnsServerAddress" }
         xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
         #**********************************************************

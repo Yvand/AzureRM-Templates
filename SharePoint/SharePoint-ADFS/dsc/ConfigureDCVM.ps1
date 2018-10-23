@@ -8,7 +8,7 @@
         [Parameter(Mandatory)] [String]$PrivateIP
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, xNetworking, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, xPendingReboot, cADFS, xDnsServer
+    Import-DscResource -ModuleName xActiveDirectory, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, xPendingReboot, cADFS, xDnsServer
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
@@ -46,7 +46,7 @@
 
         WindowsFeature DnsTools { Name = "RSAT-DNS-Server"; Ensure = "Present" }
 
-        xDnsServerAddress DnsServerAddress 
+        DnsServerAddress DnsServerAddress 
         {
             Address        = '127.0.0.1' 
             InterfaceAlias = $InterfaceAlias
@@ -62,7 +62,7 @@
             DatabasePath = "C:\NTDS"
             LogPath = "C:\NTDS"
             SysvolPath = "C:\SYSVOL"
-            DependsOn = "[xDnsServerAddress]DnsServerAddress"
+            DependsOn = "[DnsServerAddress]DnsServerAddress"
         }
 
         xPendingReboot Reboot1
@@ -111,9 +111,10 @@
         WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
         ADCSCertificationAuthority ADCS
         {
+            IsSingleInstance = "Yes"
+            CAType = "EnterpriseRootCA"
             Ensure = "Present"
             Credential = $DomainCredsNetbios
-            CAType = "EnterpriseRootCA"
             DependsOn = "[WindowsFeature]AddCertAuthority"
         }
 

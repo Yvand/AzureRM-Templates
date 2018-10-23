@@ -9,7 +9,7 @@ configuration ConfigureSQLVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, xNetworking, xActiveDirectory, SqlServerDsc, xPSDesiredStateConfiguration
+    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, xActiveDirectory, SqlServerDsc, xPSDesiredStateConfiguration
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
@@ -33,7 +33,7 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Initialization of VM
         #**********************************************************
-        xFirewall DatabaseEngineFirewallRule
+        Firewall DatabaseEngineFirewallRule
         {
             Direction = "Inbound"
             Name = "SQL-Server-Database-Engine-TCP-In"
@@ -53,7 +53,7 @@ configuration ConfigureSQLVM
             DependsOn = "[xFirewall]DatabaseEngineFirewallRule"
         }
 
-        xDnsServerAddress DnsServerAddress
+        DnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
             InterfaceAlias = $InterfaceAlias
@@ -70,7 +70,7 @@ configuration ConfigureSQLVM
             DomainUserCredential= $DomainAdminCredsQualified
             RetryCount = $RetryCount
             RetryIntervalSec = $RetryIntervalSec
-            DependsOn = "[xDnsServerAddress]DnsServerAddress"
+            DependsOn = "[DnsServerAddress]DnsServerAddress"
         }
 
         Computer DomainJoin
