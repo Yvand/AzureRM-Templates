@@ -3,13 +3,13 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sharePointVersion": {
-      "value": "2016"
+      "value": "2013"
     },
     "vmSPSize": {
       "value": "Standard_DS3_v2_Promo"
     },
     "dnsLabelPrefix": {
-      "value": "xxydspadfs"
+      "value": "xxxydspadfs"
     },
     "vmsTimeZone": {
       "value": "Romance Standard Time"

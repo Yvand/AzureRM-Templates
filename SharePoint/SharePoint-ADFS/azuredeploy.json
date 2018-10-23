@@ -1048,10 +1048,6 @@
               "UserName": "[variables('generalSettings').spSvcUserName]",
               "Password": "[variables('generalSettings').spSvcPassword]"
             },
-            "SPAppPoolCreds": {
-              "UserName": "[variables('generalSettings').spAppPoolUserName]",
-              "Password": "[variables('generalSettings').spAppPoolPassword]"
-            },
             "SPPassphraseCreds": {
               "UserName": "Passphrase",
               "Password": "[variables('generalSettings').spPassphrase]"

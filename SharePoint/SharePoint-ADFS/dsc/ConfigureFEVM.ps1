@@ -11,7 +11,6 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSvcCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPAppPoolCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
@@ -24,13 +23,13 @@ configuration ConfigureFEVM
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
-    [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
     [String] $SPTrustedSitesName = "SPSites"
     [Int] $RetryCount = 30
     [Int] $RetryIntervalSec = 30
     [String] $ComputerName = Get-Content env:computername
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
+    [String] $MySiteHostAlias = "OhMy"
 
     Node localhost
     {
@@ -263,9 +262,21 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        xDnsRecord OverrideDNSRecord
+        xDnsRecord UpdateDNSAliasSPSites
         {
             Name                 = $SPTrustedSitesName
+            Zone                 = $DomainFQDN
+            DnsServer            = $DCName
+            Target               = "$ComputerName.$DomainFQDN"
+            Type                 = "CName"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPFarm]JoinSPFarm"
+        }
+
+        xDnsRecord UpdateDNSAliasOhMy
+        {
+            Name                 = $MySiteHostAlias
             Zone                 = $DomainFQDN
             DnsServer            = $DCName
             Target               = "$ComputerName.$DomainFQDN"
@@ -409,7 +420,6 @@ $DomainAdminCreds = Get-Credential -Credential "yvand"
 $SPSetupCreds = Get-Credential -Credential "spsetup"
 $SPFarmCreds = Get-Credential -Credential "spfarm"
 $SPSvcCreds = Get-Credential -Credential "spsvc"
-$SPAppPoolCreds = Get-Credential -Credential "spapppool"
 $SPPassphraseCreds = Get-Credential -Credential "Passphrase"
 $SPSuperUserCreds = Get-Credential -Credential "spSuperUser"
 $SPSuperReaderCreds = Get-Credential -Credential "spSuperReader"
@@ -419,8 +429,8 @@ $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
 
-ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
-Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
-Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM" -Wait -Verbose -Force
+ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
+Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
+Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM" -Wait -Verbose -Force
 
 #>

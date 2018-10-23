@@ -5,8 +5,9 @@
 * MySites are now configured as host-named site collections
 * App catalog is now correctly set
 * Added missing SPN to enable Kerberos authentication to SQL Server
-* Added an wildcard as AdditionalWSFedEndpoint in relying party in ADFS (to support HNSC)
+* Added a wildcard as AdditionalWSFedEndpoint in relying party in ADFS (to support HNSC)
 * Added parameter AdditionalWSFedEndpoint on resource cADFSRelyingPartyTrust of DSC module cADFS
+* Updated resource SPTrustedIdentityTokenIssuer in SharePointDSC 2.5 to support parameter UseWReplyParameter
 * Updated SharePointDSC from 2.2 to 2.5 (with custom fix on resource SPUserProfileServiceApp)
 * Updated xDnsServer from 1.10 to 1.11
 
