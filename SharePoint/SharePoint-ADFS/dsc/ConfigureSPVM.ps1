@@ -40,6 +40,7 @@ configuration ConfigureSPVM
     [String] $SetupPath = "F:\Setup"
     [String] $DCSetupPath = "\\$DCName\C$\Setup"
     [String] $MySiteHostAlias = "OhMy"
+    [String] $HNSC1Alias = "HNSC1"
 
     Node localhost
     {
@@ -53,9 +54,10 @@ configuration ConfigureSPVM
         # Initialization of VM
         #**********************************************************
         WaitforDisk WaitForDataDisk   { DiskId = 2; RetryIntervalSec = $RetryIntervalSec; RetryCount = $RetryCount }
-        Disk PrepareDataDisk          { DiskId = 2; DriveLetter = "F" ; DependsOn   = "[WaitforDisk]WaitForDataDisk" }
+        Disk PrepareDataDisk          { DiskId = 2; DriveLetter = "F"; DependsOn = "[WaitforDisk]WaitForDataDisk" }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk"  }
+        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
+        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
         xDnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
@@ -150,6 +152,18 @@ configuration ConfigureSPVM
         xDnsRecord AddMySiteHostDNS
         {
             Name                 = $MySiteHostAlias
+            Zone                 = $DomainFQDN
+            DnsServer            = $DCName
+            Target               = "$ComputerName.$DomainFQDN"
+            Type                 = "CName"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[Computer]DomainJoin"
+        }
+
+        xDnsRecord AddHNSC1DNS
+        {
+            Name                 = $HNSC1Alias
             Zone                 = $DomainFQDN
             DnsServer            = $DCName
             Target               = "$ComputerName.$DomainFQDN"
@@ -677,6 +691,26 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebApplication]MainWebApp"
         }
 
+        SPSite CreateHNSC1
+        {
+            Url                      = "http://$HNSC1Alias/"
+            HostHeaderWebApplication = "http://$SPTrustedSitesName/"
+            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                     = "Team site"
+            Template                 = "STS#0"
+            PsDscRunAsCredential     = $SPSetupCredsQualified
+            DependsOn                = "[SPWebApplication]MainWebApp"
+        }
+
+        SPSiteUrl HNSC1IntranetUrl
+        {
+            Url                  = "http://$HNSC1Alias/"
+            Intranet             = "https://$HNSC1Alias.$DomainFQDN"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPSite]CreateHNSC1"
+        }
+
         <#xScript CreateDefaultGroupsInTeamSites
         {
             SetScript = {
@@ -697,7 +731,7 @@ configuration ConfigureSPVM
                         Write-Verbose -Message "site $($spsite.Title) has template $($spsite.RootWeb.WebTemplate)"
                         if ($spsite.RootWeb.WebTemplate -like "STS") {
                             Write-Verbose -Message "Updating site $siteUrl with $owner1 and $($spsite.Url)"
-                            $spsite.RootWeb.CreateDefaultAssociatedGroups($owner1, $owner2, $spsite.Title);
+                            $spsite.RootWeb.CreateDefaultAssociatedGroups($owner1, $owner2, $spsite.RootWeb.Title);
                             $spsite.RootWeb.Update();
                         }
                     }

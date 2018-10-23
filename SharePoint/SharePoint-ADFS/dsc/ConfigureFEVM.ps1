@@ -30,6 +30,7 @@ configuration ConfigureFEVM
     [String] $ComputerName = Get-Content env:computername
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
     [String] $MySiteHostAlias = "OhMy"
+    [String] $HNSC1Alias = "HNSC1"
 
     Node localhost
     {
@@ -43,9 +44,10 @@ configuration ConfigureFEVM
         # Initialization of VM
         #**********************************************************
         WaitforDisk WaitForDataDisk   { DiskId = 2; RetryIntervalSec = $RetryIntervalSec; RetryCount = $RetryCount }
-        Disk PrepareDataDisk          { DiskId = 2; DriveLetter = "F" ; DependsOn   = "[WaitforDisk]WaitForDataDisk" }
+        Disk PrepareDataDisk          { DiskId = 2; DriveLetter = "F"; DependsOn = "[WaitforDisk]WaitForDataDisk" }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk"  }
+        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
+        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
         xDnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
@@ -277,6 +279,18 @@ configuration ConfigureFEVM
         xDnsRecord UpdateDNSAliasOhMy
         {
             Name                 = $MySiteHostAlias
+            Zone                 = $DomainFQDN
+            DnsServer            = $DCName
+            Target               = "$ComputerName.$DomainFQDN"
+            Type                 = "CName"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPFarm]JoinSPFarm"
+        }
+
+        xDnsRecord UpdateDNSAliasHNSC1
+        {
+            Name                 = $HNSC1Alias
             Zone                 = $DomainFQDN
             DnsServer            = $DCName
             Target               = "$ComputerName.$DomainFQDN"

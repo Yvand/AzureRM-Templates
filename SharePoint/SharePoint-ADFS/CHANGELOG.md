@@ -3,6 +3,7 @@
 ## Unreleased
 
 * MySites are now configured as host-named site collections
+* Added a new host-named site collection
 * App catalog is now correctly set
 * Added missing SPN to enable Kerberos authentication to SQL Server
 * Added a wildcard as AdditionalWSFedEndpoint in relying party in ADFS (to support HNSC)
