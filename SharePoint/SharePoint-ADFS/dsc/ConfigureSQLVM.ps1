@@ -33,6 +33,11 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Initialization of VM
         #**********************************************************
+        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        
+        DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+
         Firewall DatabaseEngineFirewallRule
         {
             Direction = "Inbound"
@@ -46,31 +51,17 @@ configuration ConfigureSQLVM
             Ensure = "Present"
         }
 
-        WindowsFeature ADPS
-        {
-            Name = "RSAT-AD-PowerShell"
-            Ensure = "Present"
-            DependsOn = "[xFirewall]DatabaseEngineFirewallRule"
-        }
-
-        DnsServerAddress DnsServerAddress
-        {
-            Address        = $DNSServer
-            InterfaceAlias = $InterfaceAlias
-            AddressFamily  = 'IPv4'
-            DependsOn="[WindowsFeature]ADPS"
-        }
 
         #**********************************************************
         # Join AD forest
         #**********************************************************
         xWaitForADDomain DscForestWait
         {
-            DomainName = $DomainFQDN
-            DomainUserCredential= $DomainAdminCredsQualified
-            RetryCount = $RetryCount
-            RetryIntervalSec = $RetryIntervalSec
-            DependsOn = "[DnsServerAddress]DnsServerAddress"
+            DomainName           = $DomainFQDN
+            DomainUserCredential = $DomainAdminCredsQualified
+            RetryCount           = $RetryCount
+            RetryIntervalSec     = $RetryIntervalSec
+            DependsOn            = "[DnsServerAddress]DnsServerAddress"
         }
 
         Computer DomainJoin
