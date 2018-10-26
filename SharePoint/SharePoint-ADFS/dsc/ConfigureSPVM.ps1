@@ -697,7 +697,7 @@ configuration ConfigureSPVM
             HostHeaderWebApplication = "http://$SPTrustedSitesName/"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                     = "Team site"
+            Name                     = "$HNSC1Alias site"
             Template                 = "STS#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
             DependsOn                = "[SPWebApplication]MainWebApp"

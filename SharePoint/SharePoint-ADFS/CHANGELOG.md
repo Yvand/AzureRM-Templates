@@ -9,7 +9,7 @@
 * Added a wildcard as AdditionalWSFedEndpoint in relying party in ADFS (to support HNSC)
 * Added parameter AdditionalWSFedEndpoint on resource cADFSRelyingPartyTrust of DSC module cADFS
 * Updated resource SPTrustedIdentityTokenIssuer in SharePointDSC 2.5 to support parameter UseWReplyParameter
-* Updated SharePointDSC from 2.2 to 2.5 (with custom fix on resource SPUserProfileServiceApp)
+* Updated SharePointDSC from 2.2 to 2.6
 * Updated xDnsServer from 1.10 to 1.11
 * Updated xActiveDirectory from 2.18 to 2.21
 * Updated xPSDesiredStateConfiguration from 8.2 to 8.4
