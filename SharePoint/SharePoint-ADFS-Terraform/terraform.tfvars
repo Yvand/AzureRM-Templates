@@ -2,6 +2,7 @@ location = "West Europe"
 resourceGroupName = "ydterraform2"
 dnsLabelPrefix = "ydterraform2"
 _artifactsLocation = "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SharePoint-ADFS"
+addFrontEndToFarm = true
 vmDC = {
   vmName = "xxDC"
 }

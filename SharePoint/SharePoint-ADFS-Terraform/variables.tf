@@ -7,12 +7,17 @@ variable "adminUserName" {
     default = "yvand"
 }
 variable "adminPassword" {}
+variable "serviceAccountsPassword" {}
 variable "domainFQDN" {
   default = "contoso.local"
 }
 variable "timeZone" {
   default = "Romance Standard Time"
 }
+variable "addFrontEndToFarm" {
+  default = false
+}
+
 variable "generalSettings" {
   type = "map"
   default = {
@@ -71,6 +76,13 @@ variable "vmSP" {
     storageAccountType = "Standard_LRS"
   }
 }
+variable "vmFE" {
+  type = "map"
+  default = {
+    vmName = "FE"
+    vmSize = "Standard_DS3_v2"
+  }
+}
 variable "dscConfigureDCVM" {
   type = "map"
   default = {
@@ -95,6 +107,15 @@ variable "dscConfigureSPVM" {
     fileName = "ConfigureSPVM.zip"
     script = "ConfigureSPVM.ps1"
     function = "ConfigureSPVM"
+    forceUpdateTag = "1.0"
+  }
+}
+variable "dscConfigureFEVM" {
+  type = "map"
+  default = {
+    fileName = "ConfigureFEVM.zip"
+    script = "ConfigureFEVM.ps1"
+    function = "ConfigureFEVM"
     forceUpdateTag = "1.0"
   }
 }

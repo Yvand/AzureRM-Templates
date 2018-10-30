@@ -10,7 +10,7 @@
             "name": "Terraform apply",
             "script": "terraform apply",
             "args": [
-                "-auto-approve -var-file=\"C:\\Users\\yvand\\Documents\\SP-ADFS-Template-Secret.tfvars\""
+                "-auto-approve -var-file=\"C:\\Users\\yvand\\Documents\\SP-ADFS-Template-Secrets.tfvars\""
             ]
         }
     ]
