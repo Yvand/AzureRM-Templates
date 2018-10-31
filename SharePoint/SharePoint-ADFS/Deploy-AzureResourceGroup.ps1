@@ -16,7 +16,7 @@ $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combin
 Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 ### Define passwords
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
-if ($securePassword -eq $null) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
+if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
 $passwords = New-Object -TypeName HashTable
 $passwords['adminPassword'] = $securePassword
 $passwords['serviceAccountsPassword'] = $securePassword
@@ -24,7 +24,7 @@ $passwords['serviceAccountsPassword'] = $securePassword
 ### Parse the parameters file
 $JsonContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
 $JsonParameters = $JsonContent | Get-Member -Type NoteProperty | Where-Object {$_.Name -eq "parameters"}
-if ($JsonParameters -eq $null) {
+if ($null -eq $JsonParameters) {
     $JsonParameters = $JsonContent
 }
 else {
@@ -35,18 +35,18 @@ else {
 Import-Module Azure -ErrorAction SilentlyContinue
 $azurecontext = $null
 $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
-if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontext.Subscription -eq $null) {
+if ($null -eq $azurecontext -or $null -eq $azurecontext.Account -or $null -eq $azurecontext.Subscription) {
     Write-Host "Launching Azure authentication prompt..." -ForegroundColor Green
-    Login-AzureRmAccount
+    Connect-AzureRmAccount
     $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
 }
-if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontext.Subscription -eq $null){ 
+if ($null -eq $azurecontext -or $null -eq $azurecontext.Account -or $null -eq $azurecontext.Subscription) { 
     Write-Host "Unable to get a valid context." -ForegroundColor Red
     return
 }
 
 ### Create Resource Group if it doesn't exist
-if ((Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue) -eq $null) {
+if ($null -eq (Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue)) {
     New-AzureRmResourceGroup `
         -Name $resourceGroupName `
         -Location $resourceGroupLocation `
