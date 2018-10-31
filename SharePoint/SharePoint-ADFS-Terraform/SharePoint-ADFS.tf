@@ -505,7 +505,7 @@ resource "azurerm_virtual_machine" "VM-FE" {
   vm_size               = "${var.vmSP["vmSize"]}"
   
   os_profile {
-    computer_name  = "${var.vmSP["vmName"]}"
+    computer_name  = "${var.vmFE["vmName"]}"
     admin_username = "${var.adminUserName}"
     admin_password = "${var.adminPassword}"
   }

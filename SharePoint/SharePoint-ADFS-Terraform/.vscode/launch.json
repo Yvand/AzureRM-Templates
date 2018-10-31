@@ -8,10 +8,12 @@
             "type": "PowerShell",
             "request": "launch",
             "name": "Terraform apply",
+            "cwd": "${workspaceRoot}",
             "script": "terraform apply",
             "args": [
                 "-auto-approve -var-file=\"C:\\Users\\yvand\\Documents\\SP-ADFS-Template-Secrets.tfvars\""
-            ]
+            ],
+            "createTemporaryIntegratedConsole": true
         }
     ]
 }
