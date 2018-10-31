@@ -9,10 +9,10 @@
       "value": "Standard_DS3_v2_Promo"
     },
     "dnsLabelPrefix": {
-      "value": "xxydspadfs"
+      "value": "xydspadfs"
     },
     "domainFQDN": {
-      "value": "xxcontoso.local"
+      "value": "contoso.local"
     },
     "vmsTimeZone": {
       "value": "Romance Standard Time"
@@ -21,7 +21,7 @@
       "value": "Yes"
     },
     "_artifactsLocation": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SharePoint-ADFS"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS"
     }
   }
 }
