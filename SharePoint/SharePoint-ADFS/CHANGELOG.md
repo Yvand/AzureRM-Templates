@@ -1,6 +1,6 @@
 # Change log for AzureRM template for SharePoint 2016 and 2013 configured with ADFS
 
-## Unreleased
+## November 2019 update
 
 * MySites are now configured as host-named site collections
 * Added a new host-named site collection
