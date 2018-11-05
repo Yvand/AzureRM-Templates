@@ -608,10 +608,10 @@ resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
   PROTECTED_SETTINGS
 }
 
-# Resource https://www.terraform.io/docs/providers/azurerm/r/dev_test_lab.html
-resource "azurerm_dev_test_lab" "VM-DC-AutoShutdown" {
+# # Resource https://www.terraform.io/docs/providers/azurerm/r/dev_test_lab.html
+# resource "azurerm_dev_test_lab" "VM-DC-AutoShutdown" {
 
-}
+# }
 
 # # azurerm_dev_test_lab was introduced in azurerm 1.16: https://github.com/terraform-providers/terraform-provider-azurerm/issues/132
 # resource "azurerm_dev_test_lab_schedule" "VM-DC-AutoShutdown" {
