@@ -1,21 +1,34 @@
 variable "location" {
   default = "West Europe"
+  description = "Location where resources will be provisioned"
 }
-variable "resourceGroupName" {}
-variable "dnsLabelPrefix" {}
+variable "resourceGroupName" {
+  description = "Name of the ARM resource group to create"
+}
+variable "dnsLabelPrefix" {
+  description = "Prefix of public DNS names of VMs, e.g. 'dnsLabelPrefix-VMName.region.cloudapp.azure.com'"
+}
 variable "adminUserName" {
     default = "yvand"
+    description = "Name of the AD and SharePoint administrator. 'administrator' is not allowed"
 }
-variable "adminPassword" {}
-variable "serviceAccountsPassword" {}
+variable "adminPassword" {
+  description = "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
+}
+variable "serviceAccountsPassword" {
+  description = "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
+}
 variable "domainFQDN" {
   default = "contoso.local"
+  description = "FQDN of the AD forest to create"
 }
 variable "timeZone" {
   default = "Romance Standard Time"
+  description = "Time zone of the VMs. Type '[TimeZoneInfo]::GetSystemTimeZones().Id' in PowerShell to get the list. Note that 'UTC' works but 'UTC+xx' does NOT work."
 }
 variable "addFrontEndToFarm" {
   default = false
+  description = "Select whether a SharePoint Front End VM should be provisioned and joined to the farm."
 }
 
 variable "generalSettings" {

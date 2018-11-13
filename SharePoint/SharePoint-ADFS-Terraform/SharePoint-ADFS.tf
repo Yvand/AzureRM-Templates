@@ -1,5 +1,7 @@
 # Configure the Azure Provider
-provider "azurerm" { }
+provider "azurerm" {
+  version = "=1.18.0"
+}
 
 # Create a resource group
 resource "azurerm_resource_group" "resourceGroup" {
@@ -78,7 +80,7 @@ resource "azurerm_network_security_group" "NSG-VNet-SP" {
   }
 }
 
-# Create virtual network
+# Create the virtual network, 3 subnets, and associate each subnet with its Network Security Group
 resource "azurerm_virtual_network" "VNet" {
   name                = "${azurerm_resource_group.resourceGroup.name}-vnet"
   location            = "${azurerm_resource_group.resourceGroup.location}"
@@ -86,7 +88,7 @@ resource "azurerm_virtual_network" "VNet" {
   address_space       = ["${var.networkSettings["vNetPrivatePrefix"]}"]
 }
 
-# Create artifacts for VM DC
+# Subnet and NSG for DC
 resource "azurerm_subnet" "Subnet-DC" {
   name                 = "Subnet-${var.vmDC["vmName"]}"
   resource_group_name  = "${azurerm_resource_group.resourceGroup.name}"
@@ -99,6 +101,33 @@ resource "azurerm_subnet_network_security_group_association" "NSG-Associate-DCSu
   network_security_group_id = "${azurerm_network_security_group.NSG-VNet-DC.id}"
 }
 
+# Subnet and NSG for SQL
+resource "azurerm_subnet" "Subnet-SQL" {
+  name                 = "Subnet-${var.vmSQL["vmName"]}"
+  resource_group_name  = "${azurerm_resource_group.resourceGroup.name}"
+  virtual_network_name = "${azurerm_virtual_network.VNet.name}"
+  address_prefix       = "${var.networkSettings["vNetPrivateSubnetSQLPrefix"]}"
+}
+
+resource "azurerm_subnet_network_security_group_association" "NSG-Associate-SQLSubnet" {
+  subnet_id                 = "${azurerm_subnet.Subnet-SQL.id}"
+  network_security_group_id = "${azurerm_network_security_group.NSG-VNet-SQL.id}"
+}
+
+# Subnet and NSG for SP
+resource "azurerm_subnet" "Subnet-SP" {
+  name                 = "Subnet-${var.vmSP["vmName"]}"
+  resource_group_name  = "${azurerm_resource_group.resourceGroup.name}"
+  virtual_network_name = "${azurerm_virtual_network.VNet.name}"
+  address_prefix       = "${var.networkSettings["vNetPrivateSubnetSPPrefix"]}"
+}
+
+resource "azurerm_subnet_network_security_group_association" "NSG-Associate-SPSubnet" {
+  subnet_id                 = "${azurerm_subnet.Subnet-SP.id}"
+  network_security_group_id = "${azurerm_network_security_group.NSG-VNet-SP.id}"
+}
+
+# Create artifacts for VM DC
 resource "azurerm_public_ip" "PublicIP-DC" {
   name                         = "PublicIP-${var.vmDC["vmName"]}"
   location                     = "${azurerm_resource_group.resourceGroup.location}"
@@ -122,18 +151,6 @@ resource "azurerm_network_interface" "NIC-DC-0" {
 }
 
 # Create artifacts for VM SQL
-resource "azurerm_subnet" "Subnet-SQL" {
-  name                 = "Subnet-${var.vmSQL["vmName"]}"
-  resource_group_name  = "${azurerm_resource_group.resourceGroup.name}"
-  virtual_network_name = "${azurerm_virtual_network.VNet.name}"
-  address_prefix       = "${var.networkSettings["vNetPrivateSubnetSQLPrefix"]}"
-}
-
-resource "azurerm_subnet_network_security_group_association" "NSG-Associate-SQLSubnet" {
-  subnet_id                 = "${azurerm_subnet.Subnet-SQL.id}"
-  network_security_group_id = "${azurerm_network_security_group.NSG-VNet-SQL.id}"
-}
-
 resource "azurerm_public_ip" "PublicIP-SQL" {
   name                         = "PublicIP-${var.vmSQL["vmName"]}"
   location                     = "${azurerm_resource_group.resourceGroup.location}"
@@ -156,18 +173,6 @@ resource "azurerm_network_interface" "NIC-SQL-0" {
 }
 
 # Create artifacts for VM SP
-resource "azurerm_subnet" "Subnet-SP" {
-  name                 = "Subnet-${var.vmSP["vmName"]}"
-  resource_group_name  = "${azurerm_resource_group.resourceGroup.name}"
-  virtual_network_name = "${azurerm_virtual_network.VNet.name}"
-  address_prefix       = "${var.networkSettings["vNetPrivateSubnetSPPrefix"]}"
-}
-
-resource "azurerm_subnet_network_security_group_association" "NSG-Associate-SPSubnet" {
-  subnet_id                 = "${azurerm_subnet.Subnet-SP.id}"
-  network_security_group_id = "${azurerm_network_security_group.NSG-VNet-SP.id}"
-}
-
 resource "azurerm_public_ip" "PublicIP-SP" {
   name                         = "PublicIP-${var.vmSP["vmName"]}"
   location                     = "${azurerm_resource_group.resourceGroup.location}"

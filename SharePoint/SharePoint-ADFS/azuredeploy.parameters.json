@@ -18,7 +18,7 @@
       "value": "Romance Standard Time"
     },
     "addFrontEndToFarm": {
-      "value": "Yes"
+      "value": "No"
     },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS"
