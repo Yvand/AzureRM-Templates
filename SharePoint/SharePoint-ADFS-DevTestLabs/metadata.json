@@ -1,0 +1,9 @@
+{
+  "$schema": "https://aka.ms/azure-quickstart-templates-metadata-schema#",
+  "type": "QuickStart",
+  "itemDisplayName": "SharePoint template for DevTest labs",
+  "description": "This template deploys SharePoint 2013 or 2016 with minimum configuration to run test that involve federated authentication.",
+  "summary": "This template deploys SharePoint 2013 or 2016 with minimum configuration to run test that involve federated authentication.",
+  "githubUsername": "yvand",
+  "dateUpdated": "2018-11-13"
+}

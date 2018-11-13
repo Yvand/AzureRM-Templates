@@ -1,0 +1,24 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sharePointVersion": {
+      "value": "2016"
+    },
+    "vmSPSize": {
+      "value": "Standard_DS3_v2_Promo"
+    },
+    "dnsLabelPrefix": {
+      "value": "xydspadfs"
+    },
+    "domainFQDN": {
+      "value": "contoso.local"
+    },
+    "vmsTimeZone": {
+      "value": "Romance Standard Time"
+    },
+    "_artifactsLocation": {
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/SharePoint/SharePoint-ADFS-DevTestLabs"
+    }
+  }
+}
