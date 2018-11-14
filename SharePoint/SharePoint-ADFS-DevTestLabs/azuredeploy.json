@@ -143,7 +143,6 @@
       "vmDCName": "DC",
       "vmSQLName": "SQL",
       "vmSPName": "SP",
-      "vmFEName": "FE",
       "sqlAlias": "SQLAlias",
       "spSuperUserName": "spSuperUser",
       "spSuperReaderName": "spSuperReader",
@@ -823,14 +822,6 @@
             "SPPassphraseCreds": {
               "UserName": "Passphrase",
               "Password": "[variables('generalSettings').spPassphrase]"
-            },
-            "SPSuperUserCreds": {
-              "UserName": "[variables('generalSettings').spSuperUserName]",
-              "Password": "[parameters('serviceAccountsPassword')]"
-            },
-            "SPSuperReaderCreds": {
-              "UserName": "[variables('generalSettings').spSuperReaderName]",
-              "Password": "[parameters('serviceAccountsPassword')]"
             }
           }
         }
