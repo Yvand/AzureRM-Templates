@@ -20,6 +20,9 @@
     "addFrontEndToFarm": {
       "value": "No"
     },
+    "enableHybridBenefitServerLicenses": {
+      "value": "Yes"
+    },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS"
     }
