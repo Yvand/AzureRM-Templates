@@ -177,6 +177,13 @@
       "metadata": {
         "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
       }
+    },
+    "sharePointdataDiskSize": {
+      "type": "int",
+      "defaultValue": 64,
+      "metadata": {
+        "description": "Size in Gb of the data disk in SharePoint VMs. Set to 0 to not create the data disk."
+      }
     }
   },
   "variables": {
@@ -282,7 +289,17 @@
       "script": "ConfigureFEVM.ps1",
       "function": "ConfigureFEVM",
       "forceUpdateTag": "1.0"
-    }
+    },
+    "sharePointDataDisk": [
+      {
+        "lun": 0,
+        "name": "[variables('vmSP').vmDataDiskName]",
+        "caching": "ReadWrite",
+        "createOption": "Empty",
+        "diskSizeGB": "[parameters('sharePointdataDiskSize')]",
+        "managedDisk": {}
+      }
+    ]
   },
   "resources": [
     {
@@ -760,16 +777,7 @@
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
-          "dataDisks": [
-            {
-              "lun": 0,
-              "name": "[variables('vmSP').vmDataDiskName]",
-              "caching": "ReadWrite",
-              "createOption": "Empty",
-              "diskSizeGB": 64,
-              "managedDisk": {}
-            }
-          ]
+          "dataDisks": "[if(equals(parameters('sharePointdataDiskSize'), 0), json('null'), variables('sharePointDataDisk'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
