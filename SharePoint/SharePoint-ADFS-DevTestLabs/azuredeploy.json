@@ -2,6 +2,13 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
     "sharePointVersion": {
       "type": "string",
       "defaultValue": "2016",
@@ -129,11 +136,26 @@
         "description": "The sasToken required to access _artifactsLocation. When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       }
     },
-    "location": {
+    "enableAutomaticUpdates": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "defaultValue": "No",
       "metadata": {
-        "description": "Location for all resources."
+        "description": "Enable automatic Windows uUpdates."
+      }
+    },
+    "enableHybridBenefitServerLicenses": {
+      "type": "string",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "defaultValue": "No",
+      "metadata": {
+        "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
       }
     }
   },
@@ -438,7 +460,8 @@
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
-            "timeZone": "[parameters('vmsTimeZone')]"
+            "timeZone": "[parameters('vmsTimeZone')]",
+            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]"
           }
         },
         "storageProfile": {
@@ -465,7 +488,8 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
             }
           ]
-        }
+        },
+        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
       },
       "resources": [
         {
@@ -581,7 +605,8 @@
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
-            "timeZone": "[parameters('vmsTimeZone')]"
+            "timeZone": "[parameters('vmsTimeZone')]",
+            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]"
           }
         },
         "storageProfile": {
@@ -608,7 +633,8 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
             }
           ]
-        }
+        },
+        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
       },
       "resources": []
     },
@@ -677,7 +703,8 @@
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
-            "timeZone": "[parameters('vmsTimeZone')]"
+            "timeZone": "[parameters('vmsTimeZone')]",
+            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]"
           }
         },
         "storageProfile": {
@@ -704,7 +731,8 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
             }
           ]
-        }
+        },
+        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
       },
       "resources": []
     },
