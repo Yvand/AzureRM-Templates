@@ -9,10 +9,6 @@
         "description": "Location for all resources."
       }
     },
-    "labName": {
-      "type": "string",
-      "defaultValue": "YvanDevTests"
-    },
     "sharePointVersion": {
       "type": "string",
       "defaultValue": "2016",
@@ -63,10 +59,11 @@
     },
     "vmDCStorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard",
+      "defaultValue": "Standard_LRS",
       "allowedValues": [
-        "Standard",
-        "Premium"
+        "Standard_LRS",
+        "Standard_GRS",
+        "Premium_LRS"
       ],
       "metadata": {
         "description": "Type of storage for the managed disks. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
@@ -199,7 +196,6 @@
       "nsgSPVNetName": "NSG-VNet-SP"
     },
     "vmDC": {
-      "vmDCResourceName": "[concat(parameters('labName'), '/', variables('generalSettings').vmDCName)]",
       "vmImagePublisher": "MicrosoftWindowsServer",
       "vmImageOffer": "WindowsServer",
       "vmImageSKU": "2016-Datacenter",
@@ -250,10 +246,7 @@
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM",
       "forceUpdateTag": "1.0"
-    },
-    "labVirtualNetworkName": "[concat('Dtl', parameters('labName'))]",
-    "labSubnetName": "[concat(variables('labVirtualNetworkName'), 'Subnet')]",
-    "labVirtualNetworkId": "[resourceId('Microsoft.DevTestLab/labs/virtualnetworks', parameters('labName'), variables('labVirtualNetworkName'))]"
+    }
   },
   "resources": [
     {
@@ -402,88 +395,150 @@
       }
     },
     {
-      "name": "[variables('vmDC').vmDCResourceName]",
-      "type": "Microsoft.DevTestLab/labs/virtualmachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2018-10-15-preview",
+      "name": "[variables('vmDC').vmPublicIPName]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-08-01",
+      "dependsOn": [],
       "tags": {
-        "displayName": "[variables('vmDC').vmDCResourceName]"
+        "displayName": "[variables('vmDC').vmPublicIPName]"
       },
       "properties": {
-        "labVirtualNetworkId": "[variables('labVirtualNetworkId')]",
-        "notes": "Windows Server 2016 Datacenter",
-        "galleryImageReference": {
-          "publisher": "[variables('vmDC').vmImagePublisher]",
-          "offer": "[variables('vmDC').vmImageOffer]",
-          "sku": "[variables('vmDC').vmImageSKU]",
-          "version": "latest",
-          "osType": "Windows"
-        },
-        "size": "[variables('vmDC').vmVmSize]",
-        "userName": "[parameters('adminUserName')]",
-        "password": "[parameters('adminPassword')]",
-        "isAuthenticationWithSshKey": false,
-        "labSubnetName": "[variables('labSubnetName')]",
-        "disallowPublicIpAddress": true,
-        "storageType": "[parameters('vmDCStorageAccountType')]",
-        "allowClaim": false,
-        "networkInterface": {
-          "sharedPublicIpAddressConfiguration": {
-            "inboundNatRules": [
-              {
-                "transportProtocol": "tcp",
-                "backendPort": 3389
-              }
-            ]
-          }
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('vmDC').vmPublicIPDnsName]"
         }
       }
     },
     {
-      "name": "[concat(variables('generalSettings').vmDCName, '/ConfigureDCVM')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[variables('vmDC').vmNicName]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
+      ],
+      "tags": {
+        "displayName": "[variables('vmDC').vmNicName]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('vmDC').nicPrivateIPAddress]",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetDCName)]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('generalSettings').vmDCName]",
+      "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
       "apiVersion": "2018-06-01",
       "dependsOn": [
-        "[resourceId('Microsoft.DevTestLab/labs/virtualmachines', parameters('labName'), variables('generalSettings').vmDCName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
       ],
       "tags": {
-        "displayName": "[concat(variables('generalSettings').vmDCName,'/ConfigureDCVM')]"
+        "displayName": "[variables('generalSettings').vmDCName]"
       },
       "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.9",
-        "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[variables('dscConfigureDCVM').forceUpdateTag]",
-        "settings": {
-          "wmfVersion": "latest",
-          "configuration": {
-            "url": "[concat(parameters('_artifactsLocation'), '/', variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureDCVM').fileName, parameters('_artifactsLocationSasToken'))]",
-            "script": "[variables('dscConfigureDCVM').script]",
-            "function": "[variables('dscConfigureDCVM').function]"
-          },
-          "configurationArguments": {
-            "domainFQDN": "[parameters('domainFQDN')]",
-            "PrivateIP": "[variables('vmDC').nicPrivateIPAddress]"
-          },
-          "privacy": {
-            "dataCollection": "enable"
+        "hardwareProfile": {
+          "vmSize": "[variables('vmDC').vmVmSize]"
+        },
+        "osProfile": {
+          "computerName": "[variables('generalSettings').vmDCName]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "timeZone": "[parameters('vmsTimeZone')]",
+            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]"
           }
         },
-        "protectedSettings": {
-          "configurationArguments": {
-            "AdminCreds": {
-              "UserName": "[parameters('adminUsername')]",
-              "Password": "[parameters('adminPassword')]"
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmDC').vmImagePublisher]",
+            "offer": "[variables('vmDC').vmImageOffer]",
+            "sku": "[variables('vmDC').vmImageSKU]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('vmDC').vmOSDiskName]",
+            "caching": "ReadWrite",
+            "osType": "Windows",
+            "createOption": "FromImage",
+            "diskSizeGB": 128,
+            "managedDisk": {
+              "storageAccountType": "[parameters('vmDCStorageAccountType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
+            }
+          ]
+        },
+        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
+      },
+      "resources": [
+        {
+          "name": "ConfigureDCVM",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2018-06-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
+          ],
+          "tags": {
+            "displayName": "ConfigureDCVM"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "forceUpdateTag": "[variables('dscConfigureDCVM').forceUpdateTag]",
+            "settings": {
+              "wmfVersion": "latest",
+              "configuration": {
+                "url": "[concat(parameters('_artifactsLocation'), '/', variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureDCVM').fileName, parameters('_artifactsLocationSasToken'))]",
+                "script": "[variables('dscConfigureDCVM').script]",
+                "function": "[variables('dscConfigureDCVM').function]"
+              },
+              "configurationArguments": {
+                "domainFQDN": "[parameters('domainFQDN')]",
+                "PrivateIP": "[variables('vmDC').nicPrivateIPAddress]"
+              },
+              "privacy": {
+                "dataCollection": "enable"
+              }
             },
-            "AdfsSvcCreds": {
-              "UserName": "[variables('generalSettings').adfsSvcUserName]",
-              "Password": "[variables('generalSettings').adfsSvcPassword]"
+            "protectedSettings": {
+              "configurationArguments": {
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                },
+                "AdfsSvcCreds": {
+                  "UserName": "[variables('generalSettings').adfsSvcUserName]",
+                  "Password": "[variables('generalSettings').adfsSvcPassword]"
+                }
+              }
             }
           }
         }
-      }
+      ]
     },
     {
       "name": "[variables('vmSQL').vmPublicIPName]",
@@ -687,8 +742,8 @@
       "location": "[parameters('location')]",
       "apiVersion": "2018-06-01",
       "dependsOn": [
-        "[resourceId('Microsoft.DevTestLab/labs/virtualmachines', parameters('labName'), variables('generalSettings').vmDCName)]",
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
+        "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
       ],
       "tags": {
@@ -739,6 +794,8 @@
       "location": "[parameters('location')]",
       "apiVersion": "2018-06-01",
       "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
+        "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
       ],
       "tags": {
