@@ -24,7 +24,7 @@
       "value": "Yes"
     },
     "sharePointdataDiskSize": {
-      "value": 0
+      "value": 63
     },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS"
