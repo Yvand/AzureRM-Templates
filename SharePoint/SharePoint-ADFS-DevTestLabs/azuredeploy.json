@@ -737,17 +737,17 @@
       "resources": []
     },
     {
-      "name": "[concat(variables('generalSettings').vmSQLName,'/ConfigureSQLVM')]",
+      "name": "[concat(variables('generalSettings').vmSQLName, '/ConfigureSQLVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
       "apiVersion": "2018-06-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
       ],
       "tags": {
-        "displayName": "[concat(variables('generalSettings').vmSQLName,'/ConfigureSQLVM')]"
+        "displayName": "[concat(variables('generalSettings').vmSQLName, '/ConfigureSQLVM')]"
       },
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -789,17 +789,17 @@
       }
     },
     {
-      "name": "[concat(variables('generalSettings').vmSPName,'/ConfigureSPVM')]",
+      "name": "[concat(variables('generalSettings').vmSPName, '/ConfigureSPVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
       "apiVersion": "2018-06-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
       ],
       "tags": {
-        "displayName": "[concat(variables('generalSettings').vmSPName,'/ConfigureSPVM')]"
+        "displayName": "[concat(variables('generalSettings').vmSPName, '/ConfigureSPVM')]"
       },
       "properties": {
         "publisher": "Microsoft.Powershell",
