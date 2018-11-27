@@ -797,7 +797,7 @@
       "apiVersion": "2018-06-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
       ],
       "tags": {
@@ -849,7 +849,7 @@
       "apiVersion": "2018-06-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
       ],
       "tags": {
@@ -1036,7 +1036,7 @@
       "apiVersion": "2018-06-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
       ],
       "tags": {
