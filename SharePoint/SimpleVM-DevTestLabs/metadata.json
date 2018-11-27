@@ -1,0 +1,9 @@
+{
+  "$schema": "https://aka.ms/azure-quickstart-templates-metadata-schema#",
+  "type": "QuickStart",
+  "itemDisplayName": "Simple VM for DevTest labs",
+  "description": "Simple VM for DevTest labs",
+  "summary": "Simple VM for DevTest labs",
+  "githubUsername": "yvand",
+  "dateUpdated": "2018-11-27"
+}
