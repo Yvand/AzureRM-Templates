@@ -1,0 +1,7 @@
+{
+  "itemDisplayName": "SharePoint optimized for DevTest labs",
+  "description": "This template deploys SharePoint 2013 or 2016 with 3 VMs (DC, SQL and SharePoint). Domain Controller runs ADCS and ADFS. SharePoint has 1 web application with 2 zones. Default zone uses Windows authentication and Intranet zone uses federated authentication with ADFS.",
+  "summary": "This template deploys SharePoint 2013 or 2016 optimized for running integration tests.",
+  "githubUsername": "Yvand",
+  "dateUpdated": "2018-11-29"
+}

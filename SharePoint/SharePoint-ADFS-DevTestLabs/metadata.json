@@ -1,9 +1,0 @@
-{
-  "$schema": "https://aka.ms/azure-quickstart-templates-metadata-schema#",
-  "type": "QuickStart",
-  "itemDisplayName": "SharePoint optimized for DevTest labs",
-  "description": "This template deploys SharePoint 2013 or 2016 optimized for tests.",
-  "summary": "This template deploys SharePoint 2013 or 2016 optimized for tests.",
-  "githubUsername": "yvand",
-  "dateUpdated": "2018-11-13"
-}
