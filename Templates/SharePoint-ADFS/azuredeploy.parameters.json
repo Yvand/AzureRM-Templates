@@ -23,7 +23,7 @@
     "enableHybridBenefitServerLicenses": {
       "value": "Yes"
     },
-    "sharePointdataDiskSize": {
+    "sharePointDataDiskSize": {
       "value": 32
     },
     "_artifactsLocation": {

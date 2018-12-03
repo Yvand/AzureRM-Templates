@@ -164,7 +164,7 @@
         "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
       }
     },
-    "sharePointdataDiskSize": {
+    "sharePointDataDiskSize": {
       "type": "int",
       "defaultValue": 64,
       "metadata": {
@@ -296,7 +296,7 @@
         "name": "[variables('vmSP').vmDataDiskName]",
         "caching": "ReadWrite",
         "createOption": "Empty",
-        "diskSizeGB": "[parameters('sharePointdataDiskSize')]",
+        "diskSizeGB": "[parameters('sharePointDataDiskSize')]",
         "managedDisk": {}
       }
     ]
@@ -780,7 +780,7 @@
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
-          "dataDisks": "[if(equals(parameters('sharePointdataDiskSize'), 0), json('null'), variables('sharePointDataDisk'))]"
+          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('sharePointDataDisk'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
