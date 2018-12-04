@@ -859,5 +859,14 @@
       }
     }
   ],
-  "outputs": {}
+  "outputs": {
+    "EnvironmentLocation":{
+      "type": "string",
+      "value": "[parameters('_artifactsLocation')]"
+    },
+    "EnvironmentSAS":{
+      "type": "string",
+      "value": "[parameters('_artifactsLocationSasToken')]"
+    }
+  }
 }
