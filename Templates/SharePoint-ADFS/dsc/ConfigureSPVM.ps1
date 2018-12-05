@@ -37,7 +37,7 @@ configuration ConfigureSPVM
     [String] $UpaServiceName = "User Profile Service Application"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
-    [String] $SetupPath = "F:\Setup"
+    [String] $SetupPath = "C:\Setup"
     [String] $DCSetupPath = "\\$DCName\C$\Setup"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
@@ -262,7 +262,7 @@ configuration ConfigureSPVM
 
         File AccountsProvisioned
         {
-            DestinationPath      = "F:\Logs\DSC1.txt"
+            DestinationPath      = "C:\Logs\DSC1.txt"
             Contents             = "AccountsProvisioned"
             Type                 = 'File'
             Force                = $true
@@ -385,7 +385,7 @@ configuration ConfigureSPVM
 
         SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
         {
-            LogPath              = "F:\ULS"
+            LogPath              = "C:\ULS"
             LogSpaceInGB         = 20
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPFarm]CreateSPFarm"

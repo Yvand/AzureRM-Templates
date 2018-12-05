@@ -9,7 +9,7 @@
       "value": "Standard_DS3_v2_Promo"
     },
     "dnsLabelPrefix": {
-      "value": "xydspadfs"
+      "value": "ydsp19"
     },
     "domainFQDN": {
       "value": "contoso.local"
@@ -24,7 +24,7 @@
       "value": "Yes"
     },
     "sharePointDataDiskSize": {
-      "value": 32
+      "value": 0
     },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS"
