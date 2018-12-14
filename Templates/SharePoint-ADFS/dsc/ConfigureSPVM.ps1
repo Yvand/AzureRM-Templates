@@ -361,6 +361,7 @@ configuration ConfigureSPVM
             CentralAdministrationPort = 5000
             # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
             RunCentralAdmin           = $true
+            IsSingleInstance          = "Yes"
             Ensure                    = "Present"
             DependsOn                 = "[xScript]WaitForSQL"
         }
@@ -385,6 +386,7 @@ configuration ConfigureSPVM
         {
             LogPath              = "C:\ULS"
             LogSpaceInGB         = 20
+            IsSingleInstance     = "Yes"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
@@ -500,7 +502,7 @@ configuration ConfigureSPVM
             ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
             AllowAnonymous         = $false
             DatabaseName           = $SPDBPrefix + "Content_80"
-            Url                    = "http://$SPTrustedSitesName/"
+            WebAppUrl              = "http://$SPTrustedSitesName/"
             Port                   = 80
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
@@ -773,8 +775,8 @@ configuration ConfigureSPVM
             SecurityType         = "SharingPermissions"
             MembersToInclude     =  @(
                 MSFT_SPServiceAppSecurityEntry {
-                    Username    = $SPSvcCredsQualified.UserName
-                    AccessLevel = "Full Control"
+                    Username     = $SPSvcCredsQualified.UserName
+                    AccessLevels = @("Full Control")
             })
             PsDscRunAsCredential = $SPSetupCredsQualified
             #DependsOn           = "[xScript]RefreshLocalConfigCache"
@@ -859,6 +861,7 @@ configuration ConfigureSPVM
             UseSessionCookies     = $false
             AllowOAuthOverHttp    = $true
             AllowMetadataOverHttp = $true
+            IsSingleInstance      = "Yes"
             PsDscRunAsCredential  = $SPSetupCredsQualified
             DependsOn             = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }

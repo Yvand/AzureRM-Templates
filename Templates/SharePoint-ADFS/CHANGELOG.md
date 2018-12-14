@@ -1,4 +1,12 @@
-# Change log for AzureRM template for SharePoint 2016 and 2013 configured with ADFS
+# Change log for Azure template for SharePoint 2013, 2016 and 2019
+
+## Unreleased
+
+* Added SharePoint 2019
+* Added option to enable Hybrid benefit for Windows Server licenses
+* Added option to enable automatic Windows updates
+* Added option to choose size of SharePoint data disk. It can be removed by setting its size to 0
+* Updated SharePointDSC from 2.6 to 3.1
 
 ## November 2018 update
 
