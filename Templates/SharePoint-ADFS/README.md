@@ -1,7 +1,5 @@
 # Azure template for SharePoint 2013, 2016 and 2019
 
-## Description
-
 This template deploys SharePoint 2013, 2016 and 2019 with following configuration:
 
 * ADFS is installed on the DC and fully configured in SharePoint.
@@ -13,7 +11,7 @@ This template deploys SharePoint 2013, 2016 and 2019 with following configuratio
 * Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured.
 * A font-end can be optionally added to the farm.
 
-Each VM has its own public IP address, and are protected by NSGs (Network Security Group) attached to each subnet. RDP ports are allowed from Internet.
+Each VM has its own public IP address, and they are protected by NSGs (Network Security Group) attached to each subnet. RDP ports are allowed from Internet.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fdev%2FTemplates%2FSharePoint-ADFS%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
