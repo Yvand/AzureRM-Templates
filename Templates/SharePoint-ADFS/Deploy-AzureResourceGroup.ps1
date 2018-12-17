@@ -4,7 +4,7 @@
 ### Define variables
 $resourceGroupLocation = 'westeurope'
 #$resourceGroupLocation = 'northeurope'
-$resourceGroupName = 'xydsp19'
+$resourceGroupName = 'xydsp'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
