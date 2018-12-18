@@ -366,6 +366,29 @@ configuration ConfigureSPVM
             DependsOn                 = "[xScript]WaitForSQL"
         }
 
+        xScript RestartSPTimer
+        {
+            SetScript =
+            {
+                # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
+                Restart-Service SPTimerV4
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPDistributedCacheService]EnableDistributedCache"
+        }
+
+        SPFarmSolution InstallLdapcp
+        {
+            LiteralPath          = "$SetupPath\LDAPCP.wsp"
+            Name                 = "LDAPCP.wsp"
+            Deployed             = $true
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[xScript]RestartSPTimer"
+        }
+
         SPManagedAccount CreateSPSvcManagedAccount
         {
             AccountName          = $SPSvcCredsQualified.UserName
@@ -410,43 +433,8 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
-        xScript RestartSPTimer
-        {
-            SetScript =
-            {
-                # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
-                Restart-Service SPTimerV4
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPDistributedCacheService]EnableDistributedCache"
-        }
-
-        SPFarmSolution InstallLdapcp
-        {
-            LiteralPath          = "$SetupPath\LDAPCP.wsp"
-            Name                 = "LDAPCP.wsp"
-            Deployed             = $true
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimer"
-        }
-
-        xScript RestartSPTimerAfterInstallLdapcp
-        {
-            SetScript =
-            {
-                # Attempt to avoid error below thrown to SPTrustedIdentityTokenIssuer:
-                # UpdatedConcurrencyException: The object SPClaimEncodingManager Name=ClaimEncodingManager [...] Process:OWSTIMER 
-                Restart-Service SPTimerV4
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPFarmSolution]InstallLdapcp"
-        }
-
+        # Installing LDAPCP somehow updates SPClaimEncodingManager and it may cause an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer
+        # So resource SPTrustedIdentityTokenIssuer is ran long after [SPFarmSolution]InstallLdapcp to avoid it
         SPTrustedIdentityTokenIssuer CreateSPTrust
         {
             Name                         = $DomainFQDN
@@ -469,7 +457,7 @@ configuration ConfigureSPVM
             #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
             UseWReplyParameter           = $true
             Ensure                       = "Present"
-            DependsOn                    = "[xScript]RestartSPTimerAfterInstallLdapcp"
+            DependsOn                    = "[SPFarmSolution]InstallLdapcp"
             PsDscRunAsCredential         = $SPSetupCredsQualified
         }
 
