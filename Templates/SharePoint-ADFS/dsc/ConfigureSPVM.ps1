@@ -433,6 +433,20 @@ configuration ConfigureSPVM
             DependsOn            = "[xScript]RestartSPTimer"
         }
 
+        xScript RestartSPTimerAfterInstallLdapcp
+        {
+            SetScript =
+            {
+                # Attempt to avoid error below thrown to SPTrustedIdentityTokenIssuer:
+                # UpdatedConcurrencyException: The object SPClaimEncodingManager Name=ClaimEncodingManager [...] Process:OWSTIMER 
+                Restart-Service SPTimerV4
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPFarmSolution]InstallLdapcp"
+        }
+
         SPTrustedIdentityTokenIssuer CreateSPTrust
         {
             Name                         = $DomainFQDN
@@ -455,7 +469,7 @@ configuration ConfigureSPVM
             #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
             UseWReplyParameter           = $true
             Ensure                       = "Present"
-            DependsOn                    = "[SPFarmSolution]InstallLdapcp"
+            DependsOn                    = "[xScript]RestartSPTimerAfterInstallLdapcp"
             PsDscRunAsCredential         = $SPSetupCredsQualified
         }
 
