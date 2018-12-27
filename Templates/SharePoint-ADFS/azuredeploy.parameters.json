@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sharePointVersion": {
-      "value": "2019"
+      "value": "2016"
     },
     "vmSPSize": {
       "value": "Standard_DS3_v2_Promo"

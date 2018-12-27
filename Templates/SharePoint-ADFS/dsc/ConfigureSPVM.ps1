@@ -524,18 +524,6 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
-        $caRootCertPath = "$SetupPath\Certificates\ADFS Signing issuer.cer";
-        $caRootCert = New-Object -TypeName "System.Security.Cryptography.X509Certificates.X509Certificate2";
-        $caRootCert.Import($caRootCertPath);
-        SPTrustedRootAuthority TrustCARootCertificate
-        {
-            Name                         = "$DomainFQDN root CA"
-            CertificateThumbprint        = $caRootCert.Thumbprint
-            Ensure                       = "Present"
-            DependsOn                    = "[xScript]UpdateGPOToTrustRootCACert"
-            PsDscRunAsCredential         = $SPSetupCredsQualified
-        }
-
         CertReq SPSSiteCert
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
