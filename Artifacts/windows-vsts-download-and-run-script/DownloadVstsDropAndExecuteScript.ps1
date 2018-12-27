@@ -103,6 +103,7 @@ function Get-BuildDefinitionId
 
     Write-Host "Getting build definition ID from $BuildDefinitionUri"
     $buildDef = Invoke-RestMethod -Uri $BuildDefinitionUri -Headers $Headers -Method Get
+    Write-Host "DEBUG Got build definition $buildDef"
     if (-not $buildDefId)
     {
      $buildDefinitionId = $buildDef.value.id[0]
@@ -190,6 +191,7 @@ try
     # Output provided parameters.
     Write-Host 'Provided parameters used in this script:'
     Write-Host "  `$accessToken = $('*' * $accessToken.Length)"
+    Write-Host "  `$accessToken DEBUG = $accessToken"
     Write-Host "  `$buildDefinitionName = $buildDefinitionName"
     Write-Host "  `$vstsProjectUri = $vstsProjectUri"
     Write-Host "  `$pathToScript = $pathToScript"
