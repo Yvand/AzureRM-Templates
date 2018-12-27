@@ -203,10 +203,13 @@ try
 
     # Get the build definition ID.
     $buildDefinitionUri = "$vstsProjectUri/_apis/build/definitions?api-version=$vstsApiVersion&name=$buildDefinitionName"
+    Write-Host "buildDefinitionUri: $buildDefinitionUri"
     $buildDefinitionId = Get-BuildDefinitionId -BuildDefinitionUri $buildDefinitionUri -Headers $headers
+    Write-Host "buildDefinitionId returned: $buildDefinitionId"
 
     # Get the ID of the latest successful build.
     $buildUri = "$vstsProjectUri/_apis/build/builds/?api-version=$vstsApiVersion&definitions=$buildDefinitionId&statusFilter=succeeded";
+    Write-Host "buildUri: $buildUri"
     $buildId = Get-LatestBuildId -BuildUri $buildUri -Headers $headers
 
     # Download the build artifact package.
