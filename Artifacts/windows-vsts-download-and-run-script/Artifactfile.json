@@ -27,7 +27,7 @@
             "description": "Path to Script for execution, eg 'drop\\bin\\Debug\\scriptName.ps1'"
         },
         "scriptArguments": {
-            "type": "array",
+            "type": "string",
             "displayName": "Script Arguments",
             "description": "Optional arguments for the script, eg '-server localhost'",
             "allowEmpty": true,
