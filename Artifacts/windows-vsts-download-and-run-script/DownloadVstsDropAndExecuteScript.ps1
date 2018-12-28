@@ -4,7 +4,7 @@ param(
     [string] $buildDefinitionName,
     [string] $vstsProjectUri,
     [string] $pathToScript,
-    [string] $scriptArguments
+    [Parameter(ValueFromRemainingArguments=$true)] $scriptArguments
 )
 
 ###################################################################################################
