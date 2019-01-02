@@ -4,7 +4,8 @@ param(
     [string] $buildDefinitionName,
     [string] $vstsProjectUri,
     [string] $pathToScript,
-    [Parameter(ValueFromRemainingArguments=$true)] $scriptArguments
+    [string] $scriptArguments,
+    [Parameter(ValueFromRemainingArguments=$true)] $remainingScriptArguments
 )
 
 ###################################################################################################
@@ -186,6 +187,17 @@ try
     $destination = "$($env:HOMEDRIVE)\$buildDefinitionName"
     $vstsProjectUri = $vstsProjectUri.TrimEnd("/")
     $headers = Set-AuthHeaders -AccessToken $accessToken
+
+    # Invoke-AzureRmResourceAction generates the call to this function with parameters values passed in single quotes instead of double quotes
+    # It forces me to do this little hack to catch remaining parameters and put them back to $scriptArguments
+    $remainingScriptArguments.Split(" ") | %{
+        if ($_.StartsWith("-"))
+        {
+            $scriptArguments += $_ + " "
+        } else {
+            $scriptArguments += "'" + $_ + "' "
+        }
+    }
 
     # Output provided parameters.
     Write-Host 'Provided parameters used in this script:'
