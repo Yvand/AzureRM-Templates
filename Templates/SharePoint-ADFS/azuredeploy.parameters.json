@@ -27,7 +27,7 @@
       "value": 0
     },
     "_artifactsLocation": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/"
     }
   }
 }
