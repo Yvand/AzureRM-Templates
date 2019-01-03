@@ -817,7 +817,7 @@
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[uri(parameters('_artifactsLocation'), concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureSQLVM').fileName, parameters('_artifactsLocationSasToken')))]",
+            "url": "[uri(variables('generalSettings').baseUri, concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureSQLVM').fileName, parameters('_artifactsLocationSasToken')))]",
             "script": "[variables('dscConfigureSQLVM').script]",
             "function": "[variables('dscConfigureSQLVM').function]"
           },
@@ -869,7 +869,7 @@
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[uri(parameters('_artifactsLocation'), concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureSPVM').fileName, parameters('_artifactsLocationSasToken')))]",
+            "url": "[uri(variables('generalSettings').baseUri, concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureSPVM').fileName, parameters('_artifactsLocationSasToken')))]",
             "script": "[variables('dscConfigureSPVM').script]",
             "function": "[variables('dscConfigureSPVM').function]"
           },
@@ -1057,7 +1057,7 @@
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[uri(parameters('_artifactsLocation'), concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureFEVM').fileName, parameters('_artifactsLocationSasToken')))]",
+            "url": "[uri(variables('generalSettings').baseUri, concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureFEVM').fileName, parameters('_artifactsLocationSasToken')))]",
             "script": "[variables('dscConfigureFEVM').script]",
             "function": "[variables('dscConfigureFEVM').function]"
           },
