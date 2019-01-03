@@ -192,6 +192,7 @@ try
 	Write-Host "  DEBUG `$remainingScriptArguments = $remainingScriptArguments"
     # Invoke-AzureRmResourceAction generates the call to this function with parameters values passed in single quotes instead of double quotes
     # It forces me to do this little hack to catch remaining parameters and put them back to $scriptArguments
+	$scriptArguments.TrimEnd("``")
     $remainingScriptArguments.Split(" ") | %{
         if ($_.StartsWith("-"))
         {
