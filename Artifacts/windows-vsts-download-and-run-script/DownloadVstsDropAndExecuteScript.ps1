@@ -198,7 +198,7 @@ try
         {
             $scriptArguments += $_ + " "
         } else {
-            $scriptArguments += "'" + $_ + "' "
+            $scriptArguments += "'" + $_.TrimStart("'").TrimEnd("'") + "' "
         }
     }
 
