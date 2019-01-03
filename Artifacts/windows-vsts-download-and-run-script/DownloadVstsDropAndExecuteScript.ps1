@@ -66,6 +66,7 @@ function Get-BuildArtifacts
         Remove-Item -Path $Destination -Force -Recurse | Out-Null
     }
 
+	Write-Host "Get-BuildArtifacts: Destination is $Destination"
     Write-Host "Getting build artifacts information from $ArtifactsUri"
     [Array] $artifacts = (Invoke-RestMethod -Uri $ArtifactsUri -Headers $Headers -Method Get | ConvertTo-Json -Depth 3 | ConvertFrom-Json).value
 
@@ -230,6 +231,7 @@ try
 
     # Download the build artifact package.
     $artifactsUri = "$vstsProjectUri/_apis/build/builds/$buildId/Artifacts?api-version=$vstsApiVersion";
+	Write-Host "Call function Get-BuildArtifacts with parameters: ArtifactsUri: $ArtifactsUri and Destination: $destination"
     Get-BuildArtifacts -ArtifactsUri $artifactsUri -Headers $headers -Destination $destination
 
     # Run the script specified after having successfully downloaded the build artifact package.
