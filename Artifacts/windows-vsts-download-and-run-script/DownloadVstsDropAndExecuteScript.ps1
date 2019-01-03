@@ -188,6 +188,8 @@ try
     $vstsProjectUri = $vstsProjectUri.TrimEnd("/")
     $headers = Set-AuthHeaders -AccessToken $accessToken
 
+	Write-Host "  DEBUG `$scriptArguments = $scriptArguments"
+	Write-Host "  DEBUG `$remainingScriptArguments = $remainingScriptArguments"
     # Invoke-AzureRmResourceAction generates the call to this function with parameters values passed in single quotes instead of double quotes
     # It forces me to do this little hack to catch remaining parameters and put them back to $scriptArguments
     $remainingScriptArguments.Split(" ") | %{
@@ -202,7 +204,7 @@ try
     # Output provided parameters.
     Write-Host 'Provided parameters used in this script:'
     Write-Host "  `$accessToken = $('*' * $accessToken.Length)"
-    Write-Host "  `$accessToken DEBUG = $accessToken"
+    Write-Host "  DEBUG `$accessToken = $accessToken"
     Write-Host "  `$buildDefinitionName = $buildDefinitionName"
     Write-Host "  `$vstsProjectUri = $vstsProjectUri"
     Write-Host "  `$pathToScript = $pathToScript"
