@@ -567,7 +567,7 @@
             "settings": {
               "wmfVersion": "latest",
               "configuration": {
-                "url": "[concat(parameters('_artifactsLocation'), '/', variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureDCVM').fileName, parameters('_artifactsLocationSasToken'))]",
+                "url": "[uri(parameters('_artifactsLocation'), concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureDCVM').fileName, parameters('_artifactsLocationSasToken')))]",
                 "script": "[variables('dscConfigureDCVM').script]",
                 "function": "[variables('dscConfigureDCVM').function]"
               },
@@ -816,7 +816,7 @@
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[concat(parameters('_artifactsLocation'), '/', variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureSQLVM').fileName, parameters('_artifactsLocationSasToken'))]",
+            "url": "[uri(parameters('_artifactsLocation'), concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureSQLVM').fileName, parameters('_artifactsLocationSasToken')))]",
             "script": "[variables('dscConfigureSQLVM').script]",
             "function": "[variables('dscConfigureSQLVM').function]"
           },
@@ -868,7 +868,7 @@
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[concat(parameters('_artifactsLocation'), '/', variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureSPVM').fileName, parameters('_artifactsLocationSasToken'))]",
+            "url": "[uri(parameters('_artifactsLocation'), concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureSPVM').fileName, parameters('_artifactsLocationSasToken')))]",
             "script": "[variables('dscConfigureSPVM').script]",
             "function": "[variables('dscConfigureSPVM').function]"
           },
@@ -1056,7 +1056,7 @@
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[concat(parameters('_artifactsLocation'), '/', variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureFEVM').fileName, parameters('_artifactsLocationSasToken'))]",
+            "url": "[uri(parameters('_artifactsLocation'), concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureFEVM').fileName, parameters('_artifactsLocationSasToken')))]",
             "script": "[variables('dscConfigureFEVM').script]",
             "function": "[variables('dscConfigureFEVM').function]"
           },
