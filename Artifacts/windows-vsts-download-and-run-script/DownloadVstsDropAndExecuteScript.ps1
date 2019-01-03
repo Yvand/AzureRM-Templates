@@ -186,6 +186,7 @@ try
     # Prepare values used throughout.
     $vstsApiVersion = "2.0"
     $destination = "$($env:HOMEDRIVE)\$buildDefinitionName"
+	$destination = "C:\$buildDefinitionName"
     $vstsProjectUri = $vstsProjectUri.TrimEnd("/")
     $headers = Set-AuthHeaders -AccessToken $accessToken
 
