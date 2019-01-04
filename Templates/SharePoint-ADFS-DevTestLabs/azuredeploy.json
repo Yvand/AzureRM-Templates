@@ -862,9 +862,9 @@
     }
   ],
   "outputs": {
-    "EnvironmentLocation":{
+    "EnvironmentLocation": {
       "type": "string",
-      "value": "[parameters('_artifactsLocation')]"
+      "value": "[variables('generalSettings').baseUri]"
     },
     "EnvironmentSAS":{
       "type": "string",
