@@ -181,8 +181,7 @@
       "spSvcPassword": "[parameters('serviceAccountsPassword')]",
       "spAppPoolUserName": "spapppool",
       "spAppPoolPassword": "[parameters('serviceAccountsPassword')]",
-      "spPassphrase": "[parameters('serviceAccountsPassword')]",
-      "baseUri": "[if(empty(parameters('_artifactsLocation')), deployment().properties.templateLink.uri, parameters('_artifactsLocation'))]"
+      "spPassphrase": "[parameters('serviceAccountsPassword')]"
     },
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
