@@ -134,6 +134,13 @@
         "description": "Enable automatic Windows uUpdates."
       }
     },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS-DevTestLabs/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
     "enableHybridBenefitServerLicenses": {
       "type": "string",
       "allowedValues": [
@@ -143,13 +150,6 @@
       "defaultValue": "No",
       "metadata": {
         "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
-      }
-    },
-    "_artifactsLocation": {
-      "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS-DevTestLabs/",
-      "metadata": {
-        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
     },
     "_artifactsLocationSasToken": {
