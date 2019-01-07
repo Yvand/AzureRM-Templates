@@ -20,6 +20,30 @@ Each VM has its own public IP address, and they are protected by NSGs (Network S
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+By default, virtual machines running SharePoint and SQL use SSD drives and have enough CPU and memory to be used comfortably for development and tests, as long as Search service is not started:
+
+* Virtual machine "DC":
+  * vmDCSize: [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-compute#fsv2-series-sup1sup)
+  * vmDCStorageAccountType: Standard_LRS
+* Virtual machine "SQL":
+  * vmSQLSize: [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general#dsv2-series)
+  * vmSQLStorageAccountType: Premium_LRS
+* Virtual machines "SP" and "FE":
+  * vmSPSize: [Standard_DS3_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general#dsv2-series)
+  * vmSPStorageAccountType: Premium_LRS
+
+I recommended the following options if you wish to provision a cheap environment:
+
+* Virtual machine "DC":
+  * vmDCSize: [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-compute#fsv2-series-sup1sup)
+  * vmDCStorageAccountType: Standard_LRS
+* Virtual machine "SQL":
+  * vmSQLSize: [Standard_D2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general#dv2-series)
+  * vmSQLStorageAccountType: Standard_LRS
+* Virtual machines "SP" and "FE":
+  * vmSPSize: [Standard_D11_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-memory#dv2-series-11-15)
+  * vmSPStorageAccountType: Standard_LRS
+
 > **Notes:**  
 > I strongly recommend to update SharePoint to a recent build just after the provisioning is complete.  
 > With the default sizes of virtual machines, provisioning of the template takes about 1h15 to complete.  
