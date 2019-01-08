@@ -167,9 +167,9 @@
     },
     "sharePointDataDiskSize": {
       "type": "int",
-      "defaultValue": 64,
+      "defaultValue": 0,
       "metadata": {
-        "description": "Size in Gb of the data disk in SharePoint VMs. Set to 0 to not create the data disk."
+        "description": "Size in Gb of the additional data disk attached to SharePoint VMs. Set to 0 to not create it"
       }
     },
     "_artifactsLocation": {
