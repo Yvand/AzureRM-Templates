@@ -1,5 +1,5 @@
 #Requires -Version 3.0
-#Requires -Module AzureRM.Resources
+#Requires -Module Az.Resources
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
@@ -32,13 +32,12 @@ else {
 }
 
 ### Ensure connection to Azure RM
-Import-Module Azure -ErrorAction SilentlyContinue
 $azurecontext = $null
-$azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
+$azurecontext = Get-AzContext -ErrorAction SilentlyContinue
 if ($null -eq $azurecontext -or $null -eq $azurecontext.Account -or $null -eq $azurecontext.Subscription) {
     Write-Host "Launching Azure authentication prompt..." -ForegroundColor Green
-    Connect-AzureRmAccount
-    $azurecontext = Get-AzureRmContext -ErrorAction SilentlyContinue
+    Connect-AzAccount
+    $azurecontext = Get-AzContext -ErrorAction SilentlyContinue
 }
 if ($null -eq $azurecontext -or $null -eq $azurecontext.Account -or $null -eq $azurecontext.Subscription) { 
     Write-Host "Unable to get a valid context." -ForegroundColor Red
@@ -46,8 +45,8 @@ if ($null -eq $azurecontext -or $null -eq $azurecontext.Account -or $null -eq $a
 }
 
 ### Create Resource Group if it doesn't exist
-if ($null -eq (Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue)) {
-    New-AzureRmResourceGroup `
+if ($null -eq (Get-AzResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue)) {
+    New-AzResourceGroup `
         -Name $resourceGroupName `
         -Location $resourceGroupLocation `
         -Verbose -Force
@@ -55,7 +54,7 @@ if ($null -eq (Get-AzureRmResourceGroup -ResourceGroupName $resourceGroupName -E
 }
 
 ### Test template and deploy if it is valid, otherwise display error details
-$checkTemplate = Test-AzureRmResourceGroupDeployment `
+$checkTemplate = Test-AzResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
     -TemplateParameterFile $templateParametersFile `
@@ -66,7 +65,7 @@ if ($checkTemplate.Count -eq 0) {
     # Template is valid, deploy it
     $startTime = $(Get-Date)
     Write-Host "Starting template deployment..." -ForegroundColor Green
-    $result = New-AzureRmResourceGroupDeployment `
+    $result = New-AzResourceGroupDeployment `
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $TemplateFile `
