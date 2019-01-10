@@ -21,13 +21,6 @@
         "description": "Version of SharePoint farm to create."
       }
     },
-    "dnsLabelPrefix": {
-      "type": "string",
-      "minLength": 2,
-      "metadata": {
-        "description": "Prefix of public DNS names of VMs, e.g. 'dnsLabelPrefix-VMName.region.cloudapp.azure.com'"
-      }
-    },
     "domainFQDN": {
       "type": "string",
       "defaultValue": "contoso.local",
@@ -204,8 +197,6 @@
       "vmVmSize": "[parameters('vmDCSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmDCName, '-0')]",
       "nicPrivateIPAddress": "10.0.1.4",
-      "vmPublicIPName": "[concat('PublicIP-', variables('generalSettings').vmDCName)]",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmDCName), '_', '-'))]",
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmDCName)]"
     },
     "vmSQL": {
@@ -215,8 +206,6 @@
       "vmOSDiskName": "Disk-SQL-OS",
       "vmVmSize": "[parameters('vmSQLSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmSQLName, '-0')]",
-      "vmPublicIPName": "[concat('PublicIP-', variables('generalSettings').vmSQLName)]",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSQLName), '_', '-'))]",
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSQLName)]"
     },
     "vmSP": {
@@ -226,8 +215,6 @@
       "vmOSDiskName": "Disk-SP-OS",
       "vmVmSize": "[parameters('vmSPSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmSPName, '-0')]",
-      "vmPublicIPName": "[concat('PublicIP-', variables('generalSettings').vmSPName)]",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSPName), '_', '-'))]",
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSPName)]"
     },
     "dscConfigureDCVM": {
@@ -259,22 +246,7 @@
         "displayName": "[variables('networkSettings').nsgDCVNetName]"
       },
       "properties": {
-        "securityRules": [
-          {
-            "name": "allow-rdp-rule",
-            "properties": {
-              "description": "Allow RDP",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "3389",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          }
-        ]
+        "securityRules": []
       }
     },
     {
@@ -286,36 +258,7 @@
         "displayName": "[variables('networkSettings').nsgSQLVNetName]"
       },
       "properties": {
-        "securityRules": [
-          {
-            "name": "allow-sql-from-sp-vnet-rule",
-            "properties": {
-              "description": "Allow FE Subnet",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "1433",
-              "sourceAddressPrefix": "[variables('networkSettings').vNetPrivateSubnetSPPrefix]",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "allow-rdp-rule",
-            "properties": {
-              "description": "Allow RDP",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "3389",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 101,
-              "direction": "Inbound"
-            }
-          }
-        ]
+        "securityRules": []
       }
     },
     {
@@ -396,29 +339,12 @@
       }
     },
     {
-      "name": "[variables('vmDC').vmPublicIPName]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
-      "dependsOn": [],
-      "tags": {
-        "displayName": "[variables('vmDC').vmPublicIPName]"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[variables('vmDC').vmPublicIPDnsName]"
-        }
-      }
-    },
-    {
       "name": "[variables('vmDC').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
       "apiVersion": "2018-08-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]"
       ],
       "tags": {
         "displayName": "[variables('vmDC').vmNicName]"
@@ -432,9 +358,6 @@
               "privateIPAddress": "[variables('vmDC').nicPrivateIPAddress]",
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetDCName)]"
-              },
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
               }
             }
           }
@@ -543,29 +466,12 @@
       ]
     },
     {
-      "name": "[variables('vmSQL').vmPublicIPName]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
-      "dependsOn": [],
-      "tags": {
-        "displayName": "[variables('vmSQL').vmPublicIPName]"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[variables('vmSQL').vmPublicIPDnsName]"
-        }
-      }
-    },
-    {
       "name": "[variables('vmSQL').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
       "apiVersion": "2018-08-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]"
       ],
       "tags": {
         "displayName": "[variables('vmSQL').vmNicName]"
@@ -578,9 +484,6 @@
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSQLName)]"
-              },
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)]"
               }
             }
           }
@@ -642,29 +545,12 @@
       "resources": []
     },
     {
-      "name": "[variables('vmSP').vmPublicIPName]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
-      "dependsOn": [],
-      "tags": {
-        "displayName": "[variables('vmSP').vmPublicIPName]"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[variables('vmSP').vmPublicIPDnsName]"
-        }
-      }
-    },
-    {
       "name": "[variables('vmSP').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
       "apiVersion": "2018-08-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]"
       ],
       "tags": {
         "displayName": "[variables('vmSP').vmNicName]"
@@ -677,9 +563,6 @@
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSPName)]"
-              },
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
               }
             }
           }
