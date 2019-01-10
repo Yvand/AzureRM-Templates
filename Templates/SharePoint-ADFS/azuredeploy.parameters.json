@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sharePointVersion": {
-      "value": "2016"
+      "value": "2019"
     },
     "vmSPSize": {
       "value": "Standard_DS3_v2_Promo"
@@ -27,7 +27,7 @@
       "value": 0
     },
     "_artifactsLocation": {
-      "value": ""
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/"
     }
   }
 }
