@@ -319,628 +319,628 @@ configuration ConfigureSPVM
             DependsOn            = "[File]AccountsProvisioned"
         }
 
-        xScript WaitForSQL
-        {
-            SetScript =
-            {
-                $retrySleep = $using:RetryIntervalSec
-                $server = $using:SQLAlias
-                $db="master"
-                $retry = $true
-                while ($retry) {
-                    $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
-                    try {
-                        $sqlConnection.Open()
-                        Write-Verbose "Connection to SQL Server $server succeeded"
-                        $sqlConnection.Close()
-                        $retry = $false
-                    }
-                    catch {
-                        Write-Verbose "SQL connection to $server failed, retry in $retrySleep secs..."
-                        Start-Sleep -s $retrySleep
-                    }
-                }
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SqlAlias]AddSqlAlias"
-        }
+        # xScript WaitForSQL
+        # {
+        #     SetScript =
+        #     {
+        #         $retrySleep = $using:RetryIntervalSec
+        #         $server = $using:SQLAlias
+        #         $db="master"
+        #         $retry = $true
+        #         while ($retry) {
+        #             $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
+        #             try {
+        #                 $sqlConnection.Open()
+        #                 Write-Verbose "Connection to SQL Server $server succeeded"
+        #                 $sqlConnection.Close()
+        #                 $retry = $false
+        #             }
+        #             catch {
+        #                 Write-Verbose "SQL connection to $server failed, retry in $retrySleep secs..."
+        #                 Start-Sleep -s $retrySleep
+        #             }
+        #         }
+        #     }
+        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[SqlAlias]AddSqlAlias"
+        # }
 
-        #**********************************************************
-        # Create SharePoint farm
-        #**********************************************************
-        SPFarm CreateSPFarm
-        {
-            DatabaseServer            = $SQLAlias
-            FarmConfigDatabaseName    = $SPDBPrefix + "Config"
-            Passphrase                = $SPPassphraseCreds
-            FarmAccount               = $SPFarmCredsQualified
-            PsDscRunAsCredential      = $SPSetupCredsQualified
-            AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
-            CentralAdministrationPort = 5000
-            # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
-            RunCentralAdmin           = $true
-            IsSingleInstance          = "Yes"
-            Ensure                    = "Present"
-            DependsOn                 = "[xScript]WaitForSQL"
-        }
+        # #**********************************************************
+        # # Create SharePoint farm
+        # #**********************************************************
+        # SPFarm CreateSPFarm
+        # {
+        #     DatabaseServer            = $SQLAlias
+        #     FarmConfigDatabaseName    = $SPDBPrefix + "Config"
+        #     Passphrase                = $SPPassphraseCreds
+        #     FarmAccount               = $SPFarmCredsQualified
+        #     PsDscRunAsCredential      = $SPSetupCredsQualified
+        #     AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
+        #     CentralAdministrationPort = 5000
+        #     # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
+        #     RunCentralAdmin           = $true
+        #     IsSingleInstance          = "Yes"
+        #     Ensure                    = "Present"
+        #     DependsOn                 = "[xScript]WaitForSQL"
+        # }
 
-        xScript RestartSPTimer
-        {
-            SetScript =
-            {
-                # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
-                Restart-Service SPTimerV4
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # xScript RestartSPTimer
+        # {
+        #     SetScript =
+        #     {
+        #         # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
+        #         Restart-Service SPTimerV4
+        #     }
+        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        SPFarmSolution InstallLdapcp
-        {
-            LiteralPath          = "$SetupPath\LDAPCP.wsp"
-            Name                 = "LDAPCP.wsp"
-            Deployed             = $true
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimer"
-        }
+        # SPFarmSolution InstallLdapcp
+        # {
+        #     LiteralPath          = "$SetupPath\LDAPCP.wsp"
+        #     Name                 = "LDAPCP.wsp"
+        #     Deployed             = $true
+        #     Ensure               = "Present"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[xScript]RestartSPTimer"
+        # }
 
-        SPManagedAccount CreateSPSvcManagedAccount
-        {
-            AccountName          = $SPSvcCredsQualified.UserName
-            Account              = $SPSvcCredsQualified
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # SPManagedAccount CreateSPSvcManagedAccount
+        # {
+        #     AccountName          = $SPSvcCredsQualified.UserName
+        #     Account              = $SPSvcCredsQualified
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        SPManagedAccount CreateSPAppPoolManagedAccount
-        {
-            AccountName          = $SPAppPoolCredsQualified.UserName
-            Account              = $SPAppPoolCredsQualified
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # SPManagedAccount CreateSPAppPoolManagedAccount
+        # {
+        #     AccountName          = $SPAppPoolCredsQualified.UserName
+        #     Account              = $SPAppPoolCredsQualified
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
-        {
-            LogPath              = "C:\ULS"
-            LogSpaceInGB         = 20
-            IsSingleInstance     = "Yes"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
+        # {
+        #     LogPath              = "C:\ULS"
+        #     LogSpaceInGB         = 20
+        #     IsSingleInstance     = "Yes"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        SPStateServiceApp StateServiceApp
-        {
-            Name                 = "State Service Application"
-            DatabaseName         = $SPDBPrefix + "StateService"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # SPStateServiceApp StateServiceApp
+        # {
+        #     Name                 = "State Service Application"
+        #     DatabaseName         = $SPDBPrefix + "StateService"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        SPDistributedCacheService EnableDistributedCache
-        {
-            Name                 = "AppFabricCachingService"
-            CacheSizeInMB        = 2000
-            CreateFirewallRules  = $true
-            ServiceAccount       = $SPSvcCredsQualified.UserName
-            InstallAccount       = $SPSetupCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # SPDistributedCacheService EnableDistributedCache
+        # {
+        #     Name                 = "AppFabricCachingService"
+        #     CacheSizeInMB        = 2000
+        #     CreateFirewallRules  = $true
+        #     ServiceAccount       = $SPSvcCredsQualified.UserName
+        #     InstallAccount       = $SPSetupCredsQualified
+        #     Ensure               = "Present"
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        # Installing LDAPCP somehow updates SPClaimEncodingManager and it may cause an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer
-        # So resource SPTrustedIdentityTokenIssuer is ran long after [SPFarmSolution]InstallLdapcp to avoid it
-        SPTrustedIdentityTokenIssuer CreateSPTrust
-        {
-            Name                         = $DomainFQDN
-            Description                  = "Federation with $DomainFQDN"
-            Realm                        = "https://$SPTrustedSitesName.$DomainFQDN"
-            SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
-            IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
-            ClaimsMappings               = @(
-                MSFT_SPClaimTypeMapping{
-                    Name = "Email"
-                    IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
-                }
-                MSFT_SPClaimTypeMapping{
-                    Name = "Role"
-                    IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-                }
-            )
-            SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
-            ClaimProviderName            = "LDAPCP"
-            #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
-            UseWReplyParameter           = $true
-            Ensure                       = "Present"
-            DependsOn                    = "[SPFarmSolution]InstallLdapcp"
-            PsDscRunAsCredential         = $SPSetupCredsQualified
-        }
+        # # Installing LDAPCP somehow updates SPClaimEncodingManager and it may cause an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer
+        # # So resource SPTrustedIdentityTokenIssuer is ran long after [SPFarmSolution]InstallLdapcp to avoid it
+        # SPTrustedIdentityTokenIssuer CreateSPTrust
+        # {
+        #     Name                         = $DomainFQDN
+        #     Description                  = "Federation with $DomainFQDN"
+        #     Realm                        = "https://$SPTrustedSitesName.$DomainFQDN"
+        #     SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
+        #     IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+        #     ClaimsMappings               = @(
+        #         MSFT_SPClaimTypeMapping{
+        #             Name = "Email"
+        #             IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+        #         }
+        #         MSFT_SPClaimTypeMapping{
+        #             Name = "Role"
+        #             IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        #         }
+        #     )
+        #     SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
+        #     ClaimProviderName            = "LDAPCP"
+        #     #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
+        #     UseWReplyParameter           = $true
+        #     Ensure                       = "Present"
+        #     DependsOn                    = "[SPFarmSolution]InstallLdapcp"
+        #     PsDscRunAsCredential         = $SPSetupCredsQualified
+        # }
 
-        #**********************************************************
-        # Service instances are started at the beginning of the deployment to give some time between this and creation of service applications
-        # This makes deployment a lot more reliable and avoids errors related to concurrency update of persisted objects, or service instance not found...
-        #**********************************************************
-        SPServiceAppPool MainServiceAppPool
-        {
-            Name                 = $ServiceAppPoolName
-            ServiceAccount       = $SPSvcCredsQualified.UserName
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # #**********************************************************
+        # # Service instances are started at the beginning of the deployment to give some time between this and creation of service applications
+        # # This makes deployment a lot more reliable and avoids errors related to concurrency update of persisted objects, or service instance not found...
+        # #**********************************************************
+        # SPServiceAppPool MainServiceAppPool
+        # {
+        #     Name                 = $ServiceAppPoolName
+        #     ServiceAccount       = $SPSvcCredsQualified.UserName
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        SPServiceInstance UPAServiceInstance
-        {
-            Name                 = "User Profile Service"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # SPServiceInstance UPAServiceInstance
+        # {
+        #     Name                 = "User Profile Service"
+        #     Ensure               = "Present"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        SPServiceInstance StartSubscriptionSettingsServiceInstance
-        {
-            Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # SPServiceInstance StartSubscriptionSettingsServiceInstance
+        # {
+        #     Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
+        #     Ensure               = "Present"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        SPServiceInstance StartAppManagementServiceInstance
-        {
-            Name                 = "App Management Service"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # SPServiceInstance StartAppManagementServiceInstance
+        # {
+        #     Name                 = "App Management Service"
+        #     Ensure               = "Present"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        SPWebApplication MainWebApp
-        {
-            Name                   = "SharePoint - 80"
-            ApplicationPool        = "SharePoint - 80"
-            ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
-            AllowAnonymous         = $false
-            DatabaseName           = $SPDBPrefix + "Content_80"
-            WebAppUrl              = "http://$SPTrustedSitesName/"
-            Port                   = 80
-            Ensure                 = "Present"
-            PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[SPFarm]CreateSPFarm"
-        }
+        # SPWebApplication MainWebApp
+        # {
+        #     Name                   = "SharePoint - 80"
+        #     ApplicationPool        = "SharePoint - 80"
+        #     ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
+        #     AllowAnonymous         = $false
+        #     DatabaseName           = $SPDBPrefix + "Content_80"
+        #     WebAppUrl              = "http://$SPTrustedSitesName/"
+        #     Port                   = 80
+        #     Ensure                 = "Present"
+        #     PsDscRunAsCredential   = $SPSetupCredsQualified
+        #     DependsOn              = "[SPFarm]CreateSPFarm"
+        # }
 
-        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
-        xScript UpdateGPOToTrustRootCACert
-        {
-            SetScript =
-            {
-                gpupdate.exe /force
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false }
-            DependsOn            = "[Computer]DomainJoin"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-        }
+        # # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
+        # xScript UpdateGPOToTrustRootCACert
+        # {
+        #     SetScript =
+        #     {
+        #         gpupdate.exe /force
+        #     }
+        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript           = { return $false }
+        #     DependsOn            = "[Computer]DomainJoin"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        # }
 
-        CertReq SPSSiteCert
-        {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
-            Subject                = "$SPTrustedSitesName.$DomainFQDN"
-            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
-            KeyLength              = '2048'
-            Exportable             = $true
-            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
-            OID                    = '1.3.6.1.5.5.7.3.1'
-            KeyUsage               = '0xa0'
-            CertificateTemplate    = 'WebServer'
-            AutoRenew              = $true
-            Credential             = $DomainAdminCredsQualified
-            DependsOn              = '[xScript]UpdateGPOToTrustRootCACert'
-        }
+        # CertReq SPSSiteCert
+        # {
+        #     CARootName             = "$DomainNetbiosName-$DCName-CA"
+        #     CAServerFQDN           = "$DCName.$DomainFQDN"
+        #     Subject                = "$SPTrustedSitesName.$DomainFQDN"
+        #     SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
+        #     KeyLength              = '2048'
+        #     Exportable             = $true
+        #     ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+        #     OID                    = '1.3.6.1.5.5.7.3.1'
+        #     KeyUsage               = '0xa0'
+        #     CertificateTemplate    = 'WebServer'
+        #     AutoRenew              = $true
+        #     Credential             = $DomainAdminCredsQualified
+        #     DependsOn              = '[xScript]UpdateGPOToTrustRootCACert'
+        # }
 
-        SPWebApplicationExtension ExtendWebApp
-        {
-            WebAppUrl              = "http://$SPTrustedSitesName/"
-            Name                   = "SharePoint - 443"
-            AllowAnonymous         = $false
-            Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
-            Zone                   = "Intranet"
-            UseSSL                 = $true
-            Port                   = 443
-            Ensure                 = "Present"
-            PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = '[CertReq]SPSSiteCert'
-        }
+        # SPWebApplicationExtension ExtendWebApp
+        # {
+        #     WebAppUrl              = "http://$SPTrustedSitesName/"
+        #     Name                   = "SharePoint - 443"
+        #     AllowAnonymous         = $false
+        #     Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
+        #     Zone                   = "Intranet"
+        #     UseSSL                 = $true
+        #     Port                   = 443
+        #     Ensure                 = "Present"
+        #     PsDscRunAsCredential   = $SPSetupCredsQualified
+        #     DependsOn              = '[CertReq]SPSSiteCert'
+        # }
 
-        SPWebAppAuthentication ConfigureWebAppAuthentication
-        {
-            WebAppUrl = "http://$SPTrustedSitesName/"
-            Default = @(
-                MSFT_SPWebAppAuthenticationMode {
-                    AuthenticationMethod = "NTLM"
-                }
-            )
-            Intranet = @(
-                MSFT_SPWebAppAuthenticationMode {
-                    AuthenticationMethod = "Federated"
-                    AuthenticationProvider = $DomainFQDN
-                }
-            )
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
-        }
+        # SPWebAppAuthentication ConfigureWebAppAuthentication
+        # {
+        #     WebAppUrl = "http://$SPTrustedSitesName/"
+        #     Default = @(
+        #         MSFT_SPWebAppAuthenticationMode {
+        #             AuthenticationMethod = "NTLM"
+        #         }
+        #     )
+        #     Intranet = @(
+        #         MSFT_SPWebAppAuthenticationMode {
+        #             AuthenticationMethod = "Federated"
+        #             AuthenticationProvider = $DomainFQDN
+        #         }
+        #     )
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
+        # }
 
-        # Cannot use resource xWebsite in xWebAdministration because CertificateThumbprint is not known yet
-        xScript SetHTTPSCertificate
-        {
-            SetScript =
-            {
-                $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "*.$using:DomainFQDN"
+        # # Cannot use resource xWebsite in xWebAdministration because CertificateThumbprint is not known yet
+        # xScript SetHTTPSCertificate
+        # {
+        #     SetScript =
+        #     {
+        #         $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "*.$using:DomainFQDN"
 
-                $website = Get-WebConfiguration -Filter '/system.applicationHost/sites/site' |
-                    Where-Object -FilterScript {$_.Name -eq "SharePoint - 443"}
+        #         $website = Get-WebConfiguration -Filter '/system.applicationHost/sites/site' |
+        #             Where-Object -FilterScript {$_.Name -eq "SharePoint - 443"}
 
-                $properties = @{
-                    protocol = "https"
-                    bindingInformation = ":443:"
-                    certificateStoreName = "MY"
-                    certificateHash = $siteCert.Thumbprint
-                }
+        #         $properties = @{
+        #             protocol = "https"
+        #             bindingInformation = ":443:"
+        #             certificateStoreName = "MY"
+        #             certificateHash = $siteCert.Thumbprint
+        #         }
 
-                Clear-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Force -ErrorAction Stop
-                Add-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Value @{
-                    protocol = $properties.protocol
-                    bindingInformation = $properties.bindingInformation
-                    certificateStoreName = $properties.certificateStoreName
-                    certificateHash = $properties.certificateHash
-                } -Force -ErrorAction Stop
+        #         Clear-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Force -ErrorAction Stop
+        #         Add-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Value @{
+        #             protocol = $properties.protocol
+        #             bindingInformation = $properties.bindingInformation
+        #             certificateStoreName = $properties.certificateStoreName
+        #             certificateHash = $properties.certificateHash
+        #         } -Force -ErrorAction Stop
 
-                if (!(Get-Item IIS:\SslBindings\*!443)) {
-                    New-Item IIS:\SslBindings\*!443 -value $siteCert
-                }
+        #         if (!(Get-Item IIS:\SslBindings\*!443)) {
+        #             New-Item IIS:\SslBindings\*!443 -value $siteCert
+        #         }
 
-                <# To implement only when the TestScript will be implemented and will determine that current config must be overwritten
-                # Otherwise, assume the right certificate is already used and binding doesn't need to be recreated
-                if ((Get-Item IIS:\SslBindings\*!443)) {
-                    Remove-Item IIS:\SslBindings\*!443 -Confirm:$false
-                }
-                New-Item IIS:\SslBindings\*!443 -value $siteCert
-                #>
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
-        }
+        #         <# To implement only when the TestScript will be implemented and will determine that current config must be overwritten
+        #         # Otherwise, assume the right certificate is already used and binding doesn't need to be recreated
+        #         if ((Get-Item IIS:\SslBindings\*!443)) {
+        #             Remove-Item IIS:\SslBindings\*!443 -Confirm:$false
+        #         }
+        #         New-Item IIS:\SslBindings\*!443 -value $siteCert
+        #         #>
+        #     }
+        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
+        # }
 
-        SPCacheAccounts SetCacheAccounts
-        {
-            WebAppUrl            = "http://$SPTrustedSitesName/"
-            SuperUserAlias       = "$DomainNetbiosName\$($SPSuperUserCreds.UserName)"
-            SuperReaderAlias     = "$DomainNetbiosName\$($SPSuperReaderCreds.UserName)"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
-        }
+        # SPCacheAccounts SetCacheAccounts
+        # {
+        #     WebAppUrl            = "http://$SPTrustedSitesName/"
+        #     SuperUserAlias       = "$DomainNetbiosName\$($SPSuperUserCreds.UserName)"
+        #     SuperReaderAlias     = "$DomainNetbiosName\$($SPSuperReaderCreds.UserName)"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPWebApplication]MainWebApp"
+        # }
 
-        SPSite RootTeamSite
-        {
-            Url                  = "http://$SPTrustedSitesName/"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "Team site"
-            Template             = "STS#0"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
-        }
+        # SPSite RootTeamSite
+        # {
+        #     Url                  = "http://$SPTrustedSitesName/"
+        #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+        #     SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+        #     Name                 = "Team site"
+        #     Template             = "STS#0"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPWebApplication]MainWebApp"
+        # }
 
-        #**********************************************************
-        # Additional configuration
-        #**********************************************************
-        SPSite MySiteHost
-        {
-            Url                      = "http://$MySiteHostAlias/"
-            HostHeaderWebApplication = "http://$SPTrustedSitesName/"
-            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                     = "MySite host"
-            Template                 = "SPSMSITEHOST#0"
-            PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
-        }
+        # #**********************************************************
+        # # Additional configuration
+        # #**********************************************************
+        # SPSite MySiteHost
+        # {
+        #     Url                      = "http://$MySiteHostAlias/"
+        #     HostHeaderWebApplication = "http://$SPTrustedSitesName/"
+        #     OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+        #     SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+        #     Name                     = "MySite host"
+        #     Template                 = "SPSMSITEHOST#0"
+        #     PsDscRunAsCredential     = $SPSetupCredsQualified
+        #     DependsOn                = "[SPWebApplication]MainWebApp"
+        # }
 
-        SPSiteUrl MySiteHostIntranetUrl
-        {
-            Url                  = "http://$MySiteHostAlias/"
-            Intranet             = "https://$MySiteHostAlias.$DomainFQDN"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPSite]MySiteHost"
-        }
+        # SPSiteUrl MySiteHostIntranetUrl
+        # {
+        #     Url                  = "http://$MySiteHostAlias/"
+        #     Intranet             = "https://$MySiteHostAlias.$DomainFQDN"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPSite]MySiteHost"
+        # }
 
-        SPManagedPath MySiteManagedPath
-        {
-            WebAppUrl            = "http://$SPTrustedSitesName/"
-            RelativeUrl          = "personal"
-            Explicit             = $false
-            HostHeader           = $true
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPSite]MySiteHost"
-        }
+        # SPManagedPath MySiteManagedPath
+        # {
+        #     WebAppUrl            = "http://$SPTrustedSitesName/"
+        #     RelativeUrl          = "personal"
+        #     Explicit             = $false
+        #     HostHeader           = $true
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPSite]MySiteHost"
+        # }
 
-        SPUserProfileServiceApp UserProfileServiceApp
-        {
-            Name                 = $UpaServiceName
-            ApplicationPool      = $ServiceAppPoolName
-            MySiteHostLocation   = "http://$MySiteHostAlias/"
-            ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
-            SocialDBName         = $SPDBPrefix + "UPA_Social"
-            SyncDBName           = $SPDBPrefix + "UPA_Sync"
-            EnableNetBIOS        = $false
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]MySiteHost"
-        }
+        # SPUserProfileServiceApp UserProfileServiceApp
+        # {
+        #     Name                 = $UpaServiceName
+        #     ApplicationPool      = $ServiceAppPoolName
+        #     MySiteHostLocation   = "http://$MySiteHostAlias/"
+        #     ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
+        #     SocialDBName         = $SPDBPrefix + "UPA_Social"
+        #     SyncDBName           = $SPDBPrefix + "UPA_Sync"
+        #     EnableNetBIOS        = $false
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]MySiteHost"
+        # }
 
-        SPSite DevSite
-        {
-            Url                  = "http://$SPTrustedSitesName/sites/dev"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "Developer site"
-            Template             = "DEV#0"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
-        }
+        # SPSite DevSite
+        # {
+        #     Url                  = "http://$SPTrustedSitesName/sites/dev"
+        #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+        #     SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+        #     Name                 = "Developer site"
+        #     Template             = "DEV#0"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPWebApplication]MainWebApp"
+        # }
 
-        SPSite CreateHNSC1
-        {
-            Url                      = "http://$HNSC1Alias/"
-            HostHeaderWebApplication = "http://$SPTrustedSitesName/"
-            OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                     = "$HNSC1Alias site"
-            Template                 = "STS#0"
-            PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
-        }
+        # SPSite CreateHNSC1
+        # {
+        #     Url                      = "http://$HNSC1Alias/"
+        #     HostHeaderWebApplication = "http://$SPTrustedSitesName/"
+        #     OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+        #     SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+        #     Name                     = "$HNSC1Alias site"
+        #     Template                 = "STS#0"
+        #     PsDscRunAsCredential     = $SPSetupCredsQualified
+        #     DependsOn                = "[SPWebApplication]MainWebApp"
+        # }
 
-        SPSiteUrl HNSC1IntranetUrl
-        {
-            Url                  = "http://$HNSC1Alias/"
-            Intranet             = "https://$HNSC1Alias.$DomainFQDN"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPSite]CreateHNSC1"
-        }
+        # SPSiteUrl HNSC1IntranetUrl
+        # {
+        #     Url                  = "http://$HNSC1Alias/"
+        #     Intranet             = "https://$HNSC1Alias.$DomainFQDN"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPSite]CreateHNSC1"
+        # }
 
-        <#xScript CreateDefaultGroupsInTeamSites
-        {
-            SetScript = {
-                $argumentList = @(@{ "sitesToUpdate" = @("http://$using:SPTrustedSitesName", "http://$using:SPTrustedSitesName/sites/team");
-                                     "owner1"        = "i:0#.w|$using:DomainNetbiosName\$($using:DomainAdminCreds.UserName)";
-                                     "owner2"        = "i:05.t|$using:DomainFQDN|$($using:DomainAdminCreds.UserName)@$using:DomainFQDN" })
-                Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
-                    # Create members/visitors/owners groups in team sites
-                    $params = $args[0]
-                    #$sitesToUpdate = Get-SPSite
-                    $sitesToUpdate = $params.sitesToUpdate
-                    $owner1 = $params.owner1
-                    $owner2 = $params.owner2
+        # <#xScript CreateDefaultGroupsInTeamSites
+        # {
+        #     SetScript = {
+        #         $argumentList = @(@{ "sitesToUpdate" = @("http://$using:SPTrustedSitesName", "http://$using:SPTrustedSitesName/sites/team");
+        #                              "owner1"        = "i:0#.w|$using:DomainNetbiosName\$($using:DomainAdminCreds.UserName)";
+        #                              "owner2"        = "i:05.t|$using:DomainFQDN|$($using:DomainAdminCreds.UserName)@$using:DomainFQDN" })
+        #         Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
+        #             # Create members/visitors/owners groups in team sites
+        #             $params = $args[0]
+        #             #$sitesToUpdate = Get-SPSite
+        #             $sitesToUpdate = $params.sitesToUpdate
+        #             $owner1 = $params.owner1
+        #             $owner2 = $params.owner2
 
-                    foreach ($siteUrl in $sitesToUpdate) {
-                        $spsite = Get-SPSite $siteUrl
-                        $spsite| fl *| Out-File $SetupPath\test.txt
-                        Write-Verbose -Message "site $($spsite.Title) has template $($spsite.RootWeb.WebTemplate)"
-                        if ($spsite.RootWeb.WebTemplate -like "STS") {
-                            Write-Verbose -Message "Updating site $siteUrl with $owner1 and $($spsite.Url)"
-                            $spsite.RootWeb.CreateDefaultAssociatedGroups($owner1, $owner2, $spsite.RootWeb.Title);
-                            $spsite.RootWeb.Update();
-                        }
-                    }
-                }
-            }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[SPSite]RootTeamSite", "[SPSite]TeamSite"
-        }#>
+        #             foreach ($siteUrl in $sitesToUpdate) {
+        #                 $spsite = Get-SPSite $siteUrl
+        #                 $spsite| fl *| Out-File $SetupPath\test.txt
+        #                 Write-Verbose -Message "site $($spsite.Title) has template $($spsite.RootWeb.WebTemplate)"
+        #                 if ($spsite.RootWeb.WebTemplate -like "STS") {
+        #                     Write-Verbose -Message "Updating site $siteUrl with $owner1 and $($spsite.Url)"
+        #                     $spsite.RootWeb.CreateDefaultAssociatedGroups($owner1, $owner2, $spsite.RootWeb.Title);
+        #                     $spsite.RootWeb.Update();
+        #                 }
+        #             }
+        #         }
+        #     }
+        #     GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn = "[SPSite]RootTeamSite", "[SPSite]TeamSite"
+        # }#>
 
-        # Added that to avoid the update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
-        # Error message avoided: UpdatedConcurrencyException: The object UserProfileApplication Name=User Profile Service Application was updated by another user.  Determine if these changes will conflict, resolve any differences, and reapply the second change.  This error may also indicate a programming error caused by obtaining two copies of the same object in a single thread. Previous update information: User: CONTOSO\spfarm Process:wsmprovhost (8632) Machine:SP Time:October 17, 2017 11:25:01.0000 Stack trace (Thread [16] CorrelationId [2c50ced7-4721-0003-b7f3-502c2147d301]):  Current update information: User: CONTOSO\spsetup Process:wsmprovhost (696) Machine:SP Time:October 17, 2017 11:25:06.0252 Stack trace (Thread [62] CorrelationId [37bd239e-a854-f0e6-ee90-b0567bfec821]):
-        <#xScript RefreshLocalConfigCache
-        {
-            SetScript =
-            {
-                $methodName = "get_Local"
-                $assembly = [Reflection.Assembly]::LoadWithPartialName("Microsoft.SharePoint")
-                $SPConfigurationDBType = $assembly.GetType("Microsoft.SharePoint.Administration.SPConfigurationDatabase")
+        # # Added that to avoid the update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
+        # # Error message avoided: UpdatedConcurrencyException: The object UserProfileApplication Name=User Profile Service Application was updated by another user.  Determine if these changes will conflict, resolve any differences, and reapply the second change.  This error may also indicate a programming error caused by obtaining two copies of the same object in a single thread. Previous update information: User: CONTOSO\spfarm Process:wsmprovhost (8632) Machine:SP Time:October 17, 2017 11:25:01.0000 Stack trace (Thread [16] CorrelationId [2c50ced7-4721-0003-b7f3-502c2147d301]):  Current update information: User: CONTOSO\spsetup Process:wsmprovhost (696) Machine:SP Time:October 17, 2017 11:25:06.0252 Stack trace (Thread [62] CorrelationId [37bd239e-a854-f0e6-ee90-b0567bfec821]):
+        # <#xScript RefreshLocalConfigCache
+        # {
+        #     SetScript =
+        #     {
+        #         $methodName = "get_Local"
+        #         $assembly = [Reflection.Assembly]::LoadWithPartialName("Microsoft.SharePoint")
+        #         $SPConfigurationDBType = $assembly.GetType("Microsoft.SharePoint.Administration.SPConfigurationDatabase")
 
-                $bindingFlags = [Reflection.BindingFlags] "Public, Static"
-                $localProp = [System.Reflection.MethodInfo] $SPConfigurationDBType.GetMethod($methodName, $bindingFlags)
-                $SPConfigurationDBObject = $localProp.Invoke($null, $null)
+        #         $bindingFlags = [Reflection.BindingFlags] "Public, Static"
+        #         $localProp = [System.Reflection.MethodInfo] $SPConfigurationDBType.GetMethod($methodName, $bindingFlags)
+        #         $SPConfigurationDBObject = $localProp.Invoke($null, $null)
 
-                $methodName = "FlushCache"  # method RefreshCache() does not fix the UpdatedConcurrencyException, so use FlushCache instead
-                $bindingFlags = [Reflection.BindingFlags] "NonPublic, Instance"
-                $localProp = [System.Reflection.MethodInfo] $SPConfigurationDBType.GetMethod($methodName, $bindingFlags)
-                $localProp.Invoke($SPConfigurationDBObject, $null)
-            }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
-        }#>
+        #         $methodName = "FlushCache"  # method RefreshCache() does not fix the UpdatedConcurrencyException, so use FlushCache instead
+        #         $bindingFlags = [Reflection.BindingFlags] "NonPublic, Instance"
+        #         $localProp = [System.Reflection.MethodInfo] $SPConfigurationDBType.GetMethod($methodName, $bindingFlags)
+        #         $localProp.Invoke($SPConfigurationDBObject, $null)
+        #     }
+        #     GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn = "[SPUserProfileServiceApp]UserProfileServiceApp"
+        # }#>
 
-        # Grant spsvc full control to UPA to allow newsfeeds to work properly
-        SPServiceAppSecurity UserProfileServiceSecurity
-        {
-            ServiceAppName       = $UpaServiceName
-            SecurityType         = "SharingPermissions"
-            MembersToInclude     =  @(
-                MSFT_SPServiceAppSecurityEntry {
-                    Username     = $SPSvcCredsQualified.UserName
-                    AccessLevels = @("Full Control")
-            })
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            #DependsOn           = "[xScript]RefreshLocalConfigCache"
-            DependsOn            = "[SPUserProfileServiceApp]UserProfileServiceApp"
-        }
+        # # Grant spsvc full control to UPA to allow newsfeeds to work properly
+        # SPServiceAppSecurity UserProfileServiceSecurity
+        # {
+        #     ServiceAppName       = $UpaServiceName
+        #     SecurityType         = "SharingPermissions"
+        #     MembersToInclude     =  @(
+        #         MSFT_SPServiceAppSecurityEntry {
+        #             Username     = $SPSvcCredsQualified.UserName
+        #             AccessLevels = @("Full Control")
+        #     })
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     #DependsOn           = "[xScript]RefreshLocalConfigCache"
+        #     DependsOn            = "[SPUserProfileServiceApp]UserProfileServiceApp"
+        # }
 
-        SPSubscriptionSettingsServiceApp CreateSubscriptionSettingsServiceApp
-        {
-            Name                 = "Subscription Settings Service Application"
-            ApplicationPool      = $ServiceAppPoolName
-            DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
-            InstallAccount       = $DomainAdminCredsQualified
-            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
-        }
+        # SPSubscriptionSettingsServiceApp CreateSubscriptionSettingsServiceApp
+        # {
+        #     Name                 = "Subscription Settings Service Application"
+        #     ApplicationPool      = $ServiceAppPoolName
+        #     DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
+        #     InstallAccount       = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
+        # }
 
-        SPAppManagementServiceApp CreateAppManagementServiceApp
-        {
-            Name                 = "App Management Service Application"
-            ApplicationPool      = $ServiceAppPoolName
-            DatabaseName         = "$($SPDBPrefix)AppManagement"
-            InstallAccount       = $DomainAdminCredsQualified
-            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
-        }
+        # SPAppManagementServiceApp CreateAppManagementServiceApp
+        # {
+        #     Name                 = "App Management Service Application"
+        #     ApplicationPool      = $ServiceAppPoolName
+        #     DatabaseName         = "$($SPDBPrefix)AppManagement"
+        #     InstallAccount       = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
+        # }
 
-        SPSite TeamSite
-        {
-            Url                  = "http://$SPTrustedSitesName/sites/team"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "Team site"
-            Template             = "STS#0"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
-        }
+        # SPSite TeamSite
+        # {
+        #     Url                  = "http://$SPTrustedSitesName/sites/team"
+        #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+        #     SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+        #     Name                 = "Team site"
+        #     Template             = "STS#0"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPWebApplication]MainWebApp"
+        # }
 
-        xDnsRecord AddAddinDNSWildcard
-        {
-            Name                 = "*"
-            Zone                 = $AppDomainFQDN
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
-            DnsServer            = "$DCName.$DomainFQDN"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # xDnsRecord AddAddinDNSWildcard
+        # {
+        #     Name                 = "*"
+        #     Zone                 = $AppDomainFQDN
+        #     Target               = "$ComputerName.$DomainFQDN"
+        #     Type                 = "CName"
+        #     DnsServer            = "$DCName.$DomainFQDN"
+        #     Ensure               = "Present"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        xDnsRecord AddAddinDNSWildcardInIntranetZone
-        {
-            Name                 = "*"
-            Zone                 = $AppDomainIntranetFQDN
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
-            DnsServer            = "$DCName.$DomainFQDN"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # xDnsRecord AddAddinDNSWildcardInIntranetZone
+        # {
+        #     Name                 = "*"
+        #     Zone                 = $AppDomainIntranetFQDN
+        #     Target               = "$ComputerName.$DomainFQDN"
+        #     Type                 = "CName"
+        #     DnsServer            = "$DCName.$DomainFQDN"
+        #     Ensure               = "Present"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
-        SPAppDomain ConfigureLocalFarmAppUrls
-        {
-            AppDomain            = $AppDomainFQDN
-            Prefix               = "addin"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPSubscriptionSettingsServiceApp]CreateSubscriptionSettingsServiceApp", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
-        }
+        # SPAppDomain ConfigureLocalFarmAppUrls
+        # {
+        #     AppDomain            = $AppDomainFQDN
+        #     Prefix               = "addin"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPSubscriptionSettingsServiceApp]CreateSubscriptionSettingsServiceApp", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
+        # }
 
-        SPSite AppCatalog
-        {
-            Url                  = "http://$SPTrustedSitesName/sites/AppCatalog"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "AppCatalog"
-            Template             = "APPCATALOG#0"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
-        }
+        # SPSite AppCatalog
+        # {
+        #     Url                  = "http://$SPTrustedSitesName/sites/AppCatalog"
+        #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+        #     SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+        #     Name                 = "AppCatalog"
+        #     Template             = "APPCATALOG#0"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPWebApplication]MainWebApp"
+        # }
 
-        SPSecurityTokenServiceConfig ConfigureSTS
-        {
-            Name                  = "SecurityTokenServiceManager"
-            UseSessionCookies     = $false
-            AllowOAuthOverHttp    = $true
-            AllowMetadataOverHttp = $true
-            IsSingleInstance      = "Yes"
-            PsDscRunAsCredential  = $SPSetupCredsQualified
-            DependsOn             = "[SPAppDomain]ConfigureLocalFarmAppUrls"
-        }
+        # SPSecurityTokenServiceConfig ConfigureSTS
+        # {
+        #     Name                  = "SecurityTokenServiceManager"
+        #     UseSessionCookies     = $false
+        #     AllowOAuthOverHttp    = $true
+        #     AllowMetadataOverHttp = $true
+        #     IsSingleInstance      = "Yes"
+        #     PsDscRunAsCredential  = $SPSetupCredsQualified
+        #     DependsOn             = "[SPAppDomain]ConfigureLocalFarmAppUrls"
+        # }
 
-        Script ConfigureAppDomains
-        {
-            SetScript = {
-                $argumentList = @(@{ "webAppUrl"             = "http://$using:SPTrustedSitesName";
-                                     "AppDomainFQDN"         = "$using:AppDomainFQDN";
-                                     "AppDomainIntranetFQDN" = "$using:AppDomainIntranetFQDN" })
-                Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
-                    $params = $args[0]
+        # Script ConfigureAppDomains
+        # {
+        #     SetScript = {
+        #         $argumentList = @(@{ "webAppUrl"             = "http://$using:SPTrustedSitesName";
+        #                              "AppDomainFQDN"         = "$using:AppDomainFQDN";
+        #                              "AppDomainIntranetFQDN" = "$using:AppDomainIntranetFQDN" })
+        #         Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
+        #             $params = $args[0]
 
-                    # # Configure STS
-                    # $serviceConfig = Get-SPSecurityTokenServiceConfig
-                    # $serviceConfig.AllowOAuthOverHttp = $true
-                    # $serviceConfig.Update()
+        #             # # Configure STS
+        #             # $serviceConfig = Get-SPSecurityTokenServiceConfig
+        #             # $serviceConfig.AllowOAuthOverHttp = $true
+        #             # $serviceConfig.Update()
 
-                    # Configure app domains in zones of the web application
-                    $webAppUrl = $params.webAppUrl
-                    $appDomainDefaultZone = $params.AppDomainFQDN
-                    $appDomainIntranetZone = $params.AppDomainIntranetFQDN
+        #             # Configure app domains in zones of the web application
+        #             $webAppUrl = $params.webAppUrl
+        #             $appDomainDefaultZone = $params.AppDomainFQDN
+        #             $appDomainIntranetZone = $params.AppDomainIntranetFQDN
 
-                    $defaultZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default
-                    if($defaultZoneConfig -eq $null) {
-                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
-                    }
-                    elseif ($defaultZoneConfig.AppDomain -notlike $appDomainDefaultZone) {
-                        $defaultZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
-                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
-                    }
+        #             $defaultZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default
+        #             if($defaultZoneConfig -eq $null) {
+        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
+        #             }
+        #             elseif ($defaultZoneConfig.AppDomain -notlike $appDomainDefaultZone) {
+        #                 $defaultZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
+        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
+        #             }
 
-                    $IntranetZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet
-                    if($IntranetZoneConfig -eq $null) {
-                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
-                    }
-                    elseif ($IntranetZoneConfig.AppDomain -notlike $appDomainIntranetZone) {
-                        $IntranetZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
-                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
-                    }
+        #             $IntranetZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet
+        #             if($IntranetZoneConfig -eq $null) {
+        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
+        #             }
+        #             elseif ($IntranetZoneConfig.AppDomain -notlike $appDomainIntranetZone) {
+        #                 $IntranetZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
+        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
+        #             }
 
-                    # Configure app catalog
-                    # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
-                    #Update-SPAppCatalogConfiguration -Site "$webAppUrl/sites/AppCatalog" -Confirm:$false
-                }
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
-        }
+        #             # Configure app catalog
+        #             # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
+        #             #Update-SPAppCatalogConfiguration -Site "$webAppUrl/sites/AppCatalog" -Confirm:$false
+        #         }
+        #     }
+        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
+        # }
 
-        # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
-        SPAppCatalog MainAppCatalog
-        {
-            SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPSite]AppCatalog"
-        }
+        # # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
+        # SPAppCatalog MainAppCatalog
+        # {
+        #     SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPSite]AppCatalog"
+        # }
 
-        # DSC resource File throws an access denied when accessing a remote location, so use xScript instead
-        xScript CreateDSCCompletionFile
-        {
-            SetScript =
-            {
-                $SetupPath = $using:DCSetupPath
-                $ComputerName = $using:ComputerName
-                $DestinationPath = "$SetupPath\SPDSCFinished.txt"
-                $Contents = "DSC Configuration on $ComputerName finished successfully."
-                # Do not overwrite and do not throw an exception if file already exists
-                New-Item $DestinationPath -Type file -Value $Contents -ErrorAction SilentlyContinue
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[Script]ConfigureAppDomains"
-        }
+        # # DSC resource File throws an access denied when accessing a remote location, so use xScript instead
+        # xScript CreateDSCCompletionFile
+        # {
+        #     SetScript =
+        #     {
+        #         $SetupPath = $using:DCSetupPath
+        #         $ComputerName = $using:ComputerName
+        #         $DestinationPath = "$SetupPath\SPDSCFinished.txt"
+        #         $Contents = "DSC Configuration on $ComputerName finished successfully."
+        #         # Do not overwrite and do not throw an exception if file already exists
+        #         New-Item $DestinationPath -Type file -Value $Contents -ErrorAction SilentlyContinue
+        #     }
+        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[Script]ConfigureAppDomains"
+        # }
     }
 }
 
