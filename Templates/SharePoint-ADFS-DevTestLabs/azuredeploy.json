@@ -51,18 +51,6 @@
         "description": "Password for all service account and SharePoint passphrase. It must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
-    "vmDCStorageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Premium_LRS"
-      ],
-      "metadata": {
-        "description": "Type of storage for the managed disks. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
-      }
-    },
     "vmDCSize": {
       "type": "string",
       "defaultValue": "Standard_F4",
@@ -70,7 +58,7 @@
         "description": "Size of the DC VM"
       }
     },
-    "vmSQLStorageAccountType": {
+    "vmDCStorageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
       "allowedValues": [
@@ -89,7 +77,7 @@
         "description": "Size of the SQL VM"
       }
     },
-    "vmSPStorageAccountType": {
+    "vmSQLStorageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
       "allowedValues": [
@@ -106,6 +94,18 @@
       "defaultValue": "Standard_D11_v2",
       "metadata": {
         "description": "Size of the SQL VM"
+      }
+    },
+    "vmSPStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Type of storage for the managed disks. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
       }
     },
     "vmsTimeZone": {

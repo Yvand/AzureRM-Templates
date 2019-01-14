@@ -5,11 +5,8 @@
     "sharePointVersion": {
       "value": "2019"
     },
-    "vmSPSize": {
-      "value": "Standard_DS3_v2_Promo"
-    },
     "dnsLabelPrefix": {
-      "value": "xxydsp"
+      "value": "xydsp"
     },
     "domainFQDN": {
       "value": "contoso.local"
@@ -28,6 +25,10 @@
     },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/"
-    }
+    },
+    "vmSQLSize": { "value": "Standard_D2_v2" },
+    "vmSQLStorageAccountType": { "value": "Standard_LRS" },
+    "vmSPSize": { "value": "Standard_D11_v2" },
+    "vmSPStorageAccountType": { "value": "Standard_LRS" }
   }
 }
