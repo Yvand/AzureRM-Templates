@@ -207,7 +207,6 @@ try
     # Output provided parameters.
     Write-Host 'Provided parameters used in this script:'
     Write-Host "  `$accessToken = $('*' * $accessToken.Length)"
-    Write-Host "  DEBUG `$accessToken = $accessToken"
     Write-Host "  `$buildDefinitionName = $buildDefinitionName"
     Write-Host "  `$vstsProjectUri = $vstsProjectUri"
     Write-Host "  `$pathToScript = $pathToScript"
