@@ -1,4 +1,3 @@
-#Requires -Version 3.0
 #Requires -Module Az.Resources
 
 ### Define variables

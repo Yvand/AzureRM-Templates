@@ -500,7 +500,7 @@ configuration ConfigureSPVM
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
-            Template             = "STS#0"
+            Template             = "STS#1"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPWebApplication]MainWebApp"
         }
