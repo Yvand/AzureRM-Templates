@@ -23,7 +23,7 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
-    [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
+    # [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
     [String] $SPTrustedSitesName = "SPSites"
@@ -182,16 +182,16 @@ configuration ConfigureSPVM
             DependsOn            = "[xADUser]CreateSPSetupAccount", "[xADUser]CreateSParmAccount"
         }
 
-        xADUser CreateSPSvcAccount
-        {
-            DomainName                    = $DomainFQDN
-            UserName                      = $SPSvcCreds.UserName
-            Password                      = $SPSvcCreds
-            PasswordNeverExpires          = $true
-            Ensure                        = "Present"
-            DomainAdministratorCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[Computer]DomainJoin"
-        }
+        # xADUser CreateSPSvcAccount
+        # {
+        #     DomainName                    = $DomainFQDN
+        #     UserName                      = $SPSvcCreds.UserName
+        #     Password                      = $SPSvcCreds
+        #     PasswordNeverExpires          = $true
+        #     Ensure                        = "Present"
+        #     DomainAdministratorCredential = $DomainAdminCredsQualified
+        #     DependsOn                     = "[Computer]DomainJoin"
+        # }
 
         xADUser CreateSPAppPoolAccount
         {
@@ -211,7 +211,7 @@ configuration ConfigureSPVM
             Type                 = 'File'
             Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount", "[xADUser]CreateSPSvcAccount", "[xADUser]CreateSPAppPoolAccount"
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount", "[xADUser]CreateSPAppPoolAccount"
         }
 
         #****************************************************************
@@ -305,13 +305,13 @@ configuration ConfigureSPVM
             DependsOn                 = "[xScript]WaitForSQL"
         }
 
-        SPManagedAccount CreateSPSvcManagedAccount
-        {
-            AccountName          = $SPSvcCredsQualified.UserName
-            Account              = $SPSvcCredsQualified
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # SPManagedAccount CreateSPSvcManagedAccount
+        # {
+        #     AccountName          = $SPSvcCredsQualified.UserName
+        #     Account              = $SPSvcCredsQualified
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
         SPManagedAccount CreateSPAppPoolManagedAccount
         {
@@ -321,14 +321,14 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
-        SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
-        {
-            LogPath              = "C:\ULS"
-            LogSpaceInGB         = 20
-            IsSingleInstance     = "Yes"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
+        # SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
+        # {
+        #     LogPath              = "C:\ULS"
+        #     LogSpaceInGB         = 20
+        #     IsSingleInstance     = "Yes"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPFarm]CreateSPFarm"
+        # }
 
         <#SPDistributedCacheService EnableDistributedCache
         {
@@ -499,28 +499,10 @@ configuration ConfigureSPVM
             Url                  = "http://$SPTrustedSitesName/"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "Team site"
+            Name                 = "Blank site"
             Template             = "STS#1"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPWebApplication]MainWebApp"
-        }
-
-        # DSC resource File throws an access denied when accessing a remote location, so use xScript instead
-        xScript CreateDSCCompletionFile
-        {
-            SetScript =
-            {
-                $SetupPath = $using:DCSetupPath
-                $ComputerName = $using:ComputerName
-                $DestinationPath = "$SetupPath\SPDSCFinished.txt"
-                $Contents = "DSC Configuration on $ComputerName finished successfully."
-                # Do not overwrite and do not throw an exception if file already exists
-                New-Item $DestinationPath -Type file -Value $Contents -ErrorAction SilentlyContinue
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPSite]RootTeamSite"
         }
     }
 }

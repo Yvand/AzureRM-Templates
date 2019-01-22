@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sharePointVersion": {
-      "value": "2016"
+      "value": "2019"
     },
     "enableHybridBenefitServerLicenses": {
       "value": "Yes"
