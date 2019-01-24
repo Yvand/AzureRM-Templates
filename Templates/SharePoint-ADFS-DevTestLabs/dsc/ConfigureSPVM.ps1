@@ -7,10 +7,10 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [String]$DCName,
         [Parameter(Mandatory)] [String]$SQLName,
         [Parameter(Mandatory)] [String]$SQLAlias,
+        [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSvcCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPAppPoolCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
@@ -23,10 +23,9 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
-    # [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
-    [String] $SPDBPrefix = "SPDSC_"
-    [String] $SPTrustedSitesName = "SPSites"
+    [String] $SPDBPrefix = "SP$($SharePointVersion)_"
+    [String] $SPTrustedSitesName = "SPSites$SharePointVersion"
     [Int] $RetryCount = 30
     [Int] $RetryIntervalSec = 30
     [String] $ComputerName = Get-Content env:computername
@@ -182,17 +181,6 @@ configuration ConfigureSPVM
             DependsOn            = "[xADUser]CreateSPSetupAccount", "[xADUser]CreateSParmAccount"
         }
 
-        # xADUser CreateSPSvcAccount
-        # {
-        #     DomainName                    = $DomainFQDN
-        #     UserName                      = $SPSvcCreds.UserName
-        #     Password                      = $SPSvcCreds
-        #     PasswordNeverExpires          = $true
-        #     Ensure                        = "Present"
-        #     DomainAdministratorCredential = $DomainAdminCredsQualified
-        #     DependsOn                     = "[Computer]DomainJoin"
-        # }
-
         xADUser CreateSPAppPoolAccount
         {
             DomainName                    = $DomainFQDN
@@ -305,14 +293,6 @@ configuration ConfigureSPVM
             DependsOn                 = "[xScript]WaitForSQL"
         }
 
-        # SPManagedAccount CreateSPSvcManagedAccount
-        # {
-        #     AccountName          = $SPSvcCredsQualified.UserName
-        #     Account              = $SPSvcCredsQualified
-        #     PsDscRunAsCredential = $SPSetupCredsQualified
-        #     DependsOn            = "[SPFarm]CreateSPFarm"
-        # }
-
         SPManagedAccount CreateSPAppPoolManagedAccount
         {
             AccountName          = $SPAppPoolCredsQualified.UserName
@@ -329,17 +309,6 @@ configuration ConfigureSPVM
         #     PsDscRunAsCredential = $SPSetupCredsQualified
         #     DependsOn            = "[SPFarm]CreateSPFarm"
         # }
-
-        <#SPDistributedCacheService EnableDistributedCache
-        {
-            Name                 = "AppFabricCachingService"
-            CacheSizeInMB        = 2000
-            CreateFirewallRules  = $true
-            ServiceAccount       = $SPSvcCredsQualified.UserName
-            InstallAccount       = $SPSetupCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }#>
 
         SPTrustedIdentityTokenIssuer CreateSPTrust
         {
@@ -366,14 +335,6 @@ configuration ConfigureSPVM
             DependsOn                    = "[SPFarm]CreateSPFarm"
             PsDscRunAsCredential         = $SPSetupCredsQualified
         }
-
-        # SPServiceAppPool MainServiceAppPool
-        # {
-        #     Name                 = $ServiceAppPoolName
-        #     ServiceAccount       = $SPSvcCredsQualified.UserName
-        #     PsDscRunAsCredential = $SPSetupCredsQualified
-        #     DependsOn            = "[SPFarm]CreateSPFarm"
-        # }
 
         SPWebApplication MainWebApp
         {
@@ -541,7 +502,6 @@ help ConfigureSPVM
 $DomainAdminCreds = Get-Credential -Credential "yvand"
 $SPSetupCreds = Get-Credential -Credential "spsetup"
 $SPFarmCreds = Get-Credential -Credential "spfarm"
-$SPSvcCreds = Get-Credential -Credential "spsvc"
 $SPAppPoolCreds = Get-Credential -Credential "spapppool"
 $SPPassphraseCreds = Get-Credential -Credential "Passphrase"
 $DNSServer = "10.0.1.4"
@@ -551,7 +511,7 @@ $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
 
 $mofPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $mofPath
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $mofPath
 Set-DscLocalConfigurationManager -Path $mofPath
 Start-DscConfiguration -Path $mofPath -Wait -Verbose -Force
 
