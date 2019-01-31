@@ -455,6 +455,7 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
 
+        # Not creating site collection in SharePoint 2019 to avoid exception: https://github.com/PowerShell/SharePointDsc/issues/990
         if ($SharePointVersion -ne 2019) {
             SPSite RootTeamSite
             {
