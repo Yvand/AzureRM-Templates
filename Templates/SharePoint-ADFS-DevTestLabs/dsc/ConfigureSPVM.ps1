@@ -455,16 +455,18 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
 
-        # SPSite RootTeamSite
-        # {
-        #     Url                  = "http://$SPTrustedSitesName/"
-        #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-        #     SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-        #     Name                 = "Blank site"
-        #     Template             = "STS#1"
-        #     PsDscRunAsCredential = $SPSetupCredsQualified
-        #     DependsOn            = "[SPWebApplication]MainWebApp"
-        # }
+        if ($SharePointVersion -ne 2019) {
+            SPSite RootTeamSite
+            {
+                Url                  = "http://$SPTrustedSitesName/"
+                OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+                SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+                Name                 = "Blank site"
+                Template             = "STS#1"
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn            = "[SPWebApplication]MainWebApp"
+            }
+        }
     }
 }
 
