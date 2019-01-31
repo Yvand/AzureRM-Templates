@@ -7,6 +7,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [String]$DCName,
         [Parameter(Mandatory)] [String]$SQLName,
         [Parameter(Mandatory)] [String]$SQLAlias,
+        [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -433,8 +434,31 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
-        # Installing LDAPCP somehow updates SPClaimEncodingManager and it may cause an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer
-        # So resource SPTrustedIdentityTokenIssuer is ran long after [SPFarmSolution]InstallLdapcp to avoid it
+        # Installing LDAPCP somehow updates SPClaimEncodingManager 
+        # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
+        # The only solution I've found is to force a reboot
+        if ($SharePointVersion -ne 2019) {
+            xScript ForceRebootBeforeCreatingSPTrust
+            {
+                TestScript = {
+                    return (Test-Path HKLM:\SOFTWARE\MyMainKey\RebootKey)
+                }
+                SetScript = {
+                    New-Item -Path HKLM:\SOFTWARE\MyMainKey\RebootKey -Force
+                    $global:DSCMachineStatus = 1 
+
+                }
+                GetScript = { return @{result = 'result'}}
+                DependsOn = "[SPFarmSolution]InstallLdapcp"
+            }
+
+            xPendingReboot RebootBeforeCreatingSPTrust
+            {
+                Name      = "BeforeCreatingSPTrust"
+                DependsOn = "[xScript]ForceRebootBeforeCreatingSPTrust"
+            }
+        }
+
         SPTrustedIdentityTokenIssuer CreateSPTrust
         {
             Name                         = $DomainFQDN

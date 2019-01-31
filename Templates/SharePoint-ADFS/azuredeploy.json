@@ -878,7 +878,8 @@
             "DomainFQDN": "[parameters('domainFQDN')]",
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
-            "SQLAlias": "[variables('generalSettings').sqlAlias]"
+            "SQLAlias": "[variables('generalSettings').sqlAlias]",
+            "SharePointVersion": "[parameters('sharePointVersion')]"
           },
           "privacy": {
             "dataCollection": "enable"
