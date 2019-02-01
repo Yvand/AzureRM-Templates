@@ -441,12 +441,11 @@ configuration ConfigureSPVM
             xScript ForceRebootBeforeCreatingSPTrust
             {
                 TestScript = {
-                    return (Test-Path HKLM:\SOFTWARE\MyMainKey\RebootKey)
+                    return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
                 }
                 SetScript = {
-                    New-Item -Path HKLM:\SOFTWARE\MyMainKey\RebootKey -Force
-                    $global:DSCMachineStatus = 1 
-
+                    New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
+                    $global:DSCMachineStatus = 1
                 }
                 GetScript = { return @{result = 'result'}}
                 DependsOn = "[SPFarmSolution]InstallLdapcp"
@@ -454,8 +453,9 @@ configuration ConfigureSPVM
 
             xPendingReboot RebootBeforeCreatingSPTrust
             {
-                Name      = "BeforeCreatingSPTrust"
-                DependsOn = "[xScript]ForceRebootBeforeCreatingSPTrust"
+                Name             = "BeforeCreatingSPTrust"
+                SkipCcmClientSDK = $true
+                DependsOn        = "[xScript]ForceRebootBeforeCreatingSPTrust"
             }
         }
 
