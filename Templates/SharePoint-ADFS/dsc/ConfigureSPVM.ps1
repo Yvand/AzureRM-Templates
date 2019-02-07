@@ -106,7 +106,8 @@ configuration ConfigureSPVM
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
                 setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            GetScript = { }
+            # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             TestScript = 
             {
                 $computerName = $using:ComputerName
@@ -342,8 +343,8 @@ configuration ConfigureSPVM
                     }
                 }
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SqlAlias]AddSqlAlias"
         }
@@ -374,8 +375,8 @@ configuration ConfigureSPVM
                 # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
                 Restart-Service SPTimerV4
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
@@ -437,9 +438,10 @@ configuration ConfigureSPVM
         # Installing LDAPCP somehow updates SPClaimEncodingManager 
         # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
         # The only solution I've found is to force a reboot in SharePoint 2019
-        if ($SharePointVersion -eq 2019) {
+        if ($SharePointVersion -eq "2019") {
             xScript ForceRebootBeforeCreatingSPTrust
             {
+                # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
                 TestScript = {
                     return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
                 }
@@ -447,7 +449,7 @@ configuration ConfigureSPVM
                     New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
                     $global:DSCMachineStatus = 1
                 }
-                GetScript = { return @{result = 'result'} }
+                GetScript = { }
                 PsDscRunAsCredential = $SPSetupCredsQualified
                 DependsOn = "[SPFarmSolution]InstallLdapcp"
             }
@@ -543,8 +545,8 @@ configuration ConfigureSPVM
             {
                 gpupdate.exe /force
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false }
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             DependsOn            = "[Computer]DomainJoin"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
@@ -635,8 +637,8 @@ configuration ConfigureSPVM
                 New-Item IIS:\SslBindings\*!443 -value $siteCert
                 #>
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
@@ -961,8 +963,8 @@ configuration ConfigureSPVM
                 # Do not overwrite and do not throw an exception if file already exists
                 New-Item $DestinationPath -Type file -Value $Contents -ErrorAction SilentlyContinue
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Script]ConfigureAppDomains"
         }
