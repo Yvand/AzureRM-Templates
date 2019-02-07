@@ -434,30 +434,31 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
-        # # Installing LDAPCP somehow updates SPClaimEncodingManager 
-        # # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
-        # # The only solution I've found is to force a reboot in SharePoint 2019
-        # if ($SharePointVersion -eq 2019) {
-        #     xScript ForceRebootBeforeCreatingSPTrust
-        #     {
-        #         TestScript = {
-        #             return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
-        #         }
-        #         SetScript = {
-        #             New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
-        #             $global:DSCMachineStatus = 1
-        #         }
-        #         GetScript = { return @{result = 'result'}}
-        #         DependsOn = "[SPFarmSolution]InstallLdapcp"
-        #     }
+        # Installing LDAPCP somehow updates SPClaimEncodingManager 
+        # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
+        # The only solution I've found is to force a reboot in SharePoint 2019
+        if ($SharePointVersion -eq 2019) {
+            xScript ForceRebootBeforeCreatingSPTrust
+            {
+                TestScript = {
+                    return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
+                }
+                SetScript = {
+                    New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
+                    $global:DSCMachineStatus = 1
+                }
+                GetScript = { return @{result = 'result'} }
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn = "[SPFarmSolution]InstallLdapcp"
+            }
 
-        #     xPendingReboot RebootBeforeCreatingSPTrust
-        #     {
-        #         Name             = "BeforeCreatingSPTrust"
-        #         SkipCcmClientSDK = $true
-        #         DependsOn        = "[xScript]ForceRebootBeforeCreatingSPTrust"
-        #     }
-        # }
+            xPendingReboot RebootBeforeCreatingSPTrust
+            {
+                Name             = "BeforeCreatingSPTrust"
+                SkipCcmClientSDK = $true
+                DependsOn        = "[xScript]ForceRebootBeforeCreatingSPTrust"
+            }
+        }
 
         SPTrustedIdentityTokenIssuer CreateSPTrust
         {
