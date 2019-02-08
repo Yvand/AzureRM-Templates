@@ -292,10 +292,20 @@
       "function": "ConfigureFEVM",
       "forceUpdateTag": "1.0"
     },
-    "sharePointDataDisk": [
+    "vmSPDataDisk": [
       {
         "lun": 0,
         "name": "[variables('vmSP').vmDataDiskName]",
+        "caching": "ReadWrite",
+        "createOption": "Empty",
+        "diskSizeGB": "[parameters('sharePointDataDiskSize')]",
+        "managedDisk": {}
+      }
+    ],
+    "vmFEDataDisk": [
+      {
+        "lun": 0,
+        "name": "[variables('vmFE').vmDataDiskName]",
         "caching": "ReadWrite",
         "createOption": "Empty",
         "diskSizeGB": "[parameters('sharePointDataDiskSize')]",
@@ -782,7 +792,7 @@
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
-          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('sharePointDataDisk'))]"
+          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('vmSPDataDisk'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -1013,16 +1023,7 @@
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
-          "dataDisks": [
-            {
-              "lun": 0,
-              "name": "[variables('vmFE').vmDataDiskName]",
-              "caching": "ReadWrite",
-              "createOption": "Empty",
-              "diskSizeGB": 64,
-              "managedDisk": {}
-            }
-          ]
+          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('vmFEDataDisk'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
