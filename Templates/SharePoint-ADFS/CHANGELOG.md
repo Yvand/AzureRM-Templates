@@ -1,6 +1,6 @@
-# Change log for Azure template for SharePoint 2013, 2016 and 2019
+# Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
-## Unreleased
+## February 2019 update
 
 * Added SharePoint 2019
 * Added option to enable Hybrid benefit for Windows Server licenses
