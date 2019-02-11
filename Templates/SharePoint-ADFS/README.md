@@ -7,12 +7,12 @@ This template deploys SharePoint 2019, 2016 or 2013 with the following configura
 * A certificate authority (ADCS) is provisioned on the DC and issues all certificates needed for ADFS and SharePoint.
 * A couple of site collections are created, including [host-named site collections](https://docs.microsoft.com/en-us/SharePoint/administration/host-named-site-collection-architecture-and-deployment) that are configured for both zones.
 * User Profiles Application service is provisioned and personal sites are configured as [host-named site collections](https://docs.microsoft.com/en-us/SharePoint/administration/host-named-site-collection-architecture-and-deployment).
-* Add-ins service application is provisioned and an app catalog is created
-* 2 app domains are set (1 for for each zone of the web application) and corresponding zones are created in the DNS.
+* Add-ins service application is provisioned and an app catalog is created.
+* 2 app domains are set (1 for for each zone of the web application) and corresponding DNS zones are created.
 * Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured.
 * A 2nd SharePoint server can optionally be added to the farm.
 
-Each VM has its own public IP address, and they are protected by NSGs (Network Security Group) attached to each subnet. RDP ports are allowed from Internet.
+All virtual machines have a public IP address and are protected by Network Security Groups (attached to the subnets) that only allow RDP port from Internet.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fdev%2FTemplates%2FSharePoint-ADFS%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
