@@ -1,7 +1,5 @@
 # Configure the Azure Provider
-provider "azurerm" {
-  version = "=1.18.0"
-}
+provider "azurerm" {}
 
 # Create a resource group
 resource "azurerm_resource_group" "resourceGroup" {
