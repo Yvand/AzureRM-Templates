@@ -74,7 +74,7 @@ function Get-BuildArtifacts
     foreach ($artifact in $artifacts)
     {
         if ($artifact.resource.type -notlike "Container") {
-            Write-Host "Skip download of artifact $artifactName as it is not of type 'Container'"
+            Write-Host "Skip download of artifact $($artifact.name) as it is not of type 'Container'"
             continue
         }
         
