@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sharePointVersion": {
+      "value": "2019"
+    },
+    "dnsLabelPrefix": {
+      "value": "xydsp"
+    },
+    "domainFQDN": {
+      "value": "contoso.local"
+    },
+    "vmsTimeZone": {
+      "value": "Romance Standard Time"
+    },
+    "addFrontEndToFarm": {
+      "value": "No"
+    },
+    "enableHybridBenefitServerLicenses": {
+      "value": "Yes"
+    },
+    "sharePointDataDiskSize": {
+      "value": 0
+    },
+    "_artifactsLocation": {
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/"
+    },
+    "vmSQLSize": { "value": "Standard_D2_v2" },
+    "vmSQLStorageAccountType": { "value": "Standard_LRS" },
+    "vmSPSize": { "value": "Standard_D11_v2" },
+    "vmSPStorageAccountType": { "value": "Standard_LRS" }
+  }
+}
