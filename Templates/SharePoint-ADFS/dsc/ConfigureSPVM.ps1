@@ -57,16 +57,67 @@ configuration ConfigureSPVM
         WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
-        DnsServerAddress DnsServerAddress
-        {
-            Address        = $DNSServer
-            InterfaceAlias = $InterfaceAlias
-            AddressFamily  = 'IPv4'
-            DependsOn      ="[WindowsFeature]ADPS"
-        }
-
+        DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4'; DependsOn ="[WindowsFeature]ADPS" }
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]DnsServerAddress" }
         xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
+
+        if ($SharePointVersion -eq "2013") {
+            # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
+            # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
+            Registry EnableTLS12RegKey1
+            {
+                Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
+                ValueName = 'DisabledByDefault'
+                ValueType = 'Dword'
+                ValueData =  '0'
+                Ensure    = 'Present'
+            }
+
+            Registry EnableTLS12RegKey2
+            {
+                Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
+                ValueName = 'Enabled'
+                ValueType = 'Dword'
+                ValueData =  '1'
+                Ensure    = 'Present'
+            }
+
+            Registry EnableTLS12RegKey3
+            {
+                Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
+                ValueName = 'DisabledByDefault'
+                ValueType = 'Dword'
+                ValueData =  '0'
+                Ensure    = 'Present'
+            }
+
+            Registry EnableTLS12RegKey4
+            {
+                Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
+                ValueName = 'Enabled'
+                ValueType = 'Dword'
+                ValueData =  '1'
+                Ensure    = 'Present'
+            }
+
+            Registry SchUseStrongCrypto
+            {
+                Key       = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
+                ValueName = 'SchUseStrongCrypto'
+                ValueType = 'Dword'
+                ValueData =  '1'
+                Ensure    = 'Present'
+            }
+
+            <#Registry SchUseStrongCrypto64
+            {
+                Key                         = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'
+                ValueName                   = 'SchUseStrongCrypto'
+                ValueType                   = 'Dword'
+                ValueData                   =  '1'
+                Ensure                      = 'Present'
+            }#>
+        }
 
         #**********************************************************
         # Join AD forest
@@ -284,30 +335,11 @@ configuration ConfigureSPVM
             DependsOn       = "[File]AccountsProvisioned"
         }
 
-        # Set those 2 registry keys to workaround TLS 1.2 issue in xRemoteFile with Windows 2012 R2 (SharePoint 2013 deployment): https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405
-        Registry SchUseStrongCrypto
-        {
-            Key                         = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
-            ValueName                   = 'SchUseStrongCrypto'
-            ValueType                   = 'Dword'
-            ValueData                   =  '1'
-            Ensure                      = 'Present'
-        }
-
-        Registry SchUseStrongCrypto64
-        {
-            Key                         = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'
-            ValueName                   = 'SchUseStrongCrypto'
-            ValueType                   = 'Dword'
-            ValueData                   =  '1'
-            Ensure                      = 'Present'
-        }
-
         xRemoteFile DownloadLdapcp
         {
             Uri             = $LdapcpLink
             DestinationPath = "$SetupPath\LDAPCP.wsp"
-            DependsOn       = "[File]AccountsProvisioned", "[Registry]SchUseStrongCrypto", "[Registry]SchUseStrongCrypto64"
+            DependsOn       = "[File]AccountsProvisioned"
         }
 
         SqlAlias AddSqlAlias
