@@ -344,7 +344,7 @@ configuration ConfigureSPVM
         {
             Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
-            Realm                        = "https://$SPTrustedSitesName.$DomainFQDN"
+            Realm                        = "urn:federation:sharepoint"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
             IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
             ClaimsMappings               = @(
