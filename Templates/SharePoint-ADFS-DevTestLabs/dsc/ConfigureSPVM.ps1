@@ -486,7 +486,7 @@ configuration ConfigureSPVM
         }
 
         # Not creating site collection in SharePoint 2019 to avoid exception: https://github.com/PowerShell/SharePointDsc/issues/990
-        if ($SharePointVersion -ne 2019) {
+        #if ($SharePointVersion -ne 2019) {
             SPSite RootTeamSite
             {
                 Url                  = "http://$SPTrustedSitesName/"
@@ -497,7 +497,7 @@ configuration ConfigureSPVM
                 PsDscRunAsCredential = $SPSetupCredsQualified
                 DependsOn            = "[SPWebApplication]MainWebApp"
             }
-        }
+        #}
     }
 }
 
