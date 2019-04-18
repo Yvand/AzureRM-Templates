@@ -1074,11 +1074,11 @@
     }
   ],
   "outputs": {
-    "EnvironmentLocation":{
+    "EnvironmentLocation": {
       "type": "string",
       "value": "[parameters('_artifactsLocation')]"
     },
-    "EnvironmentSAS":{
+    "EnvironmentSAS": {
       "type": "string",
       "value": "[parameters('_artifactsLocationSasToken')]"
     }
