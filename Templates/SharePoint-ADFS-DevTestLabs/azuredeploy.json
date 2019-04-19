@@ -50,17 +50,6 @@
         "description": "FQDN of the AD forest to create"
       }
     },
-    "createPublicIPAddresses": {
-      "type": "string",
-      "defaultValue": "Yes",
-      "allowedValues": [
-        "Yes",
-        "No"
-      ],
-      "metadata": {
-        "description": "Specify if a public IP address should be set for each virtual machine."
-      }
-    },
     "adminUserName": {
       "type": "string",
       "defaultValue": "yvand",
@@ -168,6 +157,17 @@
       "defaultValue": "No",
       "metadata": {
         "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
+      }
+    },
+    "createPublicIPAndDNS": {
+      "type": "string",
+      "defaultValue": "Yes",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "metadata": {
+        "description": "Specify if VMs should be set with a public IP and a DNS that looks like \"[resourceGroupName]-[VMName].[region].cloudapp.azure.com\"."
       }
     },
     "_artifactsLocation": {
@@ -413,7 +413,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('createPublicIPAddresses'), 'Yes')]",
+      "condition": "[equals(parameters('createPublicIPAndDNS'), 'Yes')]",
       "name": "[variables('vmDC').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -451,7 +451,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetDCName)]"
               },
-              "publicIPAddress": "[if(equals(parameters('createPublicIPAddresses'), 'Yes'), variables('networkSettings').vmDCPublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(equals(parameters('createPublicIPAndDNS'), 'Yes'), variables('networkSettings').vmDCPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -559,7 +559,7 @@
       ]
     },
     {
-      "condition": "[equals(parameters('createPublicIPAddresses'), 'Yes')]",
+      "condition": "[equals(parameters('createPublicIPAndDNS'), 'Yes')]",
       "name": "[variables('vmSQL').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -596,7 +596,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSQLName)]"
               },
-              "publicIPAddress": "[if(equals(parameters('createPublicIPAddresses'), 'Yes'), variables('networkSettings').vmSQLPublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(equals(parameters('createPublicIPAndDNS'), 'Yes'), variables('networkSettings').vmSQLPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -709,7 +709,7 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('provisionSharePoint2013'), 'Yes'), equals(parameters('createPublicIPAddresses'), 'Yes'))]",
+      "condition": "[and(equals(parameters('provisionSharePoint2013'), 'Yes'), equals(parameters('createPublicIPAndDNS'), 'Yes'))]",
       "name": "[variables('vmSP2013').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -747,7 +747,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSPName)]"
               },
-              "publicIPAddress": "[if(equals(parameters('createPublicIPAddresses'), 'Yes'), variables('networkSettings').vmSP2013PublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(equals(parameters('createPublicIPAndDNS'), 'Yes'), variables('networkSettings').vmSP2013PublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -874,7 +874,7 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('provisionSharePoint2016'), 'Yes'), equals(parameters('createPublicIPAddresses'), 'Yes'))]",
+      "condition": "[and(equals(parameters('provisionSharePoint2016'), 'Yes'), equals(parameters('createPublicIPAndDNS'), 'Yes'))]",
       "name": "[variables('vmSP2016').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -912,7 +912,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSPName)]"
               },
-              "publicIPAddress": "[if(equals(parameters('createPublicIPAddresses'), 'Yes'), variables('networkSettings').vmSP2016PublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(equals(parameters('createPublicIPAndDNS'), 'Yes'), variables('networkSettings').vmSP2016PublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -1039,7 +1039,7 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('provisionSharePoint2019'), 'Yes'), equals(parameters('createPublicIPAddresses'), 'Yes'))]",
+      "condition": "[and(equals(parameters('provisionSharePoint2019'), 'Yes'), equals(parameters('createPublicIPAndDNS'), 'Yes'))]",
       "name": "[variables('vmSP2019').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -1077,7 +1077,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSPName)]"
               },
-              "publicIPAddress": "[if(equals(parameters('createPublicIPAddresses'), 'Yes'), variables('networkSettings').vmSP2019PublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(equals(parameters('createPublicIPAndDNS'), 'Yes'), variables('networkSettings').vmSP2019PublicIPNicAssociation, json('null'))]"
             }
           }
         ]
