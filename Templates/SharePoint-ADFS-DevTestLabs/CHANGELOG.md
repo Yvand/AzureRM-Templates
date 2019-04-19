@@ -4,6 +4,7 @@
 
 * Update DSC module SharePointDSC to 3.3
 * Add logic to create an optional public IP address for VMs
+* Force a reboot before creating site in SharePoint 2019 to workaround bug https://github.com/PowerShell/SharePointDsc/issues/990
 
 ## March 2019 update
 
