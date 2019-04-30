@@ -560,7 +560,7 @@
           "name": "ConfigureDCVM",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2018-06-01",
+          "apiVersion": "2019-03-01",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
           ],
@@ -807,7 +807,7 @@
       "name": "[concat(variables('generalSettings').vmSQLName,'/ConfigureSQLVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
         "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
@@ -859,7 +859,7 @@
       "name": "[concat(variables('generalSettings').vmSPName,'/ConfigureSPVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
         "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
@@ -1039,7 +1039,7 @@
       "name": "[concat(variables('generalSettings').vmFEName,'/ConfigureFEVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
         "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
@@ -1102,7 +1102,7 @@
       "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '9999'))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmDC').shutdownResourceName]",
-      "apiVersion": "2016-05-15",
+      "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
@@ -1125,7 +1125,7 @@
       "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '9999'))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmSQL').shutdownResourceName]",
-      "apiVersion": "2016-05-15",
+      "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
@@ -1148,7 +1148,7 @@
       "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '9999'))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmSP').shutdownResourceName]",
-      "apiVersion": "2016-05-15",
+      "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
@@ -1171,7 +1171,7 @@
       "condition": "[and(equals(parameters('addFrontEndToFarm'), 'Yes'), not(equals(parameters('vmsAutoShutdownTime'), '9999')))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmFE').shutdownResourceName]",
-      "apiVersion": "2016-05-15",
+      "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
