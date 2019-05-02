@@ -1,5 +1,10 @@
 # Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
+## Unreleased
+
+* Update DSC module SharePointDSC to 3.3
+* Update apiVersion of all resources to latest version
+
 ## February 2019 update
 
 * Added SharePoint 2019
