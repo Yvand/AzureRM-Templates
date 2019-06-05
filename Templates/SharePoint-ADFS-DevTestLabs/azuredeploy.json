@@ -2,15 +2,15 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "provisionSharePoint2013": {
+    "provisionSharePoint2019": {
       "type": "string",
-      "defaultValue": "No",
+      "defaultValue": "Yes",
       "allowedValues": [
         "Yes",
         "No"
       ],
       "metadata": {
-        "description": "Specify if a SharePoint 2013 farm should be provisioned."
+        "description": "Specify if a SharePoint 2019 farm should be provisioned."
       }
     },
     "provisionSharePoint2016": {
@@ -24,15 +24,15 @@
         "description": "Specify if a SharePoint 2016 farm should be provisioned."
       }
     },
-    "provisionSharePoint2019": {
+    "provisionSharePoint2013": {
       "type": "string",
-      "defaultValue": "Yes",
+      "defaultValue": "No",
       "allowedValues": [
         "Yes",
         "No"
       ],
       "metadata": {
-        "description": "Specify if a SharePoint 2019 farm should be provisioned."
+        "description": "Specify if a SharePoint 2013 farm should be provisioned."
       }
     },
     "domainFQDN": {
@@ -107,7 +107,7 @@
       "type": "string",
       "defaultValue": "Standard_D11_v2",
       "metadata": {
-        "description": "Size of the SQL VM"
+        "description": "Size of the SharePoint VM"
       }
     },
     "vmSPStorageAccountType": {
@@ -138,7 +138,7 @@
       ],
       "defaultValue": "No",
       "metadata": {
-        "description": "Enable automatic Windows uUpdates."
+        "description": "Enable automatic Windows Updates."
       }
     },
     "enableHybridBenefitServerLicenses": {
