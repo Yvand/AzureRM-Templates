@@ -151,7 +151,7 @@
       ],
       "defaultValue": "Yes",
       "metadata": {
-        "description": "Enable automatic Windows uUpdates."
+        "description": "Enable automatic Windows Updates."
       }
     },
     "enableHybridBenefitServerLicenses": {
