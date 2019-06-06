@@ -4,10 +4,10 @@ This template deploys SharePoint 2019, 2016 and 2013. Each SharePoint version is
 A DC is provisioned and configured with ADFS and ADCS, and a unique SQL Server is provisioned for all SharePoint farms.  
 Each SharePoint farm has 1 web application created with 2 zones: Windows NTLM on Default zone and ADFS on Intranet zone. They have a minimum configuration to provision quickly.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fdev%2FTemplates%2FSharePoint-ADFS-DevTestLabs%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fmaster%2FTemplates%2FSharePoint-ADFS-DevTestLabs%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fdev%2FTemplates%2FSharePoint-ADFS-DevTestLabs%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fmaster%2FTemplates%2FSharePoint-ADFS-DevTestLabs%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
