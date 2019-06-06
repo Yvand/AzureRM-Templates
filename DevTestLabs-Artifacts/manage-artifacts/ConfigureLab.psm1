@@ -53,10 +53,12 @@ function Configure-Lab
             }
             catch
             {
+                $errorMessage = $_.Exception.Message
+                Write-Error "Installation of claims provider '$claimsProviderName' failed with error '$errorMessage'. $($_.Exception)"
                 RemoveAndClean-ClaimsProviderSolution -pathToPackage $pathToPackage -claimsProviderName $claimsProviderName -adminUserName $adminUserName -adminPassword $adminPassword
             }
-        } # Attempt installation 2 times maximum
-        while ($success -eq $false -and $tryCount -le 2)        
+        } # Attempt installation 3 times maximum
+        while ($success -eq $false -and $tryCount -le 2)
     }
     finally
     {

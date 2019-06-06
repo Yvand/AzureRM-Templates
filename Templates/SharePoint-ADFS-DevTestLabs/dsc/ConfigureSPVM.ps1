@@ -15,7 +15,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, NetworkingDsc, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, NetworkingDsc, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, xPendingReboot
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -47,16 +47,65 @@ configuration ConfigureSPVM
         WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
-        DnsServerAddress DnsServerAddress
-        {
-            Address        = $DNSServer
-            InterfaceAlias = $InterfaceAlias
-            AddressFamily  = 'IPv4'
-            DependsOn      ="[WindowsFeature]ADPS"
-        }
-
+        DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4'; DependsOn ="[WindowsFeature]ADPS" }
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]DnsServerAddress" }
         xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
+
+        # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
+        # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
+        Registry EnableTLS12RegKey1
+        {
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
+            ValueName = 'DisabledByDefault'
+            ValueType = 'Dword'
+            ValueData =  '0'
+            Ensure    = 'Present'
+        }
+
+        Registry EnableTLS12RegKey2
+        {
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
+            ValueName = 'Enabled'
+            ValueType = 'Dword'
+            ValueData =  '1'
+            Ensure    = 'Present'
+        }
+
+        Registry EnableTLS12RegKey3
+        {
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
+            ValueName = 'DisabledByDefault'
+            ValueType = 'Dword'
+            ValueData =  '0'
+            Ensure    = 'Present'
+        }
+
+        Registry EnableTLS12RegKey4
+        {
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
+            ValueName = 'Enabled'
+            ValueType = 'Dword'
+            ValueData =  '1'
+            Ensure    = 'Present'
+        }
+
+        Registry SchUseStrongCrypto
+        {
+            Key       = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
+            ValueName = 'SchUseStrongCrypto'
+            ValueType = 'Dword'
+            ValueData =  '1'
+            Ensure    = 'Present'
+        }
+
+        <#Registry SchUseStrongCrypto64
+        {
+            Key                         = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'
+            ValueName                   = 'SchUseStrongCrypto'
+            ValueType                   = 'Dword'
+            ValueData                   =  '1'
+            Ensure                      = 'Present'
+        }#>
 
         #**********************************************************
         # Join AD forest
@@ -216,25 +265,6 @@ configuration ConfigureSPVM
             DependsOn       = "[File]AccountsProvisioned"
         }
 
-        # Set those 2 registry keys to workaround TLS 1.2 issue in xRemoteFile with Windows 2012 R2 (SharePoint 2013 deployment): https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405
-        Registry SchUseStrongCrypto
-        {
-            Key                         = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
-            ValueName                   = 'SchUseStrongCrypto'
-            ValueType                   = 'Dword'
-            ValueData                   =  '1'
-            Ensure                      = 'Present'
-        }
-
-        Registry SchUseStrongCrypto64
-        {
-            Key                         = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'
-            ValueName                   = 'SchUseStrongCrypto'
-            ValueType                   = 'Dword'
-            ValueData                   =  '1'
-            Ensure                      = 'Present'
-        }
-
         SqlAlias AddSqlAlias
         {
             Ensure               = "Present"
@@ -314,7 +344,7 @@ configuration ConfigureSPVM
         {
             Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
-            Realm                        = "https://$SPTrustedSitesName.$DomainFQDN"
+            Realm                        = "urn:federation:sharepoint"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
             IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
             ClaimsMappings               = @(
@@ -455,18 +485,41 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
 
-        # Not creating site collection in SharePoint 2019 to avoid exception: https://github.com/PowerShell/SharePointDsc/issues/990
-        if ($SharePointVersion -ne 2019) {
-            SPSite RootTeamSite
+        # Creating site collection in SharePoint 2019 fail: https://github.com/PowerShell/SharePointDsc/issues/990
+        # The workaround is to force a reboot before creating it
+        if ($SharePointVersion -eq "2019") {
+            xScript SetRebootIfFirstTime
             {
-                Url                  = "http://$SPTrustedSitesName/"
-                OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-                SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-                Name                 = "Blank site"
-                Template             = "STS#1"
+                # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+                TestScript = {
+                    return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
+                }
+                SetScript = {
+                    New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
+                    $global:DSCMachineStatus = 1
+                }
+                GetScript = { }
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn            = "[SPWebApplication]MainWebApp"
+                DependsOn = "[SPWebApplication]MainWebApp"
             }
+
+            xPendingReboot RebootBeforeCreatingSPSite
+            {
+                Name             = "BeforeCreatingSPTrust"
+                SkipCcmClientSDK = $true
+                DependsOn        = "[xScript]SetRebootIfFirstTime"
+            }
+        }
+
+        SPSite RootTeamSite
+        {
+            Url                  = "http://$SPTrustedSitesName/"
+            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                 = "Blank site"
+            Template             = "STS#1"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplication]MainWebApp"
         }
     }
 }
