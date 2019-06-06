@@ -37,3 +37,5 @@ If you wish to provision a cheaper environment, I recommended the following size
 > I strongly recommend to update SharePoint to a recent build just after the provisioning is complete.  
 > With the default setting for virtual machines, provisioning of the template takes about 1h15 to complete.  
 > The password complexity check in the form is not accurate and may validate a password that will be rejected by Azure when it provisions the VMs. Make sure to **use at least 2 special characters for the passwords**.
+
+> **Note:** A public version of this template can be found at <https://azure.microsoft.com/en-us/resources/templates/sharepoint-adfs/>

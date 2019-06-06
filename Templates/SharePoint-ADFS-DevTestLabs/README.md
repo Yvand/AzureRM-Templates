@@ -16,3 +16,5 @@ Size and storage type of virtual machines can be customized. Their default value
 * Virtual machine "DC": [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-compute#fsv2-series-sup1sup) / Standard_LRS
 * Virtual machine "SQL": [Standard_D2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general#dv2-series) / Standard_LRS
 * Virtual machines running SharePoint: [Standard_D11_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-memory#dv2-series-11-15) / Standard_LRS
+
+> **Note:** A public version of this template can be found at <https://github.com/Azure/azure-devtestlab/tree/master/Environments/SharePoint-AllVersions>
