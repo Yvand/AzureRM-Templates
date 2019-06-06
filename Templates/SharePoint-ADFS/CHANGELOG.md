@@ -4,6 +4,7 @@
 
 * Update DSC module SharePointDSC to 3.3
 * Update apiVersion of all resources to latest version
+* Update some properties description
 
 ## February 2019 update
 

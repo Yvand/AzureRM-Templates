@@ -7,6 +7,7 @@
 * Force a reboot before creating site in SharePoint 2019 to workaround bug https://github.com/PowerShell/SharePointDsc/issues/990
 * Remove parameter location and use function resourceGroup().location instead, to set location of resources
 * Update apiVersion of all resources to latest version
+* Update some properties description
 
 ## March 2019 update
 
