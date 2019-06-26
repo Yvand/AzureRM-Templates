@@ -630,48 +630,63 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
         }
 
-        # Cannot use resource xWebsite in xWebAdministration because CertificateThumbprint is not known yet
-        xScript SetHTTPSCertificate
+        xWebsite SetHTTPSCertificate
         {
-            SetScript =
+            Name        = "SharePoint - 443"
+            BindingInfo = MSFT_xWebBindingInformation
             {
-                $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "*.$using:DomainFQDN"
-
-                $website = Get-WebConfiguration -Filter '/system.applicationHost/sites/site' |
-                    Where-Object -FilterScript {$_.Name -eq "SharePoint - 443"}
-
-                $properties = @{
-                    protocol = "https"
-                    bindingInformation = ":443:"
-                    certificateStoreName = "MY"
-                    certificateHash = $siteCert.Thumbprint
-                }
-
-                Clear-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Force -ErrorAction Stop
-                Add-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Value @{
-                    protocol = $properties.protocol
-                    bindingInformation = $properties.bindingInformation
-                    certificateStoreName = $properties.certificateStoreName
-                    certificateHash = $properties.certificateHash
-                } -Force -ErrorAction Stop
-
-                if (!(Get-Item IIS:\SslBindings\*!443)) {
-                    New-Item IIS:\SslBindings\*!443 -value $siteCert
-                }
-
-                <# To implement only when the TestScript will be implemented and will determine that current config must be overwritten
-                # Otherwise, assume the right certificate is already used and binding doesn't need to be recreated
-                if ((Get-Item IIS:\SslBindings\*!443)) {
-                    Remove-Item IIS:\SslBindings\*!443 -Confirm:$false
-                }
-                New-Item IIS:\SslBindings\*!443 -value $siteCert
-                #>
+                Protocol             = "https"
+                Port                 = "443"
+                CertificateStoreName = "My"
+                CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
             }
-            GetScript            = { }
-            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
+
+        # # Cannot use resource xWebsite in xWebAdministration because CertificateThumbprint is not known yet
+        # xScript SetHTTPSCertificate
+        # {
+        #     SetScript =
+        #     {
+        #         $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "*.$using:DomainFQDN"
+
+        #         $website = Get-WebConfiguration -Filter '/system.applicationHost/sites/site' |
+        #             Where-Object -FilterScript {$_.Name -eq "SharePoint - 443"}
+
+        #         $properties = @{
+        #             protocol = "https"
+        #             bindingInformation = ":443:"
+        #             certificateStoreName = "MY"
+        #             certificateHash = $siteCert.Thumbprint
+        #         }
+
+        #         Clear-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Force -ErrorAction Stop
+        #         Add-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Value @{
+        #             protocol = $properties.protocol
+        #             bindingInformation = $properties.bindingInformation
+        #             certificateStoreName = $properties.certificateStoreName
+        #             certificateHash = $properties.certificateHash
+        #         } -Force -ErrorAction Stop
+
+        #         if (!(Get-Item IIS:\SslBindings\*!443)) {
+        #             New-Item IIS:\SslBindings\*!443 -value $siteCert
+        #         }
+
+        #         <# To implement only when the TestScript will be implemented and will determine that current config must be overwritten
+        #         # Otherwise, assume the right certificate is already used and binding doesn't need to be recreated
+        #         if ((Get-Item IIS:\SslBindings\*!443)) {
+        #             Remove-Item IIS:\SslBindings\*!443 -Confirm:$false
+        #         }
+        #         New-Item IIS:\SslBindings\*!443 -value $siteCert
+        #         #>
+        #     }
+        #     GetScript            = { }
+        #     TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
+        # }
 
         SPCacheAccounts SetCacheAccounts
         {
