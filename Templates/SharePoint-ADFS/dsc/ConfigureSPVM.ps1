@@ -996,6 +996,127 @@ configuration ConfigureSPVM
             DependsOn            = "[SPSite]AppCatalog"
         }
 
+        CertReq AddinsSiteCert
+        {
+            CARootName             = "$DomainNetbiosName-$DCName-CA"
+            CAServerFQDN           = "$DCName.$DomainFQDN"
+            Subject                = "Provider-hosted addins"
+            SubjectAltName         = "dns=addins.$($DomainFQDN):20443"
+            KeyLength              = '2048'
+            Exportable             = $true
+            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                    = '1.3.6.1.5.5.7.3.1'
+            KeyUsage               = '0xa0'
+            CertificateTemplate    = 'WebServer'
+            AutoRenew              = $true
+            Credential             = $DomainAdminCredsQualified
+        }
+
+        File CreateSiteDirectory
+        {
+            Ensure = "Present" # Ensure the directory is Present on the target node.
+            Type = "Directory" # The default is File.
+            DestinationPath = "C:\inetpub\wwwroot\addins"
+        }
+
+        xWebAppPool NewWebAppPool
+        {
+            State  = "Started"
+            Name   = "Provider-hosted addins"
+            managedPipelineMode            = 'Integrated'
+            managedRuntimeLoader           = 'webengine4.dll'
+            managedRuntimeVersion = 'v4.0'
+            identityType = "SpecificUser"
+            Credential = $SPSvcCredsQualified
+            Ensure = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
+        xWebsite AddinsSite
+        {
+            Name         = "Provider-hosted addins"
+            State        = "Started"
+            PhysicalPath = "C:\inetpub\wwwroot\addins"
+            ApplicationPool = "Provider-hosted addins"
+            AuthenticationInfo = MSFT_xWebAuthenticationInformation 
+            {
+                Anonymous = $true
+                Windows   = $true
+            }
+            BindingInfo  = @(
+                MSFT_xWebBindingInformation
+                {
+                    Protocol              = "HTTP"
+                    Port                  = 20080
+                }
+                MSFT_xWebBindingInformation
+                {
+                    Protocol              = "HTTPS"
+                    Port                 = 20443
+                    CertificateStoreName = "My"
+                    CertificateSubject   = "Provider-hosted addins"
+                }
+            )
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[CertReq]AddinsSiteCert"
+        }
+
+        CertReq HighTrustAddinsCert
+        {
+            CARootName             = "$DomainNetbiosName-$DCName-CA"
+            CAServerFQDN           = "$DCName.$DomainFQDN"
+            Subject                = "HighTrustAddins"
+            FriendlyName           = "HighTrustAddins"
+            KeyLength              = '2048'
+            Exportable             = $true
+            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                    = '1.3.6.1.5.5.7.3.1'
+            KeyUsage               = '0xa0'
+            CertificateTemplate    = 'WebServer'
+            AutoRenew              = $true
+            Credential             = $DomainAdminCredsQualified
+        }
+
+        xScript ExportHighTrustAddinsCert
+        {
+            SetScript = 
+            {
+                $destinationPath = "$($using:SetupPath)\Certificates"
+                $certSubject = "HighTrustAddins"
+                $certName = "HighTrustAddins.cer"
+                $certFullPath = [System.IO.Path]::Combine($destinationPath, $certName)
+                Write-Verbose -Message "Exporting public key of certificate with subject $certSubject to $certFullPath..."
+                New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
+                $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$certSubject"
+                $signingCert | Export-Certificate -FilePath $certFullPath
+                Write-Verbose -Message "Public key of certificate with subject $certSubject successfully exported to $certFullPath."
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            DependsOn = "[CertReq]HighTrustAddinsCert"
+        }
+
+        SPTrustedSecurityTokenIssuer HighTrustAddinsTrust
+        {
+            Name                           = "HighTrustAddins"
+            Description                    = "Trust for Provider-hosted high-trust add-ins"
+            RegisteredIssuerNameIdentifier = "22222222-2222-2222-2222-222222222222"
+            IsTrustBroker                  = $true
+            SigningCertificateFilePath     = "$SetupPath\Certificates\HighTrustAddins.cer"
+            Ensure                         = "Present"
+            DependsOn                      = "[xScript]ExportHighTrustAddinsCert"
+            PsDscRunAsCredential           = $SPSetupCredsQualified
+        }
+
         # DSC resource File throws an access denied when accessing a remote location, so use xScript instead
         xScript CreateDSCCompletionFile
         {
@@ -1102,9 +1223,10 @@ $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
+$SharePointVersion = 2019
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigureSPVM -SharePointVersion $SharePointVersion -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
