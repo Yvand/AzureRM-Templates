@@ -42,6 +42,7 @@ configuration ConfigureSPVM
     [String] $DCSetupPath = "\\$DCName\C$\Setup"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
+    [String] $AddinsSiteCName = "addins"
 
     Node localhost
     {
@@ -632,61 +633,18 @@ configuration ConfigureSPVM
 
         xWebsite SetHTTPSCertificate
         {
-            Name        = "SharePoint - 443"
-            BindingInfo = MSFT_xWebBindingInformation
+            Name                 = "SharePoint - 443"
+            BindingInfo          = MSFT_xWebBindingInformation
             {
-                Protocol             = "https"
-                Port                 = "443"
+                Protocol             = "HTTPS"
+                Port                 = 443
                 CertificateStoreName = "My"
                 CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
             }
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
-        }
-
-        # # Cannot use resource xWebsite in xWebAdministration because CertificateThumbprint is not known yet
-        # xScript SetHTTPSCertificate
-        # {
-        #     SetScript =
-        #     {
-        #         $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "*.$using:DomainFQDN"
-
-        #         $website = Get-WebConfiguration -Filter '/system.applicationHost/sites/site' |
-        #             Where-Object -FilterScript {$_.Name -eq "SharePoint - 443"}
-
-        #         $properties = @{
-        #             protocol = "https"
-        #             bindingInformation = ":443:"
-        #             certificateStoreName = "MY"
-        #             certificateHash = $siteCert.Thumbprint
-        #         }
-
-        #         Clear-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Force -ErrorAction Stop
-        #         Add-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Value @{
-        #             protocol = $properties.protocol
-        #             bindingInformation = $properties.bindingInformation
-        #             certificateStoreName = $properties.certificateStoreName
-        #             certificateHash = $properties.certificateHash
-        #         } -Force -ErrorAction Stop
-
-        #         if (!(Get-Item IIS:\SslBindings\*!443)) {
-        #             New-Item IIS:\SslBindings\*!443 -value $siteCert
-        #         }
-
-        #         <# To implement only when the TestScript will be implemented and will determine that current config must be overwritten
-        #         # Otherwise, assume the right certificate is already used and binding doesn't need to be recreated
-        #         if ((Get-Item IIS:\SslBindings\*!443)) {
-        #             Remove-Item IIS:\SslBindings\*!443 -Confirm:$false
-        #         }
-        #         New-Item IIS:\SslBindings\*!443 -value $siteCert
-        #         #>
-        #     }
-        #     GetScript            = { }
-        #     TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
-        # }
+        }        
 
         SPCacheAccounts SetCacheAccounts
         {
@@ -996,12 +954,24 @@ configuration ConfigureSPVM
             DependsOn            = "[SPSite]AppCatalog"
         }
 
+        xDnsRecord ProviderHostedAddinsAlias
+        {
+            Name                 = $AddinsSiteCName
+            Zone                 = $DomainFQDN
+            Target               = "$ComputerName.$DomainFQDN"
+            Type                 = "CName"
+            DnsServer            = "$DCName.$DomainFQDN"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
         CertReq AddinsSiteCert
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
             CAServerFQDN           = "$DCName.$DomainFQDN"
-            Subject                = "Provider-hosted addins"
-            SubjectAltName         = "dns=addins.$($DomainFQDN):20443"
+            Subject                = "$AddinsSiteCName.$($DomainFQDN):20443"
+            FriendlyName           = "Provider-hosted addins site certificate"
+            SubjectAltName         = "dns=$AddinsSiteCName.$($DomainFQDN):20443"
             KeyLength              = '2048'
             Exportable             = $true
             ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
@@ -1012,38 +982,38 @@ configuration ConfigureSPVM
             Credential             = $DomainAdminCredsQualified
         }
 
-        File CreateSiteDirectory
+        File AddinsSiteDirectory
         {
-            Ensure = "Present" # Ensure the directory is Present on the target node.
-            Type = "Directory" # The default is File.
             DestinationPath = "C:\inetpub\wwwroot\addins"
+            Type            = "Directory"
+            Ensure          = "Present"
         }
 
-        xWebAppPool NewWebAppPool
+        xWebAppPool AddinsSiteApplicationPool
         {
-            State  = "Started"
-            Name   = "Provider-hosted addins"
-            managedPipelineMode            = 'Integrated'
-            managedRuntimeLoader           = 'webengine4.dll'
+            Name                  = "Provider-hosted addins"
+            State                 = "Started"
+            managedPipelineMode   = 'Integrated'
+            managedRuntimeLoader  = 'webengine4.dll'
             managedRuntimeVersion = 'v4.0'
-            identityType = "SpecificUser"
-            Credential = $SPSvcCredsQualified
-            Ensure = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
+            identityType          = "SpecificUser"
+            Credential            = $SPSvcCredsQualified
+            Ensure                = "Present"
+            PsDscRunAsCredential  = $DomainAdminCredsQualified
         }
 
         xWebsite AddinsSite
         {
-            Name         = "Provider-hosted addins"
-            State        = "Started"
-            PhysicalPath = "C:\inetpub\wwwroot\addins"
-            ApplicationPool = "Provider-hosted addins"
-            AuthenticationInfo = MSFT_xWebAuthenticationInformation 
+            Name                 = "Provider-hosted addins"
+            State                = "Started"
+            PhysicalPath         = "C:\inetpub\wwwroot\addins"
+            ApplicationPool      = "Provider-hosted addins"
+            AuthenticationInfo   = MSFT_xWebAuthenticationInformation 
             {
-                Anonymous = $true
-                Windows   = $true
+                Anonymous                 = $true
+                Windows                   = $true
             }
-            BindingInfo  = @(
+            BindingInfo          = @(
                 MSFT_xWebBindingInformation
                 {
                     Protocol              = "HTTP"
@@ -1054,7 +1024,7 @@ configuration ConfigureSPVM
                     Protocol              = "HTTPS"
                     Port                 = 20443
                     CertificateStoreName = "My"
-                    CertificateSubject   = "Provider-hosted addins"
+                    CertificateSubject   = "$AddinsSiteCName.$($DomainFQDN):20443"
                 }
             )
             Ensure               = "Present"
@@ -1067,7 +1037,7 @@ configuration ConfigureSPVM
             CARootName             = "$DomainNetbiosName-$DCName-CA"
             CAServerFQDN           = "$DCName.$DomainFQDN"
             Subject                = "HighTrustAddins"
-            FriendlyName           = "HighTrustAddins"
+            FriendlyName           = "Sign OAuth tokens of high-trust add-ins"
             KeyLength              = '2048'
             Exportable             = $true
             ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
@@ -1226,7 +1196,7 @@ $SQLAlias = "SQLAlias"
 $SharePointVersion = 2019
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-ConfigureSPVM -SharePointVersion $SharePointVersion -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
