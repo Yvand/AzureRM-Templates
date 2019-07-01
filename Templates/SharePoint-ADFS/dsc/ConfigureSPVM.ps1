@@ -898,55 +898,65 @@ configuration ConfigureSPVM
             DependsOn             = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
 
-        Script ConfigureAppDomains
+        # Script ConfigureAppDomains
+        # {
+        #     SetScript = {
+        #         $argumentList = @(@{ "webAppUrl"             = "http://$using:SPTrustedSitesName";
+        #                              "AppDomainFQDN"         = "$using:AppDomainFQDN";
+        #                              "AppDomainIntranetFQDN" = "$using:AppDomainIntranetFQDN" })
+        #         Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
+        #             $params = $args[0]
+
+        #             # Configure the app domains in both zones of the web application
+        #             $webAppUrl = $params.webAppUrl
+        #             $appDomainDefaultZone = $params.AppDomainFQDN
+        #             $appDomainIntranetZone = $params.AppDomainIntranetFQDN
+
+        #             $defaultZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default
+        #             if($defaultZoneConfig -eq $null) {
+        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
+        #             }
+        #             elseif ($defaultZoneConfig.AppDomain -notlike $appDomainDefaultZone) {
+        #                 $defaultZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
+        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
+        #             }
+
+        #             $IntranetZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet
+        #             if($IntranetZoneConfig -eq $null) {
+        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
+        #             }
+        #             elseif ($IntranetZoneConfig.AppDomain -notlike $appDomainIntranetZone) {
+        #                 $IntranetZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
+        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
+        #             }
+        #         }
+        #     }
+        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
+        # }
+
+        SPWebApplicationAppDomain ConfigureAppDomainDefaultZone
         {
-            SetScript = {
-                $argumentList = @(@{ "webAppUrl"             = "http://$using:SPTrustedSitesName";
-                                     "AppDomainFQDN"         = "$using:AppDomainFQDN";
-                                     "AppDomainIntranetFQDN" = "$using:AppDomainIntranetFQDN" })
-                Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
-                    $params = $args[0]
-
-                    # # Configure STS
-                    # $serviceConfig = Get-SPSecurityTokenServiceConfig
-                    # $serviceConfig.AllowOAuthOverHttp = $true
-                    # $serviceConfig.Update()
-
-                    # Configure app domains in zones of the web application
-                    $webAppUrl = $params.webAppUrl
-                    $appDomainDefaultZone = $params.AppDomainFQDN
-                    $appDomainIntranetZone = $params.AppDomainIntranetFQDN
-
-                    $defaultZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default
-                    if($defaultZoneConfig -eq $null) {
-                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
-                    }
-                    elseif ($defaultZoneConfig.AppDomain -notlike $appDomainDefaultZone) {
-                        $defaultZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
-                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
-                    }
-
-                    $IntranetZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet
-                    if($IntranetZoneConfig -eq $null) {
-                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
-                    }
-                    elseif ($IntranetZoneConfig.AppDomain -notlike $appDomainIntranetZone) {
-                        $IntranetZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
-                        New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
-                    }
-
-                    # Configure app catalog
-                    # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
-                    #Update-SPAppCatalogConfiguration -Site "$webAppUrl/sites/AppCatalog" -Confirm:$false
-                }
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            WebAppUrl            ="http://$SPTrustedSitesName"
+            Zone                 = "Default"
+            Port                 = 80
+            AppDomain            = $AppDomainFQDN
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
 
-        # Deactivated because it throws "Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))"
+        SPWebApplicationAppDomain ConfigureAppDomainIntranetZone
+        {
+            WebAppUrl            ="http://$SPTrustedSitesName"
+            Zone                 = "Intranet"
+            Port                 = 443
+            AppDomain            = $AppDomainIntranetFQDN
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
+        }
+
         SPAppCatalog MainAppCatalog
         {
             SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
@@ -1102,7 +1112,7 @@ configuration ConfigureSPVM
             GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[Script]ConfigureAppDomains"
+            DependsOn            = "[SPTrustedSecurityTokenIssuer] HighTrustAddinsTrust"
         }
     }
 }
