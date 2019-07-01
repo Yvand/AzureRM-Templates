@@ -1112,7 +1112,7 @@ configuration ConfigureSPVM
             GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPTrustedSecurityTokenIssuer] HighTrustAddinsTrust"
+            DependsOn            = "[SPTrustedSecurityTokenIssuer]HighTrustAddinsTrust"
         }
     }
 }
