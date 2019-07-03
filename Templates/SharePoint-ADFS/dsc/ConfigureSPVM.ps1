@@ -414,7 +414,7 @@ configuration ConfigureSPVM
 
         SPTrustedRootAuthority TrustRootCA
         {
-            Name                 = "$DomainFQDN"
+            Name                 = "$DomainFQDN root CA"
             CertificateFilePath  = "$SetupPath\Certificates\ADFS Signing issuer.cer"
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified

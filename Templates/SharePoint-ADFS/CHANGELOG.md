@@ -2,9 +2,12 @@
 
 ## Unreleased
 
-* Update DSC module SharePointDSC to 3.3
+* Completely configure environment to host high-trust provider-hosted add-ins
+* Add the certificate of the root authority to the SPTrustedRootAuthority
+* Update DSC module SharePointDSC to 3.5
+* Update DSC module xPSDesiredStateConfiguration to 8.8, wich a customization on resource xRemoteFile to deal with random connection errors while downloading LDAPCP
 * Update apiVersion of all resources to latest version
-* Update some properties description
+* Update some properties description in the ARM template
 
 ## February 2019 update
 
