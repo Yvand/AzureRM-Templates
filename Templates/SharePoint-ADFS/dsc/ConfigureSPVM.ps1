@@ -1043,7 +1043,7 @@ configuration ConfigureSPVM
                     Protocol              = "HTTPS"
                     Port                 = 20443
                     CertificateStoreName = "My"
-                    CertificateSubject   = "$AddinsSiteCName.$($DomainFQDN):20443"
+                    CertificateSubject   = "$AddinsSiteCName.$($DomainFQDN)"
                 }
             )
             Ensure               = "Present"
