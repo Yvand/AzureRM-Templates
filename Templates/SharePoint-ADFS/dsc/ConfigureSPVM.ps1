@@ -412,6 +412,15 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
+        SPTrustedRootAuthority TrustRootCA
+        {
+            Name                 = "$DomainFQDN"
+            CertificateFilePath  = "$SetupPath\Certificates\ADFS Signing issuer.cer"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
+        }
+
         SPFarmSolution InstallLdapcp
         {
             LiteralPath          = "$SetupPath\LDAPCP.wsp"
@@ -596,7 +605,7 @@ configuration ConfigureSPVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = '[xScript]UpdateGPOToTrustRootCACert'
+            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
         }
 
         SPWebApplicationExtension ExtendWebApp
@@ -610,7 +619,7 @@ configuration ConfigureSPVM
             Port                   = 443
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = '[CertReq]SPSSiteCert'
+            DependsOn              = "[CertReq]SPSSiteCert", "[SPWebApplication]MainWebApp"
         }
 
         SPWebAppAuthentication ConfigureWebAppAuthentication
@@ -643,7 +652,7 @@ configuration ConfigureSPVM
             }
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
+            DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
         }        
 
         SPCacheAccounts SetCacheAccounts
@@ -815,7 +824,7 @@ configuration ConfigureSPVM
             DependsOn            = "[SPUserProfileServiceApp]UserProfileServiceApp"
         }
 
-        SPSubscriptionSettingsServiceApp CreateSubscriptionSettingsServiceApp
+        SPSubscriptionSettingsServiceApp SubscriptionSettingsServiceApp
         {
             Name                 = "Subscription Settings Service Application"
             ApplicationPool      = $ServiceAppPoolName
@@ -824,7 +833,7 @@ configuration ConfigureSPVM
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
         }
 
-        SPAppManagementServiceApp CreateAppManagementServiceApp
+        SPAppManagementServiceApp AppManagementServiceApp
         {
             Name                 = "App Management Service Application"
             ApplicationPool      = $ServiceAppPoolName
@@ -873,7 +882,7 @@ configuration ConfigureSPVM
             AppDomain            = $AppDomainFQDN
             Prefix               = "addin"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPSubscriptionSettingsServiceApp]CreateSubscriptionSettingsServiceApp", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
+            DependsOn            = "[SPSubscriptionSettingsServiceApp]SubscriptionSettingsServiceApp", "[SPAppManagementServiceApp]AppManagementServiceApp"
         }
 
         SPSite AppCatalog
@@ -895,7 +904,7 @@ configuration ConfigureSPVM
             AllowMetadataOverHttp = $true
             IsSingleInstance      = "Yes"
             PsDscRunAsCredential  = $SPSetupCredsQualified
-            DependsOn             = "[SPAppDomain]ConfigureLocalFarmAppUrls"
+            DependsOn             = "[SPFarm]CreateSPFarm"
         }
 
         Script ConfigureAppDomains
@@ -957,7 +966,7 @@ configuration ConfigureSPVM
         #     DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         # }
 
-        SPAppCatalog MainAppCatalog
+        SPAppCatalog SetAppCatalogUrl
         {
             SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
             PsDscRunAsCredential = $DomainAdminCredsQualified
