@@ -988,9 +988,9 @@ configuration ConfigureSPVM
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
             CAServerFQDN           = "$DCName.$DomainFQDN"
-            Subject                = "$AddinsSiteCName.$($DomainFQDN):20443"
+            Subject                = "$AddinsSiteCName.$($DomainFQDN)"
             FriendlyName           = "Provider-hosted addins site certificate"
-            SubjectAltName         = "dns=$AddinsSiteCName.$($DomainFQDN):20443"
+            SubjectAltName         = "dns=$AddinsSiteCName.$($DomainFQDN)"
             KeyLength              = '2048'
             Exportable             = $true
             ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
