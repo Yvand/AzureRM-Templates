@@ -472,7 +472,7 @@ configuration ConfigureSPVM
 					return $true
 				}
             }
-            DependsOn            = "[xScript]ConfigureLDAPCP"
+            DependsOn            = "[SPFarmSolution]InstallLdapcp"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
