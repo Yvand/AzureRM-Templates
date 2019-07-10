@@ -502,51 +502,6 @@ configuration ConfigureSPVM
             }
         }
 
-        # xScript ConfigureLDAPCP
-        # {
-        #     SetScript = 
-        #     {
-        #         Add-Type -AssemblyName "ldapcp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
-
-		# 		# Create LDAPCP configuration
-		# 		$config = [ldapcp.LDAPCPConfig]::CreateConfiguration([ldapcp.ClaimsProviderConstants]::CONFIG_ID, [ldapcp.ClaimsProviderConstants]::CONFIG_NAME, $using:DomainFQDN);
-
-		# 		# Remove unused claim types
-		# 		$config.ClaimTypes.Remove("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn")
-		# 		$config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname")
-		# 		$config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/primarygroupsid")
-
-		# 		# Configure augmentation
-		# 		$config.EnableAugmentation = $true
-		# 		$config.MainGroupClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-        #         foreach ($connection in $config.LDAPConnectionsProp) {
-        #             $connection.EnableAugmentation = $true
-        #         }
-
-		# 		# Save changes
-		# 		$config.Update()
-        #     }
-        #     GetScript =  
-        #     {
-        #         # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-        #         return @{ "Result" = "false" }
-        #     }
-        #     TestScript = 
-        #     {
-        #         # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-		# 		Add-Type -AssemblyName "ldapcp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
-		# 		$config = [ldapcp.LDAPCPConfig]::GetConfiguration("LDAPCPConfig")
-		# 		if ($config -eq $null) {
-		# 			return $false
-		# 		}
-		# 		else {
-		# 			return $true
-		# 		}
-        #     }
-        #     DependsOn            = "[SPFarmSolution]InstallLdapcp"
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        # }
-
         SPTrustedIdentityTokenIssuer CreateSPTrust
         {
             Name                         = $DomainFQDN
@@ -571,6 +526,51 @@ configuration ConfigureSPVM
             Ensure                       = "Present"
             DependsOn                    = "[SPFarmSolution]InstallLdapcp"
             PsDscRunAsCredential         = $SPSetupCredsQualified
+        }
+
+        xScript ConfigureLDAPCP
+        {
+            SetScript = 
+            {
+                Add-Type -AssemblyName "ldapcp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
+
+				# Create LDAPCP configuration
+				$config = [ldapcp.LDAPCPConfig]::CreateConfiguration([ldapcp.ClaimsProviderConstants]::CONFIG_ID, [ldapcp.ClaimsProviderConstants]::CONFIG_NAME, $using:DomainFQDN);
+
+				# Remove unused claim types
+				$config.ClaimTypes.Remove("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn")
+				$config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname")
+				$config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/primarygroupsid")
+
+				# Configure augmentation
+				$config.EnableAugmentation = $true
+				$config.MainGroupClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                foreach ($connection in $config.LDAPConnectionsProp) {
+                    $connection.EnableAugmentation = $true
+                }
+
+				# Save changes
+				$config.Update()
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+				Add-Type -AssemblyName "ldapcp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
+				$config = [ldapcp.LDAPCPConfig]::GetConfiguration("LDAPCPConfig")
+				if ($config -eq $null) {
+					return $false
+				}
+				else {
+					return $true
+				}
+            }
+            DependsOn            = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
         #**********************************************************
