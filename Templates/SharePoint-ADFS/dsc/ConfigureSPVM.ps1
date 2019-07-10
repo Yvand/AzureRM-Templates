@@ -1096,6 +1096,32 @@ configuration ConfigureSPVM
             DependsOn            = "[CertReq]AddinsSiteCert"
         }
 
+        xScript CopyIISWelcomePageToAddinsSite
+        {
+            SetScript = 
+            {
+                Copy-Item -Path "C:\inetpub\wwwroot\*" -Filter "iisstart*" -Destination "C:\inetpub\wwwroot\addins"
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                if ( (Get-ChildItem -Path "C:\inetpub\wwwroot\addins" -Name "iisstart*") -eq $null)
+                {
+                    return $false
+                }
+                else
+                {
+                    return $true
+                }
+            }
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xWebsite]AddinsSite"
+        }
+
         CertReq HighTrustAddinsCert
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
