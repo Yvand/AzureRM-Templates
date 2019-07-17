@@ -698,7 +698,7 @@ configuration ConfigureSPVM
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
-        }        
+        }
 
         SPCacheAccounts SetCacheAccounts
         {
