@@ -4,6 +4,7 @@
 
 * Significantly improve reliability of the deployment by mitigating its main source of failures: Add a retry mechanism to resource xRemoteFile when the download fails.
 * Completely configure SharePoint to host and run high-trust provider-hosted add-ins
+* Configure LDAPCP to enable augmentation and remove unused claim types
 * Add the certificate of the domain root authority to the SPTrustedRootAuthority
 * Update apiVersion of all ARM resources to latest version
 * Update some property descriptions in the ARM template
