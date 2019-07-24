@@ -111,7 +111,7 @@
       "type": "string",
       "defaultValue": "Standard_DS3_v2",
       "metadata": {
-        "description": "Size of the SQL VM"
+        "description": "Size of the SharePoint VM"
       }
     },
     "vmSPStorageAccountType": {
