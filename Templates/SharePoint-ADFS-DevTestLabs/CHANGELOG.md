@@ -1,6 +1,6 @@
 # Change log for AzureRM template SharePoint-ADFS-DevTestLabs
 
-## Unreleased
+## July 2019 update
 
 * Add the certificate of the domain root authority to the SPTrustedRootAuthority
 * Use DSC resource xWebsite instead of xScript to configure HTTPS binding

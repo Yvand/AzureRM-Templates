@@ -15,7 +15,7 @@
     },
     "provisionSharePoint2016": {
       "type": "string",
-      "defaultValue": "Yes",
+      "defaultValue": "No",
       "allowedValues": [
         "Yes",
         "No"
@@ -45,7 +45,6 @@
     },
     "adminUserName": {
       "type": "string",
-      "defaultValue": "yvand",
       "minLength": 1,
       "metadata": {
         "description": "Name of the AD and SharePoint administrator. 'administrator' is not allowed"
