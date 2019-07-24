@@ -1,6 +1,6 @@
 # Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
-## Unreleased
+## July 2019 update
 
 * Significantly improve reliability of the deployment by mitigating its main source of failures: Add a retry mechanism to resource xRemoteFile when the download fails.
 * Completely configure SharePoint to host and run high-trust provider-hosted add-ins
