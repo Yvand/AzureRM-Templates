@@ -24,7 +24,7 @@
       "value": 0
     },
     "_artifactsLocation": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/SharePoint-ADFS/"
+      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/"
     },
     "vmSQLSize": { "value": "Standard_D2_v2" },
     "vmSQLStorageAccountType": { "value": "Standard_LRS" },
