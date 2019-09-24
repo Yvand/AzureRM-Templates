@@ -131,7 +131,7 @@ resource "azurerm_public_ip" "PublicIP-DC" {
   location                     = "${azurerm_resource_group.resourceGroup.location}"
   resource_group_name          = "${azurerm_resource_group.resourceGroup.name}"
   domain_name_label            = "${lower(var.dnsLabelPrefix)}-${lower(var.vmDC["vmName"])}"
-  public_ip_address_allocation = "Dynamic"
+  allocation_method            = "Dynamic"
 }
 
 resource "azurerm_network_interface" "NIC-DC-0" {
@@ -154,7 +154,7 @@ resource "azurerm_public_ip" "PublicIP-SQL" {
   location                     = "${azurerm_resource_group.resourceGroup.location}"
   resource_group_name          = "${azurerm_resource_group.resourceGroup.name}"
   domain_name_label            = "${lower(var.dnsLabelPrefix)}-${lower(var.vmSQL["vmName"])}"
-  public_ip_address_allocation = "Dynamic"
+  allocation_method            = "Dynamic"
 }
 
 resource "azurerm_network_interface" "NIC-SQL-0" {
@@ -176,7 +176,7 @@ resource "azurerm_public_ip" "PublicIP-SP" {
   location                     = "${azurerm_resource_group.resourceGroup.location}"
   resource_group_name          = "${azurerm_resource_group.resourceGroup.name}"
   domain_name_label            = "${lower(var.dnsLabelPrefix)}-${lower(var.vmSP["vmName"])}"
-  public_ip_address_allocation = "Dynamic"
+  allocation_method            = "Dynamic"
 }
 
 resource "azurerm_network_interface" "NIC-SP-0" {
@@ -482,7 +482,7 @@ resource "azurerm_public_ip" "PublicIP-FE" {
   location                     = "${azurerm_resource_group.resourceGroup.location}"
   resource_group_name          = "${azurerm_resource_group.resourceGroup.name}"
   domain_name_label            = "${lower(var.dnsLabelPrefix)}-${lower(var.vmFE["vmName"])}"
-  public_ip_address_allocation = "Dynamic"
+  allocation_method            = "Dynamic"
 }
 
 resource "azurerm_network_interface" "NIC-FE-0" {
@@ -495,7 +495,7 @@ resource "azurerm_network_interface" "NIC-FE-0" {
     name                          = "ipconfig1"
     subnet_id                     = "${azurerm_subnet.Subnet-SP.id}"
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = "${azurerm_public_ip.PublicIP-FE.id}"
+    public_ip_address_id          = "${element(azurerm_public_ip.PublicIP-FE.*.id, count.index)}"
   }
 }
 
@@ -504,7 +504,7 @@ resource "azurerm_virtual_machine" "VM-FE" {
   name                  = "VM-${var.vmFE["vmName"]}"
   location              = "${azurerm_resource_group.resourceGroup.location}"
   resource_group_name   = "${azurerm_resource_group.resourceGroup.name}"
-  network_interface_ids = ["${azurerm_network_interface.NIC-FE-0.id}"]
+  network_interface_ids = ["${element(azurerm_network_interface.NIC-FE-0.*.id, count.index)}"]
   vm_size               = "${var.vmSP["vmSize"]}"
   
   os_profile {
@@ -550,7 +550,7 @@ resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
   name                 = "VM-${var.vmFE["vmName"]}-DSC"
   location             = "${azurerm_resource_group.resourceGroup.location}"
   resource_group_name  = "${azurerm_resource_group.resourceGroup.name}"
-  virtual_machine_name = "${azurerm_virtual_machine.VM-FE.name}"
+  virtual_machine_name = "${element(azurerm_virtual_machine.VM-FE.*.name, count.index)}"
   publisher            = "Microsoft.Powershell"
   type                 = "DSC"
   type_handler_version = "2.9"
