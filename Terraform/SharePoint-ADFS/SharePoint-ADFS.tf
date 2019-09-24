@@ -342,8 +342,8 @@ resource "azurerm_virtual_machine_extension" "VM-SQL-DSC" {
 	    "script": "${var.dscConfigureSQLVM["script"]}"
     },
     "configurationArguments": {
-      "DomainFQDN": "${var.domainFQDN}",
-      "DNSServer": "${var.networkSettings["vmDCPrivateIPAddress"]}"
+      "DNSServer": "${var.networkSettings["vmDCPrivateIPAddress"]}",
+      "DomainFQDN": "${var.domainFQDN}"
     },
     "privacy": {
       "dataCollection": "enable"
@@ -440,11 +440,12 @@ resource "azurerm_virtual_machine_extension" "VM-SP-DSC" {
 	    "script": "${var.dscConfigureSPVM["script"]}"
     },
     "configurationArguments": {
-      "DomainFQDN": "${var.domainFQDN}",
       "DNSServer": "${var.networkSettings["vmDCPrivateIPAddress"]}",
+      "DomainFQDN": "${var.domainFQDN}",
       "DCName": "${var.vmDC["vmName"]}",
       "SQLName": "${var.vmSQL["vmName"]}",
-      "SQLAlias": "${var.generalSettings["sqlAlias"]}"
+      "SQLAlias": "${var.generalSettings["sqlAlias"]}",
+      "SharePointVersion": "${var.sharePointVersion}"
     },
     "privacy": {
       "dataCollection": "enable"
@@ -587,8 +588,8 @@ resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
 	    "script": "${var.dscConfigureFEVM["script"]}"
     },
     "configurationArguments": {
-      "DomainFQDN": "${var.domainFQDN}",
       "DNSServer": "${var.networkSettings["vmDCPrivateIPAddress"]}",
+      "DomainFQDN": "${var.domainFQDN}",
       "DCName": "${var.vmDC["vmName"]}",
       "SQLName": "${var.vmSQL["vmName"]}",
       "SQLAlias": "${var.generalSettings["sqlAlias"]}"

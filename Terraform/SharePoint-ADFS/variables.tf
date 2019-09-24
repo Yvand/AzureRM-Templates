@@ -7,6 +7,11 @@ variable "resourceGroupName" {
   description = "Name of the ARM resource group to create"
 }
 
+variable "sharePointVersion" {
+  default     = "2019"
+  description = "Name of the ARM resource group to create"  
+}
+
 variable "dnsLabelPrefix" {
   description = "Prefix of public DNS names of VMs, e.g. 'dnsLabelPrefix-VMName.region.cloudapp.azure.com'"
 }
