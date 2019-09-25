@@ -84,14 +84,6 @@ resource "azurerm_virtual_network" "VNet" {
   name                = "${azurerm_resource_group.resourceGroup.name}-vnet"
   location            = azurerm_resource_group.resourceGroup.location
   resource_group_name = azurerm_resource_group.resourceGroup.name
-  # TF-UPGRADE-TODO: In Terraform v0.10 and earlier, it was sometimes necessary to
-  # force an interpolation expression to be interpreted as a list by wrapping it
-  # in an extra set of list brackets. That form was supported for compatibility in
-  # v0.11, but is no longer supported in Terraform v0.12.
-  #
-  # If the expression in the following list itself returns a list, remove the
-  # brackets to avoid interpretation as a list of lists. If the expression
-  # returns a single list item then leave it as-is and remove this TODO comment.
   address_space = [var.networkSettings["vNetPrivatePrefix"]]
 }
 
@@ -101,6 +93,7 @@ resource "azurerm_subnet" "Subnet-DC" {
   resource_group_name  = azurerm_resource_group.resourceGroup.name
   virtual_network_name = azurerm_virtual_network.VNet.name
   address_prefix       = var.networkSettings["vNetPrivateSubnetDCPrefix"]
+  network_security_group_id = azurerm_network_security_group.NSG-VNet-DC.id
 }
 
 resource "azurerm_subnet_network_security_group_association" "NSG-Associate-DCSubnet" {
@@ -109,11 +102,24 @@ resource "azurerm_subnet_network_security_group_association" "NSG-Associate-DCSu
 }
 
 # Subnet and NSG for SQL
+# Delay subnet creation to workaround bug https://github.com/terraform-providers/terraform-provider-azurerm/issues/2758
+resource "null_resource" "delay_subnet_sql" {
+  provisioner "local-exec" {
+    command = "ping 127.0.0.1 -n 6 > nul"
+  }
+
+  triggers = {
+    "before" = "${azurerm_subnet.Subnet-DC.id}"
+  }
+}
+
 resource "azurerm_subnet" "Subnet-SQL" {
   name                 = "Subnet-${var.vmSQL["vmName"]}"
   resource_group_name  = azurerm_resource_group.resourceGroup.name
   virtual_network_name = azurerm_virtual_network.VNet.name
   address_prefix       = var.networkSettings["vNetPrivateSubnetSQLPrefix"]
+  network_security_group_id = azurerm_network_security_group.NSG-VNet-SQL.id
+  depends_on                = ["null_resource.delay_subnet_sql"]
 }
 
 resource "azurerm_subnet_network_security_group_association" "NSG-Associate-SQLSubnet" {
@@ -122,11 +128,24 @@ resource "azurerm_subnet_network_security_group_association" "NSG-Associate-SQLS
 }
 
 # Subnet and NSG for SP
+# Delay subnet creation to workaround bug https://github.com/terraform-providers/terraform-provider-azurerm/issues/2758
+resource "null_resource" "delay_subnet_sp" {
+  provisioner "local-exec" {
+    command = "ping 127.0.0.1 -n 6 > nul"
+  }
+
+  triggers = {
+    "before" = "${azurerm_subnet.Subnet-SQL.id}"
+  }
+}
+
 resource "azurerm_subnet" "Subnet-SP" {
   name                 = "Subnet-${var.vmSP["vmName"]}"
   resource_group_name  = azurerm_resource_group.resourceGroup.name
   virtual_network_name = azurerm_virtual_network.VNet.name
   address_prefix       = var.networkSettings["vNetPrivateSubnetSPPrefix"]
+  network_security_group_id = azurerm_network_security_group.NSG-VNet-SP.id
+  depends_on                = ["null_resource.delay_subnet_sp"]
 }
 
 resource "azurerm_subnet_network_security_group_association" "NSG-Associate-SPSubnet" {
