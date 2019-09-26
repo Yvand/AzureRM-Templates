@@ -172,6 +172,17 @@
         "description": "Size in Gb of the additional data disk attached to SharePoint VMs. Set to 0 to not create it"
       }
     },
+    "createAzureBastion": {
+      "type": "string",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "defaultValue": "Yes",
+      "metadata": {
+        "description": "Choose if Azure Bastion should be provisioned."
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -309,7 +320,11 @@
         "diskSizeGB": "[parameters('sharePointDataDiskSize')]",
         "managedDisk": {}
       }
-    ]
+    ],
+    "azureBastion": {
+      "subnetPrefix": "10.0.4.0/24",
+      "publicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', 'Bastion'), '_', '-'))]"
+    }
   },
   "resources": [
     {
@@ -1188,6 +1203,63 @@
           "timeInMinutes": 30
         },
         "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('createAzureBastion'), 'Yes')]",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('networkSettings').vNetPrivateName, '/', 'BastionSubnet')]",
+      "apiVersion": "2019-04-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]"
+      ],
+      "properties": {
+        "addressPrefix": "[variables('azureBastion').subnetPrefix]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('createAzureBastion'), 'Yes')]",
+      "name": "PublicIP-Bastion",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-11-01",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "PublicIP-Bastion"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('azureBastion').publicIPDnsName]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('createAzureBastion'), 'Yes')]",
+      "name": "Bastion",
+      "type": "Microsoft.Network/bastionHosts",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'PublicIP-Bastion')]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, 'BastionSubnet')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IpConf",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'PublicIP-Bastion')]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, 'BastionSubnet')]"
+              }
+            }
+          }
+        ]
       }
     }
   ],
