@@ -23,6 +23,9 @@
     "sharePointDataDiskSize": {
       "value": 0
     },
+    "addPublicIPToVMs": {
+      "value": "Yes"
+    },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/"
     },

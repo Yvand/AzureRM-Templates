@@ -172,7 +172,7 @@
         "description": "Size in Gb of the additional data disk attached to SharePoint VMs. Set to 0 to not create it"
       }
     },
-    "createAzureBastion": {
+    "addAzureBastion": {
       "type": "string",
       "allowedValues": [
         "Yes",
@@ -180,7 +180,18 @@
       ],
       "defaultValue": "Yes",
       "metadata": {
-        "description": "Choose if Azure Bastion should be provisioned."
+        "description": "Specify if Azure Bastion should be provisioned."
+      }
+    },
+    "addPublicIPToVMs": {
+      "type": "string",
+      "defaultValue": "Yes",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "metadata": {
+        "description": "Specify if each VM should have a public IP and be reachable from Internet."
       }
     },
     "_artifactsLocation": {
@@ -232,7 +243,19 @@
       "vNetPrivateSubnetSPPrefix": "10.0.3.0/24",
       "nsgDCVNetName": "NSG-VNet-DC",
       "nsgSQLVNetName": "NSG-VNet-SQL",
-      "nsgSPVNetName": "NSG-VNet-SP"
+      "nsgSPVNetName": "NSG-VNet-SP",
+      "vmDCPublicIPNicAssociation": {
+        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
+      },
+      "vmSQLPublicIPNicAssociation": {
+        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)]"
+      },
+      "vmSPPublicIPNicAssociation": {
+        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
+      },
+      "vmFEPublicIPNicAssociation": {
+        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmFE').vmPublicIPName)]"
+      }
     },
     "vmDC": {
       "vmImagePublisher": "MicrosoftWindowsServer",
@@ -248,7 +271,7 @@
     },
     "vmSQL": {
       "vmImagePublisher": "MicrosoftSQLServer",
-      "vmImageOffer": "SQL2016SP1-WS2016",
+      "vmImageOffer": "SQL2017-WS2016",
       "vmImageSKU": "Standard",
       "vmOSDiskName": "Disk-SQL-OS",
       "vmVmSize": "[parameters('vmSQLSize')]",
@@ -473,13 +496,18 @@
       }
     },
     {
+      "condition": "[equals(parameters('addPublicIPToVMs'), 'Yes')]",
       "name": "[variables('vmDC').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-11-01",
+      "apiVersion": "2019-07-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmDC').vmPublicIPName]"
+      },
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
       },
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -510,9 +538,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetDCName)]"
               },
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
-              }
+              "publicIPAddress": "[if(equals(parameters('addPublicIPToVMs'), 'Yes'), variables('networkSettings').vmDCPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -620,13 +646,18 @@
       ]
     },
     {
+      "condition": "[equals(parameters('addPublicIPToVMs'), 'Yes')]",
       "name": "[variables('vmSQL').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-11-01",
+      "apiVersion": "2019-07-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmSQL').vmPublicIPName]"
+      },
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
       },
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -656,9 +687,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSQLName)]"
               },
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)]"
-              }
+              "publicIPAddress": "[if(equals(parameters('addPublicIPToVMs'), 'Yes'), variables('networkSettings').vmSQLPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -719,13 +748,18 @@
       "resources": []
     },
     {
+      "condition": "[equals(parameters('addPublicIPToVMs'), 'Yes')]",
       "name": "[variables('vmSP').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-11-01",
+      "apiVersion": "2019-07-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmSP').vmPublicIPName]"
+      },
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
       },
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -755,9 +789,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSPName)]"
               },
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
-              }
+              "publicIPAddress": "[if(equals(parameters('addPublicIPToVMs'), 'Yes'), variables('networkSettings').vmSPPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -871,6 +903,51 @@
       }
     },
     {
+      "name": "[concat(variables('generalSettings').vmSQLName,'/SqlIaasExtension')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-03-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmSQLName, 'ConfigureSQLVM')]"
+      ],
+      "properties": {
+        "type": "SqlIaaSAgent",
+        "publisher": "Microsoft.SqlServer.Management",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": "true",
+        "settings": {
+          "AutoTelemetrySettings": {
+            "Region": "[resourceGroup().location]"
+          },
+          "AutoPatchingSettings": {
+            "Enable": false
+          },
+          "KeyVaultCredentialSettings": {
+            "Enable": false
+          },
+          "ServerConfigurationsManagementSettings": {
+            "SQLConnectivityUpdateSettings": {
+              "ConnectivityType": "Public",
+              "Port": "1433"
+            },
+            "SQLWorkloadTypeUpdateSettings": {
+              "SQLWorkloadType": "General"
+            },
+            "AdditionalFeaturesServerConfigurations": {
+              "IsRServicesEnabled": false
+            }
+          }
+        },
+        "protectedSettings": {
+          "SQLAuthUpdateUserName": "[parameters('adminUsername')]",
+          "SQLAuthUpdatePassword": "[parameters('adminPassword')]"
+        }
+      }
+    },
+    {
       "name": "[concat(variables('generalSettings').vmSPName,'/ConfigureSPVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
@@ -947,14 +1024,18 @@
       }
     },
     {
-      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
+      "condition": "[and(equals(parameters('addFrontEndToFarm'), 'Yes'), equals(parameters('addPublicIPToVMs'), 'Yes'))]",
       "name": "[variables('vmFE').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-11-01",
+      "apiVersion": "2019-07-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmFE').vmPublicIPName]"
+      },
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
       },
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -985,9 +1066,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSPName)]"
               },
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmFE').vmPublicIPName)]"
-              }
+              "publicIPAddress": "[if(equals(parameters('addPublicIPToVMs'), 'Yes'), variables('networkSettings').vmFEPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -1206,9 +1285,9 @@
       }
     },
     {
-      "condition": "[equals(parameters('createAzureBastion'), 'Yes')]",
+      "condition": "[equals(parameters('addAzureBastion'), 'Yes')]",
       "type": "Microsoft.Network/virtualNetworks/subnets",
-      "name": "[concat(variables('networkSettings').vNetPrivateName, '/', 'BastionSubnet')]",
+      "name": "[concat(variables('networkSettings').vNetPrivateName, '/', 'AzureBastionSubnet')]",
       "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -1219,31 +1298,35 @@
       }
     },
     {
-      "condition": "[equals(parameters('createAzureBastion'), 'Yes')]",
+      "condition": "[equals(parameters('addAzureBastion'), 'Yes')]",
       "name": "PublicIP-Bastion",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-11-01",
+      "apiVersion": "2019-07-01",
       "dependsOn": [],
       "tags": {
         "displayName": "PublicIP-Bastion"
       },
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
       "properties": {
-        "publicIPAllocationMethod": "Dynamic",
+        "publicIPAllocationMethod": "Static",
         "dnsSettings": {
           "domainNameLabel": "[variables('azureBastion').publicIPDnsName]"
         }
       }
     },
     {
-      "condition": "[equals(parameters('createAzureBastion'), 'Yes')]",
+      "condition": "[equals(parameters('addAzureBastion'), 'Yes')]",
       "name": "Bastion",
       "type": "Microsoft.Network/bastionHosts",
       "location": "[parameters('location')]",
       "apiVersion": "2019-07-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', 'PublicIP-Bastion')]",
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, 'BastionSubnet')]"
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, 'AzureBastionSubnet')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -1255,7 +1338,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'PublicIP-Bastion')]"
               },
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, 'BastionSubnet')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, 'AzureBastionSubnet')]"
               }
             }
           }

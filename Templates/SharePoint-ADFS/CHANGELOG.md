@@ -1,5 +1,12 @@
 # Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
+## Unreleased
+
+* Add optional service Azure Bastion
+* Add a parameter to set if virtual machines should have a public IP address and be reachable from Internet
+* Replace SQL Server 2016 with SQL Server 2017
+* Add Azure extension SqlIaaSAgent to SQL virtual machine
+
 ## July 2019 update
 
 * Significantly improve reliability of the deployment by mitigating its main source of failures: Add a retry mechanism to resource xRemoteFile when the download fails.
