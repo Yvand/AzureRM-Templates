@@ -271,7 +271,7 @@
     },
     "vmSQL": {
       "vmImagePublisher": "MicrosoftSQLServer",
-      "vmImageOffer": "SQL2017-WS2016",
+      "vmImageOffer": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'SQL2017-WS2016-BYOL', 'SQL2017-WS2016')]",
       "vmImageSKU": "Standard",
       "vmOSDiskName": "Disk-SQL-OS",
       "vmVmSize": "[parameters('vmSQLSize')]",
