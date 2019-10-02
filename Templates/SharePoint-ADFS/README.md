@@ -12,12 +12,17 @@ This template deploys SharePoint 2019, 2016 or 2013 with the following configura
 * Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured.
 * A 2nd SharePoint server can optionally be added to the farm.
 
-All virtual machines have a public IP address and are protected by Network Security Groups (attached to the subnets) that only allow RDP port from Internet.
+You can connect to virtual machines using:
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%dev%2FTemplates%2FSharePoint-ADFS%2Fazuredeploy.json" target="_blank">
+* [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) if you set parameter addAzureBastion to 'Yes'.
+* RDP protocol if you set parameter addPublicIPToVMs to 'Yes'. Each machine will have a public IP, a DNS name, and will be reachable from Internet.
+
+All subnets connected to a virtual machine are protected by a Network Security Group that allows only RDP port from Internet.
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fdev%2FTemplates%2FSharePoint-ADFS%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%dev%2FTemplates%2FSharePoint-ADFS%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FYvand%2FAzureRM-Templates%2Fdev%2FTemplates%2FSharePoint-ADFS%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 

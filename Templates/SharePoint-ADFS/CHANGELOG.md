@@ -5,6 +5,7 @@
 * Add optional service Azure Bastion
 * Add a parameter to set if virtual machines should have a public IP address and be reachable from Internet
 * Replace SQL Server 2016 with SQL Server 2017
+* Use SQL Server Developer edition instead of Standard edition to save cost. More info: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sql/virtual-machines-windows-sql-server-pricing-guidance
 * Add Azure extension SqlIaaSAgent to SQL virtual machine
 
 ## July 2019 update

@@ -23,6 +23,9 @@
     "sharePointDataDiskSize": {
       "value": 0
     },
+    "addAzureBastion": {
+      "value": "No"
+    },
     "addPublicIPToVMs": {
       "value": "Yes"
     },

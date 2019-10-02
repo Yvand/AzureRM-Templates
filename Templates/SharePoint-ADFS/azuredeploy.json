@@ -162,7 +162,7 @@
       ],
       "defaultValue": "No",
       "metadata": {
-        "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
+        "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
       }
     },
     "sharePointDataDiskSize": {
@@ -178,7 +178,7 @@
         "Yes",
         "No"
       ],
-      "defaultValue": "Yes",
+      "defaultValue": "No",
       "metadata": {
         "description": "Specify if Azure Bastion should be provisioned."
       }
@@ -271,8 +271,8 @@
     },
     "vmSQL": {
       "vmImagePublisher": "MicrosoftSQLServer",
-      "vmImageOffer": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'SQL2017-WS2016-BYOL', 'SQL2017-WS2016')]",
-      "vmImageSKU": "Standard",
+      "vmImageOffer": "SQL2017-WS2016",
+      "vmImageSKU": "SQLDEV",
       "vmOSDiskName": "Disk-SQL-OS",
       "vmVmSize": "[parameters('vmSQLSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmSQLName, '-0')]",
