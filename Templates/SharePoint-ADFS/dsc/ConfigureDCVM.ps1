@@ -241,6 +241,16 @@
             DependsOn = "[WindowsFeature]AddADFS"
         }
 
+        # Since 2019-10, DSC regularly fails at cADFSFarm CreateADFSFarm with error below, so test to fix it with this xPendingReboot
+        # VERBOSE: [2019-10-04 11:14:42Z] [VERBOSE] [DC]: [[cADFSFarm]CreateADFSFarm] Entering function InstallADFSFarm
+        # VERBOSE: [2019-10-04 11:14:42Z] [WARNING] [DC]: [[cADFSFarm]CreateADFSFarm] A machine restart is required to complete ADFS service configuration. For more information, see: http://go.microsoft.com/fwlink/?LinkId=798725
+        # VERBOSE: [2019-10-04 11:19:14Z] [ERROR] ADMIN0121: An attempt to update service settings failed because the data set that was used for updating was stale. Refresh the data in your session or console view, and then try the update again.
+        xPendingReboot RebootBeforeCreatingSPTrust
+        {
+            Name             = "BeforeCreatingADFSFarm"
+            DependsOn        = "[WindowsFeature]AddADFS"
+        }
+
         cADFSFarm CreateADFSFarm
         {
             ServiceCredential = $AdfsSvcCredsQualified
@@ -255,7 +265,7 @@
             DecryptionCertificateName = "$ADFSSiteName.Decryption"
             Ensure= 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[WindowsFeature]AddADFS"
+            DependsOn = "[xPendingReboot]RebootBeforeCreatingSPTrust"
         }
 
         cADFSRelyingPartyTrust CreateADFSRelyingParty
@@ -347,9 +357,10 @@ $AdfsSvcCreds = Get-Credential -Credential "adfssvc"
 $DomainFQDN = "contoso.local"
 $PrivateIP = "10.0.1.4"
 
-ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
-Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
-Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM" -Wait -Verbose -Force
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
+ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+Set-DscLocalConfigurationManager -Path $outputPath
+Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
 https://github.com/PowerShell/xActiveDirectory/issues/27
 Uninstall-WindowsFeature "ADFS-Federation"
