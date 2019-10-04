@@ -142,7 +142,7 @@
             KeyUsage                  = '0xa0'
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
-            SubjectAltName            = "dns=certauth.$ADFSSiteName.$DomainFQDN&dns=$ADFSSiteName.$DomainFQDN"
+            SubjectAltName            = "dns=certauth.$ADFSSiteName.$DomainFQDN&dns=$ADFSSiteName.$DomainFQDN&dns=enterpriseregistration.$DomainFQDN"
             Credential                = $DomainCredsNetbios
             DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
@@ -251,16 +251,11 @@
             DependsOn = "[WindowsFeature]AddADFS"
         }
 
-        # Since 2019-10, DSC regularly fails at cADFSFarm CreateADFSFarm with error below, so test to fix it with this xPendingReboot
+        # Since 2019-10, DSC regularly fails at cADFSFarm CreateADFSFarm with error below, but I don't know why or how to fix it.
+        # Machine restart message is present even when there is no error and xPendingReboot before cADFSFarm detects no pending reboot
         # VERBOSE: [2019-10-04 11:14:42Z] [VERBOSE] [DC]: [[cADFSFarm]CreateADFSFarm] Entering function InstallADFSFarm
         # VERBOSE: [2019-10-04 11:14:42Z] [WARNING] [DC]: [[cADFSFarm]CreateADFSFarm] A machine restart is required to complete ADFS service configuration. For more information, see: http://go.microsoft.com/fwlink/?LinkId=798725
         # VERBOSE: [2019-10-04 11:19:14Z] [ERROR] ADMIN0121: An attempt to update service settings failed because the data set that was used for updating was stale. Refresh the data in your session or console view, and then try the update again.
-        xPendingReboot RebootBeforeCreatingSPTrust
-        {
-            Name             = "BeforeCreatingADFSFarm"
-            DependsOn        = "[WindowsFeature]AddADFS"
-        }
-
         cADFSFarm CreateADFSFarm
         {
             ServiceCredential = $AdfsSvcCredsQualified
@@ -275,7 +270,7 @@
             DecryptionCertificateName = "$ADFSSiteName.Decryption"
             Ensure= 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[xPendingReboot]RebootBeforeCreatingSPTrust"
+            DependsOn = "[WindowsFeature]AddADFS"
         }
 
         cADFSRelyingPartyTrust CreateADFSRelyingParty
