@@ -214,6 +214,16 @@
             DependsOn = "[xPendingReboot]Reboot1"
         }
 
+        # https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/deployment/configure-corporate-dns-for-the-federation-service-and-drs
+        xDnsRecord AddADFSDevideRegistrationAlias {
+            Name = "enterpriseregistration"
+            Zone = $DomainFQDN
+            Target = "$ComputerName.$DomainFQDN"
+            Type = "CName"
+            Ensure = "Present"
+            DependsOn = "[xPendingReboot]Reboot1"
+        }
+
         xScript ExportCertificates
         {
             SetScript = 
