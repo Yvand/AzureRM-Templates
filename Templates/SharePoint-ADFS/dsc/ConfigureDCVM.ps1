@@ -8,7 +8,7 @@
         [Parameter(Mandatory)] [String]$PrivateIP
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, xPendingReboot, cADFS, xDnsServer
+    Import-DscResource -ModuleName xActiveDirectory, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, cADFS, xDnsServer, ComputerManagementDsc
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
@@ -65,7 +65,7 @@
             DependsOn = "[DnsServerAddress]DnsServerAddress"
         }
 
-        xPendingReboot Reboot1
+        PendingReboot Reboot1
         {
             Name = "RebootServer"
             DependsOn = "[xADDomain]FirstDS"
@@ -75,7 +75,7 @@
         {
             Name = $AppDomainFQDN
             Ensure= 'Present'
-            DependsOn = "[xPendingReboot]Reboot1"
+            DependsOn = "[PendingReboot]Reboot1"
         }
 
         xDnsServerPrimaryZone CreateAppsIntranetDnsZone
@@ -98,17 +98,17 @@
             PasswordAuthentication = 'Negotiate'
             Ensure = "Present"
             PasswordNeverExpires = $true
-            DependsOn = "[xPendingReboot]Reboot1"
+            DependsOn = "[PendingReboot]Reboot1"
         }
 
-        WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
-        WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
+        WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
+        WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
 
         #**********************************************************
         # Configure AD CS
         #**********************************************************
-        WindowsFeature AddCertAuthority       { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
-        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
+        WindowsFeature AddCertAuthority       { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
+        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
         ADCSCertificationAuthority ADCS
         {
             IsSingleInstance = "Yes"
@@ -211,7 +211,7 @@
             Target = $PrivateIP
             Type = "ARecord"
             Ensure = "Present"
-            DependsOn = "[xPendingReboot]Reboot1"
+            DependsOn = "[PendingReboot]Reboot1"
         }
 
         # https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/deployment/configure-corporate-dns-for-the-federation-service-and-drs
@@ -221,7 +221,7 @@
             Target = "$ComputerName.$DomainFQDN"
             Type = "CName"
             Ensure = "Present"
-            DependsOn = "[xPendingReboot]Reboot1"
+            DependsOn = "[PendingReboot]Reboot1"
         }
 
         xScript ExportCertificates
@@ -252,7 +252,7 @@
         }
 
         # Since 2019-10, DSC regularly fails at cADFSFarm CreateADFSFarm with error below, but I don't know why or how to fix it.
-        # Machine restart message is present even when there is no error and xPendingReboot before cADFSFarm detects no pending reboot
+        # Machine restart message is present even when there is no error and PendingReboot before cADFSFarm detects no pending reboot
         # VERBOSE: [2019-10-04 11:14:42Z] [VERBOSE] [DC]: [[cADFSFarm]CreateADFSFarm] Entering function InstallADFSFarm
         # VERBOSE: [2019-10-04 11:14:42Z] [WARNING] [DC]: [[cADFSFarm]CreateADFSFarm] A machine restart is required to complete ADFS service configuration. For more information, see: http://go.microsoft.com/fwlink/?LinkId=798725
         # VERBOSE: [2019-10-04 11:19:14Z] [ERROR] ADMIN0121: An attempt to update service settings failed because the data set that was used for updating was stale. Refresh the data in your session or console view, and then try the update again.
