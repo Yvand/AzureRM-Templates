@@ -7,7 +7,7 @@
 * Replace SQL Server 2016 with SQL Server 2017
 * Use SQL Server Developer edition instead of Standard edition to save cost. More info: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sql/virtual-machines-windows-sql-server-pricing-guidance
 * Update DC to run with Windows Server 2019
-* Add Azure extension SqlIaaSAgent to SQL virtual machine
+* Change default sizes of virtual machines SQL and SP
 * Update DSC module SharePointDSC from 3.5 (custom) to 3.6
 * Update DSC module xPSDesiredStateConfiguration from 8.8 (custom) to 8.10
 * Update DSC module NetworkingDsc from 7.3 to 7.4
