@@ -1,11 +1,11 @@
 # Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
-## Unreleased
+## October 2019 update
 
 * Add optional service Azure Bastion
 * Add a parameter to set if virtual machines should have a public IP address and be reachable from Internet
 * Replace SQL Server 2016 with SQL Server 2017
-* Use SQL Server Developer edition instead of Standard edition to save cost. More info: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sql/virtual-machines-windows-sql-server-pricing-guidance
+* Use SQL Server Developer edition instead of Standard edition. More info: <https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sql/virtual-machines-windows-sql-server-pricing-guidance>
 * Update DC to run with Windows Server 2019
 * Change default sizes of virtual machines SQL and SP
 * Update DSC module SharePointDSC from 3.5 (custom) to 3.6
