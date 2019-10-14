@@ -40,7 +40,18 @@
       "defaultValue": "contoso.local",
       "minLength": 5,
       "metadata": {
-        "description": "FQDN of the AD forest to create"
+        "description": "FQDN of the AD forest to create."
+      }
+    },
+    "configureADFS": {
+      "type": "string",
+      "defaultValue": "No",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "metadata": {
+        "description": "Specify if ADFS shoulde be provisioned, and used in SharePoint in an extended zone."
       }
     },
     "adminUserName": {
@@ -547,7 +558,8 @@
               },
               "configurationArguments": {
                 "domainFQDN": "[parameters('domainFQDN')]",
-                "PrivateIP": "[variables('vmDC').nicPrivateIPAddress]"
+                "PrivateIP": "[variables('vmDC').nicPrivateIPAddress]",
+                "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), '$true', '$false')]"
               },
               "privacy": {
                 "dataCollection": "enable"
@@ -858,7 +870,8 @@
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
-            "SharePointVersion": "[variables('vmSP2013').vmImageSKU]"
+            "SharePointVersion": "[variables('vmSP2013').vmImageSKU]",
+            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), '$true', '$false')]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1026,7 +1039,8 @@
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
-            "SharePointVersion": "[variables('vmSP2016').vmImageSKU]"
+            "SharePointVersion": "[variables('vmSP2016').vmImageSKU]",
+            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), '$true', '$false')]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1194,7 +1208,8 @@
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
-            "SharePointVersion": "[variables('vmSP2019').vmImageSKU]"
+            "SharePointVersion": "[variables('vmSP2019').vmImageSKU]",
+            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), '$true', '$false')]"
           },
           "privacy": {
             "dataCollection": "enable"
