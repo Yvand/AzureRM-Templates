@@ -491,7 +491,7 @@ configuration ConfigureSPVM
                 DependsOn = "[SPWebApplication]MainWebApp"
             }
 
-            xPendingReboot RebootBeforeCreatingSPSite
+            PendingReboot RebootBeforeCreatingSPSite
             {
                 Name             = "BeforeCreatingSPTrust"
                 SkipCcmClientSDK = $true
@@ -540,7 +540,7 @@ function Get-NetBIOSName
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
 # Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
 
-Install-Module -Name xPendingReboot
+Install-Module -Name PendingReboot
 help ConfigureSPVM
 
 $DomainAdminCreds = Get-Credential -Credential "yvand"

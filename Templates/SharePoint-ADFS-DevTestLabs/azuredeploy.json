@@ -559,7 +559,7 @@
               "configurationArguments": {
                 "domainFQDN": "[parameters('domainFQDN')]",
                 "PrivateIP": "[variables('vmDC').nicPrivateIPAddress]",
-                "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), '$true', '$false')]"
+                "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]"
               },
               "privacy": {
                 "dataCollection": "enable"
@@ -871,7 +871,7 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[variables('vmSP2013').vmImageSKU]",
-            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), '$true', '$false')]"
+            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1040,7 +1040,7 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[variables('vmSP2016').vmImageSKU]",
-            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), '$true', '$false')]"
+            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1209,7 +1209,7 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[variables('vmSP2019').vmImageSKU]",
-            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), '$true', '$false')]"
+            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]"
           },
           "privacy": {
             "dataCollection": "enable"
