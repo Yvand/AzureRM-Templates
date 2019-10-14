@@ -366,7 +366,33 @@ configuration ConfigureSPVM
             TestScript           = { return $false }
             DependsOn            = "[Computer]DomainJoin"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-        }        
+        }
+
+        # Creating site collection in SharePoint 2019 fail: https://github.com/PowerShell/SharePointDsc/issues/990
+        # The workaround is to force a reboot before creating it
+        if ($SharePointVersion -eq "2019") {
+            xScript SetRebootIfFirstTime
+            {
+                # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+                TestScript = {
+                    return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
+                }
+                SetScript = {
+                    New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
+                    $global:DSCMachineStatus = 1
+                }
+                GetScript = { }
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn = "[SPWebApplication]MainWebApp"
+            }
+
+            PendingReboot RebootBeforeCreatingSPSite
+            {
+                Name             = "BeforeCreatingSPTrust"
+                SkipCcmClientSDK = $true
+                DependsOn        = "[xScript]SetRebootIfFirstTime"
+            }
+        }
 
         if ($ConfigureADFS -eq $true) {
             SPTrustedIdentityTokenIssuer CreateSPTrust
@@ -458,6 +484,17 @@ configuration ConfigureSPVM
                 PsDscRunAsCredential = $DomainAdminCredsQualified
                 DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
             }
+
+            SPSite RootTeamSite
+            {
+                Url                  = "http://$SPTrustedSitesName/"
+                OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+                SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+                Name                 = "Blank site"
+                Template             = "STS#1"
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn            = "[SPWebApplication]MainWebApp"
+            }
         }
         else {
             SPWebAppAuthentication ConfigureWebAppAuthentication
@@ -471,43 +508,16 @@ configuration ConfigureSPVM
                 PsDscRunAsCredential = $SPSetupCredsQualified
                 DependsOn            = "[SPWebApplication]MainWebApp"
             }
-        }        
 
-        # Creating site collection in SharePoint 2019 fail: https://github.com/PowerShell/SharePointDsc/issues/990
-        # The workaround is to force a reboot before creating it
-        if ($SharePointVersion -eq "2019") {
-            xScript SetRebootIfFirstTime
+            SPSite RootTeamSite
             {
-                # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-                TestScript = {
-                    return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
-                }
-                SetScript = {
-                    New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
-                    $global:DSCMachineStatus = 1
-                }
-                GetScript = { }
+                Url                  = "http://$SPTrustedSitesName/"
+                OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+                Name                 = "Blank site"
+                Template             = "STS#1"
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn = "[SPWebApplication]MainWebApp"
+                DependsOn            = "[SPWebApplication]MainWebApp"
             }
-
-            PendingReboot RebootBeforeCreatingSPSite
-            {
-                Name             = "BeforeCreatingSPTrust"
-                SkipCcmClientSDK = $true
-                DependsOn        = "[xScript]SetRebootIfFirstTime"
-            }
-        }
-
-        SPSite RootTeamSite
-        {
-            Url                  = "http://$SPTrustedSitesName/"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "Blank site"
-            Template             = "STS#1"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
         }
     }
 }
@@ -554,9 +564,10 @@ $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
 $SharePointVersion = "2019"
+$ConfigureADFS = $false
 
-$mofPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $mofPath
+$mofPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigureADFS $ConfigureADFS -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $mofPath
 Set-DscLocalConfigurationManager -Path $mofPath
 Start-DscConfiguration -Path $mofPath -Wait -Verbose -Force
 

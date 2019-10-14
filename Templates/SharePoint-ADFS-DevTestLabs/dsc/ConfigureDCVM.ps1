@@ -198,33 +198,6 @@
                 DependsOn = "[PendingReboot]Reboot1"
             }
 
-            xScript ExportCertificates
-            {
-                SetScript = 
-                {
-                    $destinationPath = "C:\Setup"
-                    $adfsSigningCertName = "ADFS Signing.cer"
-                    $adfsSigningIssuerCertName = "ADFS Signing issuer.cer"
-                    Write-Verbose -Message "Exporting public key of ADFS signing / signing issuer certificates..."
-                    New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
-                    $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:ADFSSiteName.Signing"
-                    $signingCert| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningCertName))
-                    Get-ChildItem -Path "cert:\LocalMachine\Root\"| Where-Object{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningIssuerCertName))
-                    Write-Verbose -Message "Public key of ADFS signing / signing issuer certificates successfully exported"
-                }
-                GetScript =  
-                {
-                    # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                    return @{ "Result" = "false" }
-                }
-                TestScript = 
-                {
-                    # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                return $false
-                }
-                DependsOn = "[WindowsFeature]AddADFS"
-            }
-
             cADFSFarm CreateADFSFarm
             {
                 ServiceCredential = $AdfsSvcCredsQualified
@@ -264,6 +237,61 @@ param = c.Value);
                 Ensure= 'Present'
                 PsDscRunAsCredential = $DomainCredsNetbios
                 DependsOn = "[cADFSFarm]CreateADFSFarm"
+            }
+
+            xScript ExportCertificates
+            {
+                SetScript = 
+                {
+                    $destinationPath = "C:\Setup"
+                    $adfsSigningCertName = "ADFS Signing.cer"
+                    $adfsSigningIssuerCertName = "ADFS Signing issuer.cer"
+                    Write-Verbose -Message "Exporting public key of ADFS signing / signing issuer certificates..."
+                    New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
+                    $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:ADFSSiteName.Signing"
+                    $signingCert| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningCertName))
+                    Get-ChildItem -Path "cert:\LocalMachine\Root\"| Where-Object{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningIssuerCertName))
+                    Write-Verbose -Message "Public key of ADFS signing / signing issuer certificates successfully exported"
+                }
+                GetScript =  
+                {
+                    # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                    return @{ "Result" = "false" }
+                }
+                TestScript = 
+                {
+                    # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                return $false
+                }
+                DependsOn = "[CertReq]ADFSSiteCert", "[CertReq]ADFSSigningCert", "[CertReq]ADFSDecryptionCert"
+            }
+        } else {
+            xScript ExportCertificates
+            {
+                SetScript = 
+                {
+                    $ComputerName = $using:ComputerName
+                    $DomainFQDN = $using:DomainFQDN
+                    $destinationPath = "C:\Setup"
+                    $adfsSigningIssuerCertName = "ADFS Signing issuer.cer"
+                    Write-Verbose -Message "Exporting the public key of the certificate authority..."
+                    New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
+                    # Find the root certificate authority by gettingthe issuer of certificate "CN=DCName.DomainFQDN" (it's the easiest way I found)
+                    $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" | Where-Object {$_.Subject -eq  "CN=$ComputerName.$DomainFQDN"}
+                    Get-ChildItem -Path "cert:\LocalMachine\Root\"| Where-Object{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningIssuerCertName))
+                    Write-Verbose -Message "The public key of the certificate authority successfully exported"
+                }
+                GetScript =  
+                {
+                    # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                    return @{ "Result" = "false" }
+                }
+                TestScript = 
+                {
+                    # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                return $false
+                }
+                DependsOn = "[ADCSCertificationAuthority]ADCS"
             }
         }
     }
@@ -314,10 +342,12 @@ $Admincreds = Get-Credential -Credential "yvand"
 $AdfsSvcCreds = Get-Credential -Credential "adfssvc"
 $DomainFQDN = "contoso.local"
 $PrivateIP = "10.0.1.4"
+$ConfigureADFS = $false
 
-ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
-Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
-Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM" -Wait -Verbose -Force
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
+ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigureADFS $ConfigureADFS -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+Set-DscLocalConfigurationManager -Path $outputPath
+Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
 https://github.com/PowerShell/xActiveDirectory/issues/27
 Uninstall-WindowsFeature "ADFS-Federation"
