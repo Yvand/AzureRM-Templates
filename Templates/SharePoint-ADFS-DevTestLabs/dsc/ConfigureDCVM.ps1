@@ -270,6 +270,8 @@ param = c.Value);
             {
                 SetScript = 
                 {
+                    gpupdate.exe /force
+                    
                     $ComputerName = $using:ComputerName
                     $DomainFQDN = $using:DomainFQDN
                     $destinationPath = "C:\Setup"
@@ -277,7 +279,7 @@ param = c.Value);
                     Write-Verbose -Message "Exporting the public key of the certificate authority..."
                     New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
                     # Find the root certificate authority by gettingthe issuer of certificate "CN=DCName.DomainFQDN" (it's the easiest way I found)
-                    $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" | Where-Object {$_.Subject -eq  "CN=$ComputerName.$DomainFQDN"}
+                    $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" | Where-Object {$_.Subject -eq "CN=$ComputerName.$DomainFQDN"}
                     Get-ChildItem -Path "cert:\LocalMachine\Root\"| Where-Object{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningIssuerCertName))
                     Write-Verbose -Message "The public key of the certificate authority successfully exported"
                 }
