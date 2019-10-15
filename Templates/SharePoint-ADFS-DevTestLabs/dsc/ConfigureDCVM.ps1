@@ -243,15 +243,17 @@ param = c.Value);
             {
                 SetScript = 
                 {
+                    Write-Verbose -Message "Exporting the public key of the ADFS signing certifiacte and its issuer..."
+                    $ADFSSiteName = $using:ADFSSiteName
                     $destinationPath = "C:\Setup"
-                    $adfsSigningCertName = "ADFS Signing.cer"
-                    $adfsSigningIssuerCertName = "ADFS Signing issuer.cer"
-                    Write-Verbose -Message "Exporting public key of ADFS signing / signing issuer certificates..."
+                    $adfsSigningCertFileName = "ADFS Signing.cer"
+                    $adfsSigningIssuerCertFileName = "ADFS Signing issuer.cer"
                     New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
-                    $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:ADFSSiteName.Signing"
-                    $signingCert| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningCertName))
-                    Get-ChildItem -Path "cert:\LocalMachine\Root\"| Where-Object{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningIssuerCertName))
-                    Write-Verbose -Message "Public key of ADFS signing / signing issuer certificates successfully exported"
+
+                    $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$ADFSSiteName.Signing"
+                    $signingCert| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningCertFileName))
+                    Get-ChildItem -Path "cert:\LocalMachine\Root\"| Where-Object{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningIssuerCertFileName))
+                    Write-Verbose -Message "Public key of the ADFS signing certifiacte and its issuer successfully exported"
                 }
                 GetScript =  
                 {
@@ -270,17 +272,19 @@ param = c.Value);
             {
                 SetScript = 
                 {
+                    # gpupdate triggers the creation of a certificate "CN=DCName.DomainFQDN" issued by certificate authority
                     gpupdate.exe /force
                     
+                    Write-Verbose -Message "Exporting the public key of the certificate authority..."
                     $ComputerName = $using:ComputerName
                     $DomainFQDN = $using:DomainFQDN
                     $destinationPath = "C:\Setup"
-                    $adfsSigningIssuerCertName = "ADFS Signing issuer.cer"
-                    Write-Verbose -Message "Exporting the public key of the certificate authority..."
+                    $rootCAFileName = "ADFS Signing issuer.cer"
                     New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
-                    # Find the root certificate authority by gettingthe issuer of certificate "CN=DCName.DomainFQDN" (it's the easiest way I found)
-                    $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" | Where-Object {$_.Subject -eq "CN=$ComputerName.$DomainFQDN"}
-                    Get-ChildItem -Path "cert:\LocalMachine\Root\"| Where-Object{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningIssuerCertName))
+                    
+                    # Find the root certificate authority by 1st getting certificate "CN=DCName.DomainFQDN", and then its issuer (easiest way I found)
+                    $machineCert = Get-ChildItem -Path "cert:\LocalMachine\My\" | Where-Object {$_.Subject -eq "CN=$ComputerName.$DomainFQDN"}
+                    Get-ChildItem -Path "cert:\LocalMachine\Root\"| Where-Object{$_.Subject -eq  $machineCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $rootCAFileName))
                     Write-Verbose -Message "The public key of the certificate authority successfully exported"
                 }
                 GetScript =  
