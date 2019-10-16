@@ -94,7 +94,7 @@ if ! az network vnet show --name $vnetName -g $resourceGroupName 1> /dev/null; t
         az network vnet create --name Vnet -g $resourceGroupName --address-prefixes 10.0.0.0/16 1> /dev/null
         az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "Subnet-DC" --address-prefixes 10.0.1.0/24 --network-security-group "NSG-VNet-DC" 1> /dev/null
         az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "Subnet-SQL" --address-prefixes 10.0.2.0/24 --network-security-group "NSG-VNet-SQL" 1> /dev/null
-        az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "Subnet-SP" --address-prefixes 10.0.3.0/24 --network-security-group "NSG-VNet-SQL" 1> /dev/null
+        az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "Subnet-SP" --address-prefixes 10.0.3.0/24 --network-security-group "NSG-VNet-SP" 1> /dev/null
         az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "AzureBastionSubnet" --address-prefixes 10.0.4.0/24 1> /dev/null
     )
     else
