@@ -60,6 +60,7 @@ spPassphrase=$adminPassword
 az group show --name $resourceGroupName 1> /dev/null || 
 {
     echo "Resource group with name $resourceGroupName could not be found. Creating new resource group.."
+    # Create a subshell to apply set -x to only the code its scope:
     (
         set -x
         az group create --name $resourceGroupName --location "$location" 1> /dev/null
@@ -67,6 +68,7 @@ az group show --name $resourceGroupName 1> /dev/null ||
 }
 
 # Create network security groups if they do not exist
+pids=()
 nsgNames=(
   "NSG-VNet-DC"
   "NSG-VNet-SQL"
@@ -76,19 +78,26 @@ for nsgName in ${nsgNames[@]}; do
     az network nsg show --name $nsgName --resource-group $resourceGroupName 1> /dev/null ||
     {
         echo "Network security group $nsgName could not be found, creating it..."
+        # Create a subshell to apply set -x to only the code its scope:
         (
             set -x
             az network nsg create --name $nsgName -g $resourceGroupName 1> /dev/null
             az network nsg rule create -g $resourceGroupName --nsg-name $nsgName --name "allow-rdp-rule" --priority 100 --source-address-prefixes Internet \
                 --source-port-ranges "*" --destination-address-prefixes '*' --destination-port-ranges 3389 --access Allow --protocol Tcp --description "Allow RDP" 1> /dev/null
-        )
+        ) &
+        pids+=( $! )
     }
+done
+for pid in "${pids[@]}"; do
+        printf 'Waiting for %d to complete...' "$pid"
+        wait $pid
 done
 
 # Create virtual network if it does not exist
 vnetName="Vnet"
 if ! az network vnet show --name $vnetName -g $resourceGroupName 1> /dev/null; then
     echo "Virtual network name $vnetName could not be found, creating it..."
+    # Create a subshell to apply set -x to only the code its scope:
     (
         set -x
         az network vnet create --name Vnet -g $resourceGroupName --address-prefixes 10.0.0.0/16 1> /dev/null
@@ -104,36 +113,42 @@ fi
 # Create VM DC if it does not exist
 if ! az vm show --resource-group $resourceGroupName --name DC 1> /dev/null; then
     echo "Virtual machine DC could not be found, creating it.."
+    # Create a subshell to apply set -x to only the code its scope:
     (
         set -x
         az network public-ip create --allocation-method Dynamic --name PublicIP-DC --dns-name "${resourceGroupName}-dc" -g $resourceGroupName 1> /dev/null
         az network nic create --name VM-DC-NIC --public-ip-address PublicIP-DC --vnet-name Vnet --subnet Subnet-DC -g $resourceGroupName 1> /dev/null
         az vm create --resource-group $resourceGroupName --name DC --image win2016datacenter --admin-username $adminUserName --admin-password $adminPassword --license-type Windows_Server \
             --nics VM-DC-NIC --os-disk-size-gb 128 --os-disk-caching ReadWrite --os-disk-name "VM-DC-OSDisk" --size Standard_F4 1> /dev/null
-
         az vm extension set --name DSC --publisher Microsoft.Powershell --version 2.9 --vm-name DC -g $resourceGroupName \
             --settings '{"ModulesURL": "'${artifactsURI}'dsc/ConfigureDCVM.zip", "configurationFunction": "ConfigureDCVM.ps1\\ConfigureDCVM", "Properties": {"domainFQDN": "'${domainFQDN}'", "PrivateIP": "10.0.1.4"} }' \
-            --protected-settings '{"Properties": {"AdminCreds": {"UserName": "'${adminUserName}'", "Password": "'${adminPassword}'" }, "AdfsSvcCreds": {"UserName": "'${adfsSvcUserName}'", "Password": "'${adminPassword}'" }}}' 1> /dev/null
+            --protected-settings '{"Properties": {"AdminCreds": {"UserName": "'${adminUserName}'", "Password": "'${adminPassword}'" }, "AdfsSvcCreds": {"UserName": "'${adfsSvcUserName}'", "Password": "'${serviceAccountsPassword}'" }}}' 1> /dev/null
     )
     else
     echo "Virtual machine DC already exists and was not modified."
 fi
 
+# Clear array
+pids=()
 # Create VM SQL if it does not exist
 if ! az vm show --resource-group $resourceGroupName --name SQL 1> /dev/null; then
     echo "Virtual machine SQL could not be found, creating it.."
+    # Create a subshell to apply set -x to only the code its scope:
     (
         set -x
         az network public-ip create --allocation-method Dynamic --name PublicIP-SQL --dns-name "${resourceGroupName}-sql" -g $resourceGroupName 1> /dev/null
         az network nic create --name VM-SQL-NIC --public-ip-address PublicIP-SQL --vnet-name Vnet --subnet Subnet-SQL -g $resourceGroupName 1> /dev/null
         az vm create --resource-group $resourceGroupName --name SQL --image MicrosoftSQLServer:SQL2017-WS2016:SQLDEV:latest --admin-username $adminUserName --admin-password $adminPassword \
             --nics VM-SQL-NIC --os-disk-size-gb 128 --os-disk-caching ReadWrite --os-disk-name "VM-SQL-OSDisk" --size Standard_DS2_v2 1> /dev/null
-        az vm extension set --name DSC --publisher Microsoft.Powershell --version 2.9 --vm-name SQL -g $resourceGroupName \
+        az vm update --name SQL -g $resourceGroupName --license-type Windows_Server 1> /dev/null
+        # On SQL VM, if DSC extension is started just after "az vm create" finished, DSC configuration always fails. Somehow, running "az vm update" before prevents this issue.
+        az vm extension set --name DSC --publisher Microsoft.Powershell --version 2.9 --vm-name SQL -g $resourceGroupName --no-wait \
             --settings '{"ModulesURL": "'${artifactsURI}'dsc/ConfigureSQLVM.zip", "configurationFunction": "ConfigureSQLVM.ps1\\ConfigureSQLVM", "Properties": {"domainFQDN": "'${domainFQDN}'", "DNSServer": "10.0.1.4"} }' \
             --protected-settings '{"Properties": {"DomainAdminCreds": {"UserName": "'${adminUserName}'", "Password": "'${adminPassword}'" }, "SqlSvcCreds": {"UserName": "'${sqlSvcUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPSetupCreds": {"UserName": "'${spSetupUserName}'", "Password": "'${serviceAccountsPassword}'" }}}' 1> /dev/null
-        az vm update --name SQL -g $resourceGroupName --license-type Windows_Server --no-wait 1> /dev/null
         # az vm extension set --name SqlIaaSAgent --publisher "Microsoft.SqlServer.Management" --version 2.0 --vm-name SQL -g $resourceGroupName --no-wait 1> /dev/null
-    )
+    ) &
+    # $! returns the PID of the last command launched in background
+    pids+=( $! )
     else
     echo "Virtual machine SQL already exists and was not modified."
 fi
@@ -141,17 +156,26 @@ fi
 # Create VM SP if it does not exist
 if ! az vm show --resource-group $resourceGroupName --name SP 1> /dev/null; then
     echo "Virtual machine SP could not be found, creating it.."
+    # Create a subshell to apply set -x to only the code its scope:
     (
         set -x
         az network public-ip create --allocation-method Dynamic --name PublicIP-SP --dns-name "${resourceGroupName}-sp" -g $resourceGroupName 1> /dev/null
         az network nic create --name VM-SP-NIC --public-ip-address PublicIP-SP --vnet-name Vnet --subnet Subnet-SP -g $resourceGroupName 1> /dev/null
         az vm create --resource-group $resourceGroupName --name SP --image MicrosoftSharePoint:MicrosoftSharePointServer:2019:latest --admin-username $adminUserName --admin-password $adminPassword \
             --nics VM-SP-NIC --os-disk-size-gb 128 --os-disk-caching ReadWrite --os-disk-name "VM-SP-OSDisk" --size Standard_DS3_v2 1> /dev/null
+        az vm update --name SP -g $resourceGroupName --license-type Windows_Server --no-wait 1> /dev/null
         az vm extension set --name DSC --publisher Microsoft.Powershell --version 2.9 --vm-name SP -g $resourceGroupName \
             --settings '{"ModulesURL": "'${artifactsURI}'dsc/ConfigureSPVM.zip", "configurationFunction": "ConfigureSPVM.ps1\\ConfigureSPVM", "Properties": {"domainFQDN": "'${domainFQDN}'", "DNSServer": "10.0.1.4", "DCName": "DC", "SQLName": "SQL", "SQLAlias": "SQLAlias", "SharePointVersion": "2019"} }' \
             --protected-settings '{"Properties": {"DomainAdminCreds": {"UserName": "'${adminUserName}'", "Password": "'${adminPassword}'" }, "SPSetupCreds": {"UserName": "'${spSetupUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPFarmCreds": {"UserName": "'${spFarmUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPSvcCreds": {"UserName": "'${spSvcUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPAppPoolCreds": {"UserName": "'${spAppPoolUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPPassphraseCreds": {"UserName": "'${spPassphrase}'", "Password": "'${spPassphrase}'" }, "SPSuperUserCreds": {"UserName": "'${spSuperUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPSuperReaderCreds": {"UserName": "'${spSuperReaderName}'", "Password": "'${serviceAccountsPassword}'" }}}' 1> /dev/null
-        az vm update --name SP -g $resourceGroupName --license-type Windows_Server --no-wait 1> /dev/null
-    )
+    ) &
+    # $! returns the PID of the last command launched in background
+    pids+=( $! )
     else
     echo "Virtual machine SP already exists and was not modified."
 fi
+
+for pid in "${pids[@]}"; do
+        printf 'Waiting for %d to complete...' "$pid"
+        wait $pid
+done
+echo "Template was deployed successfully."
