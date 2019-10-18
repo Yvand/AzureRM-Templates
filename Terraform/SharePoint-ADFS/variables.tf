@@ -102,7 +102,7 @@ variable "vmSP" {
     vmSize             = "Standard_DS3_v2"
     vmImagePublisher   = "MicrosoftSharePoint"
     vmImageOffer       = "MicrosoftSharePointServer"
-    vmImageSKU         = "2016"
+    vmImageSKU         = "2019"
     storageAccountType = "Standard_LRS"
   }
 }
@@ -156,7 +156,7 @@ variable "dscConfigureFEVM" {
 }
 
 variable "_artifactsLocation" {
-  default = "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS"
+  default = "https://github.com/Yvand/AzureRM-Templates/raw/master/SharePoint/SharePoint-ADFS/"
 }
 
 variable "_artifactsLocationSasToken" {

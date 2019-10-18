@@ -271,7 +271,7 @@ resource "azurerm_virtual_machine_extension" "VM-DC-DSC" {
   {
     "wmfVersion": "latest",
     "configuration": {
-	    "url": "${var._artifactsLocation}/${var.generalSettings["dscScriptsFolder"]}/${var.dscConfigureDCVM["fileName"]}${var._artifactsLocationSasToken}",
+	    "url": "${var._artifactsLocation}${var.generalSettings["dscScriptsFolder"]}/${var.dscConfigureDCVM["fileName"]}${var._artifactsLocationSasToken}",
 	    "function": "${var.dscConfigureDCVM["function"]}",
 	    "script": "${var.dscConfigureDCVM["script"]}"
     },
@@ -356,7 +356,7 @@ resource "azurerm_virtual_machine_extension" "VM-SQL-DSC" {
   {
     "wmfVersion": "latest",
     "configuration": {
-	    "url": "${var._artifactsLocation}/${var.generalSettings["dscScriptsFolder"]}/${var.dscConfigureSQLVM["fileName"]}${var._artifactsLocationSasToken}",
+	    "url": "${var._artifactsLocation}${var.generalSettings["dscScriptsFolder"]}/${var.dscConfigureSQLVM["fileName"]}${var._artifactsLocationSasToken}",
 	    "function": "${var.dscConfigureSQLVM["function"]}",
 	    "script": "${var.dscConfigureSQLVM["script"]}"
     },
@@ -454,7 +454,7 @@ resource "azurerm_virtual_machine_extension" "VM-SP-DSC" {
   {
     "wmfVersion": "latest",
     "configuration": {
-	    "url": "${var._artifactsLocation}/${var.generalSettings["dscScriptsFolder"]}/${var.dscConfigureSPVM["fileName"]}${var._artifactsLocationSasToken}",
+	    "url": "${var._artifactsLocation}${var.generalSettings["dscScriptsFolder"]}/${var.dscConfigureSPVM["fileName"]}${var._artifactsLocationSasToken}",
 	    "function": "${var.dscConfigureSPVM["function"]}",
 	    "script": "${var.dscConfigureSPVM["script"]}"
     },
@@ -602,7 +602,7 @@ resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
   {
     "wmfVersion": "latest",
     "configuration": {
-	    "url": "${var._artifactsLocation}/${var.generalSettings["dscScriptsFolder"]}/${var.dscConfigureFEVM["fileName"]}${var._artifactsLocationSasToken}",
+	    "url": "${var._artifactsLocation}${var.generalSettings["dscScriptsFolder"]}/${var.dscConfigureFEVM["fileName"]}${var._artifactsLocationSasToken}",
 	    "function": "${var.dscConfigureFEVM["function"]}",
 	    "script": "${var.dscConfigureFEVM["script"]}"
     },
