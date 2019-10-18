@@ -5,15 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Terraform apply",
             "type": "PowerShell",
             "request": "launch",
-            "name": "Terraform apply",
-            "cwd": "${workspaceRoot}",
-            "script": "terraform apply",
+            "script": "terraform",
             "args": [
-                "-auto-approve -var-file=\"C:\\Users\\yvand\\Documents\\SP-ADFS-Template-Secrets.tfvars\""
+                "apply -auto-approve -var-file=\"C:\\Users\\yvand\\Documents\\terraform_spadfstemplate_secrets.tfvars\""
             ],
-            "createTemporaryIntegratedConsole": true
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
