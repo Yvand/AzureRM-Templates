@@ -1,7 +1,7 @@
 location = "West Europe"
 resourceGroupName = "ydterraform"
 dnsLabelPrefix = "ydterraform"
-_artifactsLocation = "https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/SharePoint-ADFS"
+_artifactsLocation = "https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/SharePoint-ADFS/"
 addFrontEndToFarm = false
 # vmSP = {
 #   vmImageSKU = "2016"

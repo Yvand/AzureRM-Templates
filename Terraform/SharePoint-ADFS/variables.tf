@@ -78,7 +78,7 @@ variable "vmDC" {
     vmSize             = "Standard_F4"
     vmImagePublisher   = "MicrosoftWindowsServer"
     vmImageOffer       = "WindowsServer"
-    vmImageSKU         = "2016-Datacenter"
+    vmImageSKU         = "2019-Datacenter"
     storageAccountType = "Standard_LRS"
   }
 }
@@ -89,8 +89,8 @@ variable "vmSQL" {
     vmName             = "SQL"
     vmSize             = "Standard_DS2_v2"
     vmImagePublisher   = "MicrosoftSQLServer"
-    vmImageOffer       = "SQL2016SP1-WS2016"
-    vmImageSKU         = "Standard"
+    vmImageOffer       = "SQL2017-WS2016"
+    vmImageSKU         = "SQLDEV"
     storageAccountType = "Standard_LRS"
   }
 }
