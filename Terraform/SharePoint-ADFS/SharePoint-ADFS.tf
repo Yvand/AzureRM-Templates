@@ -516,7 +516,7 @@ PROTECTED_SETTINGS
 
 }
 
-# Create artifacts for optional SharePoint FrontEnd if var.addFrontEndToFarm is true
+# Create resources for optional SharePoint FrontEnd if var.addFrontEndToFarm is true
 resource "azurerm_public_ip" "PublicIP-FE" {
   count               = var.addFrontEndToFarm ? 1 : 0
   name                = "PublicIP-${var.vmFE["vmName"]}"
