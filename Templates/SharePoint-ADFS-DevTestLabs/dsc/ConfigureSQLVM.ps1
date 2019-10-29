@@ -36,7 +36,7 @@ configuration ConfigureSQLVM
         WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         
-        DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        # DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         Firewall DatabaseEngineFirewallRule
         {
@@ -61,7 +61,7 @@ configuration ConfigureSQLVM
             DomainUserCredential = $DomainAdminCredsQualified
             RetryCount           = $RetryCount
             RetryIntervalSec     = $RetryIntervalSec
-            DependsOn            = "[DnsServerAddress]DnsServerAddress"
+            #DependsOn            = "[DnsServerAddress]DnsServerAddress"
         }
 
         Computer DomainJoin
