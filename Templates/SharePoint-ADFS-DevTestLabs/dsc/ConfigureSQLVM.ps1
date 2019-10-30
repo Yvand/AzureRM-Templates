@@ -35,22 +35,7 @@ configuration ConfigureSQLVM
         #**********************************************************
         WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
-        
-        # DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
-
-        Firewall DatabaseEngineFirewallRule
-        {
-            Direction = "Inbound"
-            Name = "SQL-Server-Database-Engine-TCP-In"
-            DisplayName = "SQL Server Database Engine (TCP-In)"
-            Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Engine."
-            Group = "SQL Server"
-            Enabled = "True"
-            Protocol = "TCP"
-            LocalPort = "1433"
-            Ensure = "Present"
-        }
-
+        DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         #**********************************************************
         # Join AD forest
@@ -199,6 +184,20 @@ configuration ConfigureSQLVM
             InstanceName = "MSSQLSERVER"
             MaxDop       = 1
             DependsOn    = "[Computer]DomainJoin"
+        }
+
+        # Open port on the firewall when everything is ready, as SharePoint DSC is testing it to start creation of the farm
+        Firewall DatabaseEngineFirewallRule
+        {
+            Direction   = "Inbound"
+            Name        = "SQL-Server-Database-Engine-TCP-In"
+            DisplayName = "SQL Server Database Engine (TCP-In)"
+            Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Engine."
+            Group       = "SQL Server"
+            Enabled     = "True"
+            Protocol    = "TCP"
+            LocalPort   = "1433"
+            Ensure      = "Present"
         }
     }
 }

@@ -400,11 +400,6 @@
             "[variables('networkSettings').vNetPrivatePrefix]"
           ]
         },
-        "dhcpOptions": {
-          "dnsServers": [
-            "[variables('vmDC').nicPrivateIPAddress]"
-          ]
-        },
         "subnets": [
           {
             "name": "[variables('networkSettings').vNetPrivateSubnetDCName]",
