@@ -1,0 +1,4 @@
+azure-mgmt-resource~=2.0
+azure-mgmt-network~=2.2
+azure-mgmt-compute~=4.3
+haikunator
