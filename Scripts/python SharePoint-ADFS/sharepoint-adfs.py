@@ -20,16 +20,16 @@ from azure.mgmt.compute.models import DiskCreateOption
 
 from msrestazure.azure_exceptions import CloudError
 
-
 LOCATION = 'westus'
 GROUP_NAME = 'azurepy-ydspadfs'
 SHAREPOINT_VERSION = '2019'
-adminUserName = 'yvand'
-adminPassword = ""
-adminPassword = getpass()
-artifactsURI="https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/SharePoint-ADFS/"
-domainFQDN="contoso.local"
-adfsSvcUserName="svc_adfs"
+ADMIN_USERNAME = 'yvand'
+ADMIN_PASSWORD = ""
+ADMIN_PASSWORD = getpass()
+SERVICE_ACCOUNT_PASSWORD = ADMIN_PASSWORD
+ARTIFACTS_URI = "https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/SharePoint-ADFS/"
+DOMAIN_FQDN = "contoso.local"
+ADFS_SVC_USERNAME = "svc_adfs"
 sqlSvcUserName="svc_sql"
 spSetupUserName="spsetup"
 spFarmUserName="svc_spfarm"
@@ -97,7 +97,8 @@ VM_REFERENCE = {
 }
 
 def get_credentials():
-    adminPassword = os.environ['ADMINPASSWORD']
+    ADMIN_PASSWORD = os.environ['ADMINPASSWORD']
+    SERVICE_ACCOUNT_PASSWORD = ADMIN_PASSWORD
     subscription_id = os.environ['AZURE_SUBSCRIPTION_ID']
     credentials = ServicePrincipalCredentials(
         client_id=os.environ['AZURE_CLIENT_ID'],
@@ -234,7 +235,50 @@ def create_template():
     vm_parameters = create_vm_parameters(async_nic_creation_result.id, VM_REFERENCE['dc'])
     async_vm_creation = compute_client.virtual_machines.create_or_update(
         GROUP_NAME, DC_NAME, vm_parameters)
-    async_vm_creation.wait()
+    async_vm_creation_result = async_vm_creation.result()
+
+    # https://docs.microsoft.com/en-us/python/api/azure-mgmt-compute/azure.mgmt.compute.v2019_07_01.models.virtualmachineextension?view=azure-python
+    compute_client.virtual_machine_extensions.create_or_update(
+        GROUP_NAME,
+        '',
+        async_vm_creation_result.id,
+        'ConfigureSPVM',
+        {
+            'location': LOCATION,
+            'force_update_tag': '1.0',
+            'publisher': 'Microsoft.Powershell',
+            'virtual_machine_extension_type': 'DSC',
+            'type_handler_version': '2.9',
+            'auto_upgrade_minor_version': True,
+            'settings': {
+                'wmfVersion': 'latest',
+                'configuration': {
+                    'url': ARTIFACTS_URI + 'dsc/ConfigureDCVM.zip',
+                    'script': 'ConfigureDCVM.ps1',
+                    'function': 'ConfigureDCVM'
+                },
+                'configurationArguments': {
+                    'DomainFQDN': DOMAIN_FQDN,
+                    'PrivateIP': VM_REFERENCE["dc"]["nicPrivateIPAddress"]
+                },
+                'privacy': {
+                    'dataCollection': 'enable'
+                }
+            },
+            'protected_settings': {
+                'configurationArguments': {
+                    'AdminCreds': {
+                        'UserName': ADMIN_USERNAME,
+                        'Password': ADMIN_PASSWORD
+                    },
+                    'AdfsSvcCreds': {
+                        'UserName': ADFS_SVC_USERNAME,
+                        'Password': SERVICE_ACCOUNT_PASSWORD
+                    }
+                }
+            }
+        }
+    )
 
 
 def create_vm_parameters(nic_id, vm_reference):
@@ -244,8 +288,8 @@ def create_vm_parameters(nic_id, vm_reference):
         'location': LOCATION,
         'os_profile': {
             'computer_name': vm_reference['vmName'],
-            'admin_username': adminUserName,
-            'admin_password': adminPassword,
+            'admin_username': ADMIN_USERNAME,
+            'admin_password': ADMIN_PASSWORD,
             'windows_configuration': {
                 'provision_vm_agent': True,
                 'enable_automatic_updates': True,
