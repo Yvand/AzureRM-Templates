@@ -20,8 +20,11 @@ from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import DiskCreateOption
 from msrestazure.azure_exceptions import CloudError
 
+from multiprocessing import Pool
+from multiprocessing.dummy import Pool as ThreadPool
+
 LOCATION = 'westeurope'
-GROUP_NAME = 'azurepy-spadfs'
+GROUP_NAME = 'azurepy-spx'
 SHAREPOINT_VERSION = '2019'
 ADMIN_USERNAME = 'yvand'
 # ADMIN_PASSWORD = ""
@@ -75,12 +78,18 @@ NSG_PARAMETER = {
 NETWORK_REFERENCE = {
     "vNetPrivateName": GROUP_NAME + '-VNet',
     "vNetPrivatePrefix": "10.0.0.0/16",
-    "vNetPrivateSubnetDCName": "Subnet-1",
-    "vNetPrivateSubnetDCPrefix": "10.0.1.0/24",
-    "vNetPrivateSubnetSQLName": "Subnet-2",
-    "vNetPrivateSubnetSQLPrefix": "10.0.2.0/24",
-    "vNetPrivateSubnetSPName": "Subnet-3",
-    "vNetPrivateSubnetSPPrefix": "10.0.3.0/24",
+    "dc": {
+        "vNetPrivateSubnetName": "Subnet-1",
+        "vNetPrivateSubnetPrefix": "10.0.1.0/24",
+    },
+    "sql": {
+        "vNetPrivateSubnetName": "Subnet-2",
+        "vNetPrivateSubnetPrefix": "10.0.2.0/24",
+    },
+    "sp": {
+        "vNetPrivateSubnetName": "Subnet-3",
+        "vNetPrivateSubnetPrefix": "10.0.3.0/24",
+    }
 }
 
 VM_REFERENCE = {
@@ -297,7 +306,7 @@ def get_credentials():
     )
     return credentials, subscription_id
 
-def create_template():
+def deploy_template():
     credentials, subscription_id = get_credentials()
     resource_client = ResourceManagementClient(credentials, subscription_id)
     compute_client = ComputeManagementClient(credentials, subscription_id)
@@ -308,17 +317,19 @@ def create_template():
     resource_client.resource_groups.create_or_update(
         GROUP_NAME, {'location': LOCATION})
         
-    # Create network security groups
-    print('\nCheck network security groups')
-    nsgNames = ["NSG-VNet-DC", "NSG-VNet-SQL", "NSG-VNet-SP"]
-    for nsgName in nsgNames:
-        try:
-            nsg_info = network_client.network_security_groups.get(GROUP_NAME, nsgName)
-            print(f'\nFound network security group {nsg_info.id}')
-        except CloudError:
-            print(f'\nCreate network security group {nsgName}')
-            nsg_creation = network_client.network_security_groups.create_or_update(GROUP_NAME, nsgName, NSG_PARAMETER)
-            nsg_creation.wait()
+    """Create network security groups
+    """
+    create_network_security_groups_parameters = [
+        [network_client, "NSG-VNet-DC"],
+        [network_client, "NSG-VNet-SQL"],
+        [network_client, "NSG-VNet-SP"]
+    ]
+    # Create pool of workers
+    pool = ThreadPool(3)
+    network_security_groups_info = pool.starmap(create_network_security_groups, create_network_security_groups_parameters)
+    # Close the pool and wait for the work to finish
+    pool.close()
+    pool.join()
 
     """Create network
     """
@@ -338,190 +349,178 @@ def create_template():
                 }
             }
         )
-        vnet_creation.wait()
+        vnet_info = vnet_creation.result()
 
-    # Create Subnets
-    try:
-        subnet_dc_info = network_client.subnets.get(GROUP_NAME, NETWORK_REFERENCE['vNetPrivateName'], NETWORK_REFERENCE['vNetPrivateSubnetDCName'])
-        print(f'\nFound Subnet {subnet_dc_info.name} for DC')
-    except CloudError:
-        print('\nCreate Subnet for DC')
-        subnet_creation = network_client.subnets.create_or_update(
-            GROUP_NAME,
-            NETWORK_REFERENCE['vNetPrivateName'],
-            NETWORK_REFERENCE['vNetPrivateSubnetDCName'],
-            {'address_prefix': NETWORK_REFERENCE['vNetPrivateSubnetDCPrefix']}
-        )
-        subnet_dc_info = subnet_creation.result()
+    # Create subnet
+    # create_subnet_parameters = [
+    #     [
+    #         network_client,
+    #         vnet_info.name,
+    #         next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-DC"),
+    #         NETWORK_REFERENCE["dc"]
+    #     ],
+    #     [
+    #         network_client,
+    #         vnet_info.name,
+    #         next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-SQL"),
+    #         NETWORK_REFERENCE["sql"]
+    #     ],
+    #     [
+    #         network_client,
+    #         vnet_info.name,
+    #         next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-SP"),
+    #         NETWORK_REFERENCE["sp"]
+    #     ]
+    # ]
+    # # Create pool of workers
+    # pool = ThreadPool(3)
+    # subnets_info = pool.starmap(create_subnet, create_subnet_parameters)
+    # # Close the pool and wait for the work to finish
+    # pool.close()
+    # pool.join()
 
-    try:
-        subnet_sql_info = network_client.subnets.get(GROUP_NAME, NETWORK_REFERENCE['vNetPrivateName'], NETWORK_REFERENCE['vNetPrivateSubnetSQLName'])
-        print(f'\nFound Subnet {subnet_sql_info.name} for SQL')
-    except CloudError:
-        print('\nCreate Subnet for SQL')
-        subnet_creation = network_client.subnets.create_or_update(
-            GROUP_NAME,
-            NETWORK_REFERENCE['vNetPrivateName'],
-            NETWORK_REFERENCE['vNetPrivateSubnetSQLName'],
-            {'address_prefix': NETWORK_REFERENCE['vNetPrivateSubnetSQLPrefix']}
-        )
-        subnet_sql_info = subnet_creation.result()
-
-    try:
-        subnet_sp_info = network_client.subnets.get(GROUP_NAME, NETWORK_REFERENCE['vNetPrivateName'], NETWORK_REFERENCE['vNetPrivateSubnetSPName'])
-        print(f'\nFound Subnet {subnet_sp_info.name} for SP')
-    except CloudError:
-        print(f'\nCreate Subnet for SP')
-        subnet_creation = network_client.subnets.create_or_update(
-            GROUP_NAME,
-            NETWORK_REFERENCE['vNetPrivateName'],
-            NETWORK_REFERENCE['vNetPrivateSubnetSPName'],
-            {'address_prefix': NETWORK_REFERENCE['vNetPrivateSubnetSPPrefix']}
-        )
-        subnet_sp_info = subnet_creation.result()
+    subnets_info = []
+    subnet_info = create_subnet(
+        network_client,
+        vnet_info.name,
+        next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-DC"),
+        NETWORK_REFERENCE["dc"]
+    )
+    subnets_info.append(subnet_info)
+    subnet_info = create_subnet(
+        network_client,
+        vnet_info.name,
+        next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-SQL"),
+        NETWORK_REFERENCE["sql"]
+    )
+    subnets_info.append(subnet_info)
+    subnet_info = create_subnet(
+        network_client,
+        vnet_info.name,
+        next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-SP"),
+        NETWORK_REFERENCE["sp"]
+    )
+    subnets_info.append(subnet_info)
 
     # Create public IP addresses
-    pips_info = []
+    create_pip_parameters = []
     for vm in VM_REFERENCE:
         vmJson = str(VM_REFERENCE[vm]).replace("\'", "\"")
         vmDetails = json.loads(vmJson)
+        create_pip_parameters.append([network_client, vmDetails])
+    
+    # Create pool of workers
+    pool = ThreadPool(3)
+    pips_info = pool.starmap(create_pip, create_pip_parameters)
+    # Close the pool and wait for the work to finish
+    pool.close()
+    pool.join()
 
-        try:
-            pip_info = network_client.public_ip_addresses.get(GROUP_NAME, vmDetails['vmPublicIPName'])
-            print(f'\nPublic IP address {pip_info.id} already exists')
-            pips_info.append(pip_info)
-        except CloudError:
-            print(f'\nCreate public IP address for {vmDetails["vmName"]}')
-            pip_creation = network_client.public_ip_addresses.create_or_update(
-                GROUP_NAME,
-                vmDetails['vmPublicIPName'],
-                {'location': LOCATION, 'public_ip_allocation_method': 'Dynamic', 
-                'dns_settings': {'domain_name_label': vmDetails['vmPublicIPDnsName']}, 'sku': {'name': 'Basic'}}
-            )
-            pips_info.append(pip_creation.result())            
-
-    # Create VM DC
-    try:
-        vm_dc_info = compute_client.virtual_machines.get(GROUP_NAME, VM_REFERENCE["dc"]["vmName"])
-        print(f'\nVM {vm_dc_info.name} already exists')
-    except CloudError:
-        print('\nCreate VM DC')
-        try:
-            nic_dc_info = network_client.network_interfaces.get(GROUP_NAME, VM_REFERENCE["dc"]["vmNicName"])
-            print(f'\nNIC {nic_dc_info.name} for VM DC already exists')
-        except CloudError:
-            print('Create NIC for VM DC')
-            nic_dc_creation = network_client.network_interfaces.create_or_update(
-                GROUP_NAME,
-                VM_REFERENCE["dc"]["vmNicName"],
-                {
-                    'location': LOCATION,
-                    'ip_configurations': [{
-                        'name': 'ipconfig1',
-                        'private_ip_allocation_method': 'Static',
-                        'private_ip_address': '10.0.1.4',
-                        'subnet': {
-                            'id': subnet_dc_info.id
-                        },
-                        'public_ip_address': pips_info[0]
-                    }]
-                }
-            )
-            nic_dc_info = nic_dc_creation.result()
-
-        print('Create virtual machine')
-        vm_parameters = create_vm_definition(nic_dc_info.id, VM_REFERENCE['dc'])
-        vm_creation = compute_client.virtual_machines.create_or_update(
-            GROUP_NAME, DC_NAME, vm_parameters)
-        vm_dc_info = vm_creation.result()
-
-    # https://docs.microsoft.com/en-us/python/api/azure-mgmt-compute/azure.mgmt.compute.v2019_07_01.operations.virtualmachineextensionsoperations
-    # https://docs.microsoft.com/en-us/python/api/azure-mgmt-compute/azure.mgmt.compute.v2019_07_01.models.virtualmachineextension?view=azure-python
-    try:
-        vm_dc_dsc_info = compute_client.virtual_machine_extensions.get(GROUP_NAME, vm_dc_info.name, 'ConfigureDCVM')
-        print(f'\nDSC configuration for VM {vm_dc_info.name} already exists and is in state {vm_dc_dsc_info.provisioning_state}')
-    except CloudError:    
-        print(f'\nRun DSC configuration for VM {vm_dc_info.name}')
-        compute_client.virtual_machine_extensions.create_or_update(
-            GROUP_NAME,
-            vm_dc_info.name,
-            'ConfigureDCVM',
+    """Create virtual machines
+    """
+    create_vm_parameters = [
+        [
+            compute_client, network_client, VM_REFERENCE["dc"],
+            {
+                'location': LOCATION,
+                'ip_configurations': [{
+                    'name': 'ipconfig1',
+                    'private_ip_allocation_method': 'Static',
+                    'private_ip_address': '10.0.1.4',
+                    'subnet': {
+                        'id': next(subnet_info for subnet_info in subnets_info if subnet_info.name == NETWORK_REFERENCE["dc"]["vNetPrivateSubnetName"]).id
+                    },
+                    'public_ip_address': next(pip_info for pip_info in pips_info if pip_info.name == VM_REFERENCE["dc"]['vmPublicIPName'])
+                }]
+            },
+            True,
             VM_DSC_REFERENCE["dc"]
-        )
-    
-    # Create VM SQL
-    vm_info = create_vm(compute_client, network_client, VM_REFERENCE["sql"],
-        {
-            'location': LOCATION,
-            'ip_configurations': [{
-                'name': 'ipconfig1',
-                'private_ip_allocation_method': 'Dynamic',
-                'subnet': {
-                    'id': subnet_sql_info.id
-                },
-                'public_ip_address': pips_info[1]
-            }]
-        })
-
-    # https://docs.microsoft.com/en-us/python/api/azure-mgmt-compute/azure.mgmt.compute.v2019_07_01.operations.virtualmachineextensionsoperations
-    # https://docs.microsoft.com/en-us/python/api/azure-mgmt-compute/azure.mgmt.compute.v2019_07_01.models.virtualmachineextension?view=azure-python
-    try:
-        vm_sql_dsc_info = compute_client.virtual_machine_extensions.get(GROUP_NAME, vm_info.name, 'ConfigureSQLVM')
-        print(f'\nDSC configuration for VM {vm_info.name} already exists and is in state {vm_sql_dsc_info.provisioning_state}')
-        if vm_sql_dsc_info.provisioning_state != "Succeeded":
-            print(f'\nRun DSC configuration for VM {vm_info.name}')
-            vm_sql_dsc_creation = compute_client.virtual_machine_extensions.create_or_update(
-                GROUP_NAME,
-                vm_info.name,
-                'ConfigureSQLVM',
-                VM_DSC_REFERENCE["sql"]
-            )    
-    except CloudError:
-        print(f'\nRun DSC configuration for VM {vm_info.name}')
-        vm_sql_dsc_creation = compute_client.virtual_machine_extensions.create_or_update(
-            GROUP_NAME,
-            vm_info.name,
-            'ConfigureSQLVM',
+        ],
+        [
+            compute_client, network_client, VM_REFERENCE["sql"],
+            {
+                'location': LOCATION,
+                'ip_configurations': [{
+                    'name': 'ipconfig1',
+                    'private_ip_allocation_method': 'Dynamic',
+                    'subnet': {
+                        'id': next(subnet_info for subnet_info in subnets_info if subnet_info.name == NETWORK_REFERENCE["sql"]["vNetPrivateSubnetName"]).id
+                    },
+                    'public_ip_address': next(pip_info for pip_info in pips_info if pip_info.name == VM_REFERENCE["sql"]['vmPublicIPName'])
+                }]
+            },
+            False,
             VM_DSC_REFERENCE["sql"]
-        )
-    
-    # Create VM SP
-    vm_info = create_vm(compute_client, network_client, VM_REFERENCE["sp"],
-        {
-            'location': LOCATION,
-            'ip_configurations': [{
-                'name': 'ipconfig1',
-                'private_ip_allocation_method': 'Dynamic',
-                'subnet': {
-                    'id': subnet_sp_info.id
-                },
-                'public_ip_address': pips_info[2]
-            }]
-        })
-
-    # https://docs.microsoft.com/en-us/python/api/azure-mgmt-compute/azure.mgmt.compute.v2019_07_01.operations.virtualmachineextensionsoperations
-    # https://docs.microsoft.com/en-us/python/api/azure-mgmt-compute/azure.mgmt.compute.v2019_07_01.models.virtualmachineextension?view=azure-python
-    try:
-        vm_sp_dsc_info = compute_client.virtual_machine_extensions.get(GROUP_NAME, vm_info.name, 'ConfigureSPVM')
-        print(f'\nDSC configuration for VM {vm_info.name} already exists and is in state {vm_sp_dsc_info.provisioning_state}')
-        if vm_sp_dsc_info.provisioning_state != "Succeeded":
-            print(f'\nRun DSC configuration for VM {vm_info.name}')
-            vm_sp_dsc_creation = compute_client.virtual_machine_extensions.create_or_update(
-                GROUP_NAME,
-                vm_info.name,
-                'ConfigureSPVM',
-                VM_DSC_REFERENCE["sp"]
-            )
-    except CloudError:
-        print(f'\nRun DSC configuration for VM {vm_info.name}')
-        vm_sp_dsc_creation = compute_client.virtual_machine_extensions.create_or_update(
-            GROUP_NAME,
-            vm_info.name,
-            'ConfigureSPVM',
+        ],
+        [
+            compute_client, network_client, VM_REFERENCE["sp"],
+            {
+                'location': LOCATION,
+                'ip_configurations': [{
+                    'name': 'ipconfig1',
+                    'private_ip_allocation_method': 'Dynamic',
+                    'subnet': {
+                        'id': next(subnet_info for subnet_info in subnets_info if subnet_info.name == NETWORK_REFERENCE["sp"]["vNetPrivateSubnetName"]).id
+                    },
+                    'public_ip_address': next(pip_info for pip_info in pips_info if pip_info.name == VM_REFERENCE["sp"]['vmPublicIPName'])
+                }]
+            },
+            False,
             VM_DSC_REFERENCE["sp"]
-        )
+        ]
+    ]
 
-def create_vm(compute_client, network_client, vm_reference, network_configuration):
+    # Create pool of workers
+    pool = ThreadPool(3)
+    results = pool.starmap(create_vm, create_vm_parameters)
+    # Close the pool and wait for the work to finish
+    pool.close()
+    pool.join()
+
+def create_network_security_groups(network_client, nsgName):
+    try:
+        nsg_info = network_client.network_security_groups.get(GROUP_NAME, nsgName)
+        print(f'\nFound network security group {nsg_info.name}')
+    except CloudError:
+        print(f'\nCreate network security group {nsgName}')
+        nsg_creation = network_client.network_security_groups.create_or_update(GROUP_NAME, nsgName, NSG_PARAMETER)
+        nsg_info = nsg_creation.result()
+    return nsg_info
+
+def create_subnet(network_client, vNetPrivateName, network_security_group_name, network_reference):
+    try:
+        subnet_info = network_client.subnets.get(GROUP_NAME, vNetPrivateName, network_reference['vNetPrivateSubnetName'])
+        print(f'\nFound Subnet {subnet_info.name}')
+    except CloudError:
+        print(f'\nCreate Subnet {network_reference["vNetPrivateSubnetName"]}')
+        subnet_creation = network_client.subnets.create_or_update(
+            GROUP_NAME,
+            vNetPrivateName,
+            network_reference['vNetPrivateSubnetName'],
+            {
+                'address_prefix': network_reference['vNetPrivateSubnetPrefix'],
+                'network_security_group': network_security_group_name
+            }
+        )
+        subnet_info = subnet_creation.result()
+    return subnet_info
+
+def create_pip(network_client, vm_reference):
+    try:
+        pip_info = network_client.public_ip_addresses.get(GROUP_NAME, vm_reference['vmPublicIPName'])
+        print(f'\nPublic IP address {pip_info.id} already exists')
+    except CloudError:
+        print(f'\nCreate public IP address for {vm_reference["vmName"]}')
+        pip_creation = network_client.public_ip_addresses.create_or_update(
+            GROUP_NAME,
+            vm_reference['vmPublicIPName'],
+            {'location': LOCATION, 'public_ip_allocation_method': 'Dynamic', 
+            'dns_settings': {'domain_name_label': vm_reference['vmPublicIPDnsName']}, 'sku': {'name': 'Basic'}}
+        )
+        pip_info = pip_creation.result()
+    return pip_info
+
+def create_vm(compute_client, network_client, vm_reference, network_configuration, start_dsc_configuration, vm_dsc_reference):
     try:
         vm_info = compute_client.virtual_machines.get(GROUP_NAME, vm_reference["vmName"])
         print(f'\nVM {vm_info.name} already exists')
@@ -532,17 +531,37 @@ def create_vm(compute_client, network_client, vm_reference, network_configuratio
             print(f'\nNIC {nic_info.name} for VM SP already exists')
         except CloudError:
             print(f'Create NIC {vm_reference["vmNicName"]} for VM {vm_reference["vmName"]}')
-            nic_creation = network_client.network_interfaces.create_or_update(
-                GROUP_NAME,
-                vm_reference["vmNicName"],
-                network_configuration
-            )
+            nic_creation = network_client.network_interfaces.create_or_update(GROUP_NAME, vm_reference["vmNicName"], network_configuration)
             nic_info = nic_creation.result()
 
         print(f'Create virtual machine {vm_reference["vmName"]}')
         vm_parameters = create_vm_definition(nic_info.id, vm_reference)
         vm_creation = compute_client.virtual_machines.create_or_update(GROUP_NAME, vm_reference["vmName"], vm_parameters)
         vm_info = vm_creation.result()
+    
+    if start_dsc_configuration == True:
+        # Start DSC configuration
+        # https://docs.microsoft.com/en-us/python/api/azure-mgmt-compute/azure.mgmt.compute.v2019_07_01.operations.virtualmachineextensionsoperations
+        # https://docs.microsoft.com/en-us/python/api/azure-mgmt-compute/azure.mgmt.compute.v2019_07_01.models.virtualmachineextension?view=azure-python
+        try:
+            vm_dsc_info = compute_client.virtual_machine_extensions.get(GROUP_NAME, vm_info.name, vm_dsc_reference["settings"]["configuration"]["function"])
+            print(f'\nDSC configuration for VM {vm_info.name} already exists and is in state {vm_dsc_info.provisioning_state}')
+            if vm_dsc_info.provisioning_state != "Succeeded":
+                print(f'\nRun DSC configuration for VM {vm_info.name}')
+                vm_dsc_creation = compute_client.virtual_machine_extensions.create_or_update(
+                    GROUP_NAME,
+                    vm_info.name,
+                    vm_dsc_reference["settings"]["configuration"]["function"],
+                    vm_dsc_reference
+                )
+        except CloudError:
+            print(f'\nRun DSC configuration for VM {vm_info.name}')
+            vm_dsc_creation = compute_client.virtual_machine_extensions.create_or_update(
+                GROUP_NAME,
+                vm_info.name,
+                vm_dsc_reference["settings"]["configuration"]["function"],
+                vm_dsc_reference
+            )
     return vm_info
 
 def create_vm_definition(nic_id, vm_reference):
@@ -628,7 +647,7 @@ def tests():
     
 
 if __name__ == "__main__":
-    create_template()
+    deploy_template()
     # tests()
     
     
