@@ -24,7 +24,7 @@ from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool
 
 LOCATION = 'westeurope'
-GROUP_NAME = 'azurepy-spx'
+GROUP_NAME = 'azurepy-sp'
 SHAREPOINT_VERSION = '2019'
 ADMIN_USERNAME = 'yvand'
 # ADMIN_PASSWORD = ""
@@ -352,55 +352,32 @@ def deploy_template():
         vnet_info = vnet_creation.result()
 
     # Create subnet
-    # create_subnet_parameters = [
-    #     [
-    #         network_client,
-    #         vnet_info.name,
-    #         next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-DC"),
-    #         NETWORK_REFERENCE["dc"]
-    #     ],
-    #     [
-    #         network_client,
-    #         vnet_info.name,
-    #         next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-SQL"),
-    #         NETWORK_REFERENCE["sql"]
-    #     ],
-    #     [
-    #         network_client,
-    #         vnet_info.name,
-    #         next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-SP"),
-    #         NETWORK_REFERENCE["sp"]
-    #     ]
-    # ]
-    # # Create pool of workers
-    # pool = ThreadPool(3)
-    # subnets_info = pool.starmap(create_subnet, create_subnet_parameters)
-    # # Close the pool and wait for the work to finish
-    # pool.close()
-    # pool.join()
-
-    subnets_info = []
-    subnet_info = create_subnet(
-        network_client,
-        vnet_info.name,
-        next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-DC"),
-        NETWORK_REFERENCE["dc"]
-    )
-    subnets_info.append(subnet_info)
-    subnet_info = create_subnet(
-        network_client,
-        vnet_info.name,
-        next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-SQL"),
-        NETWORK_REFERENCE["sql"]
-    )
-    subnets_info.append(subnet_info)
-    subnet_info = create_subnet(
-        network_client,
-        vnet_info.name,
-        next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-SP"),
-        NETWORK_REFERENCE["sp"]
-    )
-    subnets_info.append(subnet_info)
+    create_subnet_parameters = [
+        [
+            network_client,
+            vnet_info.name,
+            next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-DC"),
+            NETWORK_REFERENCE["dc"]
+        ],
+        [
+            network_client,
+            vnet_info.name,
+            next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-SQL"),
+            NETWORK_REFERENCE["sql"]
+        ],
+        [
+            network_client,
+            vnet_info.name,
+            next(nsg_info for nsg_info in network_security_groups_info if nsg_info.name == "NSG-VNet-SP"),
+            NETWORK_REFERENCE["sp"]
+        ]
+    ]
+    # Create only 1 pool of workers because creating subnet in parallel fails: https://github.com/terraform-providers/terraform-provider-azurerm/issues/3780
+    pool = ThreadPool(1)
+    subnets_info = pool.starmap(create_subnet, create_subnet_parameters)
+    # Close the pool and wait for the work to finish
+    pool.close()
+    pool.join()
 
     # Create public IP addresses
     create_pip_parameters = []
