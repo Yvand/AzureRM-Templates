@@ -12,6 +12,9 @@ import traceback
 import json
 from getpass import getpass
 import sys
+import time
+from datetime import timedelta
+from colorama import init, Fore
 
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.resource import ResourceManagementClient
@@ -46,6 +49,7 @@ DC_NAME = "DC"
 SQL_NAME = "SQL"
 SP_NAME = "SP"
 SQL_ALIAS = "SQLAlias"
+_FINISH = False
 
 # VARIABLES
 PASSWORDS = {
@@ -529,7 +533,8 @@ def create_vm(compute_client, network_client, vm_reference, network_configuratio
     
     if start_dsc_configuration == True:
         vm_dsc_creation = create_vm_extension(compute_client, vm_reference["vmName"], vm_dsc_reference)
-        vm_dsc_creation.wait()
+        if vm_dsc_creation != None:
+            vm_dsc_creation.wait()
 
     return vm_info
 
@@ -612,6 +617,22 @@ def replace_in_dict(input, variables):
             result[key] = value % variables
     return result
 
+def print_time():
+    # colorama init(): "On Windows, calling init() will filter ANSI escape sequences out of any text sent to stdout or stderr, and replace them with equivalent Win32 calls.""
+    init()
+    print(f'\n{Fore.GREEN}Start provisioning at {time.strftime("%H:%M:%S", time.localtime())}{Fore.RESET}')
+    start_time = time.time()
+    while True:
+        if _FINISH:
+            elapsed_time = time.time() - start_time
+            break
+        time.sleep(30)
+        elapsed_time = time.time() - start_time
+        print(f'{Fore.GREEN}Elapsed time: {str(timedelta(seconds=elapsed_time))}{Fore.RESET}')
+    
+    print(f'{Fore.GREEN}Finished. Total elapsed time: {str(timedelta(seconds=elapsed_time))}{Fore.RESET}')
+    return elapsed_time
+
 def tests():
     # for vm in VM_REFERENCE:
     #     vmJson = str(VM_REFERENCE[vm]).replace("\'", "\"")
@@ -631,19 +652,32 @@ def tests():
     # pips_info.append("item3")
     # print(f'\nTEST {pips_info[0]}')
 
-    # replace_in_dict(example_dict, variables)
-    ADMIN_PASSWORD = os.environ['ADMINPASSWORD']
-    SERVICE_ACCOUNT_PASSWORD = ADMIN_PASSWORD
-    PASSWORDS["ADMIN_PASSWORD"] = ADMIN_PASSWORD
-    PASSWORDS["SERVICE_ACCOUNT_PASSWORD"] = SERVICE_ACCOUNT_PASSWORD
-    #result = replace_in_dict(example_dict, PASSWORDS)
-    result = replace_in_dict(VM_DSC_REFERENCE, PASSWORDS)
-    print(f'\nresult after: {result}')
+    # # replace_in_dict(example_dict, variables)
+    # ADMIN_PASSWORD = os.environ['ADMINPASSWORD']
+    # SERVICE_ACCOUNT_PASSWORD = ADMIN_PASSWORD
+    # PASSWORDS["ADMIN_PASSWORD"] = ADMIN_PASSWORD
+    # PASSWORDS["SERVICE_ACCOUNT_PASSWORD"] = SERVICE_ACCOUNT_PASSWORD
+    # #result = replace_in_dict(example_dict, PASSWORDS)
+    # result = replace_in_dict(VM_DSC_REFERENCE, PASSWORDS)
+    # print(f'\nresult after: {result}')
     
+    print(f'\nStart test')
+    print_time_pool = ThreadPool(1)
+    print_time_pool.apply_async(print_time)
+    time.sleep(20)
+    print_time_pool.terminate()
 
 if __name__ == "__main__":
-    deploy_template()
-    # tests()
+    global _FINISH
+    print_time_pool = ThreadPool(1)
+    print_time_pool.apply_async(print_time)
+    try:
+        #time.sleep(5)
+        deploy_template()
+        # tests()
     
-    
+    finally:
+        _FINISH = True
+        print_time_pool.terminate()
 
+    print(f'Finished.')
