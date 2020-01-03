@@ -23,7 +23,7 @@ from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import DiskCreateOption
 from msrestazure.azure_exceptions import CloudError
 
-from multiprocessing import Pool
+from multiprocessing import Value
 from multiprocessing.dummy import Pool as ThreadPool
 
 # PARAMETERS
@@ -49,7 +49,6 @@ DC_NAME = "DC"
 SQL_NAME = "SQL"
 SP_NAME = "SP"
 SQL_ALIAS = "SQLAlias"
-_FINISH = False
 
 # VARIABLES
 PASSWORDS = {
@@ -617,13 +616,15 @@ def replace_in_dict(input, variables):
             result[key] = value % variables
     return result
 
-def print_time():
+def print_time(stop):
+    print(f'Start print_time')
     # colorama init(): "On Windows, calling init() will filter ANSI escape sequences out of any text sent to stdout or stderr, and replace them with equivalent Win32 calls.""
     init()
     print(f'\n{Fore.GREEN}Start provisioning at {time.strftime("%H:%M:%S", time.localtime())}{Fore.RESET}')
     start_time = time.time()
     while True:
-        if _FINISH:
+        if stop.value:
+            print(f'print_time received finish signal')
             elapsed_time = time.time() - start_time
             break
         time.sleep(30)
@@ -664,20 +665,24 @@ def tests():
     print(f'\nStart test')
     print_time_pool = ThreadPool(1)
     print_time_pool.apply_async(print_time)
-    time.sleep(20)
+    time.sleep(2)
     print_time_pool.terminate()
 
 if __name__ == "__main__":
-    global _FINISH
+    # Create a shared memory variable to send a signal to async method print_time when it needs to stop, and start print_time asynchronously
+    # https://docs.python.org/3.8/library/multiprocessing.html#sharing-state-between-processes
+    finished = Value('b', False)
     print_time_pool = ThreadPool(1)
-    print_time_pool.apply_async(print_time)
+    print_time_pool.apply_async(print_time, args = (finished, ))
+    
     try:
-        #time.sleep(5)
         deploy_template()
         # tests()
     
     finally:
-        _FINISH = True
-        print_time_pool.terminate()
+        # Send signal to print_time to stop and wait for it to finish
+        finished.value = True
+        print_time_pool.close()
+        print_time_pool.join()
 
     print(f'Finished.')
