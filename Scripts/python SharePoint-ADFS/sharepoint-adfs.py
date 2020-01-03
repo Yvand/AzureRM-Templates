@@ -1,11 +1,11 @@
-"""Create SharePoint environment
+"""Provision a SharePoint 2019/2016/2013 farm
 
 This script expects that the following environment vars are set:
-
 AZURE_TENANT_ID: your Azure Active Directory tenant id or domain
 AZURE_CLIENT_ID: your Azure Active Directory Application Client ID
 AZURE_CLIENT_SECRET: your Azure Active Directory Application Secret
 AZURE_SUBSCRIPTION_ID: your Azure Subscription Id
+ADMINPASSWORD: Password for the administrator and all service accounts
 """
 import os
 import traceback
@@ -15,6 +15,8 @@ import sys
 import time
 from datetime import timedelta
 from colorama import init, Fore
+from multiprocessing import Value
+from multiprocessing.dummy import Pool as ThreadPool
 
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.mgmt.resource import ResourceManagementClient
@@ -22,9 +24,6 @@ from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import DiskCreateOption
 from msrestazure.azure_exceptions import CloudError
-
-from multiprocessing import Value
-from multiprocessing.dummy import Pool as ThreadPool
 
 # PARAMETERS
 LOCATION = 'westeurope'
@@ -617,14 +616,12 @@ def replace_in_dict(input, variables):
     return result
 
 def print_time(stop):
-    print(f'Start print_time')
     # colorama init(): "On Windows, calling init() will filter ANSI escape sequences out of any text sent to stdout or stderr, and replace them with equivalent Win32 calls.""
     init()
     print(f'\n{Fore.GREEN}Start provisioning at {time.strftime("%H:%M:%S", time.localtime())}{Fore.RESET}')
     start_time = time.time()
     while True:
         if stop.value:
-            print(f'print_time received finish signal')
             elapsed_time = time.time() - start_time
             break
         time.sleep(30)
