@@ -24,6 +24,8 @@ from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import DiskCreateOption
 from msrestazure.azure_exceptions import CloudError
+from msrestazure.azure_operation import AzureOperationPoller
+from msrest.polling import LROPoller
 
 # PARAMETERS
 LOCATION = 'westeurope'
@@ -453,15 +455,27 @@ def deploy_template():
     pool.close()
     pool.join()
 
-    # Start DSC extension of SQL and SP
+    # Start DSC extension of SQL and SP and wait for them to finish
     create_vm_extension_parameters = [
         [compute_client, VM_REFERENCE["sql"]["vmName"], VM_DSC_REFERENCE["sql"]],
         [compute_client, VM_REFERENCE["sp"]["vmName"], VM_DSC_REFERENCE["sp"]]
     ]
     pool = ThreadPool(2)
-    pool.starmap(create_vm_extension, create_vm_extension_parameters)
+    # create_vm_extension returns multiple parameters, so vmExtensions_status is a list of tuple
+    vmExtensions_status = list(pool.starmap(create_vm_extension, create_vm_extension_parameters))
     pool.close()
     pool.join()
+
+    # tuple[0] is LROPoller (if dsc extension was (re)created during this execution of the script) or None
+    # tuple[1] is the name of the VM
+    # Keep only the items where tuple[0] is LROPoller:
+    vmExtensions_status = [vmExtension_status for vmExtension_status in vmExtensions_status if type(vmExtension_status[0]) is LROPoller]
+    if len(vmExtensions_status) > 0:
+        print(f'\nWaiting for {len(vmExtensions_status)} DSC configuration to complete...')
+        pool = ThreadPool(len(vmExtensions_status))
+        pool.starmap(check_vm_extension_status, vmExtensions_status)
+        pool.close()
+        pool.join()
 
 def create_network_security_groups(network_client, nsgName):
     # https://docs.microsoft.com/en-us/python/api/azure-mgmt-network/azure.mgmt.network.v2019_09_01.operations.networksecuritygroupsoperations?view=azure-python
@@ -530,7 +544,7 @@ def create_vm(compute_client, network_client, vm_reference, network_configuratio
         vm_info = vm_creation.result()
     
     if start_dsc_configuration == True:
-        vm_dsc_creation = create_vm_extension(compute_client, vm_reference["vmName"], vm_dsc_reference)
+        vm_dsc_creation, vm_name = create_vm_extension(compute_client, vm_reference["vmName"], vm_dsc_reference)
         if vm_dsc_creation != None:
             vm_dsc_creation.wait()
 
@@ -560,7 +574,12 @@ def create_vm_extension(compute_client, vm_name, vm_dsc_reference):
             vm_dsc_reference["settings"]["configuration"]["function"],
             vm_dsc_reference
         )
-    return vm_dsc_creation
+    return vm_dsc_creation, vm_name
+
+def check_vm_extension_status(vm_dsc_creation, vm_name):
+    print(f'\nStatus of the DSC configuration for VM {vm_name}: {vm_dsc_creation.status()}')
+    vm_dsc_creation.wait()
+    print(f'DSC configuration for VM {vm_name} completed: {vm_dsc_creation.status()}')
 
 def generate_vm_definition(nic_id, vm_reference):
     """Return the definition of the VM
