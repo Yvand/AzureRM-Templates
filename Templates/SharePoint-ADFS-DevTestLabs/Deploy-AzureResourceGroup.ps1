@@ -3,8 +3,8 @@
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
-#$resourceGroupLocation = 'northeurope'
-$resourceGroupName = 'ydspdtl'
+#$resourceGroupLocation = 'East US 2'
+$resourceGroupName = 'xydspdtl'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
@@ -16,7 +16,7 @@ $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combin
 Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 ### Define passwords
 #$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
-if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
+if ([String]::IsNullOrWhiteSpace($securePassword)) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
 $passwords = New-Object -TypeName HashTable
 $passwords['adminPassword'] = $securePassword
 $passwords['serviceAccountsPassword'] = $securePassword
