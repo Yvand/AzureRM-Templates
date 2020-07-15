@@ -25,7 +25,7 @@
       "type": "string",
       "minLength": 2,
       "metadata": {
-        "description": "[Prefix] of public DNS names of VMs, as used in '[Prefix]-[VMName].[region].cloudapp.azure.com'"
+        "description": "\"[Prefix]\" of public DNS name of VMs, as used in \"[Prefix]-[VMName].[region].cloudapp.azure.com\""
       }
     },
     "domainFQDN": {
@@ -287,8 +287,8 @@
     },
     "vmSQL": {
       "vmImagePublisher": "MicrosoftSQLServer",
-      "vmImageOffer": "SQL2017-WS2016",
-      "vmImageSKU": "SQLDEV",
+      "vmImageOffer": "SQL2019-WS2019",
+      "vmImageSKU": "sqldev",
       "vmOSDiskName": "Disk-SQL-OS",
       "vmVmSize": "[parameters('vmSQLSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmSQLName, '-0')]",

@@ -2,6 +2,10 @@
 
 ## February 2020 update
 
+* Update SQL to SQL Server 2019 on Windows Server 2019
+
+## February 2020 update
+
 * Fix deployment error caused by the new values of the SKU of SharePoint images, which changed from '2013' / '2016' / '2019' to 'sp2013' / 'sp2016' / 'sp2019'
 * Update the schema of deploymentTemplate.json to latest version
 
