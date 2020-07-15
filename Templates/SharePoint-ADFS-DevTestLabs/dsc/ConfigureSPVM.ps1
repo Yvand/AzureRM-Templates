@@ -454,7 +454,7 @@ configuration ConfigureSPVM
                 WebAppUrl = "http://$SPTrustedSitesName/"
                 Default = @(
                     MSFT_SPWebAppAuthenticationMode {
-                        AuthenticationMethod = "NTLM"
+                        AuthenticationMethod = "WindowsAuthentication"
                     }
                 )
                 Intranet = @(
