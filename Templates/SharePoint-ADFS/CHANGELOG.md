@@ -3,6 +3,14 @@
 ## February 2020 update
 
 * Update SQL to SQL Server 2019 on Windows Server 2019
+* Update DSC module NetworkingDsc from 7.4 to 8.0
+* Update DSC module xPSDesiredStateConfiguration from 8.10 to 9.1
+* Update DSC module ActiveDirectoryCSDsc from 4.1 to 5.0
+* Update DSC module xDnsServer from 1.15 to 1.16
+* Update DSC module ComputerManagementDsc from 7.0 to 8.3
+* Update DSC module SqlServerDsc from 13.2 to 14.1
+* Update DSC module xWebAdministration from 2.8 to 3.1.1
+* Update DSC module SharePointDSC from 3.6 to 4.2
 
 ## February 2020 update
 
