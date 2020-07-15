@@ -223,13 +223,13 @@
     },
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
-      "vNetPrivatePrefix": "10.0.0.0/16",
+      "vNetPrivatePrefix": "10.1.0.0/16",
       "vNetPrivateSubnetDCName": "Subnet-1",
-      "vNetPrivateSubnetDCPrefix": "10.0.1.0/24",
+      "vNetPrivateSubnetDCPrefix": "10.1.1.0/24",
       "vNetPrivateSubnetSQLName": "Subnet-2",
-      "vNetPrivateSubnetSQLPrefix": "10.0.2.0/24",
+      "vNetPrivateSubnetSQLPrefix": "10.1.2.0/24",
       "vNetPrivateSubnetSPName": "Subnet-3",
-      "vNetPrivateSubnetSPPrefix": "10.0.3.0/24",
+      "vNetPrivateSubnetSPPrefix": "10.1.3.0/24",
       "nsgDCVNetName": "NSG-VNet-DC",
       "nsgSQLVNetName": "NSG-VNet-SQL",
       "nsgSPVNetName": "NSG-VNet-SP",
@@ -272,7 +272,7 @@
       "vmOSDiskName": "Disk-DC-OS",
       "vmVmSize": "[parameters('vmDCSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmDCName, '-0')]",
-      "nicPrivateIPAddress": "10.0.1.4",
+      "nicPrivateIPAddress": "10.1.1.4",
       "vmPublicIPName": "[concat('PublicIP-', variables('generalSettings').vmDCName)]",
       "vmPublicIPDnsName": "[toLower(replace(concat(resourceGroup().name, '-', variables('generalSettings').vmDCName), '_', '-'))]",
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmDCName)]"
@@ -340,7 +340,7 @@
       "forceUpdateTag": "1.0"
     },
     "azureBastion": {
-      "subnetPrefix": "10.0.4.0/24",
+      "subnetPrefix": "10.1.4.0/24",
       "publicIPDnsName": "[toLower(replace(concat(resourceGroup().name, '-', 'Bastion'), '_', '-'))]"
     }
   },
