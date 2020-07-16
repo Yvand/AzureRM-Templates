@@ -455,6 +455,7 @@ configuration ConfigureSPVM
                 Default = @(
                     MSFT_SPWebAppAuthenticationMode {
                         AuthenticationMethod = "WindowsAuthentication"
+                        WindowsAuthMethod    = "NTLM"
                     }
                 )
                 Intranet = @(
@@ -563,8 +564,8 @@ $SQLAlias = "SQLAlias"
 $SharePointVersion = "2019"
 $ConfigureADFS = $false
 
-$mofPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigureADFS $ConfigureADFS -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $mofPath
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.2\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigureADFS $ConfigureADFS -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $mofPath
 Start-DscConfiguration -Path $mofPath -Wait -Verbose -Force
 
