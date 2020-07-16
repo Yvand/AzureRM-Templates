@@ -1192,6 +1192,76 @@
     },
     {
       "condition": "[equals(parameters('addAzureBastion'), 'Yes')]",
+      "apiVersion": "2018-11-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "NSG-VNet-AzureBastionSubnet",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "NSG-VNet-AzureBastionSubnet"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-443-internet",
+            "properties": {
+              "description": "Allow 443 Internet",
+              "direction": "Inbound",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120
+            }
+          },
+          {
+            "name": "allow-443-gatewaymanager",
+            "properties": {
+              "description": "Allow 443 GatewayManager ",
+              "direction": "Inbound",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "GatewayManager",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 130
+            }
+          },
+          {
+            "name": "allow-rdp-outbound",
+            "properties": {
+              "description": "Allow RDP Outbound ",
+              "direction": "Outbound",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 120
+            }
+          },
+          {
+            "name": "allow-azurecloud-outbound",
+            "properties": {
+              "description": "Allow AzureCloud Outbound ",
+              "direction": "Outbound",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "AzureCloud",
+              "access": "Allow",
+              "priority": 130
+            }
+          }
+          ]
+      }
+    },
+    {
+      "condition": "[equals(parameters('addAzureBastion'), 'Yes')]",
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('networkSettings').vNetPrivateName, '/', 'AzureBastionSubnet')]",
       "apiVersion": "2019-04-01",
@@ -1200,7 +1270,10 @@
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]"
       ],
       "properties": {
-        "addressPrefix": "[variables('azureBastion').subnetPrefix]"
+        "addressPrefix": "[variables('azureBastion').subnetPrefix]",
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'NSG-VNet-AzureBastionSubnet')]"
+        }
       }
     },
     {
