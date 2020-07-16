@@ -1244,6 +1244,20 @@
             }
           },
           {
+            "name": "allow-ssh-outbound",
+            "properties": {
+              "description": "Allow SSH Outbound",
+              "direction": "Outbound",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 121
+            }
+          },
+          {
             "name": "allow-azurecloud-outbound",
             "properties": {
               "description": "Allow AzureCloud Outbound ",
@@ -1267,7 +1281,8 @@
       "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'NSG-VNet-AzureBastionSubnet')]"
       ],
       "properties": {
         "addressPrefix": "[variables('azureBastion').subnetPrefix]",
