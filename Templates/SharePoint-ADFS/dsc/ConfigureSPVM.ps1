@@ -994,7 +994,7 @@ configuration ConfigureSPVM
 
         SPWebApplicationAppDomain ConfigureAppDomainDefaultZone
         {
-            WebAppUrl            = "http://$using:SPTrustedSitesName"
+            WebAppUrl            = "http://$SPTrustedSitesName"
             AppDomain            = $AppDomainFQDN
             Zone                 = "Default"
             Port                 = 80
@@ -1005,7 +1005,7 @@ configuration ConfigureSPVM
 
         SPWebApplicationAppDomain ConfigureAppDomainIntranetZone
         {
-            WebAppUrl            = "http://$using:SPTrustedSitesName"
+            WebAppUrl            = "http://$SPTrustedSitesName"
             AppDomain            = $AppDomainIntranetFQDN
             Zone                 = "Intranet"
             Port                 = 443
@@ -1013,26 +1013,6 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
-
-        # SPWebApplicationAppDomain ConfigureAppDomainDefaultZone
-        # {
-        #     WebAppUrl            ="http://$SPTrustedSitesName"
-        #     Zone                 = "Default"
-        #     Port                 = 80
-        #     AppDomain            = $AppDomainFQDN
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
-        # }
-
-        # SPWebApplicationAppDomain ConfigureAppDomainIntranetZone
-        # {
-        #     WebAppUrl            ="http://$SPTrustedSitesName"
-        #     Zone                 = "Intranet"
-        #     Port                 = 443
-        #     AppDomain            = $AppDomainIntranetFQDN
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
-        # }
 
         SPAppCatalog SetAppCatalogUrl
         {
