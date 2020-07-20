@@ -235,15 +235,15 @@
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
       "vNetPrivatePrefix": "10.0.0.0/16",
-      "vNetPrivateSubnetDCName": "Subnet-1",
-      "vNetPrivateSubnetDCPrefix": "10.0.1.0/24",
-      "vNetPrivateSubnetSQLName": "Subnet-2",
-      "vNetPrivateSubnetSQLPrefix": "10.0.2.0/24",
-      "vNetPrivateSubnetSPName": "Subnet-3",
-      "vNetPrivateSubnetSPPrefix": "10.0.3.0/24",
-      "nsgDCVNetName": "NSG-VNet-DC",
-      "nsgSQLVNetName": "NSG-VNet-SQL",
-      "nsgSPVNetName": "NSG-VNet-SP",
+      "subnetDCName": "Subnet-DC",
+      "subnetDCPrefix": "10.0.1.0/24",
+      "subnetSQLName": "Subnet-SQL",
+      "subnetSQLPrefix": "10.0.2.0/24",
+      "subnetSPName": "Subnet-SP",
+      "subnetSPPrefix": "10.0.3.0/24",
+      "nsgDCVNetName": "NSG-Subnet-DC",
+      "nsgSQLVNetName": "NSG-Subnet-SQL",
+      "nsgSPVNetName": "NSG-Subnet-SP",
       "vmDCPublicIPNicAssociation": {
         "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
       },
@@ -421,27 +421,27 @@
         },
         "subnets": [
           {
-            "name": "[variables('networkSettings').vNetPrivateSubnetDCName]",
+            "name": "[variables('networkSettings').subnetDCName]",
             "properties": {
-              "addressPrefix": "[variables('networkSettings').vNetPrivateSubnetDCPrefix]",
+              "addressPrefix": "[variables('networkSettings').subnetDCPrefix]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgDCVNetName)]"
               }
             }
           },
           {
-            "name": "[variables('networkSettings').vNetPrivateSubnetSQLName]",
+            "name": "[variables('networkSettings').subnetSQLName]",
             "properties": {
-              "addressPrefix": "[variables('networkSettings').vNetPrivateSubnetSQLPrefix]",
+              "addressPrefix": "[variables('networkSettings').subnetSQLPrefix]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSQLVNetName)]"
               }
             }
           },
           {
-            "name": "[variables('networkSettings').vNetPrivateSubnetSPName]",
+            "name": "[variables('networkSettings').subnetSPName]",
             "properties": {
-              "addressPrefix": "[variables('networkSettings').vNetPrivateSubnetSPPrefix]",
+              "addressPrefix": "[variables('networkSettings').subnetSPPrefix]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSPVNetName)]"
               }
@@ -490,7 +490,7 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[variables('vmDC').nicPrivateIPAddress]",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetDCName)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetDCName)]"
               },
               "publicIPAddress": "[if(equals(parameters('addPublicIPAddressToEachVM'), 'Yes'), variables('networkSettings').vmDCPublicIPNicAssociation, json('null'))]"
             }
@@ -638,7 +638,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSQLName)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSQLName)]"
               },
               "publicIPAddress": "[if(equals(parameters('addPublicIPAddressToEachVM'), 'Yes'), variables('networkSettings').vmSQLPublicIPNicAssociation, json('null'))]"
             }
@@ -739,7 +739,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSPName)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
               },
               "publicIPAddress": "[if(equals(parameters('addPublicIPAddressToEachVM'), 'Yes'), variables('networkSettings').vmSPPublicIPNicAssociation, json('null'))]"
             }
@@ -970,7 +970,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').vNetPrivateSubnetSPName)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
               },
               "publicIPAddress": "[if(equals(parameters('addPublicIPAddressToEachVM'), 'Yes'), variables('networkSettings').vmFEPublicIPNicAssociation, json('null'))]"
             }
@@ -1194,10 +1194,10 @@
       "condition": "[equals(parameters('addAzureBastion'), 'Yes')]",
       "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "NSG-VNet-AzureBastionSubnet",
+      "name": "NSG-Subnet-AzureBastion",
       "location": "[parameters('location')]",
       "tags": {
-        "displayName": "NSG-VNet-AzureBastionSubnet"
+        "displayName": "NSG-Subnet-AzureBastion"
       },
       "properties": {
         "securityRules": [
@@ -1282,12 +1282,12 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', 'NSG-VNet-AzureBastionSubnet')]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'NSG-Subnet-AzureBastion')]"
       ],
       "properties": {
         "addressPrefix": "[variables('azureBastion').subnetPrefix]",
         "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'NSG-VNet-AzureBastionSubnet')]"
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'NSG-Subnet-AzureBastion')]"
         }
       }
     },
