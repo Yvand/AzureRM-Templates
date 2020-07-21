@@ -3,7 +3,7 @@
 ## February 2020 update
 
 * Update SQL to SQL Server 2019 on Windows Server 2019
-* Add a network security group for Azure Bastion subnet
+* Add a network security group to Azure Bastion subnet
 * Rename some resources and variables with more meaningful names
 * Update DSC module NetworkingDsc from 7.4 to 8.0
 * Update DSC module xPSDesiredStateConfiguration from 8.10 to 9.1
