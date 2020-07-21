@@ -397,7 +397,7 @@ configuration ConfigureSPVM
                     }
                 )
                 SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
-                ClaimProviderName            = ""
+                #ClaimProviderName           = "" # Should not be set if there is none
                 #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
                 UseWReplyParameter           = $true
                 Ensure                       = "Present"
@@ -557,7 +557,7 @@ $SPSetupCreds = Get-Credential -Credential "spsetup"
 $SPFarmCreds = Get-Credential -Credential "spfarm"
 $SPAppPoolCreds = Get-Credential -Credential "spapppool"
 $SPPassphraseCreds = Get-Credential -Credential "Passphrase"
-$DNSServer = "10.0.1.4"
+$DNSServer = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
@@ -567,7 +567,7 @@ $ConfigureADFS = $false
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.2\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
 ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigureADFS $ConfigureADFS -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
-Set-DscLocalConfigurationManager -Path $mofPath
-Start-DscConfiguration -Path $mofPath -Wait -Verbose -Force
+Set-DscLocalConfigurationManager -Path $outputPath
+Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
 #>
