@@ -241,9 +241,9 @@
       "subnetSQLPrefix": "10.0.2.0/24",
       "subnetSPName": "Subnet-SP",
       "subnetSPPrefix": "10.0.3.0/24",
-      "nsgDCVNetName": "NSG-Subnet-DC",
-      "nsgSQLVNetName": "NSG-Subnet-SQL",
-      "nsgSPVNetName": "NSG-Subnet-SP",
+      "nsgSubnetDCName": "NSG-Subnet-DC",
+      "nsgSubnetSQLName": "NSG-Subnet-SQL",
+      "nsgSubnetSPName": "NSG-Subnet-SP",
       "vmDCPublicIPNicAssociation": {
         "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
       },
@@ -367,10 +367,10 @@
     {
       "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('networkSettings').nsgDCVNetName]",
+      "name": "[variables('networkSettings').nsgSubnetDCName]",
       "location": "[parameters('location')]",
       "tags": {
-        "displayName": "[variables('networkSettings').nsgDCVNetName]"
+        "displayName": "[variables('networkSettings').nsgSubnetDCName]"
       },
       "properties": {
         "securityRules": "[if(equals(parameters('addPublicIPAddressToEachVM'), 'Yes'), variables('networkSettings').nsgRuleAllowRdpPort, json('null'))]"
@@ -379,10 +379,10 @@
     {
       "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('networkSettings').nsgSQLVNetName]",
+      "name": "[variables('networkSettings').nsgSubnetSQLName]",
       "location": "[parameters('location')]",
       "tags": {
-        "displayName": "[variables('networkSettings').nsgSQLVNetName]"
+        "displayName": "[variables('networkSettings').nsgSubnetSQLName]"
       },
       "properties": {
         "securityRules": "[if(equals(parameters('addPublicIPAddressToEachVM'), 'Yes'), variables('networkSettings').nsgRuleAllowRdpPort, json('null'))]"
@@ -391,10 +391,10 @@
     {
       "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('networkSettings').nsgSPVNetName]",
+      "name": "[variables('networkSettings').nsgSubnetSPName]",
       "location": "[parameters('location')]",
       "tags": {
-        "displayName": "[variables('networkSettings').nsgSPVNetName]"
+        "displayName": "[variables('networkSettings').nsgSubnetSPName]"
       },
       "properties": {
         "securityRules": "[if(equals(parameters('addPublicIPAddressToEachVM'), 'Yes'), variables('networkSettings').nsgRuleAllowRdpPort, json('null'))]"
@@ -406,9 +406,9 @@
       "location": "[parameters('location')]",
       "apiVersion": "2018-11-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgDCVNetName)]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSQLVNetName)]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSPVNetName)]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetDCName)]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetSQLName)]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetSPName)]"
       ],
       "tags": {
         "displayName": "[variables('networkSettings').vNetPrivateName]"
@@ -425,7 +425,7 @@
             "properties": {
               "addressPrefix": "[variables('networkSettings').subnetDCPrefix]",
               "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgDCVNetName)]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetDCName)]"
               }
             }
           },
@@ -434,7 +434,7 @@
             "properties": {
               "addressPrefix": "[variables('networkSettings').subnetSQLPrefix]",
               "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSQLVNetName)]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetSQLName)]"
               }
             }
           },
@@ -443,7 +443,7 @@
             "properties": {
               "addressPrefix": "[variables('networkSettings').subnetSPPrefix]",
               "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSPVNetName)]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetSPName)]"
               }
             }
           }

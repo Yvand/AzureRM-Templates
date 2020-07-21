@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Update SQL to SQL Server 2019 on Windows Server 2019
+* Rename some resources and variables with more meaningful names
 * Update DSC module NetworkingDsc from 7.4 to 8.0
 * Update DSC module xPSDesiredStateConfiguration from 8.10 to 9.1
 * Update DSC module ActiveDirectoryCSDsc from 4.1 to 5.0
