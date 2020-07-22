@@ -1,6 +1,6 @@
 # Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
-## February 2020 update
+## July 2020 update
 
 * Update SQL to SQL Server 2019 on Windows Server 2019
 * Add a network security group to Azure Bastion subnet

@@ -15,6 +15,10 @@
 * Update DSC module xWebAdministration from 2.8 to 3.1.1
 * Update DSC module SharePointDSC from 3.6 to 4.2
 
+## June 2020 update
+
+* Fix deployment error in region "eastus2euap" caused by a subnet prefix policy
+
 ## February 2020 update
 
 * Fix deployment error caused by the new values of the SKU of SharePoint images, which changed from '2013' / '2016' / '2019' to 'sp2013' / 'sp2016' / 'sp2019'
