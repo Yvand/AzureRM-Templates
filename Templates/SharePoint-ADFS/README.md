@@ -18,22 +18,22 @@ This template deploys SharePoint 2019, 2016 or 2013 with the following configura
 * Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured.
 * A 2nd SharePoint server can optionally be added to the farm.
 
-All subnets connected to a virtual machine are protected by a Network Security Group. You can connect to virtual machines using:
+All subnets are protected by a Network Security Group with rules that restrict network access. You can connect to virtual machines using:
 
 * [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) if you set parameter addAzureBastion to 'Yes'.
 * RDP protocol if you set parameter addPublicIPToVMs to 'Yes'. Each machine will have a public IP, a DNS name, and the TCP port 3389 will be allowed from Internet.
 
-By default, virtual machines use standard storage and have enough CPU and memory to be used comfortably:
+By default, virtual machines use standard storage and are sized with a good balance between cost and performance:
 
-* Virtual machine running the Domain Controller: [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-compute#fsv2-series-sup1sup) / Standard_LRS
-* Virtual machine running SQL Server: [Standard_D2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general#dv2-series) / Standard_LRS
-* Virtual machine(s) running SharePoint: [Standard_D11_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-memory#dv2-series-11-15) / Standard_LRS
+* Virtual machine size for DC: [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) / Standard_LRS (2 CPU / 7 GiB RAM)
+* Virtual machine size for SQL Server: [Standard_E2as_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/eav4-easv4-series) / Standard_LRS (2 CPU / 16 GiB RAM)
+* Virtual machine size for SharePoint: [Standard_E2as_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/eav4-easv4-series) / Standard_LRS (2 CPU / 16 GiB RAM)
 
 If you wish to get better performance, I recommended the following sizes / storage account types:
 
-* Virtual machine running the Domain Controller: [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-compute#fsv2-series-sup1sup) / Standard_LRS
-* Virtual machine running SQL Server: [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general#dsv2-series) / Premium_LRS
-* Virtual machine(s) running SharePoint: [Standard_DS3_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general#dsv2-series) / Premium_LRS
+* Virtual machine size for DC: [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) / Standard_LRS
+* Virtual machine size for SQL Server: [Standard_E2as_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/eav4-easv4-series) / Premium_LRS (2 CPU / 16 GiB RAM)
+* Virtual machine size for SharePoint: [Standard_E4as_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/eav4-easv4-series) / Premium_LRS (4 CPU / 32 GiB RAM)
 
 > **Notes:**  
 > I strongly recommend to update SharePoint to a recent build just after the provisioning is complete.  
