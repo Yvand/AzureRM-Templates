@@ -75,9 +75,9 @@
         {
             DomainName = $DomainFQDN
             UserName = $Admincreds.UserName
-            Password = $Admincreds
+            # Password = $Admincreds
             EmailAddress = $Admincreds.UserName + "@" + $DomainFQDN
-            PasswordAuthentication = 'Negotiate'
+            # PasswordAuthentication = 'Negotiate'
             Ensure = "Present"
             PasswordNeverExpires = $true
             DependsOn = "[PendingReboot]Reboot1"
@@ -164,9 +164,8 @@
                 DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
             }
 
-            xADUser CreateAdfsSvcAccount
+            ADUser CreateAdfsSvcAccount
             {
-                DomainAdministratorCredential = $DomainCredsNetbios
                 DomainName = $DomainFQDN
                 UserName = $AdfsSvcCreds.UserName
                 Password = $AdfsSvcCreds
