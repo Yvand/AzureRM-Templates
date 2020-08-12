@@ -21,7 +21,7 @@ By default, virtual machines use standard storage and are sized with a good bala
 * Virtual machine size for SQL Server: [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series): 2 CPU / 16 GiB RAM with HDD ($185.42/month in West US as of 2020-08-12)
 * Virtual machine size for SharePoint: [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series): 2 CPU / 16 GiB RAM with HDD ($185.42/month in West US as of 2020-08-12)
 
-If you wish to get better performance, I recommended the following sizes / storage account types:
+If you need a boost in performance, you may consider the following sizes / storage account types:
 
 * Virtual machine size for DC: [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series): 2 CPU / 7 GiB RAM with HDD ($183.96/month in West US as of 2020-08-12)
 * Virtual machine size for SQL Server: [Standard_E2as_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/eav4-easv4-series): 2 CPU / 16 GiB RAM with SSD ($169.36/month in West US as of 2020-08-12)
