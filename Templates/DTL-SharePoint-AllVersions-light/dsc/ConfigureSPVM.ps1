@@ -16,7 +16,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -27,8 +27,6 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [String] $SPDBPrefix = "SP$($SharePointVersion)_"
     [String] $SPTrustedSitesName = "SPSites$SharePointVersion"
-    [Int] $RetryCount = 30
-    [Int] $RetryIntervalSec = 30
     [String] $ComputerName = Get-Content env:computername
     #[String] $ServiceAppPoolName = "SharePoint Service Applications"
     [String] $SetupPath = "C:\Setup"
@@ -111,12 +109,12 @@ configuration ConfigureSPVM
         #**********************************************************
         # Join AD forest
         #**********************************************************
-        xWaitForADDomain DscForestWait
+        WaitForADDomain DscForestWait
         {
             DomainName           = $DomainFQDN
-            RetryCount           = $RetryCount
-            RetryIntervalSec     = $RetryIntervalSec
-            DomainUserCredential = $DomainAdminCredsQualified
+            WaitTimeout          = 600
+            RestartCount         = 2
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[xCredSSP]CredSSPClient"
         }
 
@@ -125,7 +123,7 @@ configuration ConfigureSPVM
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            DependsOn = "[xWaitForADDomain]DscForestWait"
+            DependsOn = "[WaitForADDomain]DscForestWait"
         }
 
         xScript CreateWSManSPNsIfNeeded
@@ -199,25 +197,23 @@ configuration ConfigureSPVM
         #**********************************************************
         # Provision required accounts for SharePoint
         #**********************************************************
-        xADUser CreateSPSetupAccount
+        ADUser CreateSPSetupAccount
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPSetupCreds.UserName
             Password                      = $SPSetupCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
-            DomainAdministratorCredential = $DomainAdminCredsQualified
             DependsOn                     = "[Computer]DomainJoin"
         }        
 
-        xADUser CreateSParmAccount
+        ADUser CreateSParmAccount
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPFarmCreds.UserName
             Password                      = $SPFarmCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
-            DomainAdministratorCredential = $DomainAdminCredsQualified
             DependsOn                     = "[Computer]DomainJoin"
         }
 
@@ -228,17 +224,16 @@ configuration ConfigureSPVM
             MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
             Credential           = $DomainAdminCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xADUser]CreateSPSetupAccount", "[xADUser]CreateSParmAccount"
+            DependsOn            = "[ADUser]CreateSPSetupAccount", "[ADUser]CreateSParmAccount"
         }
 
-        xADUser CreateSPAppPoolAccount
+        ADUser CreateSPAppPoolAccount
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPAppPoolCreds.UserName
             Password                      = $SPAppPoolCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
-            DomainAdministratorCredential = $DomainAdminCredsQualified
             DependsOn                     = "[Computer]DomainJoin"
         }
 
@@ -249,7 +244,7 @@ configuration ConfigureSPVM
             Type                 = 'File'
             Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[xADUser]CreateSParmAccount", "[xADUser]CreateSPAppPoolAccount"
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPAppPoolAccount"
         }
 
         SqlAlias AddSqlAlias
@@ -267,7 +262,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                $retrySleep = $using:RetryIntervalSec
+                $retrySleep = 30
                 $server = $using:SQLAlias
                 $db="master"
                 $retry = $true

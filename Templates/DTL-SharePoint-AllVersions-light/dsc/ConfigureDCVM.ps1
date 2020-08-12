@@ -9,7 +9,7 @@
         [Parameter(Mandatory)] [Boolean]$ConfigureADFS
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, cADFS, xDnsServer, ComputerManagementDsc
+    Import-DscResource -ModuleName ActiveDirectoryDsc, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, cADFS, xDnsServer, ComputerManagementDsc
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
@@ -51,29 +51,28 @@
             DependsOn = "[WindowsFeature]DNS"
         }
 
-        xADDomain FirstDS
+        ADDomain FirstDS
         {
-            DomainName = $DomainFQDN
-            DomainAdministratorCredential = $DomainCredsNetbios
+            DomainName                    = $DomainFQDN
+            Credential                    = $DomainCredsNetbios
             SafemodeAdministratorPassword = $DomainCredsNetbios
-            DatabasePath = "C:\NTDS"
-            LogPath = "C:\NTDS"
-            SysvolPath = "C:\SYSVOL"
-            DependsOn = "[DnsServerAddress]DnsServerAddress"
+            DatabasePath                  = "C:\NTDS"
+            LogPath                       = "C:\NTDS"
+            SysvolPath                    = "C:\SYSVOL"
+            DependsOn                     = "[DnsServerAddress]DnsServerAddress"
         }
 
         PendingReboot Reboot1
         {
             Name = "RebootServer"
-            DependsOn = "[xADDomain]FirstDS"
+            DependsOn = "[ADDomain]FirstDS"
         }       
 
         #**********************************************************
         # Misc: Set email of AD domain admin and add remote AD tools
         #**********************************************************
-        xADUser SetEmailOfDomainAdmin
+        ADUser SetEmailOfDomainAdmin
         {
-            DomainAdministratorCredential = $DomainCredsNetbios
             DomainName = $DomainFQDN
             UserName = $Admincreds.UserName
             Password = $Admincreds
@@ -184,7 +183,7 @@
                 MembersToInclude= $AdfsSvcCredsQualified.UserName
                 Credential = $DomainCredsNetbios    
                 PsDscRunAsCredential = $DomainCredsNetbios
-                DependsOn = "[xADUser]CreateAdfsSvcAccount"
+                DependsOn = "[ADUser]CreateAdfsSvcAccount"
             }
 
             WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
