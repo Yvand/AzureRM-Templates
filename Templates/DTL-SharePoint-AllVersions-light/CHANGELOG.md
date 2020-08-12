@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Update dependencies of Microsoft.Compute/virtualMachines/extensions to no longer depend on another DSC extension to complete
+* Replace DSC module xActiveDirectory with ActiveDirectoryDsc 6.0.1
+
+## July 2020 update
+
 * Update SQL to SQL Server 2019 on Windows Server 2019
 * Add a network security group to Azure Bastion subnet
 * Rename some resources and variables with more meaningful names
