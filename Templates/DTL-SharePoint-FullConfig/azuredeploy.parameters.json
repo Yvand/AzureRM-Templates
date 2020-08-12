@@ -5,9 +5,6 @@
     "sharePointVersion": {
       "value": "2019"
     },
-    "dnsLabelPrefix": {
-      "value": "xydsp"
-    },
     "domainFQDN": {
       "value": "contoso.local"
     },

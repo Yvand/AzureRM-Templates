@@ -21,13 +21,6 @@
         "description": "Version of SharePoint farm to create."
       }
     },
-    "dnsLabelPrefix": {
-      "type": "string",
-      "minLength": 2,
-      "metadata": {
-        "description": "\"[Prefix]\" of public DNS name of VMs, as used in \"[Prefix]-[VMName].[region].cloudapp.azure.com\""
-      }
-    },
     "domainFQDN": {
       "type": "string",
       "defaultValue": "contoso.local",
@@ -282,7 +275,7 @@
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmDCName, '-0')]",
       "nicPrivateIPAddress": "10.0.1.4",
       "vmPublicIPName": "[concat('PublicIP-', variables('generalSettings').vmDCName)]",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmDCName), '_', '-'))]",
+      "vmPublicIPDnsName": "[toLower(replace(concat(resourceGroup().name, '-', variables('generalSettings').vmDCName), '_', '-'))]",
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmDCName)]"
     },
     "vmSQL": {
@@ -293,7 +286,7 @@
       "vmVmSize": "[parameters('vmSQLSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmSQLName, '-0')]",
       "vmPublicIPName": "[concat('PublicIP-', variables('generalSettings').vmSQLName)]",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSQLName), '_', '-'))]",
+      "vmPublicIPDnsName": "[toLower(replace(concat(resourceGroup().name, '-', variables('generalSettings').vmSQLName), '_', '-'))]",
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSQLName)]"
     },
     "vmSP": {
@@ -305,7 +298,7 @@
       "vmVmSize": "[parameters('vmSPSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmSPName, '-0')]",
       "vmPublicIPName": "[concat('PublicIP-', variables('generalSettings').vmSPName)]",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSPName), '_', '-'))]",
+      "vmPublicIPDnsName": "[toLower(replace(concat(resourceGroup().name, '-', variables('generalSettings').vmSPName), '_', '-'))]",
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSPName)]"
     },
     "vmFE": {
@@ -313,7 +306,7 @@
       "vmDataDiskName": "Disk-FE-Data",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmFEName, '-0')]",
       "vmPublicIPName": "[concat('PublicIP-', variables('generalSettings').vmFEName)]",
-      "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmFEName), '_', '-'))]",
+      "vmPublicIPDnsName": "[toLower(replace(concat(resourceGroup().name, '-', variables('generalSettings').vmFEName), '_', '-'))]",
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmFEName)]"
     },
     "dscConfigureDCVM": {
@@ -360,7 +353,7 @@
     ],
     "azureBastion": {
       "subnetPrefix": "10.0.4.0/24",
-      "publicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', 'Bastion'), '_', '-'))]"
+      "publicIPDnsName": "[toLower(replace(concat(resourceGroup().name, '-', 'Bastion'), '_', '-'))]"
     }
   },
   "resources": [
