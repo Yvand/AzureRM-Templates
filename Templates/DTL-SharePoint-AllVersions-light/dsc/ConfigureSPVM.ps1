@@ -131,13 +131,13 @@ configuration ConfigureSPVM
                 $global:DSCMachineStatus = 1
             }
             GetScript = { }
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[WaitForADDomain]DscForestWait"
         }
 
         PendingReboot RebootRebootBeforeJoinDomain
         {
-            Name             = "BeforeCreatingSPTrust"
+            Name             = "RebootRebootBeforeJoinDomain"
             SkipCcmClientSDK = $true
             DependsOn        = "[xScript]RebootBeforeJoinDomain"
         }
