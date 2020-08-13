@@ -62,17 +62,20 @@
             DependsOn                     = "[DnsServerAddress]DnsServerAddress"
         }
 
-        PendingReboot Reboot1
-        {
-            Name = "RebootServer"
-            DependsOn = "[ADDomain]FirstDS"
-        }
+        # PendingReboot Reboot1
+        # {
+        #     Name = "RebootServer"
+        #     DependsOn = "[ADDomain]FirstDS"
+        # }
         
         WaitForADDomain ADDomainReady
         {
-            DomainName  = $DomainFQDN
-            Credential  = $DomainCredsNetbios
-            DependsOn   = "[PendingReboot]Reboot1"
+            DomainName              = $DomainFQDN
+            WaitTimeout             = 300
+            RestartCount            = 3
+            Credential              = $DomainCredsNetbios
+            WaitForValidCredentials = $true
+            DependsOn               = "[ADDomain]FirstDS"
         }
 
         #**********************************************************
