@@ -43,8 +43,8 @@ configuration ConfigureSPVM
         #**********************************************************
         # Initialization of VM
         #**********************************************************
-        # WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
-        # WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         # WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
         DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
         # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]DnsServerAddress" }
@@ -187,361 +187,361 @@ configuration ConfigureSPVM
         #     DependsOn = "[Computer]DomainJoin"
         # }
 
-        # #**********************************************************
-        # # Do some cleanup and preparation for SharePoint
-        # #**********************************************************
-        # Registry DisableLoopBackCheck
-        # {
-        #     Key       = "HKLM:\System\CurrentControlSet\Control\Lsa"
-        #     ValueName = "DisableLoopbackCheck"
-        #     ValueData = "1"
-        #     ValueType = "Dword"
-        #     Ensure    = "Present"
-        #     DependsOn ="[Computer]DomainJoin"
-        # }
+        #**********************************************************
+        # Do some cleanup and preparation for SharePoint
+        #**********************************************************
+        Registry DisableLoopBackCheck
+        {
+            Key       = "HKLM:\System\CurrentControlSet\Control\Lsa"
+            ValueName = "DisableLoopbackCheck"
+            ValueData = "1"
+            ValueType = "Dword"
+            Ensure    = "Present"
+            DependsOn ="[Computer]DomainJoin"
+        }
 
-        # xDnsRecord AddTrustedSiteDNS
-        # {
-        #     Name                 = $SPTrustedSitesName
-        #     Zone                 = $DomainFQDN
-        #     DnsServer            = $DCName
-        #     Target               = "$ComputerName.$DomainFQDN"
-        #     Type                 = "CName"
-        #     Ensure               = "Present"
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn            = "[Computer]DomainJoin"
-        # }
+        xDnsRecord AddTrustedSiteDNS
+        {
+            Name                 = $SPTrustedSitesName
+            Zone                 = $DomainFQDN
+            DnsServer            = $DCName
+            Target               = "$ComputerName.$DomainFQDN"
+            Type                 = "CName"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[Computer]DomainJoin"
+        }
 
-        # xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        # xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        # xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        # xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        # xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        # xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        # xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[Computer]DomainJoin"}
 
-        # #**********************************************************
-        # # Provision required accounts for SharePoint
-        # #**********************************************************
-        # ADUser CreateSPSetupAccount
-        # {
-        #     DomainName                    = $DomainFQDN
-        #     UserName                      = $SPSetupCreds.UserName
-        #     Password                      = $SPSetupCreds
-        #     PasswordNeverExpires          = $true
-        #     Ensure                        = "Present"
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn                     = "[Computer]DomainJoin"
-        # }        
+        #**********************************************************
+        # Provision required accounts for SharePoint
+        #**********************************************************
+        ADUser CreateSPSetupAccount
+        {
+            DomainName                    = $DomainFQDN
+            UserName                      = $SPSetupCreds.UserName
+            Password                      = $SPSetupCreds
+            PasswordNeverExpires          = $true
+            Ensure                        = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn                     = "[Computer]DomainJoin"
+        }        
 
-        # ADUser CreateSParmAccount
-        # {
-        #     DomainName                    = $DomainFQDN
-        #     UserName                      = $SPFarmCreds.UserName
-        #     Password                      = $SPFarmCreds
-        #     PasswordNeverExpires          = $true
-        #     Ensure                        = "Present"
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn                     = "[Computer]DomainJoin"
-        # }
+        ADUser CreateSParmAccount
+        {
+            DomainName                    = $DomainFQDN
+            UserName                      = $SPFarmCreds.UserName
+            Password                      = $SPFarmCreds
+            PasswordNeverExpires          = $true
+            Ensure                        = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn                     = "[Computer]DomainJoin"
+        }
 
-        # Group AddSPSetupAccountToAdminGroup
-        # {
-        #     GroupName            = "Administrators"
-        #     Ensure               = "Present"
-        #     MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
-        #     Credential           = $DomainAdminCredsQualified
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn            = "[ADUser]CreateSPSetupAccount", "[ADUser]CreateSParmAccount"
-        # }
+        Group AddSPSetupAccountToAdminGroup
+        {
+            GroupName            = "Administrators"
+            Ensure               = "Present"
+            MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
+            Credential           = $DomainAdminCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[ADUser]CreateSPSetupAccount", "[ADUser]CreateSParmAccount"
+        }
 
-        # ADUser CreateSPAppPoolAccount
-        # {
-        #     DomainName                    = $DomainFQDN
-        #     UserName                      = $SPAppPoolCreds.UserName
-        #     Password                      = $SPAppPoolCreds
-        #     PasswordNeverExpires          = $true
-        #     Ensure                        = "Present"
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn                     = "[Computer]DomainJoin"
-        # }
+        ADUser CreateSPAppPoolAccount
+        {
+            DomainName                    = $DomainFQDN
+            UserName                      = $SPAppPoolCreds.UserName
+            Password                      = $SPAppPoolCreds
+            PasswordNeverExpires          = $true
+            Ensure                        = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn                     = "[Computer]DomainJoin"
+        }
 
-        # File AccountsProvisioned
-        # {
-        #     DestinationPath      = "C:\Logs\DSC1.txt"
-        #     Contents             = "AccountsProvisioned"
-        #     Type                 = 'File'
-        #     Force                = $true
-        #     PsDscRunAsCredential = $SPSetupCredential
-        #     DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPAppPoolAccount"
-        # }
+        File AccountsProvisioned
+        {
+            DestinationPath      = "C:\Logs\DSC1.txt"
+            Contents             = "AccountsProvisioned"
+            Type                 = 'File'
+            Force                = $true
+            PsDscRunAsCredential = $SPSetupCredential
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPAppPoolAccount"
+        }
 
-        # SqlAlias AddSqlAlias
-        # {
-        #     Ensure               = "Present"
-        #     Name                 = $SQLAlias
-        #     ServerName           = $SQLName
-        #     Protocol             = "TCP"
-        #     TcpPort              = 1433
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn            = "[File]AccountsProvisioned"
-        # }
+        SqlAlias AddSqlAlias
+        {
+            Ensure               = "Present"
+            Name                 = $SQLAlias
+            ServerName           = $SQLName
+            Protocol             = "TCP"
+            TcpPort              = 1433
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[File]AccountsProvisioned"
+        }
 
-        # xScript WaitForSQL
-        # {
-        #     SetScript =
-        #     {
-        #         $retrySleep = 30
-        #         $server = $using:SQLAlias
-        #         $db="master"
-        #         $retry = $true
-        #         while ($retry) {
-        #             $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
-        #             try {
-        #                 $sqlConnection.Open()
-        #                 Write-Verbose "Connection to SQL Server $server succeeded"
-        #                 $sqlConnection.Close()
-        #                 $retry = $false
-        #             }
-        #             catch {
-        #                 Write-Verbose "SQL connection to $server failed, retry in $retrySleep secs..."
-        #                 Start-Sleep -s $retrySleep
-        #             }
-        #         }
-        #     }
-        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn            = "[SqlAlias]AddSqlAlias"
-        # }
+        xScript WaitForSQL
+        {
+            SetScript =
+            {
+                $retrySleep = 30
+                $server = $using:SQLAlias
+                $db="master"
+                $retry = $true
+                while ($retry) {
+                    $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
+                    try {
+                        $sqlConnection.Open()
+                        Write-Verbose "Connection to SQL Server $server succeeded"
+                        $sqlConnection.Close()
+                        $retry = $false
+                    }
+                    catch {
+                        Write-Verbose "SQL connection to $server failed, retry in $retrySleep secs..."
+                        Start-Sleep -s $retrySleep
+                    }
+                }
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SqlAlias]AddSqlAlias"
+        }
 
-        # #**********************************************************
-        # # Create SharePoint farm
-        # #**********************************************************
-        # SPFarm CreateSPFarm
-        # {
-        #     DatabaseServer            = $SQLAlias
-        #     FarmConfigDatabaseName    = $SPDBPrefix + "Config"
-        #     Passphrase                = $SPPassphraseCreds
-        #     FarmAccount               = $SPFarmCredsQualified
-        #     PsDscRunAsCredential      = $SPSetupCredsQualified
-        #     AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
-        #     CentralAdministrationPort = 5000
-        #     # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
-        #     RunCentralAdmin           = $true
-        #     IsSingleInstance          = "Yes"
-        #     Ensure                    = "Present"
-        #     DependsOn                 = "[xScript]WaitForSQL"
-        # }
+        #**********************************************************
+        # Create SharePoint farm
+        #**********************************************************
+        SPFarm CreateSPFarm
+        {
+            DatabaseServer            = $SQLAlias
+            FarmConfigDatabaseName    = $SPDBPrefix + "Config"
+            Passphrase                = $SPPassphraseCreds
+            FarmAccount               = $SPFarmCredsQualified
+            PsDscRunAsCredential      = $SPSetupCredsQualified
+            AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
+            CentralAdministrationPort = 5000
+            # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
+            RunCentralAdmin           = $true
+            IsSingleInstance          = "Yes"
+            Ensure                    = "Present"
+            DependsOn                 = "[xScript]WaitForSQL"
+        }
 
-        # SPManagedAccount CreateSPAppPoolManagedAccount
-        # {
-        #     AccountName          = $SPAppPoolCredsQualified.UserName
-        #     Account              = $SPAppPoolCredsQualified
-        #     PsDscRunAsCredential = $SPSetupCredsQualified
-        #     DependsOn            = "[SPFarm]CreateSPFarm"
-        # }
+        SPManagedAccount CreateSPAppPoolManagedAccount
+        {
+            AccountName          = $SPAppPoolCredsQualified.UserName
+            Account              = $SPAppPoolCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
+        }
 
-        # SPWebApplication MainWebApp
-        # {
-        #     Name                   = "SharePoint - 80"
-        #     ApplicationPool        = "SharePoint - 80"
-        #     ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
-        #     AllowAnonymous         = $false
-        #     DatabaseName           = $SPDBPrefix + "Content_80"
-        #     WebAppUrl              = "http://$SPTrustedSitesName/"
-        #     Port                   = 80
-        #     Ensure                 = "Present"
-        #     PsDscRunAsCredential   = $SPSetupCredsQualified
-        #     DependsOn              = "[SPFarm]CreateSPFarm"
-        # }
+        SPWebApplication MainWebApp
+        {
+            Name                   = "SharePoint - 80"
+            ApplicationPool        = "SharePoint - 80"
+            ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
+            AllowAnonymous         = $false
+            DatabaseName           = $SPDBPrefix + "Content_80"
+            WebAppUrl              = "http://$SPTrustedSitesName/"
+            Port                   = 80
+            Ensure                 = "Present"
+            PsDscRunAsCredential   = $SPSetupCredsQualified
+            DependsOn              = "[SPFarm]CreateSPFarm"
+        }
 
-        # # Creating site collection in SharePoint 2019 fail: https://github.com/PowerShell/SharePointDsc/issues/990
-        # # The workaround is to force a reboot before creating it
-        # if ($SharePointVersion -eq "2019") {
-        #     xScript SetRebootIfFirstTime
-        #     {
-        #         # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-        #         TestScript = {
-        #             return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
-        #         }
-        #         SetScript = {
-        #             New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
-        #             $global:DSCMachineStatus = 1
-        #         }
-        #         GetScript = { }
-        #         PsDscRunAsCredential = $SPSetupCredsQualified
-        #         DependsOn = "[SPWebApplication]MainWebApp"
-        #     }
+        # Creating site collection in SharePoint 2019 fail: https://github.com/PowerShell/SharePointDsc/issues/990
+        # The workaround is to force a reboot before creating it
+        if ($SharePointVersion -eq "2019") {
+            xScript SetRebootIfFirstTime
+            {
+                # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+                TestScript = {
+                    return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
+                }
+                SetScript = {
+                    New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
+                    $global:DSCMachineStatus = 1
+                }
+                GetScript = { }
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn = "[SPWebApplication]MainWebApp"
+            }
 
-        #     PendingReboot RebootBeforeCreatingSPSite
-        #     {
-        #         Name             = "BeforeCreatingSPTrust"
-        #         SkipCcmClientSDK = $true
-        #         DependsOn        = "[xScript]SetRebootIfFirstTime"
-        #     }
-        # }
+            PendingReboot RebootBeforeCreatingSPSite
+            {
+                Name             = "BeforeCreatingSPTrust"
+                SkipCcmClientSDK = $true
+                DependsOn        = "[xScript]SetRebootIfFirstTime"
+            }
+        }
 
-        # if ($ConfigureADFS -eq $true) {
-        #     File CopyCertificatesFromDC
-        #     {
-        #         Ensure          = "Present"
-        #         Type            = "Directory"
-        #         Recurse         = $true
-        #         SourcePath      = "$DCSetupPath"
-        #         DestinationPath = "$SetupPath\Certificates"
-        #         Credential      = $DomainAdminCredsQualified
-        #         DependsOn       = "[Computer]DomainJoin"
-        #     }
+        if ($ConfigureADFS -eq $true) {
+            File CopyCertificatesFromDC
+            {
+                Ensure          = "Present"
+                Type            = "Directory"
+                Recurse         = $true
+                SourcePath      = "$DCSetupPath"
+                DestinationPath = "$SetupPath\Certificates"
+                Credential      = $DomainAdminCredsQualified
+                DependsOn       = "[Computer]DomainJoin"
+            }
 
-        #     SPTrustedRootAuthority TrustRootCA
-        #     {
-        #         Name                 = "$DomainFQDN root CA"
-        #         CertificateFilePath  = "$SetupPath\Certificates\ADFS Signing issuer.cer"
-        #         Ensure               = "Present"
-        #         PsDscRunAsCredential = $SPSetupCredsQualified
-        #         DependsOn            = "[SPFarm]CreateSPFarm"
-        #     }
+            SPTrustedRootAuthority TrustRootCA
+            {
+                Name                 = "$DomainFQDN root CA"
+                CertificateFilePath  = "$SetupPath\Certificates\ADFS Signing issuer.cer"
+                Ensure               = "Present"
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn            = "[SPFarm]CreateSPFarm"
+            }
 
-        #     SPTrustedIdentityTokenIssuer CreateSPTrust
-        #     {
-        #         Name                         = $DomainFQDN
-        #         Description                  = "Federation with $DomainFQDN"
-        #         Realm                        = "urn:federation:sharepoint"
-        #         SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
-        #         IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
-        #         ClaimsMappings               = @(
-        #             MSFT_SPClaimTypeMapping{
-        #                 Name = "Email"
-        #                 IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
-        #             }
-        #             MSFT_SPClaimTypeMapping{
-        #                 Name = "Role"
-        #                 IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-        #             }
-        #         )
-        #         SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
-        #         #ClaimProviderName           = "" # Should not be set if there is none
-        #         #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
-        #         UseWReplyParameter           = $true
-        #         Ensure                       = "Present"
-        #         DependsOn                    = "[SPFarm]CreateSPFarm"
-        #         PsDscRunAsCredential         = $SPSetupCredsQualified
-        #     }
+            SPTrustedIdentityTokenIssuer CreateSPTrust
+            {
+                Name                         = $DomainFQDN
+                Description                  = "Federation with $DomainFQDN"
+                Realm                        = "urn:federation:sharepoint"
+                SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
+                IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                ClaimsMappings               = @(
+                    MSFT_SPClaimTypeMapping{
+                        Name = "Email"
+                        IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                    }
+                    MSFT_SPClaimTypeMapping{
+                        Name = "Role"
+                        IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                    }
+                )
+                SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
+                #ClaimProviderName           = "" # Should not be set if there is none
+                #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
+                UseWReplyParameter           = $true
+                Ensure                       = "Present"
+                DependsOn                    = "[SPFarm]CreateSPFarm"
+                PsDscRunAsCredential         = $SPSetupCredsQualified
+            }
 
-        #     # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
-        #     xScript UpdateGPOToTrustRootCACert
-        #     {
-        #         SetScript =
-        #         {
-        #             gpupdate.exe /force
-        #         }
-        #         GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-        #         TestScript           = { return $false }
-        #         DependsOn            = "[Computer]DomainJoin"
-        #         PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     }
+            # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
+            xScript UpdateGPOToTrustRootCACert
+            {
+                SetScript =
+                {
+                    gpupdate.exe /force
+                }
+                GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                TestScript           = { return $false }
+                DependsOn            = "[Computer]DomainJoin"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+            }
 
-        #     CertReq SPSSiteCert
-        #     {
-        #         CARootName             = "$DomainNetbiosName-$DCName-CA"
-        #         CAServerFQDN           = "$DCName.$DomainFQDN"
-        #         Subject                = "$SPTrustedSitesName.$DomainFQDN"
-        #         SubjectAltName         = "dns=*.$DomainFQDN"
-        #         KeyLength              = '2048'
-        #         Exportable             = $true
-        #         ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
-        #         OID                    = '1.3.6.1.5.5.7.3.1'
-        #         KeyUsage               = '0xa0'
-        #         CertificateTemplate    = 'WebServer'
-        #         AutoRenew              = $true
-        #         Credential             = $DomainAdminCredsQualified
-        #         DependsOn              = '[xScript]UpdateGPOToTrustRootCACert'
-        #     }
+            CertReq SPSSiteCert
+            {
+                CARootName             = "$DomainNetbiosName-$DCName-CA"
+                CAServerFQDN           = "$DCName.$DomainFQDN"
+                Subject                = "$SPTrustedSitesName.$DomainFQDN"
+                SubjectAltName         = "dns=*.$DomainFQDN"
+                KeyLength              = '2048'
+                Exportable             = $true
+                ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+                OID                    = '1.3.6.1.5.5.7.3.1'
+                KeyUsage               = '0xa0'
+                CertificateTemplate    = 'WebServer'
+                AutoRenew              = $true
+                Credential             = $DomainAdminCredsQualified
+                DependsOn              = '[xScript]UpdateGPOToTrustRootCACert'
+            }
 
-        #     SPWebApplicationExtension ExtendWebApp
-        #     {
-        #         WebAppUrl              = "http://$SPTrustedSitesName/"
-        #         Name                   = "SharePoint - 443"
-        #         AllowAnonymous         = $false
-        #         Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
-        #         Zone                   = "Intranet"
-        #         UseSSL                 = $true
-        #         Port                   = 443
-        #         Ensure                 = "Present"
-        #         PsDscRunAsCredential   = $SPSetupCredsQualified
-        #         DependsOn              = '[CertReq]SPSSiteCert'
-        #     }
+            SPWebApplicationExtension ExtendWebApp
+            {
+                WebAppUrl              = "http://$SPTrustedSitesName/"
+                Name                   = "SharePoint - 443"
+                AllowAnonymous         = $false
+                Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
+                Zone                   = "Intranet"
+                UseSSL                 = $true
+                Port                   = 443
+                Ensure                 = "Present"
+                PsDscRunAsCredential   = $SPSetupCredsQualified
+                DependsOn              = '[CertReq]SPSSiteCert'
+            }
 
-        #     SPWebAppAuthentication ConfigureAuthentAllZones
-        #     {
-        #         WebAppUrl = "http://$SPTrustedSitesName/"
-        #         Default = @(
-        #             MSFT_SPWebAppAuthenticationMode {
-        #                 AuthenticationMethod = "WindowsAuthentication"
-        #                 WindowsAuthMethod    = "NTLM"
-        #             }
-        #         )
-        #         Intranet = @(
-        #             MSFT_SPWebAppAuthenticationMode {
-        #                 AuthenticationMethod = "Federated"
-        #                 AuthenticationProvider = $DomainFQDN
-        #             }
-        #         )
-        #         PsDscRunAsCredential = $SPSetupCredsQualified
-        #         DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
-        #     }
+            SPWebAppAuthentication ConfigureAuthentAllZones
+            {
+                WebAppUrl = "http://$SPTrustedSitesName/"
+                Default = @(
+                    MSFT_SPWebAppAuthenticationMode {
+                        AuthenticationMethod = "WindowsAuthentication"
+                        WindowsAuthMethod    = "NTLM"
+                    }
+                )
+                Intranet = @(
+                    MSFT_SPWebAppAuthenticationMode {
+                        AuthenticationMethod = "Federated"
+                        AuthenticationProvider = $DomainFQDN
+                    }
+                )
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
+            }
 
-        #     xWebsite SetHTTPSCertificate
-        #     {
-        #         Name                 = "SharePoint - 443"
-        #         BindingInfo          = MSFT_xWebBindingInformation
-        #         {
-        #             Protocol             = "HTTPS"
-        #             Port                 = 443
-        #             CertificateStoreName = "My"
-        #             CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
-        #         }
-        #         Ensure               = "Present"
-        #         PsDscRunAsCredential = $DomainAdminCredsQualified
-        #         DependsOn            = "[SPWebAppAuthentication]ConfigureAuthentAllZones"
-        #     }
+            xWebsite SetHTTPSCertificate
+            {
+                Name                 = "SharePoint - 443"
+                BindingInfo          = MSFT_xWebBindingInformation
+                {
+                    Protocol             = "HTTPS"
+                    Port                 = 443
+                    CertificateStoreName = "My"
+                    CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
+                }
+                Ensure               = "Present"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[SPWebAppAuthentication]ConfigureAuthentAllZones"
+            }
 
-        #     SPSite RootTeamSite
-        #     {
-        #         Url                  = "http://$SPTrustedSitesName/"
-        #         OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-        #         SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-        #         Name                 = "Blank site"
-        #         Template             = "STS#1"
-        #         PsDscRunAsCredential = $SPSetupCredsQualified
-        #         DependsOn            = "[SPWebApplication]MainWebApp"
-        #     }
-        # }
-        # else {
-        #     SPWebAppAuthentication ConfigureAuthentDefaultZone
-        #     {
-        #         WebAppUrl = "http://$SPTrustedSitesName/"
-        #         Default = @(
-        #             MSFT_SPWebAppAuthenticationMode {
-        #                 AuthenticationMethod = "WindowsAuthentication"
-        #                 WindowsAuthMethod    = "NTLM"
-        #             }
-        #         )                
-        #         PsDscRunAsCredential = $SPSetupCredsQualified
-        #         DependsOn            = "[SPWebApplication]MainWebApp"
-        #     }
+            SPSite RootTeamSite
+            {
+                Url                  = "http://$SPTrustedSitesName/"
+                OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+                SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+                Name                 = "Blank site"
+                Template             = "STS#1"
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn            = "[SPWebApplication]MainWebApp"
+            }
+        }
+        else {
+            SPWebAppAuthentication ConfigureAuthentDefaultZone
+            {
+                WebAppUrl = "http://$SPTrustedSitesName/"
+                Default = @(
+                    MSFT_SPWebAppAuthenticationMode {
+                        AuthenticationMethod = "WindowsAuthentication"
+                        WindowsAuthMethod    = "NTLM"
+                    }
+                )                
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn            = "[SPWebApplication]MainWebApp"
+            }
 
-        #     SPSite RootTeamSite
-        #     {
-        #         Url                  = "http://$SPTrustedSitesName/"
-        #         OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-        #         Name                 = "Blank site"
-        #         Template             = "STS#1"
-        #         PsDscRunAsCredential = $SPSetupCredsQualified
-        #         DependsOn            = "[SPWebApplication]MainWebApp"
-        #     }
-        # }
+            SPSite RootTeamSite
+            {
+                Url                  = "http://$SPTrustedSitesName/"
+                OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+                Name                 = "Blank site"
+                Template             = "STS#1"
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn            = "[SPWebApplication]MainWebApp"
+            }
+        }
     }
 }
 
