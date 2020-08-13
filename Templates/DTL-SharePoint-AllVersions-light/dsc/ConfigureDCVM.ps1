@@ -93,15 +93,15 @@
             DependsOn = "[WaitForADDomain]ADDomainReady"
         }
 
-        WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
-        WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
+        WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[WaitForADDomain]ADDomainReady" }
+        WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[WaitForADDomain]ADDomainReady" }
 
         if ($ConfigureADFS -eq $true) {
             #**********************************************************
             # Configure AD CS
             #**********************************************************
-            WindowsFeature AddCertAuthority       { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
-            WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
+            WindowsFeature AddCertAuthority       { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[WaitForADDomain]ADDomainReady" }
+            WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[WaitForADDomain]ADDomainReady" }
             ADCSCertificationAuthority ADCS
             {
                 IsSingleInstance = "Yes"
@@ -203,7 +203,7 @@
                 Target = $PrivateIP
                 Type = "ARecord"
                 Ensure = "Present"
-                DependsOn = "[PendingReboot]Reboot1"
+                DependsOn = "[WaitForADDomain]ADDomainReady"
             }
 
             cADFSFarm CreateADFSFarm
