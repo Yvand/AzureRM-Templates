@@ -135,7 +135,7 @@ configuration ConfigureSPVM
             DependsOn = "[WaitForADDomain]DscForestWait"
         }
 
-        PendingReboot RebootBeforeCreatingSPSite
+        PendingReboot RebootRebootBeforeJoinDomain
         {
             Name             = "BeforeCreatingSPTrust"
             SkipCcmClientSDK = $true
@@ -147,7 +147,7 @@ configuration ConfigureSPVM
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            DependsOn = "[PendingReboot]RebootBeforeCreatingSPSite"
+            DependsOn = "[PendingReboot]RebootRebootBeforeJoinDomain"
         }
 
         xScript CreateWSManSPNsIfNeeded
