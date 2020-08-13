@@ -40,11 +40,12 @@ configuration ConfigureSQLVM
         #**********************************************************
         WaitForADDomain DscForestWait
         {
-            DomainName           = $DomainFQDN
-            WaitTimeout          = 600
-            RestartCount         = 2
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            #DependsOn            = "[DnsServerAddress]DnsServerAddress"
+            DomainName              = $DomainFQDN
+            WaitTimeout             = 600
+            RestartCount            = 2
+            WaitForValidCredentials = $True
+            Credential              = $DomainAdminCredsQualified
+            DependsOn               = "[DnsServerAddress]DnsServerAddress"
         }
 
         Computer DomainJoin

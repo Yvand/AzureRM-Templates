@@ -66,7 +66,14 @@
         {
             Name = "RebootServer"
             DependsOn = "[ADDomain]FirstDS"
-        }       
+        }
+        
+        WaitForADDomain ADDomainReady
+        {
+            DomainName  = $DomainFQDN
+            Credential  = $DomainCredsNetbios
+            DependsOn   = "[PendingReboot]Reboot1"
+        }
 
         #**********************************************************
         # Misc: Set email of AD domain admin and add remote AD tools
@@ -80,7 +87,7 @@
             # PasswordAuthentication = 'Negotiate'
             Ensure = "Present"
             PasswordNeverExpires = $true
-            DependsOn = "[PendingReboot]Reboot1"
+            DependsOn = "[WaitForADDomain]ADDomainReady"
         }
 
         WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
