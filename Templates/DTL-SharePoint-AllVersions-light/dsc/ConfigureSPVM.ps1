@@ -111,11 +111,12 @@ configuration ConfigureSPVM
         #**********************************************************
         WaitForADDomain DscForestWait
         {
-            DomainName           = $DomainFQDN
-            WaitTimeout          = 600
-            RestartCount         = 2
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xCredSSP]CredSSPClient"
+            DomainName              = $DomainFQDN
+            WaitTimeout             = 600
+            RestartCount            = 2
+            WaitForValidCredentials = $True
+            PsDscRunAsCredential    = $DomainAdminCredsQualified
+            DependsOn               = "[xCredSSP]CredSSPClient"
         }
 
         Computer DomainJoin
@@ -204,6 +205,7 @@ configuration ConfigureSPVM
             Password                      = $SPSetupCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn                     = "[Computer]DomainJoin"
         }        
 
@@ -214,6 +216,7 @@ configuration ConfigureSPVM
             Password                      = $SPFarmCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn                     = "[Computer]DomainJoin"
         }
 
@@ -234,6 +237,7 @@ configuration ConfigureSPVM
             Password                      = $SPAppPoolCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn                     = "[Computer]DomainJoin"
         }
 

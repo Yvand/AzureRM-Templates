@@ -66,6 +66,7 @@ configuration ConfigureSQLVM
             Password = $SQLCredsQualified
             PasswordNeverExpires = $true
             Ensure = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[Computer]DomainJoin"
         }
 
@@ -122,6 +123,7 @@ configuration ConfigureSQLVM
             Password = $SPSetupCredsQualified
             PasswordNeverExpires = $true
             Ensure = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn = "[Computer]DomainJoin"
         }
 
@@ -254,7 +256,8 @@ $SPSetupCreds = Get-Credential -Credential "spsetup"
 $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 
-ConfigureSQLVM -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Data\\output"
-Start-DscConfiguration -Path "C:\Data\output" -Wait -Verbose -Force
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.3\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
+ConfigureSQLVM -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
 #>
