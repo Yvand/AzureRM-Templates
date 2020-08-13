@@ -50,52 +50,52 @@ configuration ConfigureSPVM
         # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]DnsServerAddress" }
         # xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
-        # # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
-        # # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
-        # Registry EnableTLS12RegKey1
-        # {
-        #     Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
-        #     ValueName = 'DisabledByDefault'
-        #     ValueType = 'Dword'
-        #     ValueData =  '0'
-        #     Ensure    = 'Present'
-        # }
+        # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
+        # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
+        Registry EnableTLS12RegKey1
+        {
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
+            ValueName = 'DisabledByDefault'
+            ValueType = 'Dword'
+            ValueData =  '0'
+            Ensure    = 'Present'
+        }
 
-        # Registry EnableTLS12RegKey2
-        # {
-        #     Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
-        #     ValueName = 'Enabled'
-        #     ValueType = 'Dword'
-        #     ValueData =  '1'
-        #     Ensure    = 'Present'
-        # }
+        Registry EnableTLS12RegKey2
+        {
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
+            ValueName = 'Enabled'
+            ValueType = 'Dword'
+            ValueData =  '1'
+            Ensure    = 'Present'
+        }
 
-        # Registry EnableTLS12RegKey3
-        # {
-        #     Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
-        #     ValueName = 'DisabledByDefault'
-        #     ValueType = 'Dword'
-        #     ValueData =  '0'
-        #     Ensure    = 'Present'
-        # }
+        Registry EnableTLS12RegKey3
+        {
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
+            ValueName = 'DisabledByDefault'
+            ValueType = 'Dword'
+            ValueData =  '0'
+            Ensure    = 'Present'
+        }
 
-        # Registry EnableTLS12RegKey4
-        # {
-        #     Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
-        #     ValueName = 'Enabled'
-        #     ValueType = 'Dword'
-        #     ValueData =  '1'
-        #     Ensure    = 'Present'
-        # }
+        Registry EnableTLS12RegKey4
+        {
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
+            ValueName = 'Enabled'
+            ValueType = 'Dword'
+            ValueData =  '1'
+            Ensure    = 'Present'
+        }
 
-        # Registry SchUseStrongCrypto
-        # {
-        #     Key       = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
-        #     ValueName = 'SchUseStrongCrypto'
-        #     ValueType = 'Dword'
-        #     ValueData =  '1'
-        #     Ensure    = 'Present'
-        # }
+        Registry SchUseStrongCrypto
+        {
+            Key       = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
+            ValueName = 'SchUseStrongCrypto'
+            ValueType = 'Dword'
+            ValueData =  '1'
+            Ensure    = 'Present'
+        }
 
         <#Registry SchUseStrongCrypto64
         {
@@ -152,40 +152,47 @@ configuration ConfigureSPVM
             DependsOn = "[WaitForADDomain]DscForestWait"
         }
 
-        # xScript CreateWSManSPNsIfNeeded
-        # {
-        #     SetScript =
-        #     {
-        #         # A few times, deployment failed because of this error:
-        #         # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
-        #         # The root cause was that SPNs WSMAN/SP and WSMAN/sp.contoso.local were missing in computer account contoso\SP
-        #         # Those SPNs are created by WSMan when it (re)starts
-        #         # Restarting service causes an error, so creates SPNs manually instead
-        #         # Restart-Service winrm
+        PendingReboot RebootAfterJoinedDomain
+        {
+            Name             = "RebootAfterJoinedDomain"
+            SkipCcmClientSDK = $true
+            DependsOn        = "[Computer]DomainJoin"
+        }
+        
+        xScript CreateWSManSPNsIfNeeded
+        {
+            SetScript =
+            {
+                # A few times, deployment failed because of this error:
+                # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
+                # The root cause was that SPNs WSMAN/SP and WSMAN/sp.contoso.local were missing in computer account contoso\SP
+                # Those SPNs are created by WSMan when it (re)starts
+                # Restarting service causes an error, so creates SPNs manually instead
+                # Restart-Service winrm
 
-        #         # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
-        #         $domainFQDN = $using:DomainFQDN
-        #         $computerName = $using:ComputerName
-        #         Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
-        #         setspn.exe -S "WSMAN/$computerName" "$computerName"
-        #         setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
-        #     }
-        #     GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-        #     TestScript = 
-        #     {
-        #         $computerName = $using:ComputerName
-        #         $samAccountName = "$computerName$"
-        #         if ((Get-ADComputer -Filter {(SamAccountName -eq $samAccountName)} -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
-        #             # SPN is present
-        #             return $true
-        #         }
-        #         else {
-        #             # SPN is missing and must be created
-        #             return $false
-        #         }
-        #     }
-        #     DependsOn = "[Computer]DomainJoin"
-        # }
+                # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
+                $domainFQDN = $using:DomainFQDN
+                $computerName = $using:ComputerName
+                Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
+                setspn.exe -S "WSMAN/$computerName" "$computerName"
+                setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
+            }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript = 
+            {
+                $computerName = $using:ComputerName
+                $samAccountName = "$computerName$"
+                if ((Get-ADComputer -Filter {(SamAccountName -eq $samAccountName)} -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
+                    # SPN is present
+                    return $true
+                }
+                else {
+                    # SPN is missing and must be created
+                    return $false
+                }
+            }
+            DependsOn = "[PendingReboot]RebootAfterJoinedDomain"
+        }
 
         #**********************************************************
         # Do some cleanup and preparation for SharePoint
@@ -197,7 +204,7 @@ configuration ConfigureSPVM
             ValueData = "1"
             ValueType = "Dword"
             Ensure    = "Present"
-            DependsOn ="[Computer]DomainJoin"
+            DependsOn ="[PendingReboot]RebootAfterJoinedDomain"
         }
 
         xDnsRecord AddTrustedSiteDNS
@@ -209,16 +216,16 @@ configuration ConfigureSPVM
             Type                 = "CName"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[Computer]DomainJoin"
+            DependsOn            = "[PendingReboot]RebootAfterJoinedDomain"
         }
 
-        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
+        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
+        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
+        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
+        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
+        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
+        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
 
         #**********************************************************
         # Provision required accounts for SharePoint
@@ -231,7 +238,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[Computer]DomainJoin"
+            DependsOn                     = "[PendingReboot]RebootAfterJoinedDomain"
         }        
 
         ADUser CreateSParmAccount
@@ -242,7 +249,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[Computer]DomainJoin"
+            DependsOn                     = "[PendingReboot]RebootAfterJoinedDomain"
         }
 
         Group AddSPSetupAccountToAdminGroup
@@ -263,7 +270,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[Computer]DomainJoin"
+            DependsOn                     = "[PendingReboot]RebootAfterJoinedDomain"
         }
 
         File AccountsProvisioned
@@ -391,7 +398,7 @@ configuration ConfigureSPVM
                 SourcePath      = "$DCSetupPath"
                 DestinationPath = "$SetupPath\Certificates"
                 Credential      = $DomainAdminCredsQualified
-                DependsOn       = "[Computer]DomainJoin"
+                DependsOn       = "[PendingReboot]RebootAfterJoinedDomain"
             }
 
             SPTrustedRootAuthority TrustRootCA
@@ -438,7 +445,7 @@ configuration ConfigureSPVM
                 }
                 GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                 TestScript           = { return $false }
-                DependsOn            = "[Computer]DomainJoin"
+                DependsOn            = "[PendingReboot]RebootAfterJoinedDomain"
                 PsDscRunAsCredential = $DomainAdminCredsQualified
             }
 
