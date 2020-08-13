@@ -45,10 +45,10 @@ configuration ConfigureSPVM
         #**********************************************************
         WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
-        DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4'; DependsOn ="[WindowsFeature]ADPS" }
-        xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]DnsServerAddress" }
-        xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
+        # WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
+        DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]DnsServerAddress" }
+        # xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
         # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
         # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
@@ -116,38 +116,40 @@ configuration ConfigureSPVM
             RestartCount            = 2
             WaitForValidCredentials = $True
             PsDscRunAsCredential    = $DomainAdminCredsQualified
-            DependsOn               = "[xCredSSP]CredSSPClient"
+            # DependsOn               = "[xCredSSP]CredSSPClient"
+            DependsOn               = "[DnsServerAddress]DnsServerAddress"
         }
 
-        # Quick an,d dirty workaround for error in [Computer]DomainJoin, that fails with this error otherwise: [ERROR] The WS-Management service cannot process the request. The WMI service or the WMI provider returned an unknown error: HRESULT 0x80041033 
-        xScript RebootBeforeJoinDomain
-        {
-            # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            TestScript = {
-                return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootBeforeJoinDomain)
-            }
-            SetScript = {
-                New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootBeforeJoinDomain -Force
-                $global:DSCMachineStatus = 1
-            }
-            GetScript = { }
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[WaitForADDomain]DscForestWait"
-        }
+        # # Quick an,d dirty workaround for error in [Computer]DomainJoin, that fails with this error otherwise: [ERROR] The WS-Management service cannot process the request. The WMI service or the WMI provider returned an unknown error: HRESULT 0x80041033 
+        # xScript RebootBeforeJoinDomain
+        # {
+        #     # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        #     TestScript = {
+        #         return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootBeforeJoinDomain)
+        #     }
+        #     SetScript = {
+        #         New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootBeforeJoinDomain -Force
+        #         $global:DSCMachineStatus = 1
+        #     }
+        #     GetScript = { }
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn = "[WaitForADDomain]DscForestWait"
+        # }
 
-        PendingReboot RebootRebootBeforeJoinDomain
-        {
-            Name             = "RebootRebootBeforeJoinDomain"
-            SkipCcmClientSDK = $true
-            DependsOn        = "[xScript]RebootBeforeJoinDomain"
-        }
+        # PendingReboot RebootRebootBeforeJoinDomain
+        # {
+        #     Name             = "RebootRebootBeforeJoinDomain"
+        #     SkipCcmClientSDK = $true
+        #     DependsOn        = "[xScript]RebootBeforeJoinDomain"
+        # }
 
         Computer DomainJoin
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            DependsOn = "[PendingReboot]RebootRebootBeforeJoinDomain"
+            # DependsOn = "[PendingReboot]RebootRebootBeforeJoinDomain"
+            DependsOn = "[WaitForADDomain]DscForestWait"
         }
 
         xScript CreateWSManSPNsIfNeeded
