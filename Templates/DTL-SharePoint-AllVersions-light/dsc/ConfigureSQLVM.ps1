@@ -56,6 +56,13 @@ configuration ConfigureSQLVM
             DependsOn = "[WaitForADDomain]DscForestWait"
         }
 
+        PendingReboot RebootAfterJoinedDomain
+        {
+            Name             = "RebootAfterJoinedDomain"
+            SkipCcmClientSDK = $true
+            DependsOn        = "[Computer]DomainJoin"
+        }
+
         #**********************************************************
         # Create accounts and configure SQL Server
         #**********************************************************
@@ -67,7 +74,7 @@ configuration ConfigureSQLVM
             PasswordNeverExpires = $true
             Ensure = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[Computer]DomainJoin"
+            DependsOn = "[PendingReboot]RebootAfterJoinedDomain"
         }
 
         ADServicePrincipalName UpdateSqlSPN1
@@ -124,7 +131,7 @@ configuration ConfigureSQLVM
             PasswordNeverExpires = $true
             Ensure = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[Computer]DomainJoin"
+            DependsOn = "[PendingReboot]RebootAfterJoinedDomain"
         }
 
         SqlLogin AddDomainAdminLogin
@@ -134,7 +141,7 @@ configuration ConfigureSQLVM
             ServerName = $ComputerName
             InstanceName = "MSSQLSERVER"
             LoginType = "WindowsUser"
-            DependsOn = "[Computer]DomainJoin"
+            DependsOn = "[PendingReboot]RebootAfterJoinedDomain"
         }
 
         SqlLogin AddSPSetupLogin
@@ -182,7 +189,7 @@ configuration ConfigureSQLVM
             ServerName   = $ComputerName
             InstanceName = "MSSQLSERVER"
             MaxDop       = 1
-            DependsOn    = "[Computer]DomainJoin"
+            DependsOn    = "[PendingReboot]RebootAfterJoinedDomain"
         }
 
         # Open port on the firewall when everything is ready, as SharePoint DSC is testing it to start creation of the farm
