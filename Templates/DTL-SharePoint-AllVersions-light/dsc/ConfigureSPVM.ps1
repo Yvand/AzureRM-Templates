@@ -16,7 +16,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -50,52 +50,52 @@ configuration ConfigureSPVM
         # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]DnsServerAddress" }
         # xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
-        # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
-        # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
-        Registry EnableTLS12RegKey1
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
-            ValueName = 'DisabledByDefault'
-            ValueType = 'Dword'
-            ValueData =  '0'
-            Ensure    = 'Present'
-        }
+        # # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
+        # # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
+        # Registry EnableTLS12RegKey1
+        # {
+        #     Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
+        #     ValueName = 'DisabledByDefault'
+        #     ValueType = 'Dword'
+        #     ValueData =  '0'
+        #     Ensure    = 'Present'
+        # }
 
-        Registry EnableTLS12RegKey2
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
-            ValueName = 'Enabled'
-            ValueType = 'Dword'
-            ValueData =  '1'
-            Ensure    = 'Present'
-        }
+        # Registry EnableTLS12RegKey2
+        # {
+        #     Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
+        #     ValueName = 'Enabled'
+        #     ValueType = 'Dword'
+        #     ValueData =  '1'
+        #     Ensure    = 'Present'
+        # }
 
-        Registry EnableTLS12RegKey3
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
-            ValueName = 'DisabledByDefault'
-            ValueType = 'Dword'
-            ValueData =  '0'
-            Ensure    = 'Present'
-        }
+        # Registry EnableTLS12RegKey3
+        # {
+        #     Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
+        #     ValueName = 'DisabledByDefault'
+        #     ValueType = 'Dword'
+        #     ValueData =  '0'
+        #     Ensure    = 'Present'
+        # }
 
-        Registry EnableTLS12RegKey4
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
-            ValueName = 'Enabled'
-            ValueType = 'Dword'
-            ValueData =  '1'
-            Ensure    = 'Present'
-        }
+        # Registry EnableTLS12RegKey4
+        # {
+        #     Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
+        #     ValueName = 'Enabled'
+        #     ValueType = 'Dword'
+        #     ValueData =  '1'
+        #     Ensure    = 'Present'
+        # }
 
-        Registry SchUseStrongCrypto
-        {
-            Key       = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
-            ValueName = 'SchUseStrongCrypto'
-            ValueType = 'Dword'
-            ValueData =  '1'
-            Ensure    = 'Present'
-        }
+        # Registry SchUseStrongCrypto
+        # {
+        #     Key       = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
+        #     ValueName = 'SchUseStrongCrypto'
+        #     ValueType = 'Dword'
+        #     ValueData =  '1'
+        #     Ensure    = 'Present'
+        # }
 
         <#Registry SchUseStrongCrypto64
         {
