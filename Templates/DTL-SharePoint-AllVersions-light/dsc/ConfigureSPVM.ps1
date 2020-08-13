@@ -119,12 +119,35 @@ configuration ConfigureSPVM
             DependsOn               = "[xCredSSP]CredSSPClient"
         }
 
+        # Quick an,d dirty workaround for error in [Computer]DomainJoin, that fails with this error otherwise: [ERROR] The WS-Management service cannot process the request. The WMI service or the WMI provider returned an unknown error: HRESULT 0x80041033 
+        xScript RebootBeforeJoinDomain
+        {
+            # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            TestScript = {
+                return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootBeforeJoinDomain)
+            }
+            SetScript = {
+                New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootBeforeJoinDomain -Force
+                $global:DSCMachineStatus = 1
+            }
+            GetScript = { }
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[WaitForADDomain]DscForestWait"
+        }
+
+        PendingReboot RebootBeforeCreatingSPSite
+        {
+            Name             = "BeforeCreatingSPTrust"
+            SkipCcmClientSDK = $true
+            DependsOn        = "[xScript]RebootBeforeJoinDomain"
+        }
+
         Computer DomainJoin
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            DependsOn = "[WaitForADDomain]DscForestWait"
+            DependsOn = "[PendingReboot]RebootBeforeCreatingSPSite"
         }
 
         xScript CreateWSManSPNsIfNeeded
