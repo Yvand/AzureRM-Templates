@@ -54,6 +54,7 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Join AD forest
         #**********************************************************
+        # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
         WaitForADDomain DscForestWait
         {
             DomainName              = $DomainFQDN
@@ -64,17 +65,25 @@ configuration ConfigureSQLVM
             DependsOn               = "[DnsServerAddress]DnsServerAddress"
         }
 
-        Computer DomainJoin
+        # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
+        PendingReboot RebootOnWaitForADDomainSignal
         {
-            Name = $ComputerName
-            DomainName = $DomainFQDN
-            Credential = $DomainAdminCredsQualified
-            DependsOn = "[WaitForADDomain]DscForestWait"
+            Name             = "RebootOnWaitForADDomainSignal"
+            SkipCcmClientSDK = $true
+            DependsOn        = "[WaitForADDomain]DscForestWait"
         }
 
-        PendingReboot RebootAfterComputerSignal
+        Computer DomainJoin
         {
-            Name             = "RebootAfterComputerSignal"
+            Name       = $ComputerName
+            DomainName = $DomainFQDN
+            Credential = $DomainAdminCredsQualified
+            DependsOn  = "[PendingReboot]RebootOnWaitForADDomainSignal"
+        }
+
+        PendingReboot RebootOnComputerSignal
+        {
+            Name             = "RebootOnComputerSignal"
             SkipCcmClientSDK = $true
             DependsOn        = "[Computer]DomainJoin"
         }
@@ -90,7 +99,7 @@ configuration ConfigureSQLVM
             PasswordNeverExpires = $true
             Ensure = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[PendingReboot]RebootAfterComputerSignal"
+            DependsOn = "[PendingReboot]RebootOnComputerSignal"
         }
 
         ADServicePrincipalName UpdateSqlSPN1
@@ -147,7 +156,7 @@ configuration ConfigureSQLVM
             PasswordNeverExpires = $true
             PsDscRunAsCredential = $DomainAdminCredsQualified
             Ensure = "Present"
-            DependsOn = "[PendingReboot]RebootAfterComputerSignal"
+            DependsOn = "[PendingReboot]RebootOnComputerSignal"
         }
 
         SqlLogin AddDomainAdminLogin
@@ -157,7 +166,7 @@ configuration ConfigureSQLVM
             ServerName = $ComputerName
             InstanceName = "MSSQLSERVER"
             LoginType = "WindowsUser"
-            DependsOn = "[PendingReboot]RebootAfterComputerSignal"
+            DependsOn = "[PendingReboot]RebootOnComputerSignal"
         }
 
         SqlLogin AddSPSetupLogin
@@ -205,7 +214,7 @@ configuration ConfigureSQLVM
             ServerName   = $ComputerName
             InstanceName = "MSSQLSERVER"
             MaxDop       = 1
-            DependsOn    = "[PendingReboot]RebootAfterComputerSignal"
+            DependsOn    = "[PendingReboot]RebootOnComputerSignal"
         }
     }
 }
