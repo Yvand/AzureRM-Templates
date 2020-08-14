@@ -222,7 +222,6 @@
         {
             GroupName            = "Administrators"
             MembersToInclude     = $AdfsSvcCredsQualified.UserName
-            #Credential = $DomainCredsNetbios    
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn            = "[ADUser]CreateAdfsSvcAccount"
