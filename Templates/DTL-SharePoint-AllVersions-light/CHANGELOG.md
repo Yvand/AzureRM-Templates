@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Fix timeout issue / DSC not resuming after VM reboot: Update dependencies of DSC extensions of SP and SQL, so they no longer depend on DSC of DC
+* Replace DSC module xActiveDirectory with ActiveDirectoryDsc 6.0.1
+
+## July 2020 update
+
 * Update SQL to SQL Server 2019 on Windows Server 2019
 * Add a network security group to Azure Bastion subnet
 * Rename some resources and variables with more meaningful names

@@ -1,15 +1,14 @@
-#Requires -Version 3.0
 #Requires -Module Az.Resources
 
 ### Define variables
-# $resourceGroupLocation = 'westeurope'
-$resourceGroupLocation = 'francecentral'
-$resourceGroupName = 'xydspdtl'
+$resourceGroupLocation = 'westeurope'
+#$resourceGroupLocation = 'northeurope'
+$resourceGroupName = 'ydspfull-9'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
-#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SharePoint-ADFS-DevTestLabs"
+#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SharePoint-ADFS"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 
