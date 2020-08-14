@@ -220,12 +220,12 @@
 
         Group AddAdfsSvcAccountToDomainAdminsGroup
         {
-            GroupName = "Administrators"
-            MembersToInclude = $AdfsSvcCredsQualified.UserName
+            GroupName            = "Administrators"
+            MembersToInclude     = $AdfsSvcCredsQualified.UserName
             #Credential = $DomainCredsNetbios    
-            Ensure= "Present"
+            Ensure               = "Present"
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[xADUser]CreateAdfsSvcAccount"
+            DependsOn            = "[ADUser]CreateAdfsSvcAccount"
         }
 
         WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
@@ -294,7 +294,7 @@ param = c.Value);
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[cADFSFarm]CreateADFSFarm"
         }
-        
+
         WindowsFeature AddADFeature1 { Name = "RSAT-ADLDS";       Ensure = "Present"; }
         WindowsFeature AddADFeature2 { Name = "RSAT-ADDS-Tools";  Ensure = "Present"; }
         WindowsFeature DnsTools      { Name = "RSAT-DNS-Server";  Ensure = "Present"; }
