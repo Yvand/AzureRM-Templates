@@ -69,7 +69,7 @@ configuration ConfigureSQLVM
             Name = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            DependsOn = "[xWaitForADDomain]DscForestWait"
+            DependsOn = "[WaitForADDomain]DscForestWait"
         }
 
         PendingReboot RebootAfterComputerSignal
