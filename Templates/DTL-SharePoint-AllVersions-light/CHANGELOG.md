@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Update dependencies of Microsoft.Compute/virtualMachines/extensions to no longer depend on another DSC extension to complete
+* Fix timeout issue / DSC not resuming after VM reboot: Update dependencies of DSC extensions of SP and SQL, so they no longer depend on DSC of DC
 * Replace DSC module xActiveDirectory with ActiveDirectoryDsc 6.0.1
 
 ## July 2020 update
