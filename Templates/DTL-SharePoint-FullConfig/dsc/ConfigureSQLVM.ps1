@@ -29,25 +29,14 @@ configuration ConfigureSQLVM
         }
 
         #**********************************************************
-        # Initialization of VM
+        # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
         WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         
         DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
-
-        Firewall DatabaseEngineFirewallRule
-        {
-            Direction = "Inbound"
-            Name = "SQL-Server-Database-Engine-TCP-In"
-            DisplayName = "SQL Server Database Engine (TCP-In)"
-            Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Engine."
-            Group = "SQL Server"
-            Enabled = "True"
-            Protocol = "TCP"
-            LocalPort = "1433"
-            Ensure = "Present"
-        }
+        
+        SqlMaxDop ConfigureMaxDOP { ServerName = $ComputerName; InstanceName = "MSSQLSERVER"; MaxDop = 1; }
 
         #**********************************************************
         # Join AD forest
@@ -91,16 +80,16 @@ configuration ConfigureSQLVM
         #**********************************************************
         ADUser CreateSqlSvcAccount
         {
-            DomainName = $DomainFQDN
-            UserName = $SqlSvcCreds.UserName
-            Password = $SQLCredsQualified
+            DomainName           = $DomainFQDN
+            UserName             = $SqlSvcCreds.UserName
+            Password             = $SQLCredsQualified
             PasswordNeverExpires = $true
-            Ensure = "Present"
+            Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[PendingReboot]RebootOnComputerSignal"
+            DependsOn            = "[PendingReboot]RebootOnComputerSignal"
         }
 
-        ADServicePrincipalName UpdateSqlSPN1
+        ADServicePrincipalName SqlSvcSPN1
         {
             ServicePrincipalName = "MSSQLSvc/$ComputerName.$($DomainFQDN):1433"
             Account              = $SqlSvcCreds.UserName
@@ -109,7 +98,7 @@ configuration ConfigureSQLVM
             DependsOn            = "[ADUser]CreateSqlSvcAccount"
         }
 
-        ADServicePrincipalName UpdateSqlSPN2
+        ADServicePrincipalName SqlSvcSPN2
         {
             ServicePrincipalName = "MSSQLSvc/$ComputerName.$DomainFQDN"
             Account              = $SqlSvcCreds.UserName
@@ -118,7 +107,7 @@ configuration ConfigureSQLVM
             DependsOn            = "[ADUser]CreateSqlSvcAccount"
         }
 
-        ADServicePrincipalName UpdateSqlSPN3
+        ADServicePrincipalName SqlSvcSPN3
         {
             ServicePrincipalName = "MSSQLSvc/$($ComputerName):1433"
             Account              = $SqlSvcCreds.UserName
@@ -127,7 +116,7 @@ configuration ConfigureSQLVM
             DependsOn            = "[ADUser]CreateSqlSvcAccount"
         }
 
-        ADServicePrincipalName UpdateSqlSPN4
+        ADServicePrincipalName SqlSvcSPN4
         {
             ServicePrincipalName = "MSSQLSvc/$ComputerName"
             Account              = $SqlSvcCreds.UserName
@@ -143,76 +132,82 @@ configuration ConfigureSQLVM
             ServiceType    = "DatabaseEngine"
             ServiceAccount = $SQLCredsQualified
             RestartService = $true
-            DependsOn      = "[ADServicePrincipalName]UpdateSqlSPN1", "[ADServicePrincipalName]UpdateSqlSPN2", "[ADServicePrincipalName]UpdateSqlSPN3", "[ADServicePrincipalName]UpdateSqlSPN4"
-        }
-
-        ADUser CreateSPSetupAccount
-        {
-            DomainName = $DomainFQDN
-            UserName = $SPSetupCreds.UserName
-            Password = $SPSetupCredsQualified
-            PasswordNeverExpires = $true
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            Ensure = "Present"
-            DependsOn = "[PendingReboot]RebootOnComputerSignal"
+            DependsOn      = "[ADServicePrincipalName]SqlSvcSPN1", "[ADServicePrincipalName]SqlSvcSPN2", "[ADServicePrincipalName]SqlSvcSPN3", "[ADServicePrincipalName]SqlSvcSPN4"
         }
 
         SqlLogin AddDomainAdminLogin
         {
-            Name = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
-            Ensure = "Present"
-            ServerName = $ComputerName
+            Name         = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
+            Ensure       = "Present"
+            ServerName   = $ComputerName
             InstanceName = "MSSQLSERVER"
-            LoginType = "WindowsUser"
-            DependsOn = "[PendingReboot]RebootOnComputerSignal"
+            LoginType    = "WindowsUser"
+            DependsOn    = "[PendingReboot]RebootOnComputerSignal"
+        }
+
+        ADUser CreateSPSetupAccount
+        {
+            DomainName           = $DomainFQDN
+            UserName             = $SPSetupCreds.UserName
+            Password             = $SPSetupCredsQualified
+            PasswordNeverExpires = $true
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            Ensure               = "Present"
+            DependsOn            = "[PendingReboot]RebootOnComputerSignal"
         }
 
         SqlLogin AddSPSetupLogin
         {
-            Name = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-            Ensure = "Present"
-            ServerName = $ComputerName
+            Name         = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            Ensure       = "Present"
+            ServerName   = $ComputerName
             InstanceName = "MSSQLSERVER"
-            LoginType = "WindowsUser"
-            DependsOn = "[ADUser]CreateSPSetupAccount"
+            LoginType    = "WindowsUser"
+            DependsOn    = "[ADUser]CreateSPSetupAccount"
         }
 
         SqlRole GrantSQLRoleSysadmin
         {
-            ServerRoleName = "sysadmin"
+            ServerRoleName   = "sysadmin"
             MembersToInclude = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
-            Ensure = "Present"
-            ServerName = $ComputerName
-            InstanceName = "MSSQLSERVER"
-            DependsOn = "[SqlLogin]AddDomainAdminLogin"
+            ServerName       = $ComputerName
+            InstanceName     = "MSSQLSERVER"
+            Ensure           = "Present"
+            DependsOn        = "[SqlLogin]AddDomainAdminLogin"
         }
 
         SqlRole GrantSQLRoleSecurityAdmin
         {
-            ServerRoleName = "securityadmin"
+            ServerRoleName   = "securityadmin"
             MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-            ServerName = $ComputerName
-            InstanceName = "MSSQLSERVER"
-            Ensure = "Present"
-            DependsOn = "[SqlLogin]AddSPSetupLogin"
+            ServerName       = $ComputerName
+            InstanceName     = "MSSQLSERVER"
+            Ensure           = "Present"
+            DependsOn        = "[SqlLogin]AddSPSetupLogin"
         }
 
         SqlRole GrantSQLRoleDBCreator
         {
-            ServerRoleName = "dbcreator"
+            ServerRoleName   = "dbcreator"
             MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-            ServerName = $ComputerName
-            InstanceName = "MSSQLSERVER"
-            Ensure = "Present"
-            DependsOn = "[SqlLogin]AddSPSetupLogin"
+            ServerName       = $ComputerName
+            InstanceName     = "MSSQLSERVER"
+            Ensure           = "Present"
+            DependsOn        = "[SqlLogin]AddSPSetupLogin"
         }
 
-        SqlMaxDop ConfigureMaxDOP
+        # Open port on the firewall only when everything is ready, as SharePoint DSC is testing it to start creating the farm
+        Firewall DatabaseEngineFirewallRule
         {
-            ServerName   = $ComputerName
-            InstanceName = "MSSQLSERVER"
-            MaxDop       = 1
-            DependsOn    = "[PendingReboot]RebootOnComputerSignal"
+            Direction   = "Inbound"
+            Name        = "SQL-Server-Database-Engine-TCP-In"
+            DisplayName = "SQL Server Database Engine (TCP-In)"
+            Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Engine."
+            Group       = "SQL Server"
+            Enabled     = "True"
+            Protocol    = "TCP"
+            LocalPort   = "1433"
+            Ensure      = "Present"
         }
     }
 }
@@ -269,10 +264,10 @@ help ConfigureSQLVM
 $DomainAdminCreds = Get-Credential -Credential "yvand"
 $SqlSvcCreds = Get-Credential -Credential "sqlsvc"
 $SPSetupCreds = Get-Credential -Credential "spsetup"
-$DNSServer = "10.0.1.4"
+$DNSServer = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.3\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
 ConfigureSQLVM -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 

@@ -28,27 +28,12 @@
             RebootNodeIfNeeded = $true
         }
 
-        # Script script1
-        # {
-        #     SetScript =  {
-        #         Set-DnsServerDiagnostics -All $true
-        #         Write-Verbose -Verbose "Enabling DNS client diagnostics" 
-        #     }
-        #     GetScript =  { @{} }
-        #     TestScript = { $false }
-        #     DependsOn = "[WindowsFeature]DNS"
-        # }
-
+        #**********************************************************
+        # Create AD domain
+        #**********************************************************
         WindowsFeature ADDS { Name = "AD-Domain-Services"; Ensure = "Present" }
         WindowsFeature DNS  { Name = "DNS";                Ensure = "Present" }
-
-        DnsServerAddress DnsServerAddress 
-        {
-            Address        = '127.0.0.1' 
-            InterfaceAlias = $InterfaceAlias
-            AddressFamily  = 'IPv4'
-            DependsOn      = "[WindowsFeature]DNS"
-        }
+        DnsServerAddress SetDNS { Address = '127.0.0.1' ; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         ADDomain FirstDS
         {
@@ -58,7 +43,7 @@
             DatabasePath                  = "C:\NTDS"
             LogPath                       = "C:\NTDS"
             SysvolPath                    = "C:\SYSVOL"
-            DependsOn                     = "[DnsServerAddress]DnsServerAddress"
+            DependsOn                     = "[DnsServerAddress]SetDNS"
         }
 
         PendingReboot RebootAfterADDomainSignal
@@ -76,7 +61,10 @@
             WaitForValidCredentials = $true
             DependsOn               = "[PendingReboot]RebootAfterADDomainSignal"
         }
-
+        
+        #**********************************************************
+        # Configuration needed by SharePoint farm
+        #**********************************************************
         xDnsServerPrimaryZone CreateAppsDnsZone
         {
             Name      = $AppDomainFQDN
@@ -122,8 +110,6 @@
             DependsOn            = '[ADCSCertificationAuthority]ADCS'
             PsDscRunAsCredential = $DomainCredsNetbios
         }
-
-        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[WaitForADDomain]ADDomainReady" }
 
         #**********************************************************
         # Configure AD FS
@@ -246,7 +232,7 @@
             Type = "CName"
             Ensure = "Present"
             DependsOn = "[WaitForADDomain]ADDomainReady"
-        }        
+        }
 
         # Since 2019-10, DSC regularly fails at cADFSFarm CreateADFSFarm with error below, but I don't know why or how to fix it.
         # Machine restart message is present even when there is no error and PendingReboot before cADFSFarm detects no pending reboot
@@ -297,6 +283,7 @@ param = c.Value);
         WindowsFeature AddADFeature1 { Name = "RSAT-ADLDS";       Ensure = "Present"; }
         WindowsFeature AddADFeature2 { Name = "RSAT-ADDS-Tools";  Ensure = "Present"; }
         WindowsFeature DnsTools      { Name = "RSAT-DNS-Server";  Ensure = "Present"; }
+        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; }
     }
 }
 

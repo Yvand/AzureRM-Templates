@@ -775,6 +775,18 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
 
+        # Create this site early, otherwise [SPAppCatalog]SetAppCatalogUrl may throw error "Cannot find an SPSite object with Id or Url: http://SPSites/sites/AppCatalog"
+        SPSite AppCatalog
+        {
+            Url                  = "http://$SPTrustedSitesName/sites/AppCatalog"
+            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                 = "AppCatalog"
+            Template             = "APPCATALOG#0"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
+        }
+
         #**********************************************************
         # Additional configuration
         #**********************************************************
@@ -963,16 +975,7 @@ configuration ConfigureSPVM
             DependsOn            = "[SPSubscriptionSettingsServiceApp]SubscriptionSettingsServiceApp", "[SPAppManagementServiceApp]AppManagementServiceApp"
         }
 
-        SPSite AppCatalog
-        {
-            Url                  = "http://$SPTrustedSitesName/sites/AppCatalog"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "AppCatalog"
-            Template             = "APPCATALOG#0"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
-        }
+        
 
         SPSecurityTokenServiceConfig ConfigureSTS
         {
@@ -1051,9 +1054,7 @@ configuration ConfigureSPVM
             SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]AppCatalog"
-        }
-
-        
+        }        
 
         CertReq AddinsSiteCert
         {
