@@ -56,8 +56,8 @@ configuration ConfigureSQLVM
         WaitForADDomain DscForestWait
         {
             DomainName              = $DomainFQDN
-            WaitTimeout             = 60
-            RestartCount            = 20
+            WaitTimeout             = 1200
+            RestartCount            = 2
             WaitForValidCredentials = $True
             Credential              = $DomainAdminCredsQualified
             DependsOn               = "[DnsServerAddress]SetDNS"

@@ -164,7 +164,7 @@ configuration ConfigureSPVM
         WaitForADDomain DscForestWait
         {
             DomainName              = $DomainFQDN
-            WaitTimeout             = 600
+            WaitTimeout             = 1200
             RestartCount            = 2
             WaitForValidCredentials = $True
             Credential              = $DomainAdminCredsQualified
