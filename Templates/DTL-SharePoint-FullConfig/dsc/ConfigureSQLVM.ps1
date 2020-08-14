@@ -19,8 +19,6 @@ configuration ConfigureSQLVM
     [PSCredential] $SPSetupCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [PSCredential] $SQLCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
     $ComputerName = Get-Content env:computername
-    [Int] $RetryCount = 30
-    [Int] $RetryIntervalSec = 30
 
     Node localhost
     {
@@ -36,7 +34,7 @@ configuration ConfigureSQLVM
         WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         
-        DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         Firewall DatabaseEngineFirewallRule
         {
@@ -62,7 +60,7 @@ configuration ConfigureSQLVM
             RestartCount            = 2
             WaitForValidCredentials = $True
             Credential              = $DomainAdminCredsQualified
-            DependsOn               = "[DnsServerAddress]DnsServerAddress"
+            DependsOn               = "[DnsServerAddress]SetDNS"
         }
 
         # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
