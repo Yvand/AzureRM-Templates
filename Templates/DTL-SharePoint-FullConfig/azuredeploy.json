@@ -42,7 +42,6 @@
     },
     "adminUserName": {
       "type": "string",
-      "defaultValue": "yvand",
       "minLength": 1,
       "metadata": {
         "description": "Name of the AD and SharePoint administrator. 'administrator' is not allowed"
@@ -183,7 +182,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/dtl-new-template/Templates/DTL-SharePoint-FullConfig"
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/improve-dsc-dtl-template/Templates/DTL-SharePoint-FullConfig"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -219,13 +218,13 @@
     },
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
-      "vNetPrivatePrefix": "10.0.0.0/16",
+      "vNetPrivatePrefix": "10.1.0.0/16",
       "subnetDCName": "Subnet-DC",
-      "subnetDCPrefix": "10.0.1.0/24",
+      "subnetDCPrefix": "10.1.1.0/24",
       "subnetSQLName": "Subnet-SQL",
-      "subnetSQLPrefix": "10.0.2.0/24",
+      "subnetSQLPrefix": "10.1.2.0/24",
       "subnetSPName": "Subnet-SP",
-      "subnetSPPrefix": "10.0.3.0/24",
+      "subnetSPPrefix": "10.1.3.0/24",
       "nsgSubnetDCName": "NSG-Subnet-DC",
       "nsgSubnetSQLName": "NSG-Subnet-SQL",
       "nsgSubnetSPName": "NSG-Subnet-SP",
