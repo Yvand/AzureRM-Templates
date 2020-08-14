@@ -26,12 +26,12 @@
     "addPublicIPAddressToEachVM": {
       "value": "Yes"
     },
-    "_artifactsLocation": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dtl-new-template/Templates/DTL-SharePoint-FullConfig"
-    },
+    // "_artifactsLocation": {
+    //   "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS"
+    // },
      "vmSQLSize": { "value": "Standard_E2as_v4" },
-     "vmSQLStorageAccountType": { "value": "Standard_LRS" },
+     "vmSQLStorageAccountType": { "value": "Premium_LRS" },
      "vmSPSize": { "value": "Standard_E2as_v4" },
-     "vmSPStorageAccountType": { "value": "Standard_LRS" }
+     "vmSPStorageAccountType": { "value": "Premium_LRS" }
   }
 }

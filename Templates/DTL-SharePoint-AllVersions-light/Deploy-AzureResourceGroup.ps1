@@ -2,9 +2,9 @@
 #Requires -Module Az.Resources
 
 ### Define variables
-# $resourceGroupLocation = 'westeurope'
-$resourceGroupLocation = 'francecentral'
-$resourceGroupName = 'xydspdtl'
+$resourceGroupLocation = 'westeurope'
+# $resourceGroupLocation = 'francecentral'
+$resourceGroupName = 'yddtl-light-19'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
