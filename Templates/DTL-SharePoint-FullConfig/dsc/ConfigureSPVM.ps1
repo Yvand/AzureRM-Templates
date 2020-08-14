@@ -53,7 +53,7 @@ configuration ConfigureSPVM
         }
 
         #**********************************************************
-        # Initialization of VM - Configure as much as possible before waiting on AD domain to be available
+        # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
         WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
@@ -81,7 +81,7 @@ configuration ConfigureSPVM
             ValueData = "1"
             ValueType = "Dword"
             Ensure    = "Present"
-            DependsOn ="[PendingReboot]RebootOnComputerSignal"
+            DependsOn = "[PendingReboot]RebootOnComputerSignal"
         }
 
         # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
@@ -232,7 +232,7 @@ configuration ConfigureSPVM
         # }
 
         #**********************************************************
-        # Do SharePoint pre-reqs that require AD domain to be joined
+        # Do SharePoint pre-reqs that require membership in AD domain
         #**********************************************************        
         # Create DNS entries used by SharePoint
         xDnsRecord AddTrustedSiteDNS
