@@ -8,15 +8,13 @@
         [Parameter(Mandatory)] [String]$PrivateIP
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, cADFS, xDnsServer, ComputerManagementDsc
+    Import-DscResource -ModuleName ActiveDirectoryDsc, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, cADFS, xDnsServer, ComputerManagementDsc
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     $ComputerName = Get-Content env:computername
-    [Int] $RetryCount = 20
-    [Int] $RetryIntervalSec = 30
     [String] $SPTrustedSitesName = "SPSites"
     [String] $ADFSSiteName = "ADFS"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
@@ -30,105 +28,106 @@
             RebootNodeIfNeeded = $true
         }
 
+        # Script script1
+        # {
+        #     SetScript =  {
+        #         Set-DnsServerDiagnostics -All $true
+        #         Write-Verbose -Verbose "Enabling DNS client diagnostics" 
+        #     }
+        #     GetScript =  { @{} }
+        #     TestScript = { $false }
+        #     DependsOn = "[WindowsFeature]DNS"
+        # }
+
         WindowsFeature ADDS { Name = "AD-Domain-Services"; Ensure = "Present" }
-        WindowsFeature DNS  { Name = "DNS"; Ensure = "Present" }
-
-        Script script1
-        {
-            SetScript =  {
-                Set-DnsServerDiagnostics -All $true
-                Write-Verbose -Verbose "Enabling DNS client diagnostics" 
-            }
-            GetScript =  { @{} }
-            TestScript = { $false }
-            DependsOn = "[WindowsFeature]DNS"
-        }
-
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server"; Ensure = "Present" }
+        WindowsFeature DNS  { Name = "DNS";                Ensure = "Present" }
 
         DnsServerAddress DnsServerAddress 
         {
             Address        = '127.0.0.1' 
             InterfaceAlias = $InterfaceAlias
             AddressFamily  = 'IPv4'
-            DependsOn = "[WindowsFeature]DNS"
+            DependsOn      = "[WindowsFeature]DNS"
         }
 
-        xADDomain FirstDS
+        ADDomain FirstDS
         {
-            DomainName = $DomainFQDN
-            DomainAdministratorCredential = $DomainCredsNetbios
+            DomainName                    = $DomainFQDN
+            Credential                    = $DomainCredsNetbios
             SafemodeAdministratorPassword = $DomainCredsNetbios
-            DatabasePath = "C:\NTDS"
-            LogPath = "C:\NTDS"
-            SysvolPath = "C:\SYSVOL"
-            DependsOn = "[DnsServerAddress]DnsServerAddress"
+            DatabasePath                  = "C:\NTDS"
+            LogPath                       = "C:\NTDS"
+            SysvolPath                    = "C:\SYSVOL"
+            DependsOn                     = "[DnsServerAddress]DnsServerAddress"
         }
 
-        PendingReboot Reboot1
+        PendingReboot RebootAfterADDomainSignal
         {
-            Name = "RebootServer"
-            DependsOn = "[xADDomain]FirstDS"
+            Name      = "RebootAfterADDomainSignal"
+            DependsOn = "[ADDomain]FirstDS"
+        }
+
+        WaitForADDomain ADDomainReady
+        {
+            DomainName              = $DomainFQDN
+            WaitTimeout             = 300
+            RestartCount            = 3
+            Credential              = $DomainCredsNetbios
+            WaitForValidCredentials = $true
+            DependsOn               = "[PendingReboot]RebootAfterADDomainSignal"
         }
 
         xDnsServerPrimaryZone CreateAppsDnsZone
         {
-            Name = $AppDomainFQDN
-            Ensure= 'Present'
-            DependsOn = "[PendingReboot]Reboot1"
+            Name      = $AppDomainFQDN
+            Ensure    = "Present"
+            DependsOn = "[WaitForADDomain]ADDomainReady"
         }
 
         xDnsServerPrimaryZone CreateAppsIntranetDnsZone
         {
-            Name = $AppDomainIntranetFQDN
-            Ensure= 'Present'
-            DependsOn = "[xDnsServerPrimaryZone]CreateAppsDnsZone"
+            Name      = $AppDomainIntranetFQDN
+            Ensure    = "Present"
+            DependsOn = "[WaitForADDomain]ADDomainReady"
         }
 
-        #**********************************************************
-        # Misc: Set email of AD domain admin and add remote AD tools
-        #**********************************************************
-        xADUser SetEmailOfDomainAdmin
+        ADUser SetEmailOfDomainAdmin
         {
-            DomainAdministratorCredential = $DomainCredsNetbios
-            DomainName = $DomainFQDN
-            UserName = $Admincreds.UserName
-            Password = $Admincreds
-            EmailAddress = $Admincreds.UserName + "@" + $DomainFQDN
-            PasswordAuthentication = 'Negotiate'
-            Ensure = "Present"
+            DomainName           = $DomainFQDN
+            UserName             = $Admincreds.UserName
+            EmailAddress         = "$($Admincreds.UserName)@$DomainFQDN"
             PasswordNeverExpires = $true
-            DependsOn = "[PendingReboot]Reboot1"
+            Ensure               = "Present"
+            DependsOn            = "[WaitForADDomain]ADDomainReady"
         }
-
-        WindowsFeature AddADFeature1    { Name = "RSAT-ADLDS";          Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
-        WindowsFeature AddADFeature2    { Name = "RSAT-ADDS-Tools";     Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
 
         #**********************************************************
         # Configure AD CS
         #**********************************************************
-        WindowsFeature AddCertAuthority       { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
-        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[PendingReboot]Reboot1" }
+        WindowsFeature AddADCSFeature { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[WaitForADDomain]ADDomainReady" }
+        
         ADCSCertificationAuthority ADCS
         {
             IsSingleInstance = "Yes"
-            CAType = "EnterpriseRootCA"
-            Ensure = "Present"
-            Credential = $DomainCredsNetbios
-            DependsOn = "[WindowsFeature]AddCertAuthority"
+            CAType           = "EnterpriseRootCA"
+            Ensure           = "Present"
+            Credential       = $DomainCredsNetbios
+            DependsOn        = "[WindowsFeature]AddADCSFeature"
         }
+
+        WaitForCertificateServices WaitAfterADCSProvisioning
+        {
+            CAServerFQDN         = "$ComputerName.$DomainFQDN"
+            CARootName           = "$DomainNetbiosName-$ComputerName-CA"
+            DependsOn            = '[ADCSCertificationAuthority]ADCS'
+            PsDscRunAsCredential = $DomainCredsNetbios
+        }
+
+        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[WaitForADDomain]ADDomainReady" }
 
         #**********************************************************
         # Configure AD FS
         #**********************************************************
-        WaitForCertificateServices WaitAfterADCSProvisioning
-        {
-            CAServerFQDN = "$ComputerName.$DomainFQDN"
-            CARootName = "$DomainNetbiosName-$ComputerName-CA"
-            DependsOn = '[ADCSCertificationAuthority]ADCS'
-            PsDscRunAsCredential = $DomainCredsNetbios
-        }
-
         CertReq ADFSSiteCert
         {
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
@@ -144,7 +143,7 @@
             AutoRenew                 = $true
             SubjectAltName            = "dns=certauth.$ADFSSiteName.$DomainFQDN&dns=$ADFSSiteName.$DomainFQDN&dns=enterpriseregistration.$DomainFQDN"
             Credential                = $DomainCredsNetbios
-            DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
+            DependsOn                 = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
         CertReq ADFSSigningCert
@@ -161,7 +160,7 @@
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
-            DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
+            DependsOn                 = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
         CertReq ADFSDecryptionCert
@@ -178,50 +177,7 @@
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
-            DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
-        }
-
-        xADUser CreateAdfsSvcAccount
-        {
-            DomainAdministratorCredential = $DomainCredsNetbios
-            DomainName = $DomainFQDN
-            UserName = $AdfsSvcCreds.UserName
-            Password = $AdfsSvcCreds
-            Ensure = "Present"
-            PasswordAuthentication = 'Negotiate'
-            PasswordNeverExpires = $true
-            DependsOn = "[CertReq]ADFSSiteCert", "[CertReq]ADFSSigningCert", "[CertReq]ADFSDecryptionCert"
-        }
-
-        Group AddAdfsSvcAccountToDomainAdminsGroup
-        {
-            GroupName='Administrators'   
-            Ensure= 'Present'             
-            MembersToInclude= $AdfsSvcCredsQualified.UserName
-            Credential = $DomainCredsNetbios    
-            PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[xADUser]CreateAdfsSvcAccount"
-        }
-
-        WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
-
-        xDnsRecord AddADFSHostDNS {
-            Name = $ADFSSiteName
-            Zone = $DomainFQDN
-            Target = $PrivateIP
-            Type = "ARecord"
-            Ensure = "Present"
-            DependsOn = "[PendingReboot]Reboot1"
-        }
-
-        # https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/deployment/configure-corporate-dns-for-the-federation-service-and-drs
-        xDnsRecord AddADFSDevideRegistrationAlias {
-            Name = "enterpriseregistration"
-            Zone = $DomainFQDN
-            Target = "$ComputerName.$DomainFQDN"
-            Type = "CName"
-            Ensure = "Present"
-            DependsOn = "[PendingReboot]Reboot1"
+            DependsOn                 = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
         xScript ExportCertificates
@@ -248,8 +204,50 @@
                 # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
                return $false
             }
-            DependsOn = "[WindowsFeature]AddADFS"
+            DependsOn = "[CertReq]ADFSSiteCert", "[CertReq]ADFSSigningCert", "[CertReq]ADFSDecryptionCert"
         }
+
+        ADUser CreateAdfsSvcAccount
+        {
+            DomainName             = $DomainFQDN
+            UserName               = $AdfsSvcCreds.UserName
+            Password               = $AdfsSvcCreds
+            PasswordAuthentication = 'Negotiate'
+            PasswordNeverExpires   = $true
+            Ensure                 = "Present"
+            DependsOn              = "[CertReq]ADFSSiteCert", "[CertReq]ADFSSigningCert", "[CertReq]ADFSDecryptionCert"
+        }
+
+        Group AddAdfsSvcAccountToDomainAdminsGroup
+        {
+            GroupName = "Administrators"
+            MembersToInclude = $AdfsSvcCredsQualified.UserName
+            #Credential = $DomainCredsNetbios    
+            Ensure= "Present"
+            PsDscRunAsCredential = $DomainCredsNetbios
+            DependsOn = "[xADUser]CreateAdfsSvcAccount"
+        }
+
+        WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[Group]AddAdfsSvcAccountToDomainAdminsGroup" }
+
+        xDnsRecord AddADFSHostDNS {
+            Name = $ADFSSiteName
+            Zone = $DomainFQDN
+            Target = $PrivateIP
+            Type = "ARecord"
+            Ensure = "Present"
+            DependsOn = "[WaitForADDomain]ADDomainReady"
+        }
+
+        # https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/deployment/configure-corporate-dns-for-the-federation-service-and-drs
+        xDnsRecord AddADFSDevideRegistrationAlias {
+            Name = "enterpriseregistration"
+            Zone = $DomainFQDN
+            Target = "$ComputerName.$DomainFQDN"
+            Type = "CName"
+            Ensure = "Present"
+            DependsOn = "[WaitForADDomain]ADDomainReady"
+        }        
 
         # Since 2019-10, DSC regularly fails at cADFSFarm CreateADFSFarm with error below, but I don't know why or how to fix it.
         # Machine restart message is present even when there is no error and PendingReboot before cADFSFarm detects no pending reboot
@@ -296,6 +294,10 @@ param = c.Value);
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[cADFSFarm]CreateADFSFarm"
         }
+        
+        WindowsFeature AddADFeature1 { Name = "RSAT-ADLDS";       Ensure = "Present"; }
+        WindowsFeature AddADFeature2 { Name = "RSAT-ADDS-Tools";  Ensure = "Present"; }
+        WindowsFeature DnsTools      { Name = "RSAT-DNS-Server";  Ensure = "Present"; }
     }
 }
 
