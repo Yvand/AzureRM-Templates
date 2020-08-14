@@ -772,7 +772,7 @@ configuration ConfigureSPVM
             Name                 = "Team site"
             Template             = "STS#0"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
+            DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
 
         #**********************************************************
@@ -787,7 +787,7 @@ configuration ConfigureSPVM
             Name                     = "MySite host"
             Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
+            DependsOn                = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
 
         SPSiteUrl MySiteHostIntranetUrl
@@ -829,7 +829,7 @@ configuration ConfigureSPVM
             Name                 = "Developer site"
             Template             = "DEV#0"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
+            DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
 
         SPSite CreateHNSC1
@@ -841,7 +841,7 @@ configuration ConfigureSPVM
             Name                     = "$HNSC1Alias site"
             Template                 = "STS#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
-            DependsOn                = "[SPWebApplication]MainWebApp"
+            DependsOn                = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
 
         SPSiteUrl HNSC1IntranetUrl
@@ -950,7 +950,7 @@ configuration ConfigureSPVM
             Name                 = "Team site"
             Template             = "STS#0"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
+            DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
 
         
@@ -971,7 +971,7 @@ configuration ConfigureSPVM
             Name                 = "AppCatalog"
             Template             = "APPCATALOG#0"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]MainWebApp"
+            DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
 
         SPSecurityTokenServiceConfig ConfigureSTS
@@ -1070,6 +1070,7 @@ configuration ConfigureSPVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
+            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
         }
 
         File AddinsSiteDirectory
@@ -1162,6 +1163,7 @@ configuration ConfigureSPVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
+            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
         }
 
         xScript ExportHighTrustAddinsCert
