@@ -30,8 +30,6 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
     [String] $SPTrustedSitesName = "SPSites"
-    [Int] $RetryCount = 30
-    [Int] $RetryIntervalSec = 30
     [String] $ComputerName = Get-Content env:computername
     [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
@@ -167,7 +165,7 @@ configuration ConfigureSPVM
             WaitTimeout             = 1200
             RestartCount            = 2
             WaitForValidCredentials = $True
-            Credential              = $DomainAdminCredsQualified
+            PsDscRunAsCredential    = $DomainAdminCredsQualified
             DependsOn               = "[DnsServerAddress]SetDNS"
         }
 
@@ -307,7 +305,9 @@ configuration ConfigureSPVM
             DependsOn            = "[PendingReboot]RebootOnComputerSignal"
         }
 
-        # Provision accounts required for SharePoint
+        #**********************************************************
+        # Provision required accounts for SharePoint
+        #**********************************************************
         ADUser CreateSPSetupAccount
         {
             DomainName                    = $DomainFQDN
@@ -398,7 +398,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                $retrySleep = $using:RetryIntervalSec
+                $retrySleep = 30
                 $server = $using:SQLAlias
                 $db = "master"
                 $retry = $true
@@ -416,7 +416,7 @@ configuration ConfigureSPVM
                     }
                 }
             }
-            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SqlAlias]AddSqlAlias", "[File]AccountsProvisioned"
@@ -454,7 +454,7 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
-        # Delay this operation as much as possible, so that DC has time to generate and copy the certificates
+        # Delay this operation significantly, so that DC has time to generate and copy the certificates
         File CopyCertificatesFromDC
         {
             Ensure          = "Present"
@@ -1307,14 +1307,14 @@ $SPAppPoolCreds = Get-Credential -Credential "spapppool"
 $SPPassphraseCreds = Get-Credential -Credential "Passphrase"
 $SPSuperUserCreds = Get-Credential -Credential "spSuperUser"
 $SPSuperReaderCreds = Get-Credential -Credential "spSuperReader"
-$DNSServer = "10.0.1.4"
+$DNSServer = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
 $SharePointVersion = 2019
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.2\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.3\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
 ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
