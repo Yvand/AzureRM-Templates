@@ -137,13 +137,6 @@
         "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
       }
     },
-    "sharePointDataDiskSize": {
-      "type": "int",
-      "defaultValue": 0,
-      "metadata": {
-        "description": "Size in Gb of the additional data disk attached to SharePoint VMs. Set to 0 to not create it"
-      }
-    },
     "addAzureBastion": {
       "type": "string",
       "allowedValues": [
@@ -184,6 +177,7 @@
   "variables": {
     "_artifactsLocationWithTrailingSlash": "[concat(parameters('_artifactsLocation'), '/')]",
     "addFrontEndToFarm": "No",
+    "sharePointDataDiskSize": "0",
     "generalSettings": {
       "vmDCName": "DC",
       "vmSQLName": "SQL",
@@ -320,7 +314,7 @@
         "name": "[variables('vmSP').vmDataDiskName]",
         "caching": "ReadWrite",
         "createOption": "Empty",
-        "diskSizeGB": "[parameters('sharePointDataDiskSize')]"
+        "diskSizeGB": "[variables('sharePointDataDiskSize')]"
       }
     ],
     "vmFEDataDisk": [
@@ -329,7 +323,7 @@
         "name": "[variables('vmFE').vmDataDiskName]",
         "caching": "ReadWrite",
         "createOption": "Empty",
-        "diskSizeGB": "[parameters('sharePointDataDiskSize')]"
+        "diskSizeGB": "[variables('sharePointDataDiskSize')]"
       }
     ],
     "azureBastion": {
@@ -763,7 +757,7 @@
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
-          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('vmSPDataDisk'))]"
+          "dataDisks": "[if(equals(variables('sharePointDataDiskSize'), 0), json('null'), variables('vmSPDataDisk'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -991,7 +985,7 @@
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
-          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('vmFEDataDisk'))]"
+          "dataDisks": "[if(equals(variables('sharePointDataDiskSize'), 0), json('null'), variables('vmFEDataDisk'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
