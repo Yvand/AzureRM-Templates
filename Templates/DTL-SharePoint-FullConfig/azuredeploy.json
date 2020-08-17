@@ -29,17 +29,6 @@
         "description": "FQDN of the AD forest to create"
       }
     },
-    "addFrontEndToFarm": {
-      "type": "string",
-      "allowedValues": [
-        "Yes",
-        "No"
-      ],
-      "defaultValue": "No",
-      "metadata": {
-        "description": "Select whether a SharePoint Front End VM should be provisioned and joined to the farm."
-      }
-    },
     "adminUserName": {
       "type": "string",
       "minLength": 1,
@@ -194,6 +183,7 @@
   },
   "variables": {
     "_artifactsLocationWithTrailingSlash": "[concat(parameters('_artifactsLocation'), '/')]",
+    "addFrontEndToFarm": "No",
     "generalSettings": {
       "vmDCName": "DC",
       "vmSQLName": "SQL",
@@ -911,7 +901,7 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('addFrontEndToFarm'), 'Yes'), equals(parameters('addPublicIPAddressToEachVM'), 'Yes'))]",
+      "condition": "[and(equals(variables('addFrontEndToFarm'), 'Yes'), equals(parameters('addPublicIPAddressToEachVM'), 'Yes'))]",
       "name": "[variables('vmFE').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -931,7 +921,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
+      "condition": "[equals(variables('addFrontEndToFarm'), 'Yes')]",
       "name": "[variables('vmFE').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
@@ -959,7 +949,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
+      "condition": "[equals(variables('addFrontEndToFarm'), 'Yes')]",
       "name": "[variables('generalSettings').vmFEName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
@@ -1015,7 +1005,7 @@
       "resources": []
     },
     {
-      "condition": "[equals(parameters('addFrontEndToFarm'), 'Yes')]",
+      "condition": "[equals(variables('addFrontEndToFarm'), 'Yes')]",
       "name": "[concat(variables('generalSettings').vmFEName,'/ConfigureFEVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
