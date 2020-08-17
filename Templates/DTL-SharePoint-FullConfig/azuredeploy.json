@@ -177,7 +177,7 @@
   "variables": {
     "_artifactsLocationWithTrailingSlash": "[concat(parameters('_artifactsLocation'), '/')]",
     "addFrontEndToFarm": "No",
-    "sharePointDataDiskSize": "0",
+    "sharePointDataDiskSize": 0,
     "generalSettings": {
       "vmDCName": "DC",
       "vmSQLName": "SQL",
