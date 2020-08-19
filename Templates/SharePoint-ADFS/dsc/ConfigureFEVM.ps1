@@ -229,7 +229,9 @@ configuration ConfigureFEVM
                     {
                         # it should fail with StatusCode 404 until the team site is actually created, which means that web app was already extended
                         Write-Verbose "Request failed with a WebException: $($_.Exception)"
-                        $statusCode = $_.Exception.Response.StatusCode.value__
+                        if ($null -ne $webException.Exception.Response) {
+                            $statusCode = $_.Exception.Response.StatusCode.value__
+                        }
                     }
                     catch
                     {
@@ -237,14 +239,14 @@ configuration ConfigureFEVM
                         $statusCode = 0
                     }
 
-                    if ($statusCode -eq 404){
-                        Write-Verbose "Connection to $uri... returned status $statusCode, retrying in $sleepTime secs..."
+                    if ($statusCode -ne 401){
+                        Write-Verbose "Connection to $uri... returned status code $statusCode while 401 is expected, retrying in $sleepTime secs..."
                         Start-Sleep -Seconds $sleepTime
                     }
                     else {
-                        Write-Verbose "Connection to $uri... returned status $statusCode, test finished."
+                        Write-Verbose "Connection to $uri... returned expected status code $statusCode, exiting..."
                     }
-                } while ($statusCode -eq 404)
+                } while ($statusCode -ne 401)
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
