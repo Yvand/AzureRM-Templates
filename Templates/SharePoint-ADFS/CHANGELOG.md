@@ -1,5 +1,9 @@
 # Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
+## August 2020 update
+
+* Fix timeout issue / DSC not resuming after VM reboot: Update dependencies of DSC extensions of SP and SQL, so they no longer depend on DSC of DC
+
 ## July 2020 update
 
 * Update SQL to SQL Server 2019 on Windows Server 2019
