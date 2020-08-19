@@ -14,7 +14,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -41,80 +41,23 @@ configuration ConfigureFEVM
         }
 
         #**********************************************************
-        # Initialization of VM
+        # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
         WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
-        DnsServerAddress DnsServerAddress
-        {
-            Address        = $DNSServer
-            InterfaceAlias = $InterfaceAlias
-            AddressFamily  = 'IPv4'
-            DependsOn      = "[WindowsFeature]ADPS"
-        }
+        DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
-        xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]DnsServerAddress" }
-        xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
+        # IIS cleanup
+        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
+        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
+        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; }
+        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; }
+        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; }
+        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
+        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
 
-        #**********************************************************
-        # Join AD forest
-        #**********************************************************
-        xWaitForADDomain DscForestWait
-        {
-            DomainName           = $DomainFQDN
-            RetryCount           = $RetryCount
-            RetryIntervalSec     = $RetryIntervalSec
-            DomainUserCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xCredSSP]CredSSPClient"
-        }
-
-        Computer DomainJoin
-        {
-            Name       = $ComputerName
-            DomainName = $DomainFQDN
-            Credential = $DomainAdminCredsQualified
-            DependsOn = "[xWaitForADDomain]DscForestWait"
-        }
-
-        xScript CreateWSManSPNsIfNeeded
-        {
-            SetScript =
-            {
-                # A few times, deployment failed because of this error:
-                # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
-                # The root cause was that SPNs WSMAN/SP and WSMAN/sp.contoso.local were missing in computer account contoso\SP
-                # Those SPNs are created by WSMan when it (re)starts
-                # Restarting service causes an error, so creates SPNs manually instead
-                # Restart-Service winrm
-
-                # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
-                $domainFQDN = $using:DomainFQDN
-                $computerName = $using:ComputerName
-                Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
-                setspn.exe -S "WSMAN/$computerName" "$computerName"
-                setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
-            }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = 
-            {
-                $computerName = $using:ComputerName
-                $samAccountName = "$computerName$"
-                if ((Get-ADComputer -Filter {(SamAccountName -eq $samAccountName)} -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
-                    # SPN is present
-                    return $true
-                }
-                else {
-                    # SPN is missing and must be created
-                    return $false
-                }
-            }
-            DependsOn="[Computer]DomainJoin"
-        }
-
-        #**********************************************************
-        # Do some cleanup and preparation for SharePoint
-        #**********************************************************
+        # Allow sign-in on HTTPS sites when site host name is different than the machine name: https://support.microsoft.com/en-us/help/926642
         Registry DisableLoopBackCheck
         {
             Key       = "HKLM:\System\CurrentControlSet\Control\Lsa"
@@ -122,26 +65,64 @@ configuration ConfigureFEVM
             ValueData = "1"
             ValueType = "Dword"
             Ensure    = "Present"
-            DependsOn ="[Computer]DomainJoin"
+            DependsOn = "[PendingReboot]RebootOnComputerSignal"
         }
 
-        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
-        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[Computer]DomainJoin"}
-
-        Group AddSPSetupAccountToAdminGroup
+        # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
+        # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
+        Registry EnableTLS12RegKey1
         {
-            GroupName            = 'Administrators'
-            Ensure               = 'Present'
-            MembersToInclude     = $SPSetupCredsQualified.UserName
-            Credential           = $DomainAdminCredsQualified
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[Computer]DomainJoin"
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
+            ValueName = 'DisabledByDefault'
+            ValueType = 'Dword'
+            ValueData =  '0'
+            Ensure    = 'Present'
         }
+
+        Registry EnableTLS12RegKey2
+        {
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
+            ValueName = 'Enabled'
+            ValueType = 'Dword'
+            ValueData =  '1'
+            Ensure    = 'Present'
+        }
+
+        Registry EnableTLS12RegKey3
+        {
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
+            ValueName = 'DisabledByDefault'
+            ValueType = 'Dword'
+            ValueData =  '0'
+            Ensure    = 'Present'
+        }
+
+        Registry EnableTLS12RegKey4
+        {
+            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
+            ValueName = 'Enabled'
+            ValueType = 'Dword'
+            ValueData =  '1'
+            Ensure    = 'Present'
+        }
+
+        Registry SchUseStrongCrypto
+        {
+            Key       = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
+            ValueName = 'SchUseStrongCrypto'
+            ValueType = 'Dword'
+            ValueData =  '1'
+            Ensure    = 'Present'
+        }
+
+        <#Registry SchUseStrongCrypto64
+        {
+            Key                         = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'
+            ValueName                   = 'SchUseStrongCrypto'
+            ValueType                   = 'Dword'
+            ValueData                   =  '1'
+            Ensure                      = 'Present'
+        }#>
 
         SqlAlias AddSqlAlias
         {
@@ -150,40 +131,145 @@ configuration ConfigureFEVM
             ServerName           = $SQLName
             Protocol             = "TCP"
             TcpPort              = 1433
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[Computer]DomainJoin"
         }
 
+        #**********************************************************
+        # Join AD forest
+        #**********************************************************
+        # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
+        WaitForADDomain DscForestWait
+        {
+            DomainName              = $DomainFQDN
+            WaitTimeout             = 1200
+            RestartCount            = 2
+            WaitForValidCredentials = $True
+            PsDscRunAsCredential    = $DomainAdminCredsQualified
+            DependsOn               = "[DnsServerAddress]SetDNS"
+        }
+
+        # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
+        PendingReboot RebootOnWaitForADDomainSignal
+        {
+            Name             = "RebootOnWaitForADDomainSignal"
+            SkipCcmClientSDK = $true
+            DependsOn        = "[WaitForADDomain]DscForestWait"
+        }
+
+        Computer DomainJoin
+        {
+            Name       = $ComputerName
+            DomainName = $DomainFQDN
+            Credential = $DomainAdminCredsQualified
+            DependsOn  = "[PendingReboot]RebootOnWaitForADDomainSignal"
+        }
+
+        PendingReboot RebootOnComputerSignal
+        {
+            Name             = "RebootOnComputerSignal"
+            SkipCcmClientSDK = $true
+            DependsOn        = "[Computer]DomainJoin"
+        }
+
+        # This script might fix an issue that occured because VM did not reboot after it joined the domain.
+        # xScript CreateWSManSPNsIfNeeded
+        # {
+        #     SetScript =
+        #     {
+        #         # A few times, deployment failed because of this error:
+        #         # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
+        #         # The root cause was that SPNs WSMAN/SP and WSMAN/sp.contoso.local were missing in computer account contoso\SP
+        #         # Those SPNs are created by WSMan when it (re)starts
+        #         # Restarting service causes an error, so creates SPNs manually instead
+        #         # Restart-Service winrm
+
+        #         # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
+        #         $domainFQDN = $using:DomainFQDN
+        #         $computerName = $using:ComputerName
+        #         Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
+        #         setspn.exe -S "WSMAN/$computerName" "$computerName"
+        #         setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
+        #     }
+        #     GetScript = { }
+        #     # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        #     TestScript = 
+        #     {
+        #         $computerName = $using:ComputerName
+        #         $samAccountName = "$computerName$"
+        #         if ((Get-ADComputer -Filter {(SamAccountName -eq $samAccountName)} -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
+        #             # SPN is present
+        #             return $true
+        #         }
+        #         else {
+        #             # SPN is missing and must be created
+        #             return $false
+        #         }
+        #     }
+        #     DependsOn = "[PendingReboot]RebootOnComputerSignal"
+        # }
+
         #********************************************************************
-        # Wait for SQL Server and first SharePoint server to be ready
+        # Wait for SharePoint app server to be ready
         #********************************************************************
+        # The best test is to check a HTTP team site that is not the root, so we know that web app was already extended
+        # Not testing HTTPS avoid potential issues with the root CA cert maybe not present in the machine store yet
         xScript WaitForWebAppContentDatabase
         {
             SetScript =
             {
-                $retrySleep = $using:RetryIntervalSec
-                $server = $using:SQLAlias
-                $db= $using:SPDBPrefix + "Content_80"
-                $retry = $true
-                while ($retry) {
-                    $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
-                    try {
-                        $sqlConnection.Open()
-                        Write-Verbose "Connection to SQL Server $server succeeded"
-                        $sqlConnection.Close()
-                        $retry = $false
+                $uri = "http://$($using:SPTrustedSitesName)/sites/team"
+                $sleepTime = 10
+                $statusCode = 0
+                do {
+                    try
+                    {
+                        Write-Verbose "Trying to connect to $uri..."
+                        $Response = Invoke-WebRequest -Uri $uri -ErrorAction Stop
+                        # This will only execute if the Invoke-WebRequest is successful.
+                        $statusCode = $Response.StatusCode
                     }
-                    catch {
-                        Write-Verbose "SQL connection to $server failed, retry in $retrySleep secs..."
-                        Start-Sleep -s $retrySleep
+                    catch
+                    {
+                        # it should fail with StatusCode 404 until the team site is actually created, which means that web app was already extended
+                        $statusCode = $_.Exception.Response.StatusCode.value__
                     }
-                }
+
+                    if ($statusCode -eq 404){
+                        Write-Verbose "Connection to $uri... returned status $statusCode, retrying in $sleepTime secs..."
+                        Start-Sleep -Seconds $sleepTime
+                    }
+                    else {
+                        Write-Verbose "Connection to $uri... returned status $statusCode, test finished."
+                    }
+                } while ($statusCode -eq 404)
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[Computer]DomainJoin"
+            DependsOn            = "[PendingReboot]RebootOnComputerSignal"
         }
+
+        # xScript WaitForAppServer
+        # {
+        #     SetScript =
+        #     {
+        #         $retry = $true
+        #         $retrySleep = $using:RetryIntervalSec
+        #         $serverName = $using:DCName
+        #         $fileName = "SPDSCFinished.txt"
+        #         $fullPath = "\\$serverName\C$\Setup\$fileName"
+        #         while ($retry) {
+        #             if ((Get-Item $fullPath -ErrorAction SilentlyContinue) -ne $null){   
+        #                 $retry = $false
+        #             }
+        #             Write-Verbose "File '$fullPath' not found on server '$serverName', retry in $retrySleep secs..."
+        #             Start-Sleep -s $retrySleep
+        #         }
+        #     }
+        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[SPDistributedCacheService]EnableDistributedCache"
+        # }
 
         <# Should not join farm before Intranet zone is created on first server, otherwise web application may not provision correctly in FE
         xScript WaitForHTTPSSite
@@ -210,28 +296,7 @@ configuration ConfigureFEVM
             DependsOn            = "[xScript]WaitForWebAppContentDatabase"
         }#>
 
-        xScript WaitForAppServer
-        {
-            SetScript =
-            {
-                $retry = $true
-                $retrySleep = $using:RetryIntervalSec
-                $serverName = $using:DCName
-                $fileName = "SPDSCFinished.txt"
-                $fullPath = "\\$serverName\C$\Setup\$fileName"
-                while ($retry) {
-                    if ((Get-Item $fullPath -ErrorAction SilentlyContinue) -ne $null){   
-                        $retry = $false
-                    }
-                    Write-Verbose "File '$fullPath' not found on server '$serverName', retry in $retrySleep secs..."
-                    Start-Sleep -s $retrySleep
-                }
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]WaitForWebAppContentDatabase"
-        }
+        
 
         #**********************************************************
         # Join SharePoint farm
@@ -249,7 +314,7 @@ configuration ConfigureFEVM
             RunCentralAdmin           = $false
             IsSingleInstance          = "Yes"
             Ensure                    = "Present"
-            DependsOn                 = "[Group]AddSPSetupAccountToAdminGroup"
+            DependsOn                 = "[xScript]WaitForWebAppContentDatabase"
         }
 
         SPDistributedCacheService EnableDistributedCache
@@ -308,7 +373,7 @@ configuration ConfigureFEVM
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false }
-            DependsOn            = "[Computer]DomainJoin"
+            DependsOn            = "[SPFarm]JoinSPFarm"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
@@ -326,7 +391,7 @@ configuration ConfigureFEVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[SPFarm]JoinSPFarm", "[xScript]UpdateGPOToTrustRootCACert"
+            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
         }
 
         xWebsite SetHTTPSCertificate
