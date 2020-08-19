@@ -25,8 +25,6 @@ configuration ConfigureFEVM
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
     [String] $SPTrustedSitesName = "SPSites"
-    [Int] $RetryCount = 30
-    [Int] $RetryIntervalSec = 30
     [String] $ComputerName = Get-Content env:computername
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
     [String] $MySiteHostAlias = "OhMy"
@@ -227,10 +225,16 @@ configuration ConfigureFEVM
                         # This will only execute if the Invoke-WebRequest is successful.
                         $statusCode = $Response.StatusCode
                     }
-                    catch
+                    catch [System.Net.WebException]
                     {
                         # it should fail with StatusCode 404 until the team site is actually created, which means that web app was already extended
+                        Write-Verbose "Request failed with a WebException: $($_.Exception)"
                         $statusCode = $_.Exception.Response.StatusCode.value__
+                    }
+                    catch
+                    {
+                        Write-Verbose "Request failed with an exception: $($_.Exception)"
+                        $statusCode = 0
                     }
 
                     if ($statusCode -eq 404){
