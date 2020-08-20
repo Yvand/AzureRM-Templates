@@ -229,7 +229,7 @@ configuration ConfigureFEVM
                     {
                         # it should fail with StatusCode 404 until the team site is actually created, which means that web app was already extended
                         Write-Verbose "Request failed with a WebException: $($_.Exception)"
-                        if ($null -ne $webException.Exception.Response) {
+                        if ($null -ne $_.Exception.Response) {
                             $statusCode = $_.Exception.Response.StatusCode.value__
                         }
                     }
