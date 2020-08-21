@@ -172,16 +172,6 @@ configuration ConfigureFEVM
             DependsOn        = "[Computer]DomainJoin"
         }
 
-        Group AddSPSetupAccountToAdminGroup
-        {
-            GroupName            = "Administrators"
-            Ensure               = "Present"
-            MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
-            Credential           = $DomainAdminCredsQualified
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[Computer]DomainJoin"
-        }
-
         # This script might fix an issue that occured because VM did not reboot after it joined the domain.
         # xScript CreateWSManSPNsIfNeeded
         # {
@@ -268,6 +258,17 @@ configuration ConfigureFEVM
             DependsOn            = "[Group]AddSPSetupAccountToAdminGroup"
         }
 
+        # Setup account is created by SP VM so it must be added to local admins group after the waiting script, to be sure it was created
+        Group AddSPSetupAccountToAdminGroup
+        {
+            GroupName            = "Administrators"
+            Ensure               = "Present"
+            MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
+            Credential           = $DomainAdminCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xScript]WaitForWebAppContentDatabase"
+        }
+
         # xScript WaitForAppServer
         # {
         #     SetScript =
@@ -334,7 +335,7 @@ configuration ConfigureFEVM
             RunCentralAdmin           = $false
             IsSingleInstance          = "Yes"
             Ensure                    = "Present"
-            DependsOn                 = "[xScript]WaitForWebAppContentDatabase"
+            DependsOn                 = "[xScript]AddSPSetupAccountToAdminGroup"
         }
 
         SPDistributedCacheService EnableDistributedCache
@@ -345,7 +346,7 @@ configuration ConfigureFEVM
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
             Ensure               = "Present"
-            DependsOn            = "[SPFarm]JoinSPFarm"
+            DependsOn            = "[Group]JoinSPFarm"
         }
 
         xDnsRecord UpdateDNSAliasSPSites
