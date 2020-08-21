@@ -58,7 +58,7 @@ configuration ConfigureSPVM
         WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
         DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
-        # xCredSSP is required to configure User Profile Application in SharePointDsc
+        # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
         xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
@@ -151,8 +151,6 @@ configuration ConfigureSPVM
             ServerName           = $SQLName
             Protocol             = "TCP"
             TcpPort              = 1433
-            #PsDscRunAsCredential = $DomainAdminCredsQualified
-            #DependsOn            = "[File]AccountsProvisioned"
         }
 
         #**********************************************************
@@ -231,7 +229,7 @@ configuration ConfigureSPVM
 
         #**********************************************************
         # Do SharePoint pre-reqs that require membership in AD domain
-        #**********************************************************        
+        #**********************************************************
         # Create DNS entries used by SharePoint
         xDnsRecord AddTrustedSiteDNS
         {
