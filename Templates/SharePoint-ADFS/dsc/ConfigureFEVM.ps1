@@ -168,6 +168,16 @@ configuration ConfigureFEVM
             DependsOn        = "[Computer]DomainJoin"
         }
 
+        Group AddSPSetupAccountToAdminGroup
+        {
+            GroupName            = "Administrators"
+            Ensure               = "Present"
+            MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
+            Credential           = $DomainAdminCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[Computer]DomainJoin"
+        }
+
         # This script might fix an issue that occured because VM did not reboot after it joined the domain.
         # xScript CreateWSManSPNsIfNeeded
         # {
@@ -251,7 +261,7 @@ configuration ConfigureFEVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[PendingReboot]RebootOnComputerSignal"
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup"
         }
 
         # xScript WaitForAppServer
