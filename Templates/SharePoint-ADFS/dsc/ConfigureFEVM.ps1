@@ -219,7 +219,7 @@ configuration ConfigureFEVM
             SetScript =
             {
                 $uri = "http://$($using:SPTrustedSitesName)/sites/team"
-                $sleepTime = 10
+                $sleepTime = 30
                 $statusCode = 0
                 do {
                     try
@@ -231,16 +231,15 @@ configuration ConfigureFEVM
                     }
                     catch [System.Net.WebException]
                     {
-                        # it should fail with StatusCode 404 until the team site is actually created, which means that web app was already extended
-                        Write-Verbose "Request failed with a WebException: $($_.Exception)"
+                        # We always expect a WebException. When site will be ready, $_.Exception.Response.StatusCode.value__ will have value 401
+                        # Write-Verbose "Request failed with a WebException: $($_.Exception)"
                         if ($null -ne $_.Exception.Response) {
                             $statusCode = $_.Exception.Response.StatusCode.value__
                         }
                     }
                     catch
                     {
-                        Write-Verbose "Request failed with an exception: $($_.Exception)"
-                        $statusCode = 0
+                        Write-Verbose "Request failed with an unexpected exception: $($_.Exception)"
                     }
 
                     if ($statusCode -ne 401){
@@ -255,7 +254,7 @@ configuration ConfigureFEVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup"
+            DependsOn            = "[PendingReboot]RebootOnComputerSignal"
         }
 
         # Setup account is created by SP VM so it must be added to local admins group after the waiting script, to be sure it was created
@@ -335,7 +334,7 @@ configuration ConfigureFEVM
             RunCentralAdmin           = $false
             IsSingleInstance          = "Yes"
             Ensure                    = "Present"
-            DependsOn                 = "[xScript]AddSPSetupAccountToAdminGroup"
+            DependsOn                 = "[Group]AddSPSetupAccountToAdminGroup"
         }
 
         SPDistributedCacheService EnableDistributedCache
