@@ -345,7 +345,7 @@ configuration ConfigureFEVM
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
             Ensure               = "Present"
-            DependsOn            = "[Group]JoinSPFarm"
+            DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
         xDnsRecord UpdateDNSAliasSPSites
