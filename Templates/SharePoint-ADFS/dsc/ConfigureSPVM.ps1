@@ -939,7 +939,7 @@ configuration ConfigureSPVM
             Name                 = "Subscription Settings Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
-            InstallAccount       = $DomainAdminCredsQualified
+            InstallAccount       = $SPSetupCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
         }
 
@@ -948,7 +948,7 @@ configuration ConfigureSPVM
             Name                 = "App Management Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)AppManagement"
-            InstallAccount       = $DomainAdminCredsQualified
+            InstallAccount       = $SPSetupCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
         }
 
@@ -1032,7 +1032,7 @@ configuration ConfigureSPVM
             Zone                 = "Default"
             Port                 = 80
             SSL                  = $false
-            PsDscRunAsCredential = $DomainAdminCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
 
@@ -1043,14 +1043,14 @@ configuration ConfigureSPVM
             Zone                 = "Intranet"
             Port                 = 443
             SSL                  = $true
-            PsDscRunAsCredential = $DomainAdminCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
 
         SPAppCatalog SetAppCatalogUrl
         {
             SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
+            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSite]AppCatalog"
         }        
 
