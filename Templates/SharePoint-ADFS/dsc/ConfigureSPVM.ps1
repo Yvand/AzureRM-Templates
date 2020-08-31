@@ -524,7 +524,43 @@ configuration ConfigureSPVM
             ServiceAccount       = $SPSvcCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
             Ensure               = "Present"
+            DependsOn            = "[SPManagedAccount]CreateSPSvcManagedAccount"
+        }
+
+        #**********************************************************
+        # Service instances are started at the beginning of the deployment to give some time between this and creation of service applications
+        # This makes deployment a lot more reliable and avoids errors related to concurrency update of persisted objects, or service instance not found...
+        #**********************************************************
+        SPServiceInstance UPAServiceInstance
+        {
+            Name                 = "User Profile Service"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+        }
+
+        SPServiceInstance StartSubscriptionSettingsServiceInstance
+        {
+            Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+        }
+
+        SPServiceInstance StartAppManagementServiceInstance
+        {
+            Name                 = "App Management Service"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+        }
+
+        SPServiceAppPool MainServiceAppPool
+        {
+            Name                 = $ServiceAppPoolName
+            ServiceAccount       = $SPSvcCredsQualified.UserName
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPManagedAccount]CreateSPSvcManagedAccount"
         }
 
         # Installing LDAPCP somehow updates SPClaimEncodingManager 
@@ -623,43 +659,7 @@ configuration ConfigureSPVM
             }
             DependsOn            = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-        }
-
-        #**********************************************************
-        # Service instances are started at the beginning of the deployment to give some time between this and creation of service applications
-        # This makes deployment a lot more reliable and avoids errors related to concurrency update of persisted objects, or service instance not found...
-        #**********************************************************
-        SPServiceAppPool MainServiceAppPool
-        {
-            Name                 = $ServiceAppPoolName
-            ServiceAccount       = $SPSvcCredsQualified.UserName
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        }
-
-        SPServiceInstance UPAServiceInstance
-        {
-            Name                 = "User Profile Service"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        }
-
-        SPServiceInstance StartSubscriptionSettingsServiceInstance
-        {
-            Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        }
-
-        SPServiceInstance StartAppManagementServiceInstance
-        {
-            Name                 = "App Management Service"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        }
+        }        
 
         SPWebApplication MainWebApp
         {
@@ -961,9 +961,7 @@ configuration ConfigureSPVM
             Template             = "STS#0"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
-        }
-
-        
+        }        
 
         SPAppDomain ConfigureLocalFarmAppUrls
         {
@@ -971,9 +969,7 @@ configuration ConfigureSPVM
             Prefix               = "addin"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSubscriptionSettingsServiceApp]SubscriptionSettingsServiceApp", "[SPAppManagementServiceApp]AppManagementServiceApp"
-        }
-
-        
+        }        
 
         SPSecurityTokenServiceConfig ConfigureSTS
         {
