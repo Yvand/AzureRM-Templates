@@ -14,11 +14,11 @@ $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combin
 
 Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 ### Set passwords
-#$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
+# $securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
-$passwords = New-Object -TypeName HashTable
-$passwords.adminPassword = $securePassword
-$passwords.serviceAccountsPassword = $securePassword
+# $passwords = New-Object -TypeName HashTable
+# $passwords.adminPassword = $securePassword
+# $passwords.serviceAccountsPassword = $securePassword
 
 ### Set parameters
 $parameters = New-Object -TypeName HashTable
@@ -55,10 +55,10 @@ if ($null -eq (Get-AzResourceGroup -ResourceGroupName $resourceGroupName -ErrorA
 $checkTemplate = Test-AzResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
-    -TemplateParameterObject $parameters
+    -TemplateParameterObject $parameters `
+    -Verbose
     # -TemplateParameterFile $templateParametersFile `
     # @passwords `
-    # -Verbose
 
 if ($checkTemplate.Count -eq 0) {
     # Template is valid, deploy it
@@ -68,10 +68,10 @@ if ($checkTemplate.Count -eq 0) {
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $TemplateFile `
-        -TemplateParameterObject $parameters
+        -TemplateParameterObject $parameters `
+        -Verbose -Force
         # -TemplateParameterFile $templateParametersFile `
         # @passwords `
-        # -Verbose -Force
 
     $elapsedTime = New-TimeSpan $startTime $(get-date)
     $result
