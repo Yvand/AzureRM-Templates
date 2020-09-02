@@ -3,7 +3,7 @@
 ### Define variables
 $resourceGroupLocation = 'westeurope'
 #$resourceGroupLocation = 'northeurope'
-$resourceGroupName = 'ydqs7'
+$resourceGroupName = 'ydqs5'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
@@ -13,21 +13,20 @@ $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptR
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 
 Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
-### Define passwords
-#$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
+### Set passwords
+# $securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
-$passwords = New-Object -TypeName HashTable
-$passwords['adminPassword'] = $securePassword
-$passwords['serviceAccountsPassword'] = $securePassword
+# $passwords = New-Object -TypeName HashTable
+# $passwords.adminPassword = $securePassword
+# $passwords.serviceAccountsPassword = $securePassword
 
-### Parse the parameters file
-$JsonContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
-$JsonParameters = $JsonContent | Get-Member -Type NoteProperty | Where-Object {$_.Name -eq "parameters"}
-if ($null -eq $JsonParameters) {
-    $JsonParameters = $JsonContent
-}
-else {
-    $JsonParameters = $JsonContent.parameters
+### Set parameters
+$parameters = New-Object -TypeName HashTable
+$parameters.adminPassword = $securePassword
+$parameters.serviceAccountsPassword = $securePassword
+$paramFileContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
+$paramFileContent.parameters | Get-Member -MemberType *Property | ForEach-Object { 
+    $parameters.($_.name) = $paramFileContent.parameters.($_.name).value; 
 }
 
 ### Ensure connection to Azure RM
@@ -56,9 +55,10 @@ if ($null -eq (Get-AzResourceGroup -ResourceGroupName $resourceGroupName -ErrorA
 $checkTemplate = Test-AzResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
-    -TemplateParameterFile $templateParametersFile `
-    @passwords `
+    -TemplateParameterObject $parameters `
     -Verbose
+    # -TemplateParameterFile $templateParametersFile `
+    # @passwords `
 
 if ($checkTemplate.Count -eq 0) {
     # Template is valid, deploy it
@@ -68,9 +68,10 @@ if ($checkTemplate.Count -eq 0) {
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $TemplateFile `
-        -TemplateParameterFile $templateParametersFile `
-        @passwords `
+        -TemplateParameterObject $parameters `
         -Verbose -Force
+        # -TemplateParameterFile $templateParametersFile `
+        # @passwords `
 
     $elapsedTime = New-TimeSpan $startTime $(get-date)
     $result
