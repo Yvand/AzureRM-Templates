@@ -769,6 +769,7 @@ configuration ConfigureSPVM
             SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
             Template             = "STS#0"
+            CreateDefaultGroups  = $true
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
@@ -850,6 +851,7 @@ configuration ConfigureSPVM
             SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "$HNSC1Alias site"
             Template                 = "STS#0"
+            CreateDefaultGroups      = $true
             PsDscRunAsCredential     = $SPSetupCredsQualified
             DependsOn                = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
@@ -861,38 +863,6 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSite]CreateHNSC1"
         }
-
-        <#xScript CreateDefaultGroupsInTeamSites
-        {
-            SetScript = {
-                $argumentList = @(@{ "sitesToUpdate" = @("http://$using:SPTrustedSitesName", "http://$using:SPTrustedSitesName/sites/team");
-                                     "owner1"        = "i:0#.w|$using:DomainNetbiosName\$($using:DomainAdminCreds.UserName)";
-                                     "owner2"        = "i:05.t|$using:DomainFQDN|$($using:DomainAdminCreds.UserName)@$using:DomainFQDN" })
-                Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
-                    # Create members/visitors/owners groups in team sites
-                    $params = $args[0]
-                    #$sitesToUpdate = Get-SPSite
-                    $sitesToUpdate = $params.sitesToUpdate
-                    $owner1 = $params.owner1
-                    $owner2 = $params.owner2
-
-                    foreach ($siteUrl in $sitesToUpdate) {
-                        $spsite = Get-SPSite $siteUrl
-                        $spsite| fl *| Out-File $SetupPath\test.txt
-                        Write-Verbose -Message "site $($spsite.Title) has template $($spsite.RootWeb.WebTemplate)"
-                        if ($spsite.RootWeb.WebTemplate -like "STS") {
-                            Write-Verbose -Message "Updating site $siteUrl with $owner1 and $($spsite.Url)"
-                            $spsite.RootWeb.CreateDefaultAssociatedGroups($owner1, $owner2, $spsite.RootWeb.Title);
-                            $spsite.RootWeb.Update();
-                        }
-                    }
-                }
-            }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn = "[SPSite]RootTeamSite", "[SPSite]TeamSite"
-        }#>
 
         # Added that to avoid the update conflict error (UpdatedConcurrencyException) of the UserProfileApplication persisted object
         # Error message avoided: UpdatedConcurrencyException: The object UserProfileApplication Name=User Profile Service Application was updated by another user.  Determine if these changes will conflict, resolve any differences, and reapply the second change.  This error may also indicate a programming error caused by obtaining two copies of the same object in a single thread. Previous update information: User: CONTOSO\spfarm Process:wsmprovhost (8632) Machine:SP Time:October 17, 2017 11:25:01.0000 Stack trace (Thread [16] CorrelationId [2c50ced7-4721-0003-b7f3-502c2147d301]):  Current update information: User: CONTOSO\spsetup Process:wsmprovhost (696) Machine:SP Time:October 17, 2017 11:25:06.0252 Stack trace (Thread [62] CorrelationId [37bd239e-a854-f0e6-ee90-b0567bfec821]):
@@ -959,6 +929,7 @@ configuration ConfigureSPVM
             SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
             Template             = "STS#0"
+            CreateDefaultGroups  = $true
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }        
@@ -981,45 +952,6 @@ configuration ConfigureSPVM
             PsDscRunAsCredential  = $SPSetupCredsQualified
             DependsOn             = "[SPFarm]CreateSPFarm"
         }
-
-        # Script ConfigureAppDomains
-        # {
-        #     SetScript = {
-        #         $argumentList = @(@{ "webAppUrl"             = "http://$using:SPTrustedSitesName";
-        #                              "AppDomainFQDN"         = "$using:AppDomainFQDN";
-        #                              "AppDomainIntranetFQDN" = "$using:AppDomainIntranetFQDN" })
-        #         Invoke-SPDscCommand -Arguments @argumentList -ScriptBlock {
-        #             $params = $args[0]
-
-        #             # Configure the app domains in both zones of the web application
-        #             $webAppUrl = $params.webAppUrl
-        #             $appDomainDefaultZone = $params.AppDomainFQDN
-        #             $appDomainIntranetZone = $params.AppDomainIntranetFQDN
-
-        #             $defaultZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default
-        #             if($defaultZoneConfig -eq $null) {
-        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
-        #             }
-        #             elseif ($defaultZoneConfig.AppDomain -notlike $appDomainDefaultZone) {
-        #                 $defaultZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
-        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Default -AppDomain $appDomainDefaultZone -ErrorAction SilentlyContinue
-        #             }
-
-        #             $IntranetZoneConfig = Get-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet
-        #             if($IntranetZoneConfig -eq $null) {
-        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
-        #             }
-        #             elseif ($IntranetZoneConfig.AppDomain -notlike $appDomainIntranetZone) {
-        #                 $IntranetZoneConfig| Remove-SPWebApplicationAppDomain -Confirm:$false
-        #                 New-SPWebApplicationAppDomain -WebApplication $webAppUrl -Zone Intranet -SecureSocketsLayer -AppDomain $appDomainIntranetZone -ErrorAction SilentlyContinue
-        #             }
-        #         }
-        #     }
-        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
-        # }
 
         SPWebApplicationAppDomain ConfigureAppDomainDefaultZone
         {
