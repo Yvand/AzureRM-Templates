@@ -659,7 +659,7 @@ configuration ConfigureSPVM
             }
             DependsOn            = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-        }        
+        }
 
         SPWebApplication MainWebApp
         {
@@ -922,25 +922,13 @@ configuration ConfigureSPVM
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
         }
 
-        SPSite TeamSite
-        {
-            Url                  = "http://$SPTrustedSitesName/sites/team"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "Team site"
-            Template             = "STS#0"
-            CreateDefaultGroups  = $true
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
-        }        
-
         SPAppDomain ConfigureLocalFarmAppUrls
         {
             AppDomain            = $AppDomainFQDN
             Prefix               = "addin"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSubscriptionSettingsServiceApp]SubscriptionSettingsServiceApp", "[SPAppManagementServiceApp]AppManagementServiceApp"
-        }        
+        }
 
         SPSecurityTokenServiceConfig ConfigureSTS
         {
@@ -980,7 +968,21 @@ configuration ConfigureSPVM
             SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSite]AppCatalog"
-        }        
+        }
+        
+        # This team site is tested by VM FE to wait before joining the farm, so it acts as a milestone and it should be created only when all SharePoint services are created
+        # If VM FE joins the farm while a SharePoint service is creating here, it may block its creation forever.
+        SPSite TeamSite
+        {
+            Url                  = "http://$SPTrustedSitesName/sites/team"
+            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            Name                 = "Team site"
+            Template             = "STS#0"
+            CreateDefaultGroups  = $true
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication", "[SPWebApplicationAppDomain]ConfigureAppDomainDefaultZone", "[SPWebApplicationAppDomain]ConfigureAppDomainIntranetZone", "[SPAppCatalog]SetAppCatalogUrl"
+        }
 
         CertReq AddinsSiteCert
         {
