@@ -170,71 +170,37 @@ configuration ConfigureFEVM
             Name             = "RebootOnComputerSignal"
             SkipCcmClientSDK = $true
             DependsOn        = "[Computer]DomainJoin"
-        }
-
-        # This script might fix an issue that occured because VM did not reboot after it joined the domain.
-        # xScript CreateWSManSPNsIfNeeded
-        # {
-        #     SetScript =
-        #     {
-        #         # A few times, deployment failed because of this error:
-        #         # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
-        #         # The root cause was that SPNs WSMAN/SP and WSMAN/sp.contoso.local were missing in computer account contoso\SP
-        #         # Those SPNs are created by WSMan when it (re)starts
-        #         # Restarting service causes an error, so creates SPNs manually instead
-        #         # Restart-Service winrm
-
-        #         # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
-        #         $domainFQDN = $using:DomainFQDN
-        #         $computerName = $using:ComputerName
-        #         Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
-        #         setspn.exe -S "WSMAN/$computerName" "$computerName"
-        #         setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
-        #     }
-        #     GetScript = { }
-        #     # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-        #     TestScript = 
-        #     {
-        #         $computerName = $using:ComputerName
-        #         $samAccountName = "$computerName$"
-        #         if ((Get-ADComputer -Filter {(SamAccountName -eq $samAccountName)} -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
-        #             # SPN is present
-        #             return $true
-        #         }
-        #         else {
-        #             # SPN is missing and must be created
-        #             return $false
-        #         }
-        #     }
-        #     DependsOn = "[PendingReboot]RebootOnComputerSignal"
-        # }
+        }        
 
         #********************************************************************
         # Wait for SharePoint app server to be ready
         #********************************************************************
-        # The best test is to check a HTTP team site that is not the root, so we know that web app was already extended
+        # The best test is to check the latest HTTP team site to be created, after all SharePoint services are provisioned.
+        # If this server joins the farm while a SharePoint service is creating, it may block its creation forever.
         # Not testing HTTPS avoid potential issues with the root CA cert maybe not present in the machine store yet
-        xScript WaitForWebAppContentDatabase
+        xScript WaitForSPFarmReadyToJoin
         {
             SetScript =
             {
                 $uri = "http://$($using:SPTrustedSitesName)/sites/team"
                 $sleepTime = 30
-                $statusCode = 0
+                $currentStatusCode = 0
+                $expectedStatusCode = 200
                 do {
                     try
                     {
                         Write-Verbose "Trying to connect to $uri..."
-                        $Response = Invoke-WebRequest -Uri $uri -ErrorAction Stop
-                        # This will only execute if the Invoke-WebRequest is successful.
-                        $statusCode = $Response.StatusCode
+                        # -UseDefaultCredentials: Does NTLM authN
+                        $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 10 -ErrorAction Stop
+                        # When it will be actually ready, it will respond 401/302/200, and $Response.StatusCode will be 200
+                        $currentStatusCode = $Response.StatusCode
                     }
                     catch [System.Net.WebException]
                     {
-                        # We always expect a WebException. When site will be ready, $_.Exception.Response.StatusCode.value__ will have value 401
+                        # We always expect a WebException until site is actually up. 
                         # Write-Verbose "Request failed with a WebException: $($_.Exception)"
                         if ($null -ne $_.Exception.Response) {
-                            $statusCode = $_.Exception.Response.StatusCode.value__
+                            $currentStatusCode = $_.Exception.Response.StatusCode.value__
                         }
                     }
                     catch
@@ -242,14 +208,14 @@ configuration ConfigureFEVM
                         Write-Verbose "Request failed with an unexpected exception: $($_.Exception)"
                     }
 
-                    if ($statusCode -ne 401){
-                        Write-Verbose "Connection to $uri... returned status code $statusCode while 401 is expected, retrying in $sleepTime secs..."
+                    if ($currentStatusCode -ne $expectedStatusCode){
+                        Write-Verbose "Connection to $uri... returned status code $currentStatusCode while $expectedStatusCode is expected, retrying in $sleepTime secs..."
                         Start-Sleep -Seconds $sleepTime
                     }
                     else {
-                        Write-Verbose "Connection to $uri... returned expected status code $statusCode, exiting..."
+                        Write-Verbose "Connection to $uri... returned expected status code $currentStatusCode, exiting..."
                     }
-                } while ($statusCode -ne 401)
+                } while ($currentStatusCode -ne $expectedStatusCode)
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
@@ -265,7 +231,7 @@ configuration ConfigureFEVM
             MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
             Credential           = $DomainAdminCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]WaitForWebAppContentDatabase"
+            DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
         }
 
         # xScript WaitForAppServer
@@ -290,33 +256,6 @@ configuration ConfigureFEVM
         #     PsDscRunAsCredential = $DomainAdminCredsQualified
         #     DependsOn            = "[SPDistributedCacheService]EnableDistributedCache"
         # }
-
-        <# Should not join farm before Intranet zone is created on first server, otherwise web application may not provision correctly in FE
-        xScript WaitForHTTPSSite
-        {
-            SetScript =
-            {
-                $retrySleep = $using:RetryIntervalSec
-                $url = "https://$($using:SPTrustedSitesName).$($using:DomainFQDN)"
-                $retry = $true
-                while ($retry) {
-                    try {
-                        Invoke-WebRequest -Uri $url -UseBasicParsing
-                        $retry = $false
-                    }
-                    catch {
-                        Write-Verbose "Connection to $url failed, retry in $retrySleep secs..."
-                        Start-Sleep -s $retrySleep
-                    }
-                }
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]WaitForWebAppContentDatabase"
-        }#>
-
-        
 
         #**********************************************************
         # Join SharePoint farm
