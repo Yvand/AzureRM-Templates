@@ -191,8 +191,9 @@ configuration ConfigureFEVM
                     {
                         Write-Verbose "Trying to connect to $uri..."
                         # -UseDefaultCredentials: Does NTLM authN
-                        $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 10 -ErrorAction Stop
-                        # When it will be actually ready, it will respond 401/302/200, and $Response.StatusCode will be 200
+                        # -UseBasicParsing: Avoid exception because IE was not first launched yet
+                        $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 10 -ErrorAction Stop -UseBasicParsing
+                        # When it will be actually ready, site will respond 401/302/200, and $Response.StatusCode will be 200
                         $currentStatusCode = $Response.StatusCode
                     }
                     catch [System.Net.WebException]
