@@ -67,7 +67,6 @@ configuration ConfigureFEVM
             ValueData = "1"
             ValueType = "Dword"
             Ensure    = "Present"
-            DependsOn = "[PendingReboot]RebootOnComputerSignal"
         }
 
         # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
@@ -170,7 +169,44 @@ configuration ConfigureFEVM
             Name             = "RebootOnComputerSignal"
             SkipCcmClientSDK = $true
             DependsOn        = "[Computer]DomainJoin"
-        }        
+        }
+        
+        # This script is still needed
+        xScript CreateWSManSPNsIfNeeded
+        {
+            SetScript =
+            {
+                # A few times, deployment failed because of this error:
+                # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
+                # The root cause was that SPNs WSMAN/SP and WSMAN/sp.contoso.local were missing in computer account contoso\SP
+                # Those SPNs are created by WSMan when it (re)starts
+                # Restarting service causes an error, so creates SPNs manually instead
+                # Restart-Service winrm
+
+                # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
+                $domainFQDN = $using:DomainFQDN
+                $computerName = $using:ComputerName
+                Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
+                setspn.exe -S "WSMAN/$computerName" "$computerName"
+                setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
+            }
+            GetScript = { }
+            # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            TestScript = 
+            {
+                $computerName = $using:ComputerName
+                $samAccountName = "$computerName$"
+                if ((Get-ADComputer -Filter {(SamAccountName -eq $samAccountName)} -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
+                    # SPN is present
+                    return $true
+                }
+                else {
+                    # SPN is missing and must be created
+                    return $false
+                }
+            }
+            DependsOn = "[PendingReboot]RebootOnComputerSignal"
+        }
 
         #********************************************************************
         # Wait for SharePoint app server to be ready
@@ -221,7 +257,7 @@ configuration ConfigureFEVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[PendingReboot]RebootOnComputerSignal"
+            DependsOn            = "[xScript]CreateWSManSPNsIfNeeded"
         }
 
         # Setup account is created by SP VM so it must be added to local admins group after the waiting script, to be sure it was created
