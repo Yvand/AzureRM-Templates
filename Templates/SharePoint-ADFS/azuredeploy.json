@@ -267,7 +267,7 @@
             "sourceAddressPrefix": "Internet",
             "destinationAddressPrefix": "*",
             "access": "Allow",
-            "priority": 100,
+            "priority": 110,
             "direction": "Inbound"
           }
         }
@@ -808,8 +808,6 @@
       "location": "[parameters('location')]",
       "apiVersion": "2019-12-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
       ],
       "tags": {
@@ -860,8 +858,6 @@
       "location": "[parameters('location')]",
       "apiVersion": "2019-12-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
       ],
       "tags": {
@@ -1041,8 +1037,6 @@
       "location": "[parameters('location')]",
       "apiVersion": "2019-12-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
       ],
       "tags": {
