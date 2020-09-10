@@ -43,9 +43,9 @@ configuration ConfigureSPVM
         #**********************************************************
         # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
-        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
-        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
+        WindowsFeature AddADTools      { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature AddADPowerShell { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        WindowsFeature AddDnsTools     { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
         DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         # IIS cleanup
@@ -65,7 +65,6 @@ configuration ConfigureSPVM
             ValueData = "1"
             ValueType = "Dword"
             Ensure    = "Present"
-            DependsOn = "[PendingReboot]RebootOnComputerSignal"
         }
 
         # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
@@ -131,15 +130,13 @@ configuration ConfigureSPVM
             ServerName           = $SQLName
             Protocol             = "TCP"
             TcpPort              = 1433
-            #PsDscRunAsCredential = $DomainAdminCredsQualified
-            #DependsOn            = "[File]AccountsProvisioned"
         }
 
         #**********************************************************
         # Join AD forest
         #**********************************************************
         # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
-        WaitForADDomain DscForestWait
+        WaitForADDomain WaitForDCReady
         {
             DomainName              = $DomainFQDN
             WaitTimeout             = 1200
@@ -150,63 +147,64 @@ configuration ConfigureSPVM
         }
         
         # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
-        PendingReboot RebootOnWaitForADDomainSignal
+        PendingReboot RebootOnSignalFromWaitForDCReady
         {
-            Name             = "RebootOnWaitForADDomainSignal"
+            Name             = "RebootOnSignalFromWaitForDCReady"
             SkipCcmClientSDK = $true
-            DependsOn        = "[WaitForADDomain]DscForestWait"
+            DependsOn        = "[WaitForADDomain]WaitForDCReady"
         }
 
-        Computer DomainJoin
+        Computer JoinDomain
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            DependsOn  = "[PendingReboot]RebootOnWaitForADDomainSignal"
+            DependsOn  = "[PendingReboot]RebootOnSignalFromWaitForDCReady"
         }
 
-        PendingReboot RebootOnComputerSignal
+        PendingReboot RebootOnSignalFromJoinDomain
         {
-            Name             = "RebootOnComputerSignal"
+            Name             = "RebootOnSignalFromJoinDomain"
             SkipCcmClientSDK = $true
-            DependsOn        = "[Computer]DomainJoin"
+            DependsOn        = "[Computer]JoinDomain"
         }
         
-        # This script might fix an issue that occured because VM did not reboot after it joined the domain.
-        # xScript CreateWSManSPNsIfNeeded
-        # {
-        #     SetScript =
-        #     {
-        #         # A few times, deployment failed because of this error:
-        #         # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
-        #         # The root cause was that SPNs WSMAN/SP and WSMAN/sp.contoso.local were missing in computer account contoso\SP
-        #         # Those SPNs are created by WSMan when it (re)starts
-        #         # Restarting service causes an error, so creates SPNs manually instead
-        #         # Restart-Service winrm
+        # This script is still needed
+        xScript CreateWSManSPNsIfNeeded
+        {
+            SetScript =
+            {
+                # A few times, deployment failed because of this error:
+                # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
+                # The root cause was that SPNs WSMAN/SP and WSMAN/sp.contoso.local were missing in computer account contoso\SP
+                # Those SPNs are created by WSMan when it (re)starts
+                # Restarting service causes an error, so creates SPNs manually instead
+                # Restart-Service winrm
 
-        #         # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
-        #         $domainFQDN = $using:DomainFQDN
-        #         $computerName = $using:ComputerName
-        #         Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
-        #         setspn.exe -S "WSMAN/$computerName" "$computerName"
-        #         setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
-        #     }
-        #     GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-        #     TestScript = 
-        #     {
-        #         $computerName = $using:ComputerName
-        #         $samAccountName = "$computerName$"
-        #         if ((Get-ADComputer -Filter {(SamAccountName -eq $samAccountName)} -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
-        #             # SPN is present
-        #             return $true
-        #         }
-        #         else {
-        #             # SPN is missing and must be created
-        #             return $false
-        #         }
-        #     }
-        #     DependsOn = "[PendingReboot]RebootOnComputerSignal"
-        # }
+                # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
+                $domainFQDN = $using:DomainFQDN
+                $computerName = $using:ComputerName
+                Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
+                setspn.exe -S "WSMAN/$computerName" "$computerName"
+                setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
+            }
+            GetScript = { }
+            # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            TestScript = 
+            {
+                $computerName = $using:ComputerName
+                $samAccountName = "$computerName$"
+                if ((Get-ADComputer -Filter {(SamAccountName -eq $samAccountName)} -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
+                    # SPN is present
+                    return $true
+                }
+                else {
+                    # SPN is missing and must be created
+                    return $false
+                }
+            }
+            DependsOn = "[PendingReboot]RebootOnSignalFromJoinDomain"
+        }
 
         #**********************************************************
         # Do SharePoint pre-reqs that require membership in AD domain
@@ -221,7 +219,7 @@ configuration ConfigureSPVM
             Type                 = "CName"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[PendingReboot]RebootOnComputerSignal"
+            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         #**********************************************************
@@ -235,7 +233,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[PendingReboot]RebootOnComputerSignal"
+            DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }        
 
         ADUser CreateSParmAccount
@@ -246,7 +244,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[PendingReboot]RebootOnComputerSignal"
+            DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         Group AddSPSetupAccountToAdminGroup
@@ -267,7 +265,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[PendingReboot]RebootOnComputerSignal"
+            DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         File AccountsProvisioned
@@ -277,7 +275,7 @@ configuration ConfigureSPVM
             Type                 = 'File'
             Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPAppPoolAccount"
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPAppPoolAccount", "[xScript]CreateWSManSPNsIfNeeded"
         }
 
         xScript WaitForSQL
@@ -335,7 +333,7 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
-        SPWebApplication MainWebApp
+        SPWebApplication CreateMainWebApp
         {
             Name                   = "SharePoint - 80"
             ApplicationPool        = "SharePoint - 80"
@@ -349,10 +347,10 @@ configuration ConfigureSPVM
             DependsOn              = "[SPFarm]CreateSPFarm"
         }
 
-        # Creating site collection in SharePoint 2019 fail: https://github.com/PowerShell/SharePointDsc/issues/990
+        # Creating site collection in SharePoint 2019 fails: https://github.com/PowerShell/SharePointDsc/issues/990
         # The workaround is to force a reboot before creating it
         if ($SharePointVersion -eq "2019") {
-            xScript SetRebootIfFirstTime
+            xScript ForceRebootBeforeCreatingSPSite
             {
                 # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
                 TestScript = {
@@ -364,14 +362,14 @@ configuration ConfigureSPVM
                 }
                 GetScript = { }
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn = "[SPWebApplication]MainWebApp"
+                DependsOn = "[SPWebApplication]CreateMainWebApp"
             }
 
             PendingReboot RebootBeforeCreatingSPSite
             {
                 Name             = "BeforeCreatingSPTrust"
                 SkipCcmClientSDK = $true
-                DependsOn        = "[xScript]SetRebootIfFirstTime"
+                DependsOn        = "[xScript]ForceRebootBeforeCreatingSPSite"
             }
         }
 
@@ -385,7 +383,7 @@ configuration ConfigureSPVM
                 SourcePath      = "$DCSetupPath"
                 DestinationPath = "$SetupPath\Certificates"
                 Credential      = $DomainAdminCredsQualified
-                DependsOn       = "[PendingReboot]RebootOnComputerSignal"
+                DependsOn       = "[PendingReboot]RebootOnSignalFromJoinDomain"
             }
 
             SPTrustedRootAuthority TrustRootCA
@@ -432,11 +430,11 @@ configuration ConfigureSPVM
                 }
                 GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                 TestScript           = { return $false }
-                DependsOn            = "[PendingReboot]RebootOnComputerSignal"
+                DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
                 PsDscRunAsCredential = $DomainAdminCredsQualified
             }
 
-            CertReq SPSSiteCert
+            CertReq GenerateMainWebAppCertificate
             {
                 CARootName             = "$DomainNetbiosName-$DCName-CA"
                 CAServerFQDN           = "$DCName.$DomainFQDN"
@@ -453,7 +451,7 @@ configuration ConfigureSPVM
                 DependsOn              = '[xScript]UpdateGPOToTrustRootCACert'
             }
 
-            SPWebApplicationExtension ExtendWebApp
+            SPWebApplicationExtension ExtendMainWebApp
             {
                 WebAppUrl              = "http://$SPTrustedSitesName/"
                 Name                   = "SharePoint - 443"
@@ -464,10 +462,10 @@ configuration ConfigureSPVM
                 Port                   = 443
                 Ensure                 = "Present"
                 PsDscRunAsCredential   = $SPSetupCredsQualified
-                DependsOn              = '[CertReq]SPSSiteCert'
+                DependsOn              = "[CertReq]GenerateMainWebAppCertificate", "[SPWebApplication]CreateMainWebApp"
             }
 
-            SPWebAppAuthentication ConfigureAuthentAllZones
+            SPWebAppAuthentication ConfigureMainWebAppAuthentication
             {
                 WebAppUrl = "http://$SPTrustedSitesName/"
                 Default = @(
@@ -483,7 +481,7 @@ configuration ConfigureSPVM
                     }
                 )
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
+                DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp"
             }
 
             xWebsite SetHTTPSCertificate
@@ -498,10 +496,10 @@ configuration ConfigureSPVM
                 }
                 Ensure               = "Present"
                 PsDscRunAsCredential = $DomainAdminCredsQualified
-                DependsOn            = "[SPWebAppAuthentication]ConfigureAuthentAllZones"
+                DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
             }
 
-            SPSite RootTeamSite
+            SPSite CreateRootSite
             {
                 Url                  = "http://$SPTrustedSitesName/"
                 OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
@@ -509,11 +507,11 @@ configuration ConfigureSPVM
                 Name                 = "Team site"
                 Template             = "STS#0"
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn            = "[SPWebApplication]MainWebApp"
+                DependsOn            = "[SPWebApplication]CreateMainWebApp"
             }
         }
         else {
-            SPWebAppAuthentication ConfigureAuthentDefaultZone
+            SPWebAppAuthentication ConfigureMainWebAppAuthentication
             {
                 WebAppUrl = "http://$SPTrustedSitesName/"
                 Default = @(
@@ -521,19 +519,19 @@ configuration ConfigureSPVM
                         AuthenticationMethod = "WindowsAuthentication"
                         WindowsAuthMethod    = "NTLM"
                     }
-                )                
+                )
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn            = "[SPWebApplication]MainWebApp"
+                DependsOn            = "[SPWebApplication]CreateMainWebApp"
             }
 
-            SPSite RootTeamSite
+            SPSite CreateRootSite
             {
                 Url                  = "http://$SPTrustedSitesName/"
                 OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
                 Name                 = "Team site"
                 Template             = "STS#0"
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn            = "[SPWebApplication]MainWebApp"
+                DependsOn            = "[SPWebApplication]CreateMainWebApp"
             }
         }
     }
