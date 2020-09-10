@@ -41,9 +41,9 @@ configuration ConfigureFEVM
         #**********************************************************
         # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
-        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
-        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
+        WindowsFeature AddADTools      { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature AddADPowerShell { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        WindowsFeature AddDnsTools     { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
         DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         # # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
@@ -138,7 +138,7 @@ configuration ConfigureFEVM
         # Join AD forest
         #**********************************************************
         # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
-        WaitForADDomain DscForestWait
+        WaitForADDomain WaitForDCReady
         {
             DomainName              = $DomainFQDN
             WaitTimeout             = 1200
@@ -149,26 +149,26 @@ configuration ConfigureFEVM
         }
 
         # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
-        PendingReboot RebootOnWaitForADDomainSignal
+        PendingReboot RebootOnSignalFromWaitForDCReady
         {
-            Name             = "RebootOnWaitForADDomainSignal"
+            Name             = "RebootOnSignalFromWaitForDCReady"
             SkipCcmClientSDK = $true
-            DependsOn        = "[WaitForADDomain]DscForestWait"
+            DependsOn        = "[WaitForADDomain]WaitForDCReady"
         }
 
-        Computer DomainJoin
+        Computer JoinDomain
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            DependsOn  = "[PendingReboot]RebootOnWaitForADDomainSignal"
+            DependsOn  = "[PendingReboot]RebootOnSignalFromWaitForDCReady"
         }
 
-        PendingReboot RebootOnComputerSignal
+        PendingReboot RebootOnSignalFromJoinDomain
         {
-            Name             = "RebootOnComputerSignal"
+            Name             = "RebootOnSignalFromJoinDomain"
             SkipCcmClientSDK = $true
-            DependsOn        = "[Computer]DomainJoin"
+            DependsOn        = "[Computer]JoinDomain"
         }
         
         # This script is still needed
@@ -205,7 +205,7 @@ configuration ConfigureFEVM
                     return $false
                 }
             }
-            DependsOn = "[PendingReboot]RebootOnComputerSignal"
+            DependsOn = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         #********************************************************************
