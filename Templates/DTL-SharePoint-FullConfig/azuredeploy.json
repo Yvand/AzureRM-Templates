@@ -42,7 +42,6 @@
     },
     "adminUserName": {
       "type": "string",
-      "defaultValue": "yvand",
       "minLength": 1,
       "metadata": {
         "description": "Name of the AD and SharePoint administrator. 'administrator' is not allowed"
@@ -149,13 +148,6 @@
         "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
       }
     },
-    "sharePointDataDiskSize": {
-      "type": "int",
-      "defaultValue": 0,
-      "metadata": {
-        "description": "Size in Gb of the additional data disk attached to SharePoint VMs. Set to 0 to not create it"
-      }
-    },
     "addAzureBastion": {
       "type": "string",
       "allowedValues": [
@@ -180,10 +172,10 @@
     },
     "_artifactsLocation": {
       "type": "string",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/improve-dsc-dtl-template/Templates/DTL-SharePoint-FullConfig",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-      },
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/dtl-new-template/Templates/DTL-SharePoint-FullConfig"
+      }
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -195,6 +187,7 @@
   },
   "variables": {
     "_artifactsLocationWithTrailingSlash": "[concat(parameters('_artifactsLocation'), '/')]",
+    "sharePointDataDiskSize": 0,
     "generalSettings": {
       "vmDCName": "DC",
       "vmSQLName": "SQL",
@@ -219,13 +212,13 @@
     },
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
-      "vNetPrivatePrefix": "10.0.0.0/16",
+      "vNetPrivatePrefix": "10.1.0.0/16",
       "subnetDCName": "Subnet-DC",
-      "subnetDCPrefix": "10.0.1.0/24",
+      "subnetDCPrefix": "10.1.1.0/24",
       "subnetSQLName": "Subnet-SQL",
-      "subnetSQLPrefix": "10.0.2.0/24",
+      "subnetSQLPrefix": "10.1.2.0/24",
       "subnetSPName": "Subnet-SP",
-      "subnetSPPrefix": "10.0.3.0/24",
+      "subnetSPPrefix": "10.1.3.0/24",
       "nsgSubnetDCName": "NSG-Subnet-DC",
       "nsgSubnetSQLName": "NSG-Subnet-SQL",
       "nsgSubnetSPName": "NSG-Subnet-SP",
@@ -252,7 +245,7 @@
             "sourceAddressPrefix": "Internet",
             "destinationAddressPrefix": "*",
             "access": "Allow",
-            "priority": 100,
+            "priority": 110,
             "direction": "Inbound"
           }
         }
@@ -265,7 +258,7 @@
       "vmOSDiskName": "Disk-DC-OS",
       "vmVmSize": "[parameters('vmDCSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmDCName, '-0')]",
-      "nicPrivateIPAddress": "10.0.1.4",
+      "nicPrivateIPAddress": "10.1.1.4",
       "vmPublicIPName": "[concat('PublicIP-', variables('generalSettings').vmDCName)]",
       "vmPublicIPDnsName": "[toLower(replace(concat(resourceGroup().name, '-', variables('generalSettings').vmDCName), '_', '-'))]",
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmDCName)]"
@@ -331,7 +324,7 @@
         "name": "[variables('vmSP').vmDataDiskName]",
         "caching": "ReadWrite",
         "createOption": "Empty",
-        "diskSizeGB": "[parameters('sharePointDataDiskSize')]"
+        "diskSizeGB": "[variables('sharePointDataDiskSize')]"
       }
     ],
     "vmFEDataDisk": [
@@ -340,11 +333,11 @@
         "name": "[variables('vmFE').vmDataDiskName]",
         "caching": "ReadWrite",
         "createOption": "Empty",
-        "diskSizeGB": "[parameters('sharePointDataDiskSize')]"
+        "diskSizeGB": "[variables('sharePointDataDiskSize')]"
       }
     ],
     "azureBastion": {
-      "subnetPrefix": "10.0.4.0/24",
+      "subnetPrefix": "10.1.4.0/24",
       "publicIPDnsName": "[toLower(replace(concat(resourceGroup().name, '-', 'Bastion'), '_', '-'))]"
     }
   },
@@ -774,7 +767,7 @@
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
-          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('vmSPDataDisk'))]"
+          "dataDisks": "[if(equals(variables('sharePointDataDiskSize'), 0), json('null'), variables('vmSPDataDisk'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -1002,7 +995,7 @@
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
-          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('vmFEDataDisk'))]"
+          "dataDisks": "[if(equals(variables('sharePointDataDiskSize'), 0), json('null'), variables('vmFEDataDisk'))]"
         },
         "networkProfile": {
           "networkInterfaces": [

@@ -41,14 +41,31 @@ configuration ConfigureSPVM
         }
 
         #**********************************************************
-        # Initialization of VM
+        # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
-        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
-        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
-        DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
-        # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]DnsServerAddress" }
-        # xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
+        WindowsFeature AddADTools      { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature AddADPowerShell { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        WindowsFeature AddDnsTools     { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
+        DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+
+        # IIS cleanup
+        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
+        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
+        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; }
+        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; }
+        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; }
+        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
+        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
+
+        # Allow sign-in on HTTPS sites when site host name is different than the machine name: https://support.microsoft.com/en-us/help/926642
+        Registry DisableLoopBackCheck
+        {
+            Key       = "HKLM:\System\CurrentControlSet\Control\Lsa"
+            ValueName = "DisableLoopbackCheck"
+            ValueData = "1"
+            ValueType = "Dword"
+            Ensure    = "Present"
+        }
 
         # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
         # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
@@ -106,59 +123,53 @@ configuration ConfigureSPVM
             Ensure                      = 'Present'
         }#>
 
+        SqlAlias AddSqlAlias
+        {
+            Ensure               = "Present"
+            Name                 = $SQLAlias
+            ServerName           = $SQLName
+            Protocol             = "TCP"
+            TcpPort              = 1433
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
-        WaitForADDomain DscForestWait
+        # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
+        WaitForADDomain WaitForDCReady
         {
             DomainName              = $DomainFQDN
-            WaitTimeout             = 600
+            WaitTimeout             = 1200
             RestartCount            = 2
             WaitForValidCredentials = $True
             PsDscRunAsCredential    = $DomainAdminCredsQualified
-            # DependsOn               = "[xCredSSP]CredSSPClient"
-            DependsOn               = "[DnsServerAddress]DnsServerAddress"
+            DependsOn               = "[DnsServerAddress]SetDNS"
+        }
+        
+        # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
+        PendingReboot RebootOnSignalFromWaitForDCReady
+        {
+            Name             = "RebootOnSignalFromWaitForDCReady"
+            SkipCcmClientSDK = $true
+            DependsOn        = "[WaitForADDomain]WaitForDCReady"
         }
 
-        # # Quick an,d dirty workaround for error in [Computer]DomainJoin, that fails with this error otherwise: [ERROR] The WS-Management service cannot process the request. The WMI service or the WMI provider returned an unknown error: HRESULT 0x80041033 
-        # xScript RebootBeforeJoinDomain
-        # {
-        #     # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-        #     TestScript = {
-        #         return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootBeforeJoinDomain)
-        #     }
-        #     SetScript = {
-        #         New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootBeforeJoinDomain -Force
-        #         $global:DSCMachineStatus = 1
-        #     }
-        #     GetScript = { }
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn = "[WaitForADDomain]DscForestWait"
-        # }
-
-        # PendingReboot RebootRebootBeforeJoinDomain
-        # {
-        #     Name             = "RebootRebootBeforeJoinDomain"
-        #     SkipCcmClientSDK = $true
-        #     DependsOn        = "[xScript]RebootBeforeJoinDomain"
-        # }
-
-        Computer DomainJoin
+        Computer JoinDomain
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            # DependsOn = "[PendingReboot]RebootRebootBeforeJoinDomain"
-            DependsOn = "[WaitForADDomain]DscForestWait"
+            DependsOn  = "[PendingReboot]RebootOnSignalFromWaitForDCReady"
         }
 
-        PendingReboot RebootAfterJoinedDomain
+        PendingReboot RebootOnSignalFromJoinDomain
         {
-            Name             = "RebootAfterJoinedDomain"
+            Name             = "RebootOnSignalFromJoinDomain"
             SkipCcmClientSDK = $true
-            DependsOn        = "[Computer]DomainJoin"
+            DependsOn        = "[Computer]JoinDomain"
         }
         
+        # This script is still needed
         xScript CreateWSManSPNsIfNeeded
         {
             SetScript =
@@ -177,7 +188,8 @@ configuration ConfigureSPVM
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
                 setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            GetScript = { }
+            # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             TestScript = 
             {
                 $computerName = $using:ComputerName
@@ -191,22 +203,13 @@ configuration ConfigureSPVM
                     return $false
                 }
             }
-            DependsOn = "[PendingReboot]RebootAfterJoinedDomain"
+            DependsOn = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         #**********************************************************
-        # Do some cleanup and preparation for SharePoint
+        # Do SharePoint pre-reqs that require membership in AD domain
         #**********************************************************
-        Registry DisableLoopBackCheck
-        {
-            Key       = "HKLM:\System\CurrentControlSet\Control\Lsa"
-            ValueName = "DisableLoopbackCheck"
-            ValueData = "1"
-            ValueType = "Dword"
-            Ensure    = "Present"
-            DependsOn ="[PendingReboot]RebootAfterJoinedDomain"
-        }
-
+        # Create DNS entries used by SharePoint
         xDnsRecord AddTrustedSiteDNS
         {
             Name                 = $SPTrustedSitesName
@@ -216,16 +219,8 @@ configuration ConfigureSPVM
             Type                 = "CName"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[PendingReboot]RebootAfterJoinedDomain"
+            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
-
-        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
-        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
-        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
-        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
-        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
-        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
-        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[PendingReboot]RebootAfterJoinedDomain"}
 
         #**********************************************************
         # Provision required accounts for SharePoint
@@ -238,7 +233,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[PendingReboot]RebootAfterJoinedDomain"
+            DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }        
 
         ADUser CreateSParmAccount
@@ -249,7 +244,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[PendingReboot]RebootAfterJoinedDomain"
+            DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         Group AddSPSetupAccountToAdminGroup
@@ -259,7 +254,7 @@ configuration ConfigureSPVM
             MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
             Credential           = $DomainAdminCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[ADUser]CreateSPSetupAccount", "[ADUser]CreateSParmAccount"
+            DependsOn            = "[ADUser]CreateSPSetupAccount"
         }
 
         ADUser CreateSPAppPoolAccount
@@ -270,7 +265,7 @@ configuration ConfigureSPVM
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn                     = "[PendingReboot]RebootAfterJoinedDomain"
+            DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         File AccountsProvisioned
@@ -280,18 +275,7 @@ configuration ConfigureSPVM
             Type                 = 'File'
             Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPAppPoolAccount"
-        }
-
-        SqlAlias AddSqlAlias
-        {
-            Ensure               = "Present"
-            Name                 = $SQLAlias
-            ServerName           = $SQLName
-            Protocol             = "TCP"
-            TcpPort              = 1433
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[File]AccountsProvisioned"
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPAppPoolAccount", "[xScript]CreateWSManSPNsIfNeeded"
         }
 
         xScript WaitForSQL
@@ -300,7 +284,7 @@ configuration ConfigureSPVM
             {
                 $retrySleep = 30
                 $server = $using:SQLAlias
-                $db="master"
+                $db = "master"
                 $retry = $true
                 while ($retry) {
                     $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
@@ -317,9 +301,9 @@ configuration ConfigureSPVM
                 }
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SqlAlias]AddSqlAlias"
+            DependsOn            = "[SqlAlias]AddSqlAlias", "[File]AccountsProvisioned"
         }
 
         #**********************************************************
@@ -349,7 +333,7 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
-        SPWebApplication MainWebApp
+        SPWebApplication CreateMainWebApp
         {
             Name                   = "SharePoint - 80"
             ApplicationPool        = "SharePoint - 80"
@@ -363,10 +347,10 @@ configuration ConfigureSPVM
             DependsOn              = "[SPFarm]CreateSPFarm"
         }
 
-        # Creating site collection in SharePoint 2019 fail: https://github.com/PowerShell/SharePointDsc/issues/990
+        # Creating site collection in SharePoint 2019 fails: https://github.com/PowerShell/SharePointDsc/issues/990
         # The workaround is to force a reboot before creating it
         if ($SharePointVersion -eq "2019") {
-            xScript SetRebootIfFirstTime
+            xScript ForceRebootBeforeCreatingSPSite
             {
                 # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
                 TestScript = {
@@ -378,18 +362,19 @@ configuration ConfigureSPVM
                 }
                 GetScript = { }
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn = "[SPWebApplication]MainWebApp"
+                DependsOn = "[SPWebApplication]CreateMainWebApp"
             }
 
             PendingReboot RebootBeforeCreatingSPSite
             {
                 Name             = "BeforeCreatingSPTrust"
                 SkipCcmClientSDK = $true
-                DependsOn        = "[xScript]SetRebootIfFirstTime"
+                DependsOn        = "[xScript]ForceRebootBeforeCreatingSPSite"
             }
         }
 
         if ($ConfigureADFS -eq $true) {
+            # Delay this operation significantly, so that DC has time to generate and copy the certificates
             File CopyCertificatesFromDC
             {
                 Ensure          = "Present"
@@ -398,7 +383,7 @@ configuration ConfigureSPVM
                 SourcePath      = "$DCSetupPath"
                 DestinationPath = "$SetupPath\Certificates"
                 Credential      = $DomainAdminCredsQualified
-                DependsOn       = "[PendingReboot]RebootAfterJoinedDomain"
+                DependsOn       = "[PendingReboot]RebootOnSignalFromJoinDomain"
             }
 
             SPTrustedRootAuthority TrustRootCA
@@ -445,11 +430,11 @@ configuration ConfigureSPVM
                 }
                 GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                 TestScript           = { return $false }
-                DependsOn            = "[PendingReboot]RebootAfterJoinedDomain"
+                DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
                 PsDscRunAsCredential = $DomainAdminCredsQualified
             }
 
-            CertReq SPSSiteCert
+            CertReq GenerateMainWebAppCertificate
             {
                 CARootName             = "$DomainNetbiosName-$DCName-CA"
                 CAServerFQDN           = "$DCName.$DomainFQDN"
@@ -466,7 +451,7 @@ configuration ConfigureSPVM
                 DependsOn              = '[xScript]UpdateGPOToTrustRootCACert'
             }
 
-            SPWebApplicationExtension ExtendWebApp
+            SPWebApplicationExtension ExtendMainWebApp
             {
                 WebAppUrl              = "http://$SPTrustedSitesName/"
                 Name                   = "SharePoint - 443"
@@ -477,10 +462,10 @@ configuration ConfigureSPVM
                 Port                   = 443
                 Ensure                 = "Present"
                 PsDscRunAsCredential   = $SPSetupCredsQualified
-                DependsOn              = '[CertReq]SPSSiteCert'
+                DependsOn              = "[CertReq]GenerateMainWebAppCertificate", "[SPWebApplication]CreateMainWebApp"
             }
 
-            SPWebAppAuthentication ConfigureAuthentAllZones
+            SPWebAppAuthentication ConfigureMainWebAppAuthentication
             {
                 WebAppUrl = "http://$SPTrustedSitesName/"
                 Default = @(
@@ -496,7 +481,7 @@ configuration ConfigureSPVM
                     }
                 )
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn            = "[SPWebApplicationExtension]ExtendWebApp"
+                DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp"
             }
 
             xWebsite SetHTTPSCertificate
@@ -511,22 +496,23 @@ configuration ConfigureSPVM
                 }
                 Ensure               = "Present"
                 PsDscRunAsCredential = $DomainAdminCredsQualified
-                DependsOn            = "[SPWebAppAuthentication]ConfigureAuthentAllZones"
+                DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
             }
 
-            SPSite RootTeamSite
+            SPSite CreateRootSite
             {
                 Url                  = "http://$SPTrustedSitesName/"
                 OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
                 SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-                Name                 = "Blank site"
-                Template             = "STS#1"
+                Name                 = "Team site"
+                Template             = "STS#0"
+                CreateDefaultGroups  = $true
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn            = "[SPWebApplication]MainWebApp"
+                DependsOn            = "[SPWebApplication]CreateMainWebApp"
             }
         }
         else {
-            SPWebAppAuthentication ConfigureAuthentDefaultZone
+            SPWebAppAuthentication ConfigureMainWebAppAuthentication
             {
                 WebAppUrl = "http://$SPTrustedSitesName/"
                 Default = @(
@@ -534,19 +520,20 @@ configuration ConfigureSPVM
                         AuthenticationMethod = "WindowsAuthentication"
                         WindowsAuthMethod    = "NTLM"
                     }
-                )                
+                )
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn            = "[SPWebApplication]MainWebApp"
+                DependsOn            = "[SPWebApplication]CreateMainWebApp"
             }
 
-            SPSite RootTeamSite
+            SPSite CreateRootSite
             {
                 Url                  = "http://$SPTrustedSitesName/"
                 OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-                Name                 = "Blank site"
-                Template             = "STS#1"
+                Name                 = "Team site"
+                Template             = "STS#0"
+                CreateDefaultGroups  = $true
                 PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn            = "[SPWebApplication]MainWebApp"
+                DependsOn            = "[SPWebApplication]CreateMainWebApp"
             }
         }
     }
@@ -596,7 +583,7 @@ $SQLAlias = "SQLAlias"
 $SharePointVersion = "2019"
 $ConfigureADFS = $false
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.2\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.3\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
 ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigureADFS $ConfigureADFS -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force

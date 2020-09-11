@@ -8,17 +8,14 @@
     "domainFQDN": {
       "value": "contoso.local"
     },
+    "adminUserName": { 
+      "value": "yvand"
+    },
     "vmsTimeZone": {
       "value": "Romance Standard Time"
     },
-    "addFrontEndToFarm": {
-      "value": "No"
-    },
     "enableHybridBenefitServerLicenses": {
       "value": "Yes"
-    },
-    "sharePointDataDiskSize": {
-      "value": 0
     },
     "addAzureBastion": {
       "value": "Yes"
