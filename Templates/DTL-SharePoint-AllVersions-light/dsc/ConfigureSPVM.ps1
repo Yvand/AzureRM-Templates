@@ -347,31 +347,31 @@ configuration ConfigureSPVM
             DependsOn              = "[SPFarm]CreateSPFarm"
         }
 
-        # Creating site collection in SharePoint 2019 fails: https://github.com/PowerShell/SharePointDsc/issues/990
-        # The workaround is to force a reboot before creating it
-        if ($SharePointVersion -eq "2019") {
-            xScript ForceRebootBeforeCreatingSPSite
-            {
-                # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-                TestScript = {
-                    return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
-                }
-                SetScript = {
-                    New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
-                    $global:DSCMachineStatus = 1
-                }
-                GetScript = { }
-                PsDscRunAsCredential = $SPSetupCredsQualified
-                DependsOn = "[SPWebApplication]CreateMainWebApp"
-            }
+        # # Creating site collection in SharePoint 2019 fails: https://github.com/PowerShell/SharePointDsc/issues/990
+        # # The workaround is to force a reboot before creating it
+        # if ($SharePointVersion -eq "2019") {
+        #     xScript ForceRebootBeforeCreatingSPSite
+        #     {
+        #         # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        #         TestScript = {
+        #             return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
+        #         }
+        #         SetScript = {
+        #             New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
+        #             $global:DSCMachineStatus = 1
+        #         }
+        #         GetScript = { }
+        #         PsDscRunAsCredential = $SPSetupCredsQualified
+        #         DependsOn = "[SPWebApplication]CreateMainWebApp"
+        #     }
 
-            PendingReboot RebootBeforeCreatingSPSite
-            {
-                Name             = "BeforeCreatingSPTrust"
-                SkipCcmClientSDK = $true
-                DependsOn        = "[xScript]ForceRebootBeforeCreatingSPSite"
-            }
-        }
+        #     PendingReboot RebootBeforeCreatingSPSite
+        #     {
+        #         Name             = "BeforeCreatingSPTrust"
+        #         SkipCcmClientSDK = $true
+        #         DependsOn        = "[xScript]ForceRebootBeforeCreatingSPSite"
+        #     }
+        # }
 
         if ($ConfigureADFS -eq $true) {
             # Delay this operation significantly, so that DC has time to generate and copy the certificates
