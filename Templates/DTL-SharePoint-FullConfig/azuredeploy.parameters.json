@@ -3,25 +3,19 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sharePointVersion": {
-      "value": "2013"
-    },
-    "dnsLabelPrefix": {
-      "value": "ydqs7"
+      "value": "2019"
     },
     "domainFQDN": {
       "value": "contoso.local"
     },
+    "adminUserName": { 
+      "value": "yvand"
+    },
     "vmsTimeZone": {
       "value": "Romance Standard Time"
     },
-    "addFrontEndToFarm": {
-      "value": "Yes"
-    },
     "enableHybridBenefitServerLicenses": {
       "value": "Yes"
-    },
-    "sharePointDataDiskSize": {
-      "value": 0
     },
     "addAzureBastion": {
       "value": "Yes"
@@ -29,9 +23,9 @@
     "addPublicIPAddressToEachVM": {
       "value": "Yes"
     },
-    "_artifactsLocation": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/update-sharepoint-adfs-quickstart-template/Templates/SharePoint-ADFS/"
-    },
+    // "_artifactsLocation": {
+    //   "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS"
+    // },
      "vmSQLSize": { "value": "Standard_E2as_v4" },
      "vmSQLStorageAccountType": { "value": "Premium_LRS" },
      "vmSPSize": { "value": "Standard_E2as_v4" },

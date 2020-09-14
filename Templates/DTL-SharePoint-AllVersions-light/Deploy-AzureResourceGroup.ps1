@@ -1,32 +1,34 @@
+#Requires -Version 3.0
 #Requires -Module Az.Resources
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
-#$resourceGroupLocation = 'northeurope'
-$resourceGroupName = 'ydqs5'
+# $resourceGroupLocation = 'francecentral'
+$resourceGroupName = 'yddtl-light-19'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
-#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SharePoint-ADFS"
+#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SharePoint-ADFS-DevTestLabs"
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 
 Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
-### Set passwords
-# $securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
+### Define passwords
+#$securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
-# $passwords = New-Object -TypeName HashTable
-# $passwords.adminPassword = $securePassword
-# $passwords.serviceAccountsPassword = $securePassword
+$passwords = New-Object -TypeName HashTable
+$passwords['adminPassword'] = $securePassword
+$passwords['serviceAccountsPassword'] = $securePassword
 
-### Set parameters
-$parameters = New-Object -TypeName HashTable
-$parameters.adminPassword = $securePassword
-$parameters.serviceAccountsPassword = $securePassword
-$paramFileContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
-$paramFileContent.parameters | Get-Member -MemberType *Property | ForEach-Object { 
-    $parameters.($_.name) = $paramFileContent.parameters.($_.name).value; 
+### Parse the parameters file
+$JsonContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
+$JsonParameters = $JsonContent | Get-Member -Type NoteProperty | Where-Object {$_.Name -eq "parameters"}
+if ($null -eq $JsonParameters) {
+    $JsonParameters = $JsonContent
+}
+else {
+    $JsonParameters = $JsonContent.parameters
 }
 
 ### Ensure connection to Azure RM
@@ -55,10 +57,9 @@ if ($null -eq (Get-AzResourceGroup -ResourceGroupName $resourceGroupName -ErrorA
 $checkTemplate = Test-AzResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
     -TemplateFile $TemplateFile `
-    -TemplateParameterObject $parameters `
+    -TemplateParameterFile $templateParametersFile `
+    @passwords `
     -Verbose
-    # -TemplateParameterFile $templateParametersFile `
-    # @passwords `
 
 if ($checkTemplate.Count -eq 0) {
     # Template is valid, deploy it
@@ -68,10 +69,9 @@ if ($checkTemplate.Count -eq 0) {
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
         -TemplateFile $TemplateFile `
-        -TemplateParameterObject $parameters `
+        -TemplateParameterFile $templateParametersFile `
+        @passwords `
         -Verbose -Force
-        # -TemplateParameterFile $templateParametersFile `
-        # @passwords `
 
     $elapsedTime = New-TimeSpan $startTime $(get-date)
     $result

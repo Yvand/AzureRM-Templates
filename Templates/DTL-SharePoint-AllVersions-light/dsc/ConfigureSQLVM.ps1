@@ -293,7 +293,7 @@ help ConfigureSQLVM
 $DomainAdminCreds = Get-Credential -Credential "yvand"
 $SqlSvcCreds = Get-Credential -Credential "sqlsvc"
 $SPSetupCreds = Get-Credential -Credential "spsetup"
-$DNSServer = "10.0.1.4"
+$DNSServer = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.1.0\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
