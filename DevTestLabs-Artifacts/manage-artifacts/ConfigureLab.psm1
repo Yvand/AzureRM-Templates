@@ -391,9 +391,10 @@ function Invoke-SPDSCCommand
         # Running garbage collection to resolve issues related to Azure DSC extention use
         [GC]::Collect()
 
+        # Replace CredSSP with Basic to eliminate the dependency on it. Requires WSMan:\localhost\Client\AllowUnencrypted set to true
         $session = New-PSSession -ComputerName $env:COMPUTERNAME `
                                  -Credential $Credential `
-                                 -Authentication CredSSP `
+                                 -Authentication Basic `
                                  -Name "DevTestLabs" `
                                  -SessionOption (New-PSSessionOption -OperationTimeout 0 `
                                                                      -IdleTimeout 60000) `

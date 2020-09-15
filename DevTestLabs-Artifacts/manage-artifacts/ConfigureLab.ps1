@@ -35,8 +35,11 @@ Push-Location $PSScriptRoot
 
 try
 {
-    Import-Module -Name ".\ConfigureLab.psm1"
-    Configure-Lab @PSBoundParameters
+   # Enable unencrypted traffic on WSMan to allow Basic authentication on New-PSSession
+   Set-Item WSMan:\localhost\Client\AllowUnencrypted $true
+
+   Import-Module -Name ".\ConfigureLab.psm1"
+   Configure-Lab @PSBoundParameters
 }
 catch
 {
@@ -45,6 +48,9 @@ catch
 }
 finally
 {
-    Pop-Location
-	Remove-Module -Name "ConfigureLab"
+   Pop-Location
+   Remove-Module -Name "ConfigureLab"
+   
+   # Disable unencrypted traffic when finished as a best practice
+   Set-Item WSMan:\localhost\Client\AllowUnencrypted $true
 }
