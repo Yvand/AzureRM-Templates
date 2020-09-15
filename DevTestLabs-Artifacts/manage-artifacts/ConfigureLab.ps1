@@ -52,5 +52,5 @@ finally
    Remove-Module -Name "ConfigureLab"
    
    # Disable unencrypted traffic when finished as a best practice
-   Set-Item WSMan:\localhost\Client\AllowUnencrypted $true
+   Set-Item WSMan:\localhost\Client\AllowUnencrypted $false
 }
