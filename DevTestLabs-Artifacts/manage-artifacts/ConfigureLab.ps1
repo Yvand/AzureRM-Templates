@@ -37,6 +37,8 @@ try
 {
    # Enable unencrypted traffic on WSMan to allow Basic authentication on New-PSSession
    Set-Item WSMan:\localhost\Client\AllowUnencrypted $true
+   Set-Item WSMan:\localhost\Service\AllowUnencrypted $true
+   Set-Item WSMan:\localhost\Service\Auth\Basic $true
 
    Import-Module -Name ".\ConfigureLab.psm1"
    Configure-Lab @PSBoundParameters
@@ -53,4 +55,6 @@ finally
    
    # Disable unencrypted traffic when finished as a best practice
    Set-Item WSMan:\localhost\Client\AllowUnencrypted $false
+   Set-Item WSMan:\localhost\Service\AllowUnencrypted $false
+   Set-Item WSMan:\localhost\Service\Auth\Basic $false
 }
