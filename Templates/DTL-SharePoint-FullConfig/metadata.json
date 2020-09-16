@@ -3,5 +3,5 @@
   "summary": "This template configures a SharePoint web application with Windows and ADFS, some path based / host-named site collections, UPA and Apps services. Claims provider LDAPCP is installed.",
   "description": "Create a single SharePoint 2019 / 2016 / 2013 farm with an extensive configuration to ease the creation of complex environments.",
   "githubUsername": "Yvand",
-  "dateUpdated": "2020-09-14"
+  "dateUpdated": "2020-09-15"
 }
