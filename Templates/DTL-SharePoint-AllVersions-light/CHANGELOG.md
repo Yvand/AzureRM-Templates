@@ -1,5 +1,11 @@
 # Change log for AzureRM template SharePoint-ADFS-DevTestLabs
 
+## Enhancements & bug-fixes - Published in September 17, 2020
+
+* Re-add creation of SPDistributedCacheService
+* Re-add xCredSSP configuration
+* Disable IE Enhanced Security Configuration (ESC) on SharePoint VMs
+
 ## September 2020 update
 
 * Many modifications on DSC scripts to improve their reliability, readability and consistency
