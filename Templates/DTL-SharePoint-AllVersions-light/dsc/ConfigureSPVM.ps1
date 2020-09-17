@@ -345,6 +345,17 @@ configuration ConfigureSPVM
             DependsOn                 = "[xScript]WaitForSQL"
         }
 
+        SPDistributedCacheService EnableDistributedCache
+        {
+            Name                 = "AppFabricCachingService"
+            CacheSizeInMB        = 2000
+            CreateFirewallRules  = $true
+            ServiceAccount       = $SPFarmCredsQualified.UserName
+            InstallAccount       = $SPSetupCredsQualified
+            Ensure               = "Present"
+            DependsOn            = "[SPFarm]CreateSPFarm"
+        }
+
         SPManagedAccount CreateSPAppPoolManagedAccount
         {
             AccountName          = $SPAppPoolCredsQualified.UserName
