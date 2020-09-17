@@ -148,17 +148,21 @@ configuration ConfigureSPVM
                 Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
                 #Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0
 
+                if ($false -eq (Test-Path -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer")) {
+                    New-Item -Path "HKLM:\Software\Policies\Microsoft" -Name "Internet Explorer"
+                }
+
                 # Disable the first run wizard of IE
                 $ieFirstRunKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main"
                 if ($false -eq (Test-Path -Path $ieFirstRunKey)) {
-                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "Main"        
+                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "Main"
                 }
                 Set-ItemProperty -Path $ieFirstRunKey -Name "DisableFirstRunCustomize" -Value 1
                 
                 # Set new tabs to open "about:blank" in IE
                 $ieNewTabKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing"
                 if ($false -eq (Test-Path -Path $ieNewTabKey)) {
-                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "TabbedBrowsing"        
+                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "TabbedBrowsing"
                 }
                 Set-ItemProperty -Path $ieNewTabKey -Name "NewTabPageShow" -Value 0
             }
