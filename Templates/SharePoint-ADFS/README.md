@@ -37,6 +37,5 @@ If you need a boost in performance, you may consider the following sizes / stora
 
 > **Notes:**  
 > I strongly recommend to update SharePoint to a recent build just after the provisioning is complete.  
-> With the default setting for virtual machines, provisioning of the template takes about 1h15 to complete.  
+> With the default setting for virtual machines, provisioning of the template takes about 1h to complete.  
 > The password complexity check in the form is not accurate and may validate a password that will be rejected by Azure when it provisions the VMs. Make sure to **use at least 2 special characters for the passwords**.
-

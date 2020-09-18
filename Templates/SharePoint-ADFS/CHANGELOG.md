@@ -1,4 +1,4 @@
-# Change log for Azure template for SharePoint-ADFS
+# Change log for Azure template SharePoint-ADFS
 
 ## Enhancements & bug-fixes - Published in September 18, 2020
 
@@ -7,6 +7,7 @@
 * Disable the first run wizard of IE on SharePoint VMs
 * Set new tabs to open "about:blank" in IE on SharePoint VMs
 * Move resources to avoid error on ExtendMainWebApp
+* Remove customization of SPDiagnosticLoggingSettings
 
 ## September 2020 update
 
