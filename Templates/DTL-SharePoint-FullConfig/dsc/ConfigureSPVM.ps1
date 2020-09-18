@@ -587,6 +587,50 @@ configuration ConfigureSPVM
             DependsOn            = "[SPManagedAccount]CreateSPSvcManagedAccount"
         }
 
+        SPWebApplication CreateMainWebApp
+        {
+            Name                   = "SharePoint - 80"
+            ApplicationPool        = "SharePoint - 80"
+            ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
+            AllowAnonymous         = $false
+            DatabaseName           = $SPDBPrefix + "Content_80"
+            WebAppUrl              = "http://$SPTrustedSitesName/"
+            Port                   = 80
+            Ensure                 = "Present"
+            PsDscRunAsCredential   = $SPSetupCredsQualified
+            DependsOn              = "[xScript]RestartSPTimerAfterCreateSPFarm"
+        }
+
+        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
+        xScript UpdateGPOToTrustRootCACert
+        {
+            SetScript =
+            {
+                gpupdate.exe /force
+            }
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
+        CertReq GenerateMainWebAppCertificate
+        {
+            CARootName             = "$DomainNetbiosName-$DCName-CA"
+            CAServerFQDN           = "$DCName.$DomainFQDN"
+            Subject                = "$SPTrustedSitesName.$DomainFQDN"
+            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
+            KeyLength              = '2048'
+            Exportable             = $true
+            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                    = '1.3.6.1.5.5.7.3.1'
+            KeyUsage               = '0xa0'
+            CertificateTemplate    = 'WebServer'
+            AutoRenew              = $true
+            Credential             = $DomainAdminCredsQualified
+            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
+        }
+
         # Installing LDAPCP somehow updates SPClaimEncodingManager 
         # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
         # The only solution I've found is to force a reboot in SharePoint 2019
@@ -685,50 +729,8 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
-        SPWebApplication CreateMainWebApp
-        {
-            Name                   = "SharePoint - 80"
-            ApplicationPool        = "SharePoint - 80"
-            ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
-            AllowAnonymous         = $false
-            DatabaseName           = $SPDBPrefix + "Content_80"
-            WebAppUrl              = "http://$SPTrustedSitesName/"
-            Port                   = 80
-            Ensure                 = "Present"
-            PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        }
-
-        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
-        xScript UpdateGPOToTrustRootCACert
-        {
-            SetScript =
-            {
-                gpupdate.exe /force
-            }
-            GetScript            = { }
-            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-        }
-
-        CertReq GenerateMainWebAppCertificate
-        {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
-            Subject                = "$SPTrustedSitesName.$DomainFQDN"
-            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
-            KeyLength              = '2048'
-            Exportable             = $true
-            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
-            OID                    = '1.3.6.1.5.5.7.3.1'
-            KeyUsage               = '0xa0'
-            CertificateTemplate    = 'WebServer'
-            AutoRenew              = $true
-            Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
-        }
-
+        # ExtendMainWebApp might fail with error: "The web.config could not be saved on this IIS Web Site: C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config.\r\nThe process cannot access the file 'C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config' because it is being used by another process."
+        # So I added resources between it and CreateMainWebApp to avoid it
         SPWebApplicationExtension ExtendMainWebApp
         {
             WebAppUrl              = "http://$SPTrustedSitesName/"
