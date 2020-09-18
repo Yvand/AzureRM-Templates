@@ -532,15 +532,6 @@ configuration ConfigureSPVM
             DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
         }
 
-        SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
-        {
-            LogPath              = "C:\ULS"
-            LogSpaceInGB         = 20
-            IsSingleInstance     = "Yes"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        }
-
         SPStateServiceApp StateServiceApp
         {
             Name                 = "State Service Application"
