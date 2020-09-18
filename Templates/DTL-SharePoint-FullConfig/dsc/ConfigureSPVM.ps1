@@ -545,10 +545,10 @@ configuration ConfigureSPVM
             Name                 = "AppFabricCachingService"
             CacheSizeInMB        = 2000
             CreateFirewallRules  = $true
-            ServiceAccount       = $SPSvcCredsQualified.UserName
+            ServiceAccount       = $SPFarmCredsQualified.UserName
             InstallAccount       = $SPSetupCredsQualified
             Ensure               = "Present"
-            DependsOn            = "[SPManagedAccount]CreateSPSvcManagedAccount"
+            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
         }
 
         #**********************************************************
