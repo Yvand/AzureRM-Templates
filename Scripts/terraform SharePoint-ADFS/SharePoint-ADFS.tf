@@ -1,6 +1,21 @@
-# Configure the Azure Provider
+# Configure the Microsoft Azure Provider
 provider "azurerm" {
+  # We recommend pinning to the specific version of the Azure Provider you're using
+  # since new versions are released frequently
+  version = "=2.28.0"
+
+  features {}
+
+  # More information on the authentication methods supported by
+  # the AzureRM Provider can be found here:
+  # http://terraform.io/docs/providers/azurerm/index.html
+
+  # subscription_id = "..."
+  # client_id       = "..."
+  # client_secret   = "..."
+  # tenant_id       = "..."
 }
+
 
 # Create a resource group
 resource "azurerm_resource_group" "resourceGroup" {
@@ -9,8 +24,8 @@ resource "azurerm_resource_group" "resourceGroup" {
 }
 
 # Create network security groups
-resource "azurerm_network_security_group" "NSG-VNet-DC" {
-  name                = "NSG-VNet-${var.vmDC["vmName"]}"
+resource "azurerm_network_security_group" "NSG-Subnet-DC" {
+  name                = "NSG-Subnet-${var.vmDC["vmName"]}"
   location            = azurerm_resource_group.resourceGroup.location
   resource_group_name = azurerm_resource_group.resourceGroup.name
 
@@ -23,13 +38,13 @@ resource "azurerm_network_security_group" "NSG-VNet-DC" {
     source_address_prefix      = "Internet"
     destination_address_prefix = "*"
     access                     = "Allow"
-    priority                   = 100
+    priority                   = 110
     direction                  = "Inbound"
   }
 }
 
-resource "azurerm_network_security_group" "NSG-VNet-SQL" {
-  name                = "NSG-VNet-${var.vmSQL["vmName"]}"
+resource "azurerm_network_security_group" "NSG-Subnet-SQL" {
+  name                = "NSG-Subnet-${var.vmSQL["vmName"]}"
   location            = azurerm_resource_group.resourceGroup.location
   resource_group_name = azurerm_resource_group.resourceGroup.name
 
@@ -42,26 +57,13 @@ resource "azurerm_network_security_group" "NSG-VNet-SQL" {
     source_address_prefix      = "Internet"
     destination_address_prefix = "*"
     access                     = "Allow"
-    priority                   = 100
-    direction                  = "Inbound"
-  }
-
-  security_rule {
-    name                       = "allow-sql-from-sp-vnet-rule"
-    description                = "Allow FE Subnet"
-    protocol                   = "TCP"
-    source_port_range          = "*"
-    destination_port_range     = "1433"
-    source_address_prefix      = var.networkSettings["vNetPrivateSubnetSPPrefix"]
-    destination_address_prefix = "*"
-    access                     = "Allow"
-    priority                   = 101
+    priority                   = 110
     direction                  = "Inbound"
   }
 }
 
-resource "azurerm_network_security_group" "NSG-VNet-SP" {
-  name                = "NSG-VNet-${var.vmSP["vmName"]}"
+resource "azurerm_network_security_group" "NSG-Subnet-SP" {
+  name                = "NSG-Subnet-${var.vmSP["vmName"]}"
   location            = azurerm_resource_group.resourceGroup.location
   resource_group_name = azurerm_resource_group.resourceGroup.name
 
@@ -74,7 +76,7 @@ resource "azurerm_network_security_group" "NSG-VNet-SP" {
     source_address_prefix      = "Internet"
     destination_address_prefix = "*"
     access                     = "Allow"
-    priority                   = 100
+    priority                   = 110
     direction                  = "Inbound"
   }
 }
@@ -92,65 +94,62 @@ resource "azurerm_subnet" "Subnet-DC" {
   name                 = "Subnet-${var.vmDC["vmName"]}"
   resource_group_name  = azurerm_resource_group.resourceGroup.name
   virtual_network_name = azurerm_virtual_network.VNet.name
-  address_prefix       = var.networkSettings["vNetPrivateSubnetDCPrefix"]
-  network_security_group_id = azurerm_network_security_group.NSG-VNet-DC.id
+  address_prefixes     = [var.networkSettings["vNetPrivateSubnetDCPrefix"]]
 }
 
-resource "azurerm_subnet_network_security_group_association" "NSG-Associate-DCSubnet" {
+resource "azurerm_subnet_network_security_group_association" "nsg_subnetdc_association" {
   subnet_id                 = azurerm_subnet.Subnet-DC.id
-  network_security_group_id = azurerm_network_security_group.NSG-VNet-DC.id
+  network_security_group_id = azurerm_network_security_group.NSG-Subnet-DC.id
 }
 
 # Subnet and NSG for SQL
-# Delay subnet creation to workaround bug https://github.com/terraform-providers/terraform-provider-azurerm/issues/2758
-resource "null_resource" "delay_subnet_sql" {
-  provisioner "local-exec" {
-    command = "ping 127.0.0.1 -n 6 > nul"
-  }
+# # Delay subnet creation to workaround bug https://github.com/terraform-providers/terraform-provider-azurerm/issues/2758
+# resource "null_resource" "delay_subnet_sql" {
+#   provisioner "local-exec" {
+#     command = "ping 127.0.0.1 -n 6 > nul"
+#   }
 
-  triggers = {
-    "before" = "${azurerm_subnet.Subnet-DC.id}"
-  }
-}
+#   triggers = {
+#     "before" = "${azurerm_subnet.Subnet-DC.id}"
+#   }
+# }
 
 resource "azurerm_subnet" "Subnet-SQL" {
   name                 = "Subnet-${var.vmSQL["vmName"]}"
   resource_group_name  = azurerm_resource_group.resourceGroup.name
   virtual_network_name = azurerm_virtual_network.VNet.name
-  address_prefix       = var.networkSettings["vNetPrivateSubnetSQLPrefix"]
-  network_security_group_id = azurerm_network_security_group.NSG-VNet-SQL.id
-  depends_on                = ["null_resource.delay_subnet_sql"]
+  address_prefixes       = [var.networkSettings["vNetPrivateSubnetSQLPrefix"]]
+  # depends_on                = [null_resource.delay_subnet_sql]
 }
 
-resource "azurerm_subnet_network_security_group_association" "NSG-Associate-SQLSubnet" {
+resource "azurerm_subnet_network_security_group_association" "nsg_subnetsql_association" {
   subnet_id                 = azurerm_subnet.Subnet-SQL.id
-  network_security_group_id = azurerm_network_security_group.NSG-VNet-SQL.id
+  network_security_group_id = azurerm_network_security_group.NSG-Subnet-SQL.id
 }
 
 # Subnet and NSG for SP
-# Delay subnet creation to workaround bug https://github.com/terraform-providers/terraform-provider-azurerm/issues/2758
-resource "null_resource" "delay_subnet_sp" {
-  provisioner "local-exec" {
-    command = "ping 127.0.0.1 -n 6 > nul"
-  }
+# # Delay subnet creation to workaround bug https://github.com/terraform-providers/terraform-provider-azurerm/issues/2758
+# resource "null_resource" "delay_subnet_sp" {
+#   provisioner "local-exec" {
+#     command = "ping 127.0.0.1 -n 6 > nul"
+#   }
 
-  triggers = {
-    "before" = "${azurerm_subnet.Subnet-SQL.id}"
-  }
-}
+#   triggers = {
+#     "before" = "${azurerm_subnet.Subnet-SQL.id}"
+#   }
+# }
 
 resource "azurerm_subnet" "Subnet-SP" {
   name                 = "Subnet-${var.vmSP["vmName"]}"
   resource_group_name  = azurerm_resource_group.resourceGroup.name
   virtual_network_name = azurerm_virtual_network.VNet.name
-  address_prefix       = var.networkSettings["vNetPrivateSubnetSPPrefix"]
-  network_security_group_id = azurerm_network_security_group.NSG-VNet-SP.id
-  depends_on                = ["null_resource.delay_subnet_sp"]
+  address_prefixes       = [var.networkSettings["vNetPrivateSubnetSPPrefix"]]
+  # depends_on                = [null_resource.delay_subnet_sp]
 }
 
-resource "azurerm_subnet_network_security_group_association" "NSG-Associate-SPSubnet" {
+resource "azurerm_subnet_network_security_group_association" "nsg_subnetsp_association" {
   subnet_id                 = azurerm_subnet.Subnet-SP.id
-  network_security_group_id = azurerm_network_security_group.NSG-VNet-SP.id
+  network_security_group_id = azurerm_network_security_group.NSG-Subnet-SP.id
 }
 
 # Create artifacts for VM DC
@@ -221,51 +220,45 @@ resource "azurerm_network_interface" "NIC-SP-0" {
 }
 
 # Create virtual machines
-resource "azurerm_virtual_machine" "VM-DC" {
+resource "azurerm_windows_virtual_machine" "VM-DC" {
   name                  = "VM-${var.vmDC["vmName"]}"
+  computer_name = var.vmDC["vmName"]
   location              = azurerm_resource_group.resourceGroup.location
   resource_group_name   = azurerm_resource_group.resourceGroup.name
   network_interface_ids = [azurerm_network_interface.NIC-DC-0.id]
-  vm_size               = var.vmDC["vmSize"]
+  size                  = var.vmDC["vmSize"]
+  admin_username        = var.adminUserName
+  admin_password        = var.adminPassword
+  license_type = "Windows_Server"
+  timezone                  = var.timeZone
+  enable_automatic_updates  = true
+  provision_vm_agent        = true
 
-  os_profile {
-    computer_name  = var.vmDC["vmName"]
-    admin_username = var.adminUserName
-    admin_password = var.adminPassword
+  os_disk {
+    name                 = "Disk-${var.vmDC["vmName"]}-OS"
+    storage_account_type = var.vmDC["storageAccountType"]
+    caching              = "ReadWrite"
   }
 
-  os_profile_windows_config {
-    timezone                  = var.timeZone
-    enable_automatic_upgrades = true
-    provision_vm_agent        = true
-  }
-
-  storage_image_reference {
+  source_image_reference {
     publisher = var.vmDC["vmImagePublisher"]
     offer     = var.vmDC["vmImageOffer"]
     sku       = var.vmDC["vmImageSKU"]
     version   = "latest"
   }
-
-  storage_os_disk {
-    name              = "Disk-${var.vmDC["vmName"]}-OS"
-    managed_disk_type = var.vmDC["storageAccountType"]
-    create_option     = "FromImage"
-    disk_size_gb      = "128"
-    caching           = "ReadWrite"
-    os_type           = "Windows"
-  }
 }
 
 resource "azurerm_virtual_machine_extension" "VM-DC-DSC" {
   name                       = "VM-${var.vmDC["vmName"]}-DSC"
-  location                   = azurerm_resource_group.resourceGroup.location
-  resource_group_name        = azurerm_resource_group.resourceGroup.name
-  virtual_machine_name       = azurerm_virtual_machine.VM-DC.name
+  virtual_machine_id       = azurerm_windows_virtual_machine.VM-DC.id
   publisher                  = "Microsoft.Powershell"
   type                       = "DSC"
   type_handler_version       = "2.9"
   auto_upgrade_minor_version = true
+
+  timeouts {
+    create = "45m"
+  }
 
   settings = <<SETTINGS
   {
@@ -283,9 +276,7 @@ resource "azurerm_virtual_machine_extension" "VM-DC-DSC" {
       "dataCollection": "enable"
     }
   }
-  
 SETTINGS
-
 
   protected_settings = <<PROTECTED_SETTINGS
   {
@@ -300,57 +291,48 @@ SETTINGS
       }
     }
   }
-  
 PROTECTED_SETTINGS
-
 }
 
-resource "azurerm_virtual_machine" "VM-SQL" {
+resource "azurerm_windows_virtual_machine" "VM-SQL" {
   name                  = "VM-${var.vmSQL["vmName"]}"
+  computer_name = var.vmSQL["vmName"]
   location              = azurerm_resource_group.resourceGroup.location
   resource_group_name   = azurerm_resource_group.resourceGroup.name
   network_interface_ids = [azurerm_network_interface.NIC-SQL-0.id]
-  vm_size               = var.vmSQL["vmSize"]
+  size               = var.vmSQL["vmSize"]
+  admin_username        = var.adminUserName
+  admin_password        = var.adminPassword
+  license_type = "Windows_Server"
+  timezone                  = var.timeZone
+  enable_automatic_updates  = true
+  provision_vm_agent        = true
 
-  os_profile {
-    computer_name  = var.vmSQL["vmName"]
-    admin_username = var.adminUserName
-    admin_password = var.adminPassword
+  os_disk {
+    name              = "Disk-${var.vmSQL["vmName"]}-OS"
+    storage_account_type = var.vmSQL["storageAccountType"]
+    caching              = "ReadWrite"
   }
 
-  os_profile_windows_config {
-    timezone                  = var.timeZone
-    enable_automatic_upgrades = true
-    provision_vm_agent        = true
-  }
-
-  storage_image_reference {
+  source_image_reference {
     publisher = var.vmSQL["vmImagePublisher"]
     offer     = var.vmSQL["vmImageOffer"]
     sku       = var.vmSQL["vmImageSKU"]
     version   = "latest"
   }
-
-  storage_os_disk {
-    name              = "Disk-${var.vmSQL["vmName"]}-OS"
-    managed_disk_type = var.vmSQL["storageAccountType"]
-    create_option     = "FromImage"
-    disk_size_gb      = "128"
-    caching           = "ReadWrite"
-    os_type           = "Windows"
-  }
 }
 
 resource "azurerm_virtual_machine_extension" "VM-SQL-DSC" {
   name                       = "VM-${var.vmSQL["vmName"]}-DSC"
-  location                   = azurerm_resource_group.resourceGroup.location
-  resource_group_name        = azurerm_resource_group.resourceGroup.name
-  virtual_machine_name       = azurerm_virtual_machine.VM-SQL.name
+  virtual_machine_id       = azurerm_windows_virtual_machine.VM-SQL.id
   publisher                  = "Microsoft.Powershell"
   type                       = "DSC"
   type_handler_version       = "2.9"
   auto_upgrade_minor_version = true
-  depends_on                 = [azurerm_virtual_machine_extension.VM-DC-DSC]
+
+  timeouts {
+    create = "45m"
+  }
 
   settings = <<SETTINGS
   {
@@ -368,9 +350,7 @@ resource "azurerm_virtual_machine_extension" "VM-SQL-DSC" {
       "dataCollection": "enable"
     }
   }
-  
 SETTINGS
-
 
   protected_settings = <<PROTECTED_SETTINGS
   {
@@ -389,66 +369,48 @@ SETTINGS
       }
     }
   }
-  
 PROTECTED_SETTINGS
-
 }
 
-resource "azurerm_virtual_machine" "VM-SP" {
+resource "azurerm_windows_virtual_machine" "VM-SP" {
   name                  = "VM-${var.vmSP["vmName"]}"
+  computer_name = var.vmSP["vmName"]
   location              = azurerm_resource_group.resourceGroup.location
   resource_group_name   = azurerm_resource_group.resourceGroup.name
   network_interface_ids = [azurerm_network_interface.NIC-SP-0.id]
-  vm_size               = var.vmSP["vmSize"]
+  size               = var.vmSP["vmSize"]
+  admin_username        = var.adminUserName
+  admin_password        = var.adminPassword
+  license_type = "Windows_Server"
+  timezone                  = var.timeZone
+  enable_automatic_updates  = true
+  provision_vm_agent        = true
 
-  os_profile {
-    computer_name  = var.vmSP["vmName"]
-    admin_username = var.adminUserName
-    admin_password = var.adminPassword
+  os_disk {
+    name                 = "Disk-${var.vmSP["vmName"]}-OS"
+    storage_account_type = var.vmSP["storageAccountType"]
+    caching              = "ReadWrite"
   }
 
-  os_profile_windows_config {
-    timezone                  = var.timeZone
-    enable_automatic_upgrades = true
-    provision_vm_agent        = true
-  }
-
-  storage_image_reference {
+  source_image_reference {
     publisher = var.vmSP["vmImagePublisher"]
     offer     = var.vmSP["vmImageOffer"]
     sku       = var.vmSP["vmImageSKU"]
     version   = "latest"
   }
-
-  storage_os_disk {
-    name              = "Disk-${var.vmSP["vmName"]}-OS"
-    managed_disk_type = var.vmSP["storageAccountType"]
-    create_option     = "FromImage"
-    disk_size_gb      = "128"
-    caching           = "ReadWrite"
-    os_type           = "Windows"
-  }
-
-  storage_data_disk {
-    name              = "Disk-${var.vmSP["vmName"]}-Data"
-    lun               = 0
-    caching           = "ReadWrite"
-    create_option     = "Empty"
-    disk_size_gb      = 64
-    managed_disk_type = var.vmSP["storageAccountType"]
-  }
 }
 
 resource "azurerm_virtual_machine_extension" "VM-SP-DSC" {
   name                       = "VM-${var.vmSP["vmName"]}-DSC"
-  location                   = azurerm_resource_group.resourceGroup.location
-  resource_group_name        = azurerm_resource_group.resourceGroup.name
-  virtual_machine_name       = azurerm_virtual_machine.VM-SP.name
+  virtual_machine_id       = azurerm_windows_virtual_machine.VM-SP.id
   publisher                  = "Microsoft.Powershell"
   type                       = "DSC"
   type_handler_version       = "2.9"
   auto_upgrade_minor_version = true
-  depends_on                 = [azurerm_virtual_machine_extension.VM-DC-DSC]
+
+  timeouts {
+    create = "90m"
+  }
 
   settings = <<SETTINGS
   {
@@ -470,9 +432,7 @@ resource "azurerm_virtual_machine_extension" "VM-SP-DSC" {
       "dataCollection": "enable"
     }
   }
-  
 SETTINGS
-
 
   protected_settings = <<PROTECTED_SETTINGS
   {
@@ -511,143 +471,140 @@ SETTINGS
       }
     }
   }
-  
 PROTECTED_SETTINGS
-
 }
 
-# Create resources for optional SharePoint FrontEnd if var.addFrontEndToFarm is true
-resource "azurerm_public_ip" "PublicIP-FE" {
-  count               = var.addFrontEndToFarm ? 1 : 0
-  name                = "PublicIP-${var.vmFE["vmName"]}"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
-  domain_name_label   = "${lower(var.dnsLabelPrefix)}-${lower(var.vmFE["vmName"])}"
-  allocation_method   = "Dynamic"
-}
+# # Create resources for optional SharePoint FrontEnd if var.addFrontEndToFarm is true
+# resource "azurerm_public_ip" "PublicIP-FE" {
+#   count               = var.addFrontEndToFarm ? 1 : 0
+#   name                = "PublicIP-${var.vmFE["vmName"]}"
+#   location            = azurerm_resource_group.resourceGroup.location
+#   resource_group_name = azurerm_resource_group.resourceGroup.name
+#   domain_name_label   = "${lower(var.dnsLabelPrefix)}-${lower(var.vmFE["vmName"])}"
+#   allocation_method   = "Dynamic"
+# }
 
-resource "azurerm_network_interface" "NIC-FE-0" {
-  count               = var.addFrontEndToFarm ? 1 : 0
-  name                = "NIC-${var.vmFE["vmName"]}-0"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+# resource "azurerm_network_interface" "NIC-FE-0" {
+#   count               = var.addFrontEndToFarm ? 1 : 0
+#   name                = "NIC-${var.vmFE["vmName"]}-0"
+#   location            = azurerm_resource_group.resourceGroup.location
+#   resource_group_name = azurerm_resource_group.resourceGroup.name
 
-  ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.Subnet-SP.id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = element(azurerm_public_ip.PublicIP-FE.*.id, count.index)
-  }
-}
+#   ip_configuration {
+#     name                          = "ipconfig1"
+#     subnet_id                     = azurerm_subnet.Subnet-SP.id
+#     private_ip_address_allocation = "Dynamic"
+#     public_ip_address_id          = element(azurerm_public_ip.PublicIP-FE.*.id, count.index)
+#   }
+# }
 
-resource "azurerm_virtual_machine" "VM-FE" {
-  count                 = var.addFrontEndToFarm ? 1 : 0
-  name                  = "VM-${var.vmFE["vmName"]}"
-  location              = azurerm_resource_group.resourceGroup.location
-  resource_group_name   = azurerm_resource_group.resourceGroup.name
-  network_interface_ids = [element(azurerm_network_interface.NIC-FE-0.*.id, count.index)]
-  vm_size               = var.vmSP["vmSize"]
+# resource "azurerm_windows_virtual_machine" "VM-FE" {
+#   count                 = var.addFrontEndToFarm ? 1 : 0
+#   name                  = "VM-${var.vmFE["vmName"]}"
+#   location              = azurerm_resource_group.resourceGroup.location
+#   resource_group_name   = azurerm_resource_group.resourceGroup.name
+#   network_interface_ids = [element(azurerm_network_interface.NIC-FE-0.*.id, count.index)]
+#   vm_size               = var.vmSP["vmSize"]
 
-  os_profile {
-    computer_name  = var.vmFE["vmName"]
-    admin_username = var.adminUserName
-    admin_password = var.adminPassword
-  }
+#   os_profile {
+#     computer_name  = var.vmFE["vmName"]
+#     admin_username = var.adminUserName
+#     admin_password = var.adminPassword
+#   }
 
-  os_profile_windows_config {
-    timezone                  = var.timeZone
-    enable_automatic_upgrades = true
-    provision_vm_agent        = true
-  }
+#   os_profile_windows_config {
+#     timezone                  = var.timeZone
+#     enable_automatic_upgrades = true
+#     provision_vm_agent        = true
+#   }
 
-  storage_image_reference {
-    publisher = var.vmSP["vmImagePublisher"]
-    offer     = var.vmSP["vmImageOffer"]
-    sku       = var.vmSP["vmImageSKU"]
-    version   = "latest"
-  }
+#   storage_image_reference {
+#     publisher = var.vmSP["vmImagePublisher"]
+#     offer     = var.vmSP["vmImageOffer"]
+#     sku       = var.vmSP["vmImageSKU"]
+#     version   = "latest"
+#   }
 
-  storage_os_disk {
-    name              = "Disk-${var.vmFE["vmName"]}-OS"
-    managed_disk_type = var.vmSP["storageAccountType"]
-    create_option     = "FromImage"
-    disk_size_gb      = "128"
-    caching           = "ReadWrite"
-    os_type           = "Windows"
-  }
+#   storage_os_disk {
+#     name              = "Disk-${var.vmFE["vmName"]}-OS"
+#     managed_disk_type = var.vmSP["storageAccountType"]
+#     create_option     = "FromImage"
+#     disk_size_gb      = "128"
+#     caching           = "ReadWrite"
+#     os_type           = "Windows"
+#   }
 
-  storage_data_disk {
-    name              = "Disk-${var.vmFE["vmName"]}-Data"
-    lun               = 0
-    caching           = "ReadWrite"
-    create_option     = "Empty"
-    disk_size_gb      = 64
-    managed_disk_type = var.vmSP["storageAccountType"]
-  }
-}
+#   storage_data_disk {
+#     name              = "Disk-${var.vmFE["vmName"]}-Data"
+#     lun               = 0
+#     caching           = "ReadWrite"
+#     create_option     = "Empty"
+#     disk_size_gb      = 64
+#     managed_disk_type = var.vmSP["storageAccountType"]
+#   }
+# }
 
-resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
-  count                      = var.addFrontEndToFarm ? 1 : 0
-  name                       = "VM-${var.vmFE["vmName"]}-DSC"
-  location                   = azurerm_resource_group.resourceGroup.location
-  resource_group_name        = azurerm_resource_group.resourceGroup.name
-  virtual_machine_name       = element(azurerm_virtual_machine.VM-FE.*.name, count.index)
-  publisher                  = "Microsoft.Powershell"
-  type                       = "DSC"
-  type_handler_version       = "2.9"
-  auto_upgrade_minor_version = true
-  depends_on                 = [azurerm_virtual_machine_extension.VM-DC-DSC]
+# resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
+#   count                      = var.addFrontEndToFarm ? 1 : 0
+#   name                       = "VM-${var.vmFE["vmName"]}-DSC"
+#   location                   = azurerm_resource_group.resourceGroup.location
+#   resource_group_name        = azurerm_resource_group.resourceGroup.name
+#   virtual_machine_name       = element(azurerm_windows_virtual_machine.VM-FE.*.name, count.index)
+#   publisher                  = "Microsoft.Powershell"
+#   type                       = "DSC"
+#   type_handler_version       = "2.9"
+#   auto_upgrade_minor_version = true
 
-  settings = <<SETTINGS
-  {
-    "wmfVersion": "latest",
-    "configuration": {
-	    "url": "${var._artifactsLocation}${var.generalSettings["dscScriptsFolder"]}/${var.dscConfigureFEVM["fileName"]}${var._artifactsLocationSasToken}",
-	    "function": "${var.dscConfigureFEVM["function"]}",
-	    "script": "${var.dscConfigureFEVM["script"]}"
-    },
-    "configurationArguments": {
-      "DNSServer": "${var.networkSettings["vmDCPrivateIPAddress"]}",
-      "DomainFQDN": "${var.domainFQDN}",
-      "DCName": "${var.vmDC["vmName"]}",
-      "SQLName": "${var.vmSQL["vmName"]}",
-      "SQLAlias": "${var.generalSettings["sqlAlias"]}"
-    },
-    "privacy": {
-      "dataCollection": "enable"
-    }
-  }
+#   settings = <<SETTINGS
+#   {
+#     "wmfVersion": "latest",
+#     "configuration": {
+# 	    "url": "${var._artifactsLocation}${var.generalSettings["dscScriptsFolder"]}/${var.dscConfigureFEVM["fileName"]}${var._artifactsLocationSasToken}",
+# 	    "function": "${var.dscConfigureFEVM["function"]}",
+# 	    "script": "${var.dscConfigureFEVM["script"]}"
+#     },
+#     "configurationArguments": {
+#       "DNSServer": "${var.networkSettings["vmDCPrivateIPAddress"]}",
+#       "DomainFQDN": "${var.domainFQDN}",
+#       "DCName": "${var.vmDC["vmName"]}",
+#       "SQLName": "${var.vmSQL["vmName"]}",
+#       "SQLAlias": "${var.generalSettings["sqlAlias"]}"
+#     },
+#     "privacy": {
+#       "dataCollection": "enable"
+#     }
+#   }
   
-SETTINGS
+# SETTINGS
 
 
-  protected_settings = <<PROTECTED_SETTINGS
-  {
-    "configurationArguments": {
-      "DomainAdminCreds": {
-        "UserName": "${var.adminUserName}",
-        "Password": "${var.adminPassword}"
-      },
-      "SPSetupCreds": {
-        "UserName": "${var.generalSettings["spSetupUserName"]}",
-        "Password": "${var.serviceAccountsPassword}"
-      },
-      "SPFarmCreds": {
-        "UserName": "${var.generalSettings["spFarmUserName"]}",
-        "Password": "${var.serviceAccountsPassword}"
-      },
-      "SPSvcCreds": {
-        "UserName": "${var.generalSettings["spSvcUserName"]}",
-        "Password": "${var.serviceAccountsPassword}"
-      },
-      "SPPassphraseCreds": {
-        "UserName": "Passphrase",
-        "Password": "${var.serviceAccountsPassword}"
-      }
-    }
-  }
+#   protected_settings = <<PROTECTED_SETTINGS
+#   {
+#     "configurationArguments": {
+#       "DomainAdminCreds": {
+#         "UserName": "${var.adminUserName}",
+#         "Password": "${var.adminPassword}"
+#       },
+#       "SPSetupCreds": {
+#         "UserName": "${var.generalSettings["spSetupUserName"]}",
+#         "Password": "${var.serviceAccountsPassword}"
+#       },
+#       "SPFarmCreds": {
+#         "UserName": "${var.generalSettings["spFarmUserName"]}",
+#         "Password": "${var.serviceAccountsPassword}"
+#       },
+#       "SPSvcCreds": {
+#         "UserName": "${var.generalSettings["spSvcUserName"]}",
+#         "Password": "${var.serviceAccountsPassword}"
+#       },
+#       "SPPassphraseCreds": {
+#         "UserName": "Passphrase",
+#         "Password": "${var.serviceAccountsPassword}"
+#       }
+#     }
+#   }
   
-PROTECTED_SETTINGS
+# PROTECTED_SETTINGS
 
-}
+# }
 

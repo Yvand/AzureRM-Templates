@@ -75,7 +75,7 @@ variable "vmDC" {
   type = map(string)
   default = {
     vmName             = "DC"
-    vmSize             = "Standard_F4"
+    vmSize             = "Standard_DS2_v2"
     vmImagePublisher   = "MicrosoftWindowsServer"
     vmImageOffer       = "WindowsServer"
     vmImageSKU         = "2019-Datacenter"
@@ -87,10 +87,10 @@ variable "vmSQL" {
   type = map(string)
   default = {
     vmName             = "SQL"
-    vmSize             = "Standard_DS2_v2"
+    vmSize             = "Standard_E2ds_v4"
     vmImagePublisher   = "MicrosoftSQLServer"
-    vmImageOffer       = "SQL2017-WS2016"
-    vmImageSKU         = "SQLDEV"
+    vmImageOffer       = "SQL2019-WS2019"
+    vmImageSKU         = "sqldev"
     storageAccountType = "Standard_LRS"
   }
 }
@@ -99,10 +99,10 @@ variable "vmSP" {
   type = map(string)
   default = {
     vmName             = "SP"
-    vmSize             = "Standard_DS3_v2"
+    vmSize             = "Standard_E2ds_v4"
     vmImagePublisher   = "MicrosoftSharePoint"
     vmImageOffer       = "MicrosoftSharePointServer"
-    vmImageSKU         = "2019"
+    vmImageSKU         = "sp2019"
     storageAccountType = "Standard_LRS"
   }
 }
@@ -111,7 +111,7 @@ variable "vmFE" {
   type = map(string)
   default = {
     vmName = "FE"
-    vmSize = "Standard_DS3_v2"
+    vmSize = "Standard_E2ds_v4"
   }
 }
 
