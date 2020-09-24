@@ -1,4 +1,12 @@
-# Change log for AzureRM template SharePoint-ADFS-DevTestLabs
+# Change log for AzureRM template SharePoint-AllVersions-LightConfig
+
+## Enhancements & bug-fixes - Published in September 17, 2020
+
+* Re-add creation of SPDistributedCacheService
+* Re-add xCredSSP configuration
+* Disable IE Enhanced Security Configuration (ESC) on SharePoint VMs
+* Disable the first run wizard of IE on SharePoint VMs
+* Set new tabs to open "about:blank" in IE on SharePoint VMs
 
 ## September 2020 update
 
@@ -6,10 +14,25 @@
 * Create default SharePoint security groups on team site
 * Ensure compliance with policy CASG-DenyNSGRule100Allow
 
-## August 2020 update
+## August 2020-08-18 update
+
+* Revert SP and SQL to old VM sizes due to issues with Edsv4-series in "East US" since today (they fail to start)
+
+## August 2020 update 3
+
+* Update DSC configuration of all VMs to make deployment much more reliable after the change to fix the time out issue
+
+## August 2020 update 2
 
 * Fix timeout issue / DSC not resuming after VM reboot: Update dependencies of DSC extensions of SP and SQL, so they no longer depend on DSC of DC
 * Replace DSC module xActiveDirectory with ActiveDirectoryDsc 6.0.1
+
+## August 2020 update
+
+* Update VM sizes to more recent, powerful and cheaper ones (prices per month in West US as of 2020-08-11):
+  - DC: from [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-previous-gen?toc=/azure/virtual-machines/linux/toc.json&bc=/azure/virtual-machines/linux/breadcrumb/toc.json) ($316.09) to [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96)
+  - SQL: from [Standard_D2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
+  - SP: from [Standard_D11_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series-memory) ($192.72) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
 
 ## July 2020 update
 
@@ -17,10 +40,6 @@
 * Add a network security group to Azure Bastion subnet
 * Rename some resources and variables with more meaningful names
 * Update apiVersion of each resource to latest version
-* Update VM sizes to more recent, powerful and cheaper ones (prices per month in West US as of 2020-08-11):
-  - DC: from [Standard_F4](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-previous-gen?toc=/azure/virtual-machines/linux/toc.json&bc=/azure/virtual-machines/linux/breadcrumb/toc.json) ($316.09) to [Standard_DS2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96)
-  - SQL: from [Standard_D2_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series) ($183.96) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
-  - SP: from [Standard_D11_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series-memory) ($192.72) to [Standard_E2ds_v4](https://docs.microsoft.com/en-us/azure/virtual-machines/edv4-edsv4-series) ($185.42)
 * Update DSC module NetworkingDsc from 7.4 to 8.0
 * Update DSC module xPSDesiredStateConfiguration from 8.10 to 9.1
 * Update DSC module ActiveDirectoryCSDsc from 4.1 to 5.0

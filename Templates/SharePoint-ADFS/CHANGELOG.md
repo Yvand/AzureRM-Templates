@@ -1,4 +1,14 @@
-# Change log for Azure template for SharePoint 2019 / 2016 / 2013
+# Change log for Azure template SharePoint-ADFS
+
+## Enhancements & bug-fixes - Published in September 18, 2020
+
+* Run SPDistributedCacheService as farm account instead of a different service account
+* Disable IE Enhanced Security Configuration (ESC) on SharePoint VMs
+* Disable the first run wizard of IE on SharePoint VMs
+* Set new tabs to open "about:blank" in IE on SharePoint VMs
+* Move resources to avoid error on ExtendMainWebApp
+* Remove customization of SPDiagnosticLoggingSettings
+* Update apiVersion of Microsoft.DevTestLab/schedules to 2018-10-15-preview
 
 ## September 2020 update
 
