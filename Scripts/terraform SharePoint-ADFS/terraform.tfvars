@@ -1,8 +1,8 @@
 location = "West Europe"
-resourceGroupName = "ydterraform"
-dnsLabelPrefix = "ydterraform"
-addFrontEndToFarm = false
-sharePointVersion = 2019
+resourceGroupName = "ydterraform6"
+dnsLabelPrefix = "ydterraform6"
+countOfFrontEndToAdd = 2
+sharePointVersion = 2016
 # vmSP = {
 #   storageAccountType = "Standard_LRS"
 #   vmSize = "Standard_E2as_v4"
