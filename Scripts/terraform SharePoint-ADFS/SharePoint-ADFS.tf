@@ -536,6 +536,10 @@ resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
   type_handler_version       = "2.9"
   auto_upgrade_minor_version = true
 
+  timeouts {
+    create = "90m"
+  }
+
   settings = <<SETTINGS
   {
     "wmfVersion": "latest",
