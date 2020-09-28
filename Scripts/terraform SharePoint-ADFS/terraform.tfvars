@@ -1,10 +1,10 @@
 location = "West Europe"
-resourceGroupName = "ydterraform6"
-dnsLabelPrefix = "ydterraform6"
+resourceGroupName = "ydterraform1"
+dnsLabelPrefix = "ydterraform1"
 countOfFrontEndToAdd = 2
-sharePointVersion = 2016
+sharePointVersion = 2013
 # vmSP = {
 #   storageAccountType = "Standard_LRS"
 #   vmSize = "Standard_E2as_v4"
 # }
-_artifactsLocation = "https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/SharePoint-ADFS/"
+_artifactsLocation = "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/"
