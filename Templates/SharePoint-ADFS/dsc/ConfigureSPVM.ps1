@@ -631,50 +631,33 @@ configuration ConfigureSPVM
             DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
         }
 
-        # # Installing LDAPCP somehow updates SPClaimEncodingManager 
-        # # But in SharePoint 2019 and 2016, it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
-        # # The only solution I've found is to force a reboot
-        # if ($SharePointVersion -eq "2019" -or $SharePointVersion -eq "2016") {
-        #     xScript ForceRebootBeforeCreatingSPTrust
-        #     {
-        #         # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-        #         TestScript = {
-        #             return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
-        #         }
-        #         SetScript = {
-        #             New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
-        #             $global:DSCMachineStatus = 1
-        #         }
-        #         GetScript = { }
-        #         PsDscRunAsCredential = $SPSetupCredsQualified
-        #         DependsOn = "[SPFarmSolution]InstallLdapcp"
-        #     }
+        # Installing LDAPCP somehow updates SPClaimEncodingManager 
+        # But in SharePoint 2019, it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
+        # The only solution I've found is to force a reboot
+        if ($SharePointVersion -eq "2019") {
+            xScript ForceRebootBeforeCreatingSPTrust
+            {
+                # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+                TestScript = {
+                    return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
+                }
+                SetScript = {
+                    New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
+                    $global:DSCMachineStatus = 1
+                }
+                GetScript = { }
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn = "[SPFarmSolution]InstallLdapcp"
+            }
 
-        #     PendingReboot RebootOnSignalFromForceRebootBeforeCreatingSPTrust
-        #     {
-        #         Name             = "RebootOnSignalFromForceRebootBeforeCreatingSPTrust"
-        #         SkipCcmClientSDK = $true
-        #         DependsOn        = "[xScript]ForceRebootBeforeCreatingSPTrust"
-        #     }
-        # }
-
-        # ExtendMainWebApp might fail with error: "The web.config could not be saved on this IIS Web Site: C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config.\r\nThe process cannot access the file 'C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config' because it is being used by another process."
-        # So I added resources between it and CreateMainWebApp to avoid it
-        SPWebApplicationExtension ExtendMainWebApp
-        {
-            WebAppUrl              = "http://$SPTrustedSitesName/"
-            Name                   = "SharePoint - 443"
-            AllowAnonymous         = $false
-            Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
-            Zone                   = "Intranet"
-            UseSSL                 = $true
-            Port                   = 443
-            Ensure                 = "Present"
-            PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[CertReq]GenerateMainWebAppCertificate", "[SPWebApplication]CreateMainWebApp"
+            PendingReboot RebootOnSignalFromForceRebootBeforeCreatingSPTrust
+            {
+                Name             = "RebootOnSignalFromForceRebootBeforeCreatingSPTrust"
+                SkipCcmClientSDK = $true
+                DependsOn        = "[xScript]ForceRebootBeforeCreatingSPTrust"
+            }
         }
 
-        # Attempt to delay creation of SPTrustedIdentityTokenIssuer to avoid an UpdatedConcurrencyException on SPClaimEncodingManager caused by SPFarmSolution InstallLdapcp
         SPTrustedIdentityTokenIssuer CreateSPTrust
         {
             Name                         = $DomainFQDN
@@ -744,6 +727,22 @@ configuration ConfigureSPVM
             }
             DependsOn            = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
             PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
+        # ExtendMainWebApp might fail with error: "The web.config could not be saved on this IIS Web Site: C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config.\r\nThe process cannot access the file 'C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config' because it is being used by another process."
+        # So I added resources between it and CreateMainWebApp to avoid it
+        SPWebApplicationExtension ExtendMainWebApp
+        {
+            WebAppUrl              = "http://$SPTrustedSitesName/"
+            Name                   = "SharePoint - 443"
+            AllowAnonymous         = $false
+            Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
+            Zone                   = "Intranet"
+            UseSSL                 = $true
+            Port                   = 443
+            Ensure                 = "Present"
+            PsDscRunAsCredential   = $SPSetupCredsQualified
+            DependsOn              = "[CertReq]GenerateMainWebAppCertificate", "[SPWebApplication]CreateMainWebApp"
         }
 
         SPWebAppAuthentication ConfigureMainWebAppAuthentication
