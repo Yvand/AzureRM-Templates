@@ -6,7 +6,7 @@
       "value": "2019"
     },
     "dnsLabelPrefix": {
-      "value": "ydqs4"
+      "value": "ydq6"
     },
     "domainFQDN": {
       "value": "contoso.local"
@@ -14,8 +14,8 @@
     "vmsTimeZone": {
       "value": "Romance Standard Time"
     },
-    "numberOfFrontEndToAdd": {
-      "value": 3
+    "numberOfAdditionalFrontEnd": {
+      "value": 0
     },
     "enableHybridBenefitServerLicenses": {
       "value": "Yes"

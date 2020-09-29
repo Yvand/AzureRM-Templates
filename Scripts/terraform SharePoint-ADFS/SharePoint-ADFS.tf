@@ -474,9 +474,9 @@ SETTINGS
 PROTECTED_SETTINGS
 }
 
-# Can create 0 to var.numberOfFrontEndToAdd FE VMs
+# Can create 0 to var.numberOfAdditionalFrontEnd FE VMs
 resource "azurerm_public_ip" "PublicIP-FE" {
-  count               = var.numberOfFrontEndToAdd
+  count               = var.numberOfAdditionalFrontEnd
   name                = "PublicIP-${var.vmFE["vmName"]}-${count.index}"
   location            = azurerm_resource_group.resourceGroup.location
   resource_group_name = azurerm_resource_group.resourceGroup.name
@@ -485,7 +485,7 @@ resource "azurerm_public_ip" "PublicIP-FE" {
 }
 
 resource "azurerm_network_interface" "NIC-FE-0" {
-  count               = var.numberOfFrontEndToAdd
+  count               = var.numberOfAdditionalFrontEnd
   name                = "NIC-${var.vmFE["vmName"]}-${count.index}-0"
   location            = azurerm_resource_group.resourceGroup.location
   resource_group_name = azurerm_resource_group.resourceGroup.name
@@ -499,7 +499,7 @@ resource "azurerm_network_interface" "NIC-FE-0" {
 }
 
 resource "azurerm_windows_virtual_machine" "VM-FE" {
-  count                 = var.numberOfFrontEndToAdd
+  count                 = var.numberOfAdditionalFrontEnd
   name                  = "VM-${var.vmFE["vmName"]}-${count.index}"
   computer_name         = "${var.vmFE["vmName"]}-${count.index}"
   location              = azurerm_resource_group.resourceGroup.location
@@ -528,7 +528,7 @@ resource "azurerm_windows_virtual_machine" "VM-FE" {
 }
 
 resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
-  count                      = var.numberOfFrontEndToAdd
+  count                      = var.numberOfAdditionalFrontEnd
   name                       = "VM-${var.vmFE["vmName"]}-${count.index}-DSC"
   virtual_machine_id       = element(azurerm_windows_virtual_machine.VM-FE.*.id, count.index)
   publisher                  = "Microsoft.Powershell"

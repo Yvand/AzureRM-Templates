@@ -1,8 +1,8 @@
 location = "West Europe"
 resourceGroupName = "ydterraform1"
 dnsLabelPrefix = "ydterraform1"
-numberOfFrontEndToAdd = 2
-sharePointVersion = 2013
+numberOfAdditionalFrontEnd = 2
+sharePointVersion = 2019
 /*vmSP = {
     vmName             = "SP"
     vmSize             = "Standard_E2ds_v4"
