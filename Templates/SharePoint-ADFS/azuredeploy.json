@@ -348,15 +348,6 @@
         "diskSizeGB": "[parameters('sharePointDataDiskSize')]"
       }
     ],
-    "vmFEDataDisk": [
-      {
-        "lun": 0,
-        "name": "[variables('vmFE').vmDataDiskName]",
-        "caching": "ReadWrite",
-        "createOption": "Empty",
-        "diskSizeGB": "[parameters('sharePointDataDiskSize')]"
-      }
-    ],
     "azureBastion": {
       "subnetPrefix": "10.0.4.0/24",
       "publicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', 'Bastion'), '_', '-'))]"
@@ -1029,8 +1020,7 @@
             "managedDisk": {
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
-          },
-          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('vmFEDataDisk'))]"
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
