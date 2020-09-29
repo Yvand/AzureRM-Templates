@@ -935,7 +935,7 @@
         "displayName": "[concat(variables('vmFE').vmPublicIPName, '-', copyIndex())]"
       },
       "copy": {
-          "name": "publicIPAddressesCopy",
+          "name": "frontendPublicIPAddresses",
           "count": "[parameters('addFrontEndToFarm')]"
       },
       "sku": {
@@ -957,13 +957,13 @@
       "apiVersion": "2019-09-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
-        "publicIPAddressesCopy"
+        "frontendPublicIPAddresses"
       ],
       "tags": {
         "displayName": "[concat(variables('vmFE').vmNicName, '-', copyIndex())]"
       },
       "copy": {
-          "name": "networkInterfacesCopy",
+          "name": "frontendNetworkInterfaces",
           "count": "[parameters('addFrontEndToFarm')]"
       },
       "properties": {
@@ -990,13 +990,13 @@
       "location": "[parameters('location')]",
       "apiVersion": "2019-12-01",
       "dependsOn": [
-        "networkInterfacesCopy"
+        "frontendNetworkInterfaces"
       ],
       "tags": {
         "displayName": "[concat(variables('generalSettings').vmFEName, '-', copyIndex())]"
       },
       "copy": {
-          "name": "virtualMachinesCopy",
+          "name": "frontendVirtualMachines",
           "count": "[parameters('addFrontEndToFarm')]"
       },
       "properties": {
@@ -1050,13 +1050,13 @@
       "location": "[parameters('location')]",
       "apiVersion": "2019-12-01",
       "dependsOn": [
-        "virtualMachinesCopy"
+        "frontendVirtualMachines"
       ],
       "tags": {
         "displayName": "[concat(variables('generalSettings').vmFEName, '-', copyIndex(),'/ConfigureFEVM')]"
       },
        "copy": {
-          "name": "virtualMachinesExtensionsCopy",
+          "name": "frontendVirtualMachineExtensions",
           "count": "[parameters('addFrontEndToFarm')]"
       },
       "properties": {
@@ -1185,10 +1185,10 @@
       "apiVersion": "2018-10-15-preview",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "virtualMachinesCopy"
+        "frontendVirtualMachines"
       ],
       "copy": {
-          "name": "vmAutoShutdownCopy",
+          "name": "frontendAutoShutdowns",
           "count": "[parameters('addFrontEndToFarm')]"
       },
       "properties": {
