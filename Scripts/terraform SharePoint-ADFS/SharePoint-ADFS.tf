@@ -395,7 +395,7 @@ resource "azurerm_windows_virtual_machine" "VM-SP" {
   source_image_reference {
     publisher = var.vmSP["vmImagePublisher"]
     offer     = var.vmSP["vmImageOffer"]
-    sku       = var.vmSP["vmImageSKU"]
+    sku       = "sp${var.sharePointVersion}"
     version   = "latest"
   }
 }
@@ -522,7 +522,7 @@ resource "azurerm_windows_virtual_machine" "VM-FE" {
   source_image_reference {
     publisher = var.vmSP["vmImagePublisher"]
     offer     = var.vmSP["vmImageOffer"]
-    sku       = var.vmSP["vmImageSKU"]
+    sku       = "sp${var.sharePointVersion}"
     version   = "latest"
   }  
 }
