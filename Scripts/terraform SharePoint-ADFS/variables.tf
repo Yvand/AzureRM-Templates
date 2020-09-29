@@ -39,7 +39,7 @@ variable "timeZone" {
   description = "Time zone of the VMs. Type '[TimeZoneInfo]::GetSystemTimeZones().Id' in PowerShell to get the list. Note that 'UTC' works but 'UTC+xx' does NOT work."
 }
 
-variable "countOfFrontEndToAdd" {
+variable "numberOfFrontEndToAdd" {
   default     = 0
   description = "Type how many additional front ends should be added to the SharePoint farm"
 }

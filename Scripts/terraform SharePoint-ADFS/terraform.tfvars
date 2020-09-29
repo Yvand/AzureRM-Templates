@@ -1,7 +1,7 @@
 location = "West Europe"
 resourceGroupName = "ydterraform1"
 dnsLabelPrefix = "ydterraform1"
-countOfFrontEndToAdd = 2
+numberOfFrontEndToAdd = 2
 sharePointVersion = 2013
 /*vmSP = {
     vmName             = "SP"
