@@ -36,7 +36,7 @@
         "description": "FQDN of the AD forest to create"
       }
     },
-    "addFrontEndToFarm": {
+    "numberOfFrontEndToAdd": {
       "type": "int",
       "allowedValues": [
         0,1,2,3,4,5
@@ -926,7 +926,7 @@
       }
     },
     {
-      "condition": "[and(greaterOrEquals(parameters('addFrontEndToFarm'), 1), equals(parameters('addPublicIPAddressToEachVM'), 'Yes'))]",
+      "condition": "[and(greaterOrEquals(parameters('numberOfFrontEndToAdd'), 1), equals(parameters('addPublicIPAddressToEachVM'), 'Yes'))]",
       "name": "[concat(variables('vmFE').vmPublicIPName, '-', copyIndex())]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -936,7 +936,7 @@
       },
       "copy": {
           "name": "frontendPublicIPAddresses",
-          "count": "[parameters('addFrontEndToFarm')]"
+          "count": "[parameters('numberOfFrontEndToAdd')]"
       },
       "sku": {
         "name": "Basic",
@@ -950,7 +950,7 @@
       }
     },
     {
-      "condition": "[greaterOrEquals(parameters('addFrontEndToFarm'), 1)]",
+      "condition": "[greaterOrEquals(parameters('numberOfFrontEndToAdd'), 1)]",
       "name": "[concat(variables('vmFE').vmNicName, '-', copyIndex())]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
@@ -964,7 +964,7 @@
       },
       "copy": {
           "name": "frontendNetworkInterfaces",
-          "count": "[parameters('addFrontEndToFarm')]"
+          "count": "[parameters('numberOfFrontEndToAdd')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -984,7 +984,7 @@
       }
     },
     {
-      "condition": "[greaterOrEquals(parameters('addFrontEndToFarm'), 1)]",
+      "condition": "[greaterOrEquals(parameters('numberOfFrontEndToAdd'), 1)]",
       "name": "[concat(variables('generalSettings').vmFEName, '-', copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
@@ -997,7 +997,7 @@
       },
       "copy": {
           "name": "frontendVirtualMachines",
-          "count": "[parameters('addFrontEndToFarm')]"
+          "count": "[parameters('numberOfFrontEndToAdd')]"
       },
       "properties": {
         "hardwareProfile": {
@@ -1044,7 +1044,7 @@
       "resources": []
     },
     {
-      "condition": "[greaterOrEquals(parameters('addFrontEndToFarm'), 1)]",
+      "condition": "[greaterOrEquals(parameters('numberOfFrontEndToAdd'), 1)]",
       "name": "[concat(variables('generalSettings').vmFEName, '-', copyIndex(),'/ConfigureFEVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
@@ -1057,7 +1057,7 @@
       },
        "copy": {
           "name": "frontendVirtualMachineExtensions",
-          "count": "[parameters('addFrontEndToFarm')]"
+          "count": "[parameters('numberOfFrontEndToAdd')]"
       },
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -1179,7 +1179,7 @@
       }
     },
     {
-      "condition": "[and(greaterOrEquals(parameters('addFrontEndToFarm'), 1), not(equals(parameters('vmsAutoShutdownTime'), '9999')))]",
+      "condition": "[and(greaterOrEquals(parameters('numberOfFrontEndToAdd'), 1), not(equals(parameters('vmsAutoShutdownTime'), '9999')))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[concat(variables('vmFE').shutdownResourceName, '-', copyIndex())]",
       "apiVersion": "2018-10-15-preview",
@@ -1189,7 +1189,7 @@
       ],
       "copy": {
           "name": "frontendAutoShutdowns",
-          "count": "[parameters('addFrontEndToFarm')]"
+          "count": "[parameters('numberOfFrontEndToAdd')]"
       },
       "properties": {
         "status": "Enabled",

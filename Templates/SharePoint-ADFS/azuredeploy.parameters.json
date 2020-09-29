@@ -3,10 +3,10 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sharePointVersion": {
-      "value": "2013"
+      "value": "2019"
     },
     "dnsLabelPrefix": {
-      "value": "ydqs7"
+      "value": "ydqs4"
     },
     "domainFQDN": {
       "value": "contoso.local"
@@ -14,8 +14,8 @@
     "vmsTimeZone": {
       "value": "Romance Standard Time"
     },
-    "addFrontEndToFarm": {
-      "value": 2
+    "numberOfFrontEndToAdd": {
+      "value": 3
     },
     "enableHybridBenefitServerLicenses": {
       "value": "Yes"
