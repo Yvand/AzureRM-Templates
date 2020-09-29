@@ -1202,7 +1202,7 @@
           "status": "Disabled",
           "timeInMinutes": 30
         },
-        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('generalSettings').vmFEName), '-', copyIndex())]"
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('generalSettings').vmFEName, '-', copyIndex()))]"
       }
     },
     {
