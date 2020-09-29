@@ -1004,7 +1004,7 @@
           "vmSize": "[variables('vmSP').vmVmSize]"
         },
         "osProfile": {
-          "computerName": "[variables('generalSettings').vmFEName]",
+          "computerName": "[concat(variables('generalSettings').vmFEName, '-', copyIndex())]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
