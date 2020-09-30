@@ -1,5 +1,9 @@
 # Change log for Azure template for SharePoint-SingleFarm-FullConfig
 
+## Unreleased
+
+* Add ability to set 0 to n number of FE VMs to add to SharePoint farm
+
 ## Enhancements & bug-fixes - Published in September 18, 2020
 
 * Run SPDistributedCacheService as farm account instead of a different service account
