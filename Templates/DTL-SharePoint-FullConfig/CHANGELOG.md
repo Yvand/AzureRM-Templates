@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add ability to set 0 to n number of FE VMs to add to SharePoint farm
+* Customize resource ComputerManagementDsc.Computer to trigger reboot for SharePoint VMs and avoid error
 
 ## Enhancements & bug-fixes - Published in September 18, 2020
 
