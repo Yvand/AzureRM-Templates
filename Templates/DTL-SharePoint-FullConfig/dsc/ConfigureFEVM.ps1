@@ -174,7 +174,7 @@ configuration ConfigureFEVM
         WaitForADDomain WaitForDCReady
         {
             DomainName              = $DomainFQDN
-            WaitTimeout             = 1200
+            WaitTimeout             = 1800
             RestartCount            = 2
             WaitForValidCredentials = $True
             PsDscRunAsCredential    = $DomainAdminCredsQualified
