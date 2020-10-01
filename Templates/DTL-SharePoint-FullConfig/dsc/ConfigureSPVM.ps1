@@ -1034,6 +1034,7 @@ configuration ConfigureSPVM
             DestinationPath = "C:\inetpub\wwwroot\addins"
             Type            = "Directory"
             Ensure          = "Present"
+            DependsOn       = "[SPFarm]CreateSPFarm"
         }
 
         xWebAppPool CreateAddinsSiteApplicationPool
@@ -1047,6 +1048,7 @@ configuration ConfigureSPVM
             Credential            = $SPSvcCredsQualified
             Ensure                = "Present"
             PsDscRunAsCredential  = $DomainAdminCredsQualified
+            DependsOn             = "[SPFarm]CreateSPFarm"
         }
 
         xWebsite CreateAddinsSite
