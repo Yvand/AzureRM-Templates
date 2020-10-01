@@ -314,7 +314,7 @@ configuration ConfigureFEVM
                 $computerName = $env:computerName
                 $digitFound = $computerName -match '\d+'
                 if ($digitFound) {
-                    $computerNumber = $matches[0]
+                    $computerNumber = [Convert]::ToInt16($matches[0])
                 }
                 else {
                     $computerNumber = 0
