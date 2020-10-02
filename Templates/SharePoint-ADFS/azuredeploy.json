@@ -209,7 +209,7 @@
     }
   },
   "variables": {
-    "numberOfAdditionalFrontEnd": "[if(equals(parameters('numberOfAdditionalFrontEnd'), 0), add(parameters('numberOfAdditionalFrontEnd'), 1), parameters('numberOfAdditionalFrontEnd'))]",
+    "copyCountVarToWorkaroundTemplateValidationBugInPortalOnly": "[if(equals(parameters('numberOfAdditionalFrontEnd'), 0), add(parameters('numberOfAdditionalFrontEnd'), 1), parameters('numberOfAdditionalFrontEnd'))]",
     "generalSettings": {
       "vmDCName": "DC",
       "vmSQLName": "SQL",
@@ -928,7 +928,7 @@
       },
       "copy": {
           "name": "frontendPublicIPAddresses",
-          "count": "[variables('numberOfAdditionalFrontEnd')]"
+          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortalOnly')]"
       },
       "sku": {
         "name": "Basic",
@@ -956,7 +956,7 @@
       },
       "copy": {
           "name": "frontendNetworkInterfaces",
-          "count": "[variables('numberOfAdditionalFrontEnd')]"
+          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortalOnly')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -989,7 +989,7 @@
       },
       "copy": {
           "name": "frontendVirtualMachines",
-          "count": "[variables('numberOfAdditionalFrontEnd')]"
+          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortalOnly')]"
       },
       "properties": {
         "hardwareProfile": {
@@ -1048,7 +1048,7 @@
       },
        "copy": {
           "name": "frontendVirtualMachineExtensions",
-          "count": "[variables('numberOfAdditionalFrontEnd')]"
+          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortalOnly')]"
       },
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -1180,7 +1180,7 @@
       ],
       "copy": {
           "name": "frontendAutoShutdowns",
-          "count": "[variables('numberOfAdditionalFrontEnd')]"
+          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortalOnly')]"
       },
       "properties": {
         "status": "Enabled",
