@@ -1,9 +1,10 @@
 # Change log for Azure template for SharePoint-SingleFarm-FullConfig
 
-## Unreleased
+## Enhancements & bug-fixes - Published in October 2, 2020
 
-* Add ability to set 0 to n number of FE VMs to add to SharePoint farm
-* Customize resource ComputerManagementDsc.Computer to trigger reboot for SharePoint VMs and avoid error
+* Replace parameter addFrontEndToFarm with numberOfAdditionalFrontEnd
+* Add parameter numberOfAdditionalFrontEnd to set between 0 to 3 FE VMs to add to SharePoint farm
+* Customize resource ComputerManagementDsc.Computer to trigger reboot of SharePoint VMs without error
 
 ## Enhancements & bug-fixes - Published in September 18, 2020
 
