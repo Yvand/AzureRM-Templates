@@ -209,7 +209,7 @@
     }
   },
   "variables": {
-    "copyCountVarToWorkaroundTemplateValidationBugInPortalOnly": "[if(equals(parameters('numberOfAdditionalFrontEnd'), 0), add(parameters('numberOfAdditionalFrontEnd'), 1), parameters('numberOfAdditionalFrontEnd'))]",
+    "copyCountVarToWorkaroundTemplateValidationBugInPortal": "[if(equals(parameters('numberOfAdditionalFrontEnd'), 0), 1, parameters('numberOfAdditionalFrontEnd'))]",
     "generalSettings": {
       "vmDCName": "DC",
       "vmSQLName": "SQL",
@@ -928,7 +928,7 @@
       },
       "copy": {
           "name": "frontendPublicIPAddresses",
-          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortalOnly')]"
+          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortal')]"
       },
       "sku": {
         "name": "Basic",
@@ -956,7 +956,7 @@
       },
       "copy": {
           "name": "frontendNetworkInterfaces",
-          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortalOnly')]"
+          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortal')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -989,7 +989,7 @@
       },
       "copy": {
           "name": "frontendVirtualMachines",
-          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortalOnly')]"
+          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortal')]"
       },
       "properties": {
         "hardwareProfile": {
@@ -1048,7 +1048,7 @@
       },
        "copy": {
           "name": "frontendVirtualMachineExtensions",
-          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortalOnly')]"
+          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortal')]"
       },
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -1180,7 +1180,7 @@
       ],
       "copy": {
           "name": "frontendAutoShutdowns",
-          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortalOnly')]"
+          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortal')]"
       },
       "properties": {
         "status": "Enabled",
