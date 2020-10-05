@@ -1,5 +1,15 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in October 5, 2020
+
+* Implement workaround to the template validation error when it is deployed from the portal and parameter numberOfAdditionalFrontEnd is set to 0
+
+## Enhancements & bug-fixes - Published in October 2, 2020
+
+* Replace parameter addFrontEndToFarm with numberOfAdditionalFrontEnd
+* Add parameter numberOfAdditionalFrontEnd to set between 0 to 3 FE VMs to add to SharePoint farm
+* Customize resource ComputerManagementDsc.Computer to trigger reboot of SharePoint VMs without error
+
 ## Enhancements & bug-fixes - Published in September 18, 2020
 
 * Run SPDistributedCacheService as farm account instead of a different service account

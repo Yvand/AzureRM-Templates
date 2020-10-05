@@ -39,7 +39,7 @@ variable "timeZone" {
   description = "Time zone of the VMs. Type '[TimeZoneInfo]::GetSystemTimeZones().Id' in PowerShell to get the list. Note that 'UTC' works but 'UTC+xx' does NOT work."
 }
 
-variable "countOfFrontEndToAdd" {
+variable "numberOfAdditionalFrontEnd" {
   default     = 0
   description = "Type how many additional front ends should be added to the SharePoint farm"
 }
@@ -102,7 +102,7 @@ variable "vmSP" {
     vmSize             = "Standard_E2ds_v4"
     vmImagePublisher   = "MicrosoftSharePoint"
     vmImageOffer       = "MicrosoftSharePointServer"
-    vmImageSKU         = "sp2019"
+    //vmImageSKU         = "sp2019"
     storageAccountType = "Standard_LRS"
   }
 }
