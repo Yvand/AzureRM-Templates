@@ -320,11 +320,14 @@ configuration ConfigureFEVM
                     $computerNumber = 0
                 }
                 $sleepTimeInSeconds = $computerNumber * 60  # Add a delay of 1 minute between each server
-                Write-Verbose "Computer $computerName is going to sleep for $sleepTimeInSeconds seconds before joining the SharePoint farm, to avoid multiple servers joining it at the same time"
+                Write-Verbose "Computer $computerName is going to wait for $sleepTimeInSeconds seconds before joining the SharePoint farm, to avoid multiple servers joining it at the same time"
                 Start-Sleep -Seconds $sleepTimeInSeconds
+                New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\Flag_WaitToAvoidServersJoiningFarmSimultaneously -Force
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            TestScript           = {    # Make sure this script resource runs only 1 time (and not at each reboot)
+                return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\Flag_WaitToAvoidServersJoiningFarmSimultaneously)
+            }
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Group]AddSPSetupAccountToAdminGroup"
         }
