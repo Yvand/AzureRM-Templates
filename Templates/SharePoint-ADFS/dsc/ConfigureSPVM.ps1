@@ -639,14 +639,14 @@ configuration ConfigureSPVM
             {
                 # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
                 TestScript = {
-                    return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
+                    return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust)
                 }
                 SetScript = {
-                    New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
+                    New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust -Force
                     $global:DSCMachineStatus = 1
                 }
                 GetScript = { }
-                PsDscRunAsCredential = $SPSetupCredsQualified
+                PsDscRunAsCredential = $DomainAdminCredsQualified
                 DependsOn = "[SPFarmSolution]InstallLdapcp"
             }
 
