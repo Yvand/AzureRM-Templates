@@ -1,5 +1,13 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+* Use a unique location for custom registry keys
+* Update DSC module SharePointDSC from 4.2 to 4.3
+* Update DSC module NetworkingDsc from 8.0 to 8.1
+* Update DSC module ActiveDirectoryCSDsc from 4.1 to 5.0
+* Update DSC module xWebAdministration from 3.1.1 to 3.2
+
 ## Enhancements & bug-fixes - Published in October 5, 2020
 
 * Implement workaround to the template validation error when it is deployed from the portal and parameter numberOfAdditionalFrontEnd is set to 0
