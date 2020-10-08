@@ -39,11 +39,11 @@
     "numberOfAdditionalFrontEnd": {
       "type": "int",
       "allowedValues": [
-        0,1,2,3
+        0,1,2,3,4
       ],
       "defaultValue": 0,
       "metadata": {
-        "description": "Select whether a SharePoint Front End VM should be provisioned and joined to the farm."
+        "description": "Type how many MinRole Front-end should be added to the farm. Later you can change their MinRole as needed."
       }
     },
     "adminUserName": {
