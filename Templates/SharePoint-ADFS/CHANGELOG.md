@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Set FrontEnd VMs with SharePoint MinRole Front-End
+* Set FrontEnd VMs with SharePoint MinRole Front-End on SharePoint versions that support MinRoles configuration
 * Increase max numberOfAdditionalFrontEnd from 3 to 4
 * Define the list of all possible values for the time zone parameter vmsTimeZone
 * Update WaitToAvoidServersJoiningFarmSimultaneously to ensure it runs only 1 time, and updated the delay from 60 to 90 secs to improve reliability

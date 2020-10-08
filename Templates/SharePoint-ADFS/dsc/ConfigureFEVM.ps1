@@ -7,10 +7,10 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [String]$DCName,
         [Parameter(Mandatory)] [String]$SQLName,
         [Parameter(Mandatory)] [String]$SQLAlias,
+        [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSvcCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
@@ -22,7 +22,6 @@ configuration ConfigureFEVM
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
-    [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
     [String] $SPTrustedSitesName = "SPSites"
     [String] $ComputerName = Get-Content env:computername
@@ -335,21 +334,41 @@ configuration ConfigureFEVM
         #**********************************************************
         # Join SharePoint farm
         #**********************************************************
-        SPFarm JoinSPFarm
-        {
-            DatabaseServer            = $SQLAlias
-            FarmConfigDatabaseName    = $SPDBPrefix + "Config"
-            Passphrase                = $SPPassphraseCreds
-            FarmAccount               = $SPFarmCredsQualified
-            PsDscRunAsCredential      = $SPSetupCredsQualified
-            AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
-            CentralAdministrationPort = 5000
-            # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
-            RunCentralAdmin           = $false
-            IsSingleInstance          = "Yes"
-            ServerRole                = "WebFrontEnd"
-            Ensure                    = "Present"
-            DependsOn                 = "[xScript]WaitToAvoidServersJoiningFarmSimultaneously"
+        if ($SharePointVersion -eq "2013") {
+            # Do not set property ServerRole as it is not supported in SharePoint 2013
+            SPFarm JoinSPFarm
+            {
+                DatabaseServer            = $SQLAlias
+                FarmConfigDatabaseName    = $SPDBPrefix + "Config"
+                Passphrase                = $SPPassphraseCreds
+                FarmAccount               = $SPFarmCredsQualified
+                PsDscRunAsCredential      = $SPSetupCredsQualified
+                AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
+                CentralAdministrationPort = 5000
+                # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
+                RunCentralAdmin           = $false
+                IsSingleInstance          = "Yes"
+                Ensure                    = "Present"
+                DependsOn                 = "[xScript]WaitToAvoidServersJoiningFarmSimultaneously"
+            }
+        } else {
+            # Set property ServerRole in all SharePoint versions that support it
+            SPFarm JoinSPFarm
+            {
+                DatabaseServer            = $SQLAlias
+                FarmConfigDatabaseName    = $SPDBPrefix + "Config"
+                Passphrase                = $SPPassphraseCreds
+                FarmAccount               = $SPFarmCredsQualified
+                PsDscRunAsCredential      = $SPSetupCredsQualified
+                AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
+                CentralAdministrationPort = 5000
+                # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
+                RunCentralAdmin           = $false
+                IsSingleInstance          = "Yes"
+                ServerRole                = "WebFrontEnd"
+                Ensure                    = "Present"
+                DependsOn                 = "[xScript]WaitToAvoidServersJoiningFarmSimultaneously"
+            }
         }
 
         xDnsRecord UpdateDNSAliasSPSites
@@ -494,7 +513,6 @@ help ConfigureFEVM
 $DomainAdminCreds = Get-Credential -Credential "yvand"
 $SPSetupCreds = Get-Credential -Credential "spsetup"
 $SPFarmCreds = Get-Credential -Credential "spfarm"
-$SPSvcCreds = Get-Credential -Credential "spsvc"
 $SPPassphraseCreds = Get-Credential -Credential "Passphrase"
 $SPSuperUserCreds = Get-Credential -Credential "spSuperUser"
 $SPSuperReaderCreds = Get-Credential -Credential "spSuperReader"
@@ -503,9 +521,10 @@ $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
+$SharePointVersion = 2019
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.1.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
-ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 

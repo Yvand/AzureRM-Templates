@@ -271,7 +271,7 @@
       ],
       "minLength": 2,
       "metadata": {
-        "description": "Time zone of the VMs. Type \"[TimeZoneInfo]::GetSystemTimeZones().Id\" in PowerShell to get the list. Note that 'UTC' works but 'UTC+xx' does NOT work."
+        "description": "Time zone of the virtual machines. Type \"[TimeZoneInfo]::GetSystemTimeZones().Id\" in PowerShell to get the list."
       }
     },
     "vmsAutoShutdownTime": {
@@ -1209,7 +1209,8 @@
             "DomainFQDN": "[parameters('domainFQDN')]",
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
-            "SQLAlias": "[variables('generalSettings').sqlAlias]"
+            "SQLAlias": "[variables('generalSettings').sqlAlias]",
+            "SharePointVersion": "[parameters('sharePointVersion')]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1228,10 +1229,6 @@
             "SPFarmCreds": {
               "UserName": "[variables('generalSettings').spFarmUserName]",
               "Password": "[variables('generalSettings').spFarmPassword]"
-            },
-            "SPSvcCreds": {
-              "UserName": "[variables('generalSettings').spSvcUserName]",
-              "Password": "[variables('generalSettings').spSvcPassword]"
             },
             "SPPassphraseCreds": {
               "UserName": "Passphrase",
