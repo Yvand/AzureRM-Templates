@@ -319,7 +319,7 @@ configuration ConfigureFEVM
                 else {
                     $computerNumber = 0
                 }
-                $sleepTimeInSeconds = $computerNumber * 60  # Add a delay of 1 minute between each server
+                $sleepTimeInSeconds = $computerNumber * 90  # Add a delay of 90 secs between each server
                 Write-Verbose "Computer $computerName is going to wait for $sleepTimeInSeconds seconds before joining the SharePoint farm, to avoid multiple servers joining it at the same time"
                 Start-Sleep -Seconds $sleepTimeInSeconds
                 New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\Flag_WaitToAvoidServersJoiningFarmSimultaneously -Force
