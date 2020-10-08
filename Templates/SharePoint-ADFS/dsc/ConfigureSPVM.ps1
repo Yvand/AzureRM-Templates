@@ -18,7 +18,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -423,6 +423,55 @@ configuration ConfigureSPVM
             Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
             DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[xScript]CreateWSManSPNsIfNeeded"
+        }
+
+        #**********************************************************
+        # Install applications using Chocolatey
+        #**********************************************************
+        cChocoInstaller InstallChoco
+        {
+            InstallDir = "C:\Program Files\Choco"
+            DependsOn  = "[File]AccountsProvisioned"
+        }
+
+        cChocoPackageInstaller InstallEdge
+        {
+            Name                 = 'microsoft-edge'
+            Ensure               = 'Present'
+            Version              =  83.0.478.61
+            DependsOn            = '[cChocoInstaller]InstallChoco'
+        }
+
+        cChocoPackageInstaller InstallChrome
+        {
+            Name                 = 'googlechrome'
+            Ensure               = 'Present'
+            Version              =  83.0.4103.116
+            DependsOn            = '[cChocoInstaller]InstallChoco'
+        }
+
+        cChocoPackageInstaller InstallEverything
+        {
+            Name                 = 'everything'
+            Ensure               = 'Present'
+            Version              =  1.4.1969
+            DependsOn            = '[cChocoInstaller]InstallChoco'
+        }
+
+        cChocoPackageInstaller InstallIlspy
+        {
+            Name                 = 'ilspy'
+            Ensure               = 'Present'
+            Version              =  6.0.0.5836
+            DependsOn            = '[cChocoInstaller]InstallChoco'
+        }
+        
+        cChocoPackageInstaller InstallFiddler
+        {
+            Name                 = 'fiddler'
+            Ensure               = 'Present'
+            Version              =  5.0.20202.18177
+            DependsOn            = '[cChocoInstaller]InstallChoco'
         }
 
         xScript WaitForSQL
