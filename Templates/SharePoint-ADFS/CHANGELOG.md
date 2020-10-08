@@ -3,6 +3,8 @@
 ## Unreleased
 
 * Use a unique location for custom registry keys
+* Ensure that WaitToAvoidServersJoiningFarmSimultaneously runs only 1 time in FE VMs
+* Set FE VMs with MinRole WebFrontEnd
 * Update DSC module SharePointDSC from 4.2 to 4.3
 * Update DSC module NetworkingDsc from 8.0 to 8.1
 * Update DSC module ActiveDirectoryCSDsc from 4.1 to 5.0
