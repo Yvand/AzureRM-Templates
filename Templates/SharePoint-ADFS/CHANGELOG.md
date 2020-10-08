@@ -2,9 +2,11 @@
 
 ## Unreleased
 
+* Set FrontEnd VMs with SharePoint MinRole Front-End
+* Increase max numberOfAdditionalFrontEnd from 3 to 4
+* Define the list of all possible values for the time zone parameter vmsTimeZone
+* Update WaitToAvoidServersJoiningFarmSimultaneously to ensure it runs only 1 time, and updated the delay from 60 to 90 secs to improve reliability
 * Use a unique location for custom registry keys
-* Ensure that WaitToAvoidServersJoiningFarmSimultaneously runs only 1 time in FE VMs
-* Set FE VMs with MinRole WebFrontEnd
 * Update DSC module SharePointDSC from 4.2 to 4.3
 * Update DSC module NetworkingDsc from 8.0 to 8.1
 * Update DSC module ActiveDirectoryCSDsc from 4.1 to 5.0
