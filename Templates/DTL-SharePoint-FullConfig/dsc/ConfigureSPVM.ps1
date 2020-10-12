@@ -196,18 +196,18 @@ configuration ConfigureSPVM
 
         cChocoPackageInstaller InstallEdge
         {
-            Name                 = 'microsoft-edge'
-            Ensure               = 'Present'
+            Name                 = "microsoft-edge"
+            Ensure               = "Present"
             Version              =  83.0.478.61
-            DependsOn            = '[cChocoInstaller]InstallChoco'
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         cChocoPackageInstaller InstallNotepadpp
         {
-            Name                 = 'notepadplusplus.install'
-            Ensure               = 'Present'
+            Name                 = "notepadplusplus.install"
+            Ensure               = "Present"
             Version              =  7.9
-            DependsOn            = '[cChocoInstaller]InstallChoco'
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         #**********************************************************
@@ -449,13 +449,14 @@ configuration ConfigureSPVM
             DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[xScript]CreateWSManSPNsIfNeeded"
         }
         
+        # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
         cChocoPackageInstaller InstallFiddler
         {
-            Name                 = 'fiddler'
-            Ensure               = 'Present'
+            Name                 = "fiddler"
+            Ensure               = "Present"
             Version              =  5.0.20202.18177
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = '[cChocoInstaller]InstallChoco'
+            DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         xScript WaitForSQL

@@ -1,5 +1,17 @@
 # Change log for AzureRM template SharePoint-AllVersions-LightConfig
 
+## Unreleased
+
+* Install Edge in SharePoint VM through Chocolatey
+* Install Fiddler in SharePoint VM through Chocolatey
+* Install Notepad++ in SharePoint VM through Chocolatey
+* Define the list of all possible values for the time zone parameter vmsTimeZone
+* Use a unique location for custom registry keys
+* Update DSC module SharePointDSC from 4.2 to 4.3
+* Update DSC module NetworkingDsc from 8.0 to 8.1
+* Update DSC module ActiveDirectoryCSDsc from 4.1 to 5.0
+* Update DSC module xWebAdministration from 3.1.1 to 3.2
+
 ## Enhancements & bug-fixes - Published in September 17, 2020
 
 * Re-add creation of SPDistributedCacheService

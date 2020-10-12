@@ -250,51 +250,52 @@ configuration ConfigureFEVM
 
         cChocoPackageInstaller InstallEdge
         {
-            Name                 = 'microsoft-edge'
-            Ensure               = 'Present'
+            Name                 = "microsoft-edge"
+            Ensure               = "Present"
             Version              =  83.0.478.61
-            DependsOn            = '[cChocoInstaller]InstallChoco'
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         cChocoPackageInstaller InstallChrome
         {
-            Name                 = 'googlechrome'
-            Ensure               = 'Present'
+            Name                 = "googlechrome"
+            Ensure               = "Present"
             Version              =  83.0.4103.116
-            DependsOn            = '[cChocoInstaller]InstallChoco'
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         cChocoPackageInstaller InstallEverything
         {
-            Name                 = 'everything'
-            Ensure               = 'Present'
+            Name                 = "everything"
+            Ensure               = "Present"
             Version              =  1.4.1969
-            DependsOn            = '[cChocoInstaller]InstallChoco'
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         cChocoPackageInstaller InstallILSpy
         {
-            Name                 = 'ilspy'
-            Ensure               = 'Present'
+            Name                 = "ilspy"
+            Ensure               = "Present"
             Version              =  6.0.0.5836
-            DependsOn            = '[cChocoInstaller]InstallChoco'
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         cChocoPackageInstaller InstallNotepadpp
         {
-            Name                 = 'notepadplusplus.install'
-            Ensure               = 'Present'
+            Name                 = "notepadplusplus.install"
+            Ensure               = "Present"
             Version              =  7.9
-            DependsOn            = '[cChocoInstaller]InstallChoco'
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
+        # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
         cChocoPackageInstaller InstallFiddler
         {
-            Name                 = 'fiddler'
-            Ensure               = 'Present'
+            Name                 = "fiddler"
+            Ensure               = "Present"
             Version              =  5.0.20202.18177
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = '[cChocoInstaller]InstallChoco'
+            DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         #********************************************************************
