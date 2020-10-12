@@ -43,7 +43,7 @@
       ],
       "defaultValue": 0,
       "metadata": {
-        "description": "Type how many MinRole Front-end should be added to the farm. Later you can change their MinRole as needed."
+        "description": "Number of MinRole Front-end to add to the farm. The MinRole itself can be changed later as needed."
       }
     },
     "adminUserName": {
