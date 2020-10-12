@@ -218,11 +218,27 @@ configuration ConfigureSPVM
             DependsOn            = '[cChocoInstaller]InstallChoco'
         }
 
-        cChocoPackageInstaller InstallIlspy
+        cChocoPackageInstaller InstallILSpy
         {
             Name                 = 'ilspy'
             Ensure               = 'Present'
             Version              =  6.0.0.5836
+            DependsOn            = '[cChocoInstaller]InstallChoco'
+        }
+
+        cChocoPackageInstaller InstallNotepadpp
+        {
+            Name                 = 'notepadplusplus.install'
+            Ensure               = 'Present'
+            Version              =  7.9
+            DependsOn            = '[cChocoInstaller]InstallChoco'
+        }
+
+        cChocoPackageInstaller Install7zip
+        {
+            Name                 = '7zip.install'
+            Ensure               = 'Present'
+            Version              =  19.0
             DependsOn            = '[cChocoInstaller]InstallChoco'
         }
 
