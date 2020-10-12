@@ -202,43 +202,11 @@ configuration ConfigureSPVM
             DependsOn            = '[cChocoInstaller]InstallChoco'
         }
 
-        cChocoPackageInstaller InstallChrome
-        {
-            Name                 = 'googlechrome'
-            Ensure               = 'Present'
-            Version              =  83.0.4103.116
-            DependsOn            = '[cChocoInstaller]InstallChoco'
-        }
-
-        cChocoPackageInstaller InstallEverything
-        {
-            Name                 = 'everything'
-            Ensure               = 'Present'
-            Version              =  1.4.1969
-            DependsOn            = '[cChocoInstaller]InstallChoco'
-        }
-
-        cChocoPackageInstaller InstallILSpy
-        {
-            Name                 = 'ilspy'
-            Ensure               = 'Present'
-            Version              =  6.0.0.5836
-            DependsOn            = '[cChocoInstaller]InstallChoco'
-        }
-
         cChocoPackageInstaller InstallNotepadpp
         {
             Name                 = 'notepadplusplus.install'
             Ensure               = 'Present'
             Version              =  7.9
-            DependsOn            = '[cChocoInstaller]InstallChoco'
-        }
-
-        cChocoPackageInstaller Install7zip
-        {
-            Name                 = '7zip.install'
-            Ensure               = 'Present'
-            Version              =  19.0
             DependsOn            = '[cChocoInstaller]InstallChoco'
         }
 
