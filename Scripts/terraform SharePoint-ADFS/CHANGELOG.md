@@ -1,6 +1,6 @@
 # Change log for Terraform template SharePoint-ADFS-Terraform
 
-## ## Enhancements & bug-fixes - Published in September 25, 2020
+## ## Enhancements & bug-fixes - Published in October 13, 2020
 
 * Update list of parameters passed to DSC script ConfigureFEVM
 
