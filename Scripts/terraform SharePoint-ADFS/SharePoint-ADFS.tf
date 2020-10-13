@@ -553,7 +553,8 @@ resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
       "DomainFQDN": "${var.domainFQDN}",
       "DCName": "${var.vmDC["vmName"]}",
       "SQLName": "${var.vmSQL["vmName"]}",
-      "SQLAlias": "${var.generalSettings["sqlAlias"]}"
+      "SQLAlias": "${var.generalSettings["sqlAlias"]}",
+      "SharePointVersion": "${var.sharePointVersion}"
     },
     "privacy": {
       "dataCollection": "enable"
@@ -574,10 +575,6 @@ SETTINGS
       },
       "SPFarmCreds": {
         "UserName": "${var.generalSettings["spFarmUserName"]}",
-        "Password": "${var.serviceAccountsPassword}"
-      },
-      "SPSvcCreds": {
-        "UserName": "${var.generalSettings["spSvcUserName"]}",
         "Password": "${var.serviceAccountsPassword}"
       },
       "SPPassphraseCreds": {
