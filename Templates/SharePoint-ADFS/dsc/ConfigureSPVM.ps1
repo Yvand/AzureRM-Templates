@@ -210,13 +210,6 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller InstallUlsViewer
-        {
-            Name                 = "ulsviewer"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
         cChocoPackageInstaller Install7zip
         {
             Name                 = "7zip.install"
@@ -471,6 +464,15 @@ configuration ConfigureSPVM
             Version              =  5.0.20202.18177
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
+        }
+
+        # Install ULSViewer as $DomainAdminCredsQualified to ensure that the shortcut is visible on the desktop
+        cChocoPackageInstaller InstallUlsViewer
+        {
+            Name                 = "ulsviewer"
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         xScript WaitForSQL
