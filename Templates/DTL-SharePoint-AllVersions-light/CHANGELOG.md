@@ -1,6 +1,6 @@
 # Change log for AzureRM template SharePoint-AllVersions-LightConfig
 
-## Unreleased
+## Enhancements & bug-fixes - Published in October 13, 2020
 
 * Install Edge Chromium in SharePoint VMs through Chocolatey
 * Install Notepad++ in SharePoint VMs through Chocolatey

@@ -1,6 +1,6 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Unreleased
+## Enhancements & bug-fixes - Published in October 13, 2020
 
 * Set FrontEnd VMs with SharePoint MinRole Front-End on SharePoint versions that support MinRoles configuration
 * Increase max numberOfAdditionalFrontEnd from 3 to 4
