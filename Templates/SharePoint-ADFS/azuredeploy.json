@@ -350,7 +350,6 @@
     }
   },
   "variables": {
-    "copyCountVarToWorkaroundTemplateValidationBugInPortal": "[if(equals(parameters('numberOfAdditionalFrontEnd'), 0), 1, parameters('numberOfAdditionalFrontEnd'))]",
     "generalSettings": {
       "vmDCName": "DC",
       "vmSQLName": "SQL",
@@ -1069,7 +1068,7 @@
       },
       "copy": {
           "name": "frontendPublicIPAddresses",
-          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortal')]"
+          "count": "[parameters('numberOfAdditionalFrontEnd')]"
       },
       "sku": {
         "name": "Basic",
@@ -1097,7 +1096,7 @@
       },
       "copy": {
           "name": "frontendNetworkInterfaces",
-          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortal')]"
+          "count": "[parameters('numberOfAdditionalFrontEnd')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -1130,7 +1129,7 @@
       },
       "copy": {
           "name": "frontendVirtualMachines",
-          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortal')]"
+          "count": "[parameters('numberOfAdditionalFrontEnd')]"
       },
       "properties": {
         "hardwareProfile": {
@@ -1189,7 +1188,7 @@
       },
        "copy": {
           "name": "frontendVirtualMachineExtensions",
-          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortal')]"
+          "count": "[parameters('numberOfAdditionalFrontEnd')]"
       },
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -1318,7 +1317,7 @@
       ],
       "copy": {
           "name": "frontendAutoShutdowns",
-          "count": "[variables('copyCountVarToWorkaroundTemplateValidationBugInPortal')]"
+          "count": "[parameters('numberOfAdditionalFrontEnd')]"
       },
       "properties": {
         "status": "Enabled",
