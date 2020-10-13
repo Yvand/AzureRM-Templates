@@ -2,9 +2,10 @@
 
 ## Unreleased
 
-* Install Edge in SharePoint VM through Chocolatey
-* Install Fiddler in SharePoint VM through Chocolatey
-* Install Notepad++ in SharePoint VM through Chocolatey
+* Install Edge Chromium in SharePoint VMs through Chocolatey
+* Install Notepad++ in SharePoint VMs through Chocolatey
+* Install Fiddler in SharePoint VMs through Chocolatey
+* Install ULS Viewer in SharePoint VMs through Chocolatey
 * Define the list of all possible values for the time zone parameter vmsTimeZone
 * Use a unique location for custom registry keys
 * Update DSC module SharePointDSC from 4.2 to 4.3
