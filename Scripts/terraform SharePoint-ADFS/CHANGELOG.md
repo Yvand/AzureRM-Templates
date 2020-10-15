@@ -1,6 +1,10 @@
 # Change log for Terraform template SharePoint-ADFS-Terraform
 
-## ## Enhancements & bug-fixes - Published in September 25, 2020
+## Enhancements & bug-fixes - Published in October 13, 2020
+
+* Update list of parameters passed to DSC script ConfigureFEVM
+
+## Enhancements & bug-fixes - Published in September 25, 2020
 
 * Fix many problems in the template that was outdated
 * It's now possible to add 0 to n FE VM by setting var countOfFrontEndToAdd (which replaces addFrontEndToFarm)
