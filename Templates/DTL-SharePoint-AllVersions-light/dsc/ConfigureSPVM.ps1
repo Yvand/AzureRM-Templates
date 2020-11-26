@@ -181,7 +181,7 @@ configuration ConfigureSPVM
         {
             Name                 = "microsoft-edge"
             Ensure               = "Present"
-            Version              =  83.0.478.61
+            Version              =  87.0.664.47
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
@@ -189,7 +189,7 @@ configuration ConfigureSPVM
         {
             Name                 = "notepadplusplus.install"
             Ensure               = "Present"
-            Version              =  7.9
+            Version              =  7.9.1
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
@@ -344,7 +344,7 @@ configuration ConfigureSPVM
         {
             Name                 = "fiddler"
             Ensure               = "Present"
-            Version              =  5.0.20202.18177
+            Version              =  5.0.20204.45441
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
