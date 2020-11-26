@@ -1,5 +1,10 @@
 # Change log for AzureRM template SharePoint-AllVersions-LightConfig
 
+## Unreleased
+
+* Update Chocolatey packages Edge, Notepad++ and Fiddler to latest version
+* Rename local admin of VMs as 'local-adminUserName' to not be like AD domain admin name
+
 ## Enhancements & bug-fixes - Published in October 13, 2020
 
 * Install Edge Chromium in SharePoint VMs through Chocolatey

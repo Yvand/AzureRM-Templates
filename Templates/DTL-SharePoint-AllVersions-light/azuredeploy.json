@@ -356,6 +356,7 @@
       "vmSP2016Name": "SP2016",
       "vmSP2019Name": "SP2019",
       "sqlAlias": "SQLAlias",
+      "localAdminUserName": "[concat('local-', parameters('adminUserName'))]",
       "spSuperUserName": "spSuperUser",
       "spSuperReaderName": "spSuperReader",
       "adfsSvcUserName": "adfssvc",
@@ -645,7 +646,7 @@
         },
         "osProfile": {
           "computerName": "[variables('generalSettings').vmDCName]",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[variables('generalSettings').localAdminUserName]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
@@ -794,7 +795,7 @@
         },
         "osProfile": {
           "computerName": "[variables('generalSettings').vmSQLName]",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[variables('generalSettings').localAdminUserName]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
@@ -947,7 +948,7 @@
         },
         "osProfile": {
           "computerName": "[variables('generalSettings').vmSP2013Name]",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[variables('generalSettings').localAdminUserName]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
@@ -1114,7 +1115,7 @@
         },
         "osProfile": {
           "computerName": "[variables('generalSettings').vmSP2016Name]",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[variables('generalSettings').localAdminUserName]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
@@ -1281,7 +1282,7 @@
         },
         "osProfile": {
           "computerName": "[variables('generalSettings').vmSP2019Name]",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[variables('generalSettings').localAdminUserName]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
