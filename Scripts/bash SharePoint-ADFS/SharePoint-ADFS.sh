@@ -9,6 +9,8 @@ IFS=$'\n\t'
 
 usage() { echo "Usage: $0 -g <resourceGroupName> -l <resourceGroupLocation> -p <accountsPassword>" 1>&2; exit 1; }
 
+# DEMO_NAME=$(($RANDOM % 10000)) && echo $DEMO_NAME
+
 location="west europe"
 resourceGroupName=""
 adminUserName="yvand"
