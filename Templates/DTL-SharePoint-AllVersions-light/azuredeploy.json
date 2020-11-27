@@ -103,7 +103,7 @@
     },
     "vmSQLSize": {
       "type": "string",
-      "defaultValue": "Standard_D2_v2",
+      "defaultValue": "Standard_E2ds_v4",
       "metadata": {
         "description": "Size of the SQL VM"
       }
@@ -122,7 +122,7 @@
     },
     "vmSPSize": {
       "type": "string",
-      "defaultValue": "Standard_D11_v2",
+      "defaultValue": "Standard_E2ds_v4",
       "metadata": {
         "description": "Size of the SharePoint VM"
       }
@@ -646,7 +646,7 @@
         },
         "osProfile": {
           "computerName": "[variables('generalSettings').vmDCName]",
-          "adminUsername": "[variables('generalSettings').localAdminUserName]",
+          "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
