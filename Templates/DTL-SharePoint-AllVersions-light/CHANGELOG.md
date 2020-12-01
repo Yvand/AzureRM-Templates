@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-* Update Chocolatey packages Edge, Notepad++ and Fiddler to latest version
+* Update Chocolatey packages Edge, Notepad++ and Fiddler to their latest version
 * Rename local admin of VMs as 'local-adminUserName' to not be like AD domain admin name
+* Set ServicePrincipalNames on SPAppPoolAccount
 
 ## Enhancements & bug-fixes - Published in October 13, 2020
 

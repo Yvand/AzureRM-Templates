@@ -325,7 +325,8 @@ configuration ConfigureSPVM
             Password                      = $SPAppPoolCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
+            ServicePrincipalNames         = @("HTTP/$SPTrustedSitesName", "HTTP/$SPTrustedSitesName.$DomainFQDN")
+            PsDscRunAsCredential          = $DomainAdminCredsQualified
             DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
