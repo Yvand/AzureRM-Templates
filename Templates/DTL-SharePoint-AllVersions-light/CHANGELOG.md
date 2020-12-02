@@ -5,6 +5,7 @@
 * Update Chocolatey packages Edge, Notepad++ and Fiddler to their latest version
 * Rename local admin of SP and SQL VMs to 'local-<adminUserName>', so it's not identical to the AD domain admin
 * Set the authentication of the web application to Kerberos instead of NTLM
+* Set property ProviderSignOutUri on resource SPTrustedIdentityTokenIssuer
 * Change default size of SP and SQL VMs to Standard_E2ds_v4
 
 ## Enhancements & bug-fixes - Published in October 13, 2020

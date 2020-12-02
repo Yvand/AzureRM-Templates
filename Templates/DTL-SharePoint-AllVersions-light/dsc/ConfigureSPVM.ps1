@@ -524,7 +524,7 @@ configuration ConfigureSPVM
                 )
                 SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
                 #ClaimProviderName           = "" # Should not be set if there is none
-                #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
+                ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
                 UseWReplyParameter           = $true
                 Ensure                       = "Present"
                 DependsOn                    = "[SPFarm]CreateSPFarm"
