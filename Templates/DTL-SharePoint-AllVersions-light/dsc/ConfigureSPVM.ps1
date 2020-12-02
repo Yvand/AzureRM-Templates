@@ -325,9 +325,27 @@ configuration ConfigureSPVM
             Password                      = $SPAppPoolCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
-            ServicePrincipalNames         = @("HTTP/$SPTrustedSitesName", "HTTP/$SPTrustedSitesName.$DomainFQDN")
             PsDscRunAsCredential          = $DomainAdminCredsQualified
             DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
+        }
+
+        # Since this DSC may run on multiple SP servers, each with a diferent SPN (spsites201x), SPN cannot be set in ADUser.ServicePrincipalNames because each config removes the SPNs of the previous one
+        ADServicePrincipalName SetSPAppPoolSPN1
+        {
+            ServicePrincipalName = "HTTP/$SPTrustedSitesName.$DomainFQDN"
+            Account              = $SPAppPoolCreds.UserName
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[ADUser]CreateSPAppPoolAccount"
+        }
+
+        ADServicePrincipalName SetSPAppPoolSPN2
+        {
+            ServicePrincipalName = "HTTP/$SPTrustedSitesName"
+            Account              = $SPAppPoolCreds.UserName
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[ADUser]CreateSPAppPoolAccount"
         }
 
         File AccountsProvisioned

@@ -3,8 +3,9 @@
 ## Unreleased
 
 * Update Chocolatey packages Edge, Notepad++ and Fiddler to their latest version
-* Rename local admin of VMs as 'local-adminUserName' to not be like AD domain admin name
+* Rename local admin of SP and SQL VMs to 'local-<adminUserName>', so it's not identical to the AD domain admin
 * Set ServicePrincipalNames on SPAppPoolAccount
+* Change default size of SP and SQL VMs to Standard_E2ds_v4
 
 ## Enhancements & bug-fixes - Published in October 13, 2020
 

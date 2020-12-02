@@ -84,45 +84,10 @@ configuration ConfigureSQLVM
             UserName             = $SqlSvcCreds.UserName
             Password             = $SQLCredsQualified
             PasswordNeverExpires = $true
+            ServicePrincipalNames = @("MSSQLSvc/$ComputerName.$($DomainFQDN):1433", "MSSQLSvc/$ComputerName.$DomainFQDN", "MSSQLSvc/$($ComputerName):1433", "MSSQLSvc/$ComputerName")
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
-        }
-
-        ADServicePrincipalName SetSqlSvcSPN1
-        {
-            ServicePrincipalName = "MSSQLSvc/$ComputerName.$($DomainFQDN):1433"
-            Account              = $SqlSvcCreds.UserName
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[ADUser]CreateSqlSvcAccount"
-        }
-
-        ADServicePrincipalName SetSqlSvcSPN2
-        {
-            ServicePrincipalName = "MSSQLSvc/$ComputerName.$DomainFQDN"
-            Account              = $SqlSvcCreds.UserName
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[ADUser]CreateSqlSvcAccount"
-        }
-
-        ADServicePrincipalName SetSqlSvcSPN3
-        {
-            ServicePrincipalName = "MSSQLSvc/$($ComputerName):1433"
-            Account              = $SqlSvcCreds.UserName
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[ADUser]CreateSqlSvcAccount"
-        }
-
-        ADServicePrincipalName SetSqlSvcSPN4
-        {
-            ServicePrincipalName = "MSSQLSvc/$ComputerName"
-            Account              = $SqlSvcCreds.UserName
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[ADUser]CreateSqlSvcAccount"
         }
 
         # Tentative fix on random error on resources SqlServiceAccount/SqlLogin after computer joined domain (although SqlMaxDop Test succeeds):
@@ -161,7 +126,7 @@ configuration ConfigureSQLVM
             ServiceType    = "DatabaseEngine"
             ServiceAccount = $SQLCredsQualified
             RestartService = $true
-            DependsOn      = "[xScript]EnsureSQLServiceStarted", "[ADServicePrincipalName]SetSqlSvcSPN1", "[ADServicePrincipalName]SetSqlSvcSPN2", "[ADServicePrincipalName]SetSqlSvcSPN3", "[ADServicePrincipalName]SetSqlSvcSPN4"
+            DependsOn      = "[xScript]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
         }
 
         SqlLogin AddDomainAdminLogin
