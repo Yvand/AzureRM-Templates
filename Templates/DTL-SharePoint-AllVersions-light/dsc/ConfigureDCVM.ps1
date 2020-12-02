@@ -188,11 +188,10 @@
                 Password = $AdfsSvcCreds
                 PasswordAuthentication = 'Negotiate'
                 PasswordNeverExpires = $true
-                ServicePrincipalNames = @("HTTP/$ADFSSiteName.$DomainFQDN", "HTTP/$ADFSSiteName")
                 Ensure = "Present"
                 DependsOn = "[CertReq]GenerateADFSSiteCertificate", "[CertReq]GenerateADFSSigningCertificate", "[CertReq]GenerateADFSDecryptionCertificate"
             }
-            
+
             WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[ADUser]CreateAdfsSvcAccount" }
 
             xDnsRecord AddADFSHostDNS
