@@ -581,7 +581,7 @@ configuration ConfigureSPVM
                 Default = @(
                     MSFT_SPWebAppAuthenticationMode {
                         AuthenticationMethod = "WindowsAuthentication"
-                        WindowsAuthMethod    = "Kerberos"
+                        WindowsAuthMethod    = "NTLM"
                     }
                 )
                 Intranet = @(
@@ -628,7 +628,7 @@ configuration ConfigureSPVM
                 Default = @(
                     MSFT_SPWebAppAuthenticationMode {
                         AuthenticationMethod = "WindowsAuthentication"
-                        WindowsAuthMethod    = "Kerberos"
+                        WindowsAuthMethod    = "NTLM"
                     }
                 )
                 PsDscRunAsCredential = $SPSetupCredsQualified
