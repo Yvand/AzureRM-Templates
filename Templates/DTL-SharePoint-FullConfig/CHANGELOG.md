@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Fix the duplicate SPN issue on MSSQLSvc service, which was on both the SQL computer and the SQL service account
+* Set the SPN of SharePoint sites on the SharePoint application pool account
 
 ## Enhancements & bug-fixes - Published in October 13, 2020
 
