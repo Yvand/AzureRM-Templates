@@ -1,5 +1,9 @@
 # Change log for Azure template for DTL-SharePoint-FullConfig
 
+## Unreleased
+
+* Fix the duplicate SPN issue on MSSQLSvc service, which was on both the SQL computer and the SQL service account
+
 ## Enhancements & bug-fixes - Published in October 13, 2020
 
 * Set FrontEnd VMs with SharePoint MinRole Front-End on SharePoint versions that support MinRoles configuration
