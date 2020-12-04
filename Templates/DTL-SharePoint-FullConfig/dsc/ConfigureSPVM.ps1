@@ -728,7 +728,7 @@ configuration ConfigureSPVM
             )
             SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
             ClaimProviderName            = "LDAPCP"
-            #ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
+            ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
             UseWReplyParameter           = $true
             Ensure                       = "Present"
             DependsOn                    = "[SPFarmSolution]InstallLdapcp"
