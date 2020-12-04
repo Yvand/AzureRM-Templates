@@ -252,15 +252,15 @@ configuration ConfigureFEVM
         {
             Name                 = "microsoft-edge"
             Ensure               = "Present"
-            Version              =  83.0.478.61
+            Version              =  87.0.664.55
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         cChocoPackageInstaller InstallChrome
         {
-            Name                 = "googlechrome"
+            Name                 = "GoogleChrome"
+            Version              =  87.0.4280.88
             Ensure               = "Present"
-            Version              =  83.0.4103.116
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
@@ -268,29 +268,30 @@ configuration ConfigureFEVM
         {
             Name                 = "everything"
             Ensure               = "Present"
-            Version              =  1.4.1969
+            Version              =  1.4.11000
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         cChocoPackageInstaller InstallILSpy
         {
             Name                 = "ilspy"
-            Ensure               = "Present"
             Version              =  6.0.0.5836
+            Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         cChocoPackageInstaller InstallNotepadpp
         {
             Name                 = "notepadplusplus.install"
+            Version              =  7.9.1
             Ensure               = "Present"
-            Version              =  7.9
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         cChocoPackageInstaller Install7zip
         {
             Name                 = "7zip.install"
+            Version              =  19.0
             Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
@@ -299,8 +300,8 @@ configuration ConfigureFEVM
         cChocoPackageInstaller InstallFiddler
         {
             Name                 = "fiddler"
+            Version              =  5.0.20204.45441
             Ensure               = "Present"
-            Version              =  5.0.20202.18177
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
         }

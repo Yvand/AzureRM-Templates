@@ -181,7 +181,7 @@ configuration ConfigureSPVM
         {
             Name                 = "microsoft-edge"
             Ensure               = "Present"
-            Version              =  87.0.664.47
+            Version              =  87.0.664.55
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
