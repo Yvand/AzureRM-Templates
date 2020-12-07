@@ -180,16 +180,24 @@ configuration ConfigureSPVM
         cChocoPackageInstaller InstallEdge
         {
             Name                 = "microsoft-edge"
-            Ensure               = "Present"
             Version              =  87.0.664.55
+            Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         cChocoPackageInstaller InstallNotepadpp
         {
             Name                 = "notepadplusplus.install"
-            Ensure               = "Present"
             Version              =  7.9.1
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller Install7zip
+        {
+            Name                 = "7zip.install"
+            Version              =  "19.0"
+            Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
@@ -362,8 +370,8 @@ configuration ConfigureSPVM
         cChocoPackageInstaller InstallFiddler
         {
             Name                 = "fiddler"
-            Ensure               = "Present"
             Version              =  5.0.20204.45441
+            Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
