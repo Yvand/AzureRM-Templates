@@ -4,7 +4,6 @@
 
 * Update Chocolatey packages Edge, Notepad++ and Fiddler to their latest version
 * Install 7-zip through Chocolatey
-* Rename local admin of SP and SQL VMs to 'local-<adminUserName>', so it's not identical to the AD domain admin
 * Fix the duplicate SPN issue on MSSQLSvc service, which was on both the SQL computer and the SQL service account
 * Set the SPN of SharePoint sites on the SharePoint application pool account
 * Set property ProviderSignOutUri on resource SPTrustedIdentityTokenIssuer
