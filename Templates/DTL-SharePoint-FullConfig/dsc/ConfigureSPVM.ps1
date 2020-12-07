@@ -213,7 +213,7 @@ configuration ConfigureSPVM
         cChocoPackageInstaller Install7zip
         {
             Name                 = "7zip.install"
-            Version              =  19.0
+            Version              =  "19.0"
             Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
