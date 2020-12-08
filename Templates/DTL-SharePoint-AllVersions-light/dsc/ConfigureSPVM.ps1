@@ -180,7 +180,6 @@ configuration ConfigureSPVM
         cChocoPackageInstaller InstallEdge
         {
             Name                 = "microsoft-edge"
-            Version              =  87.0.664.55
             Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
@@ -188,7 +187,6 @@ configuration ConfigureSPVM
         cChocoPackageInstaller InstallNotepadpp
         {
             Name                 = "notepadplusplus.install"
-            Version              =  7.9.1
             Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
@@ -196,7 +194,6 @@ configuration ConfigureSPVM
         cChocoPackageInstaller Install7zip
         {
             Name                 = "7zip.install"
-            Version              =  "19.0"
             Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
