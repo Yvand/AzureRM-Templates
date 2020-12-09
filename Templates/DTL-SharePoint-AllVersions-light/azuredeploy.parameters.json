@@ -5,7 +5,7 @@
     "provisionSharePoint2013": { "value": "Yes" },
     "provisionSharePoint2016": { "value": "Yes" },
     "provisionSharePoint2019": { "value": "Yes" },
-    "configureADFS": { "value": "No" },
+    "configureADFS": { "value": "Yes" },
     "domainFQDN": { "value": "contoso.local" },
     "adminUserName": { "value": "Yvand" },
     "addAzureBastion": { "value": "Yes" },
@@ -14,9 +14,9 @@
     "enableAutomaticUpdates": { "value": "No" },    
     "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-AllVersions-light" },
     "vmDCStorageAccountType": { "value": "Premium_LRS" },
-    "vmSQLSize": { "value": "Standard_E2as_v4" },
+    // "vmSQLSize": { "value": "Standard_E2as_v4" },
     "vmSQLStorageAccountType": { "value": "Premium_LRS" },
-    "vmSPSize": { "value": "Standard_E2as_v4" },
+    // "vmSPSize": { "value": "Standard_E2as_v4" },
     "vmSPStorageAccountType": { "value": "Premium_LRS" }
   }
 }
