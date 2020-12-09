@@ -1,5 +1,12 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+* Update all Chocolatey packages to their latest version
+* Fix the duplicate SPN issue on MSSQLSvc service, which was on both the SQL computer and the SQL service account
+* Set the SPN of SharePoint sites on the SharePoint application pool account
+* Set property ProviderSignOutUri on resource SPTrustedIdentityTokenIssuer
+
 ## Enhancements & bug-fixes - Published in October 13, 2020
 
 * Set FrontEnd VMs with SharePoint MinRole Front-End on SharePoint versions that support MinRoles configuration
