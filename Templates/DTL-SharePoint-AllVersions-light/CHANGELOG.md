@@ -1,6 +1,6 @@
-# Change log for AzureRM template SharePoint-AllVersions-LightConfig
+# Change log for Azure DevTest Labs template SharePoint-AllVersions
 
-## Unreleased
+## Enhancements & bug-fixes - Published in December 09, 2020
 
 * Update Chocolatey packages Edge, Notepad++ and Fiddler to their latest version
 * Install 7-zip through Chocolatey
@@ -8,6 +8,7 @@
 * Set the SPN of SharePoint sites on the SharePoint application pool account
 * Set property ProviderSignOutUri on resource SPTrustedIdentityTokenIssuer
 * Change default size of SP and SQL VMs to Standard_E2ds_v4
+* Update DSC module SqlServerDsc from 14.2.1 to 15.0
 
 ## Enhancements & bug-fixes - Published in October 13, 2020
 
