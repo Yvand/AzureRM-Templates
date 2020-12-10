@@ -1,6 +1,6 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Enhancements & bug-fixes - Published in December 09, 2020
+## Enhancements & bug-fixes - Published in December 10, 2020
 
 * Update all Chocolatey packages to their latest version
 * Remove ADFS service account from Administrators group
