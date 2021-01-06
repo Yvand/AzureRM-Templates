@@ -6,7 +6,7 @@
       "value": "2019"
     },
     "dnsLabelPrefix": {
-      "value": "ydq6"
+      "value": "ydspfull1"
     },
     "domainFQDN": {
       "value": "contoso.local"
@@ -15,7 +15,7 @@
       "value": "Romance Standard Time"
     },
     "numberOfAdditionalFrontEnd": {
-      "value": 0
+      "value": 2
     },
     "enableHybridBenefitServerLicenses": {
       "value": "Yes"
@@ -29,12 +29,12 @@
     "addPublicIPAddressToEachVM": {
       "value": "Yes"
     },
+    // "vmSQLSize": { "value": "Standard_E2as_v4" },
+    // "vmSQLStorageAccountType": { "value": "Premium_LRS" },
+    // "vmSPSize": { "value": "Standard_E2as_v4" },
+    // "vmSPStorageAccountType": { "value": "Premium_LRS" },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/"
-    },
-     "vmSQLSize": { "value": "Standard_E2as_v4" },
-     "vmSQLStorageAccountType": { "value": "Premium_LRS" },
-     "vmSPSize": { "value": "Standard_E2as_v4" },
-     "vmSPStorageAccountType": { "value": "Premium_LRS" }
+    }
   }
 }

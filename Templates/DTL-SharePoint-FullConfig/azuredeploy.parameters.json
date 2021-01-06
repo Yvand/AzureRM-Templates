@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sharePointVersion": {
-      "value": "2016"
+      "value": "2019"
     },
     "domainFQDN": {
       "value": "contoso.local"
@@ -15,7 +15,7 @@
       "value": "Romance Standard Time"
     },
     "numberOfAdditionalFrontEnd": {
-      "value": 2
+      "value": 1
     },
     "enableHybridBenefitServerLicenses": {
       "value": "Yes"
@@ -26,15 +26,12 @@
     "addPublicIPAddressToEachVM": {
       "value": "Yes"
     },
-    "addFrontEndToFarm": {
-        "value": "Yes"
-    },
+    // "vmSQLSize": { "value": "Standard_E2as_v4" },
+    //  "vmSQLStorageAccountType": { "value": "Premium_LRS" },
+    //  "vmSPSize": { "value": "Standard_E2as_v4" },
+    //  "vmSPStorageAccountType": { "value": "Premium_LRS" },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-FullConfig"
-    },
-     "vmSQLSize": { "value": "Standard_E2as_v4" },
-     "vmSQLStorageAccountType": { "value": "Premium_LRS" },
-     "vmSPSize": { "value": "Standard_E2as_v4" },
-     "vmSPStorageAccountType": { "value": "Premium_LRS" }
+    }     
   }
 }
