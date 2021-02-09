@@ -367,6 +367,7 @@ configuration ConfigureSPVM
         cChocoPackageInstaller InstallFiddler
         {
             Name                 = "fiddler"
+            Version              =  5.0.20204.45441
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
