@@ -1,5 +1,9 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+* Update DSC module SharePointDSC from 4.3 to 4.5.1
+
 ## Enhancements & bug-fixes - Published in February 9, 2021
 
 * Update DSC module cChoco from 2.4 to 2.5 to fix issue <https://github.com/chocolatey/cChoco/issues/151>

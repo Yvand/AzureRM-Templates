@@ -1299,8 +1299,8 @@ function Get-SPDSCInstalledProductVersion
 }
 
 <#
-# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
-# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
+# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.0.0
+# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.0.0\DSCWork
 
 Install-Module -Name PendingReboot
 help ConfigureSPVM
@@ -1320,7 +1320,7 @@ $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
 $SharePointVersion = 2019
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.3\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
 ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
