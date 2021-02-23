@@ -659,7 +659,7 @@ configuration ConfigureSPVM
             }
             GetScript            = { }
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
+            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
