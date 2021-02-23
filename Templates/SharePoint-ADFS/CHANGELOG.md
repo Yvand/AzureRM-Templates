@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+* Add new SQL permissions to spsetup account to work with updated SPFarm resource
+* Set dependency of xScript UpdateGPOToTrustRootCACert to RestartSPTimerAfterCreateSPFarm
 * Update DSC module SharePointDSC from 4.3 to 4.5.1
+* Update DSC module SqlServerDsc from 15.0 to 15.1.1
 
 ## Enhancements & bug-fixes - Published in February 9, 2021
 

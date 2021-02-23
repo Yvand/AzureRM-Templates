@@ -217,6 +217,50 @@ configuration ConfigureSQLVM
             DependsOn        = "[SqlLogin]AddSPSetupLogin"
         }
 
+        # Since SharePointDsc 4.4.0, SPFarm "Switched from creating a Lock database to a Lock table in the TempDB. This to allow the use of precreated databases."
+        # But for this to work, the SPSetup account needs specific permissions on both the tempdb and the dbo schema
+        SqlDatabaseUser AddSPSetupUserToTempdb
+        {
+            ServerName           = $ComputerName
+            InstanceName         = "MSSQLSERVER"
+            DatabaseName         = "tempdb"
+            UserType             = 'Login'
+            Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            LoginName            = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            DependsOn            = "[SqlLogin]AddSPSetupLogin"
+        }
+
+        SqlDatabasePermission GrantPermissionssToTempdb
+        {
+            Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            ServerName           =  $ComputerName
+            InstanceName         = "MSSQLSERVER"
+            DatabaseName         = "tempdb"
+            Permissions          = @('Select', 'CreateTable', 'Execute')
+            PermissionState      = "Grant"
+            Ensure               = "Present"
+            DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
+        }
+
+        SqlDatabaseObjectPermission GrantPermissionssToDboSchema
+        {
+            Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            ServerName           = $ComputerName
+            InstanceName         = "MSSQLSERVER"
+            DatabaseName         = "tempdb"
+            SchemaName           = "dbo"
+            ObjectName           = ""
+            ObjectType           = "Schema"
+            Permission           = @(
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = @("Select", "Update", "Insert", "Execute", "Control", "References")
+                }
+            )
+            DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
+        }
+
         # Open port on the firewall only when everything is ready, as SharePoint DSC is testing it to start creating the farm
         Firewall AddDatabaseEngineFirewallRule
         {
@@ -288,7 +332,7 @@ $SPSetupCreds = Get-Credential -Credential "spsetup"
 $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.2.0\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.0.0\DSCWork\ConfigureSQLVM.0"
 ConfigureSQLVM -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
