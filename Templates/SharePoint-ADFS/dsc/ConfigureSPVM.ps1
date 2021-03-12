@@ -791,7 +791,7 @@ configuration ConfigureSPVM
             Port                   = 443
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[CertReq]GenerateMainWebAppCertificate", "[SPWebApplication]CreateMainWebApp"
+            DependsOn              = "[CertReq]GenerateMainWebAppCertificate", "[SPWebApplication]CreateMainWebApp", "[xScript]ConfigureLDAPCP"
         }
 
         SPWebAppAuthentication ConfigureMainWebAppAuthentication
@@ -970,7 +970,7 @@ configuration ConfigureSPVM
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
             InstallAccount       = $SPSetupCredsQualified
-            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
+            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance", "[xScript]ConfigureLDAPCP"
         }
 
         SPAppManagementServiceApp CreateAppManagementServiceApp
@@ -1083,7 +1083,7 @@ configuration ConfigureSPVM
             DestinationPath = "C:\inetpub\wwwroot\addins"
             Type            = "Directory"
             Ensure          = "Present"
-            DependsOn       = "[SPFarm]CreateSPFarm"
+            DependsOn       = "[SPFarm]CreateSPFarm", "[xScript]ConfigureLDAPCP"
         }
 
         xWebAppPool CreateAddinsSiteApplicationPool
