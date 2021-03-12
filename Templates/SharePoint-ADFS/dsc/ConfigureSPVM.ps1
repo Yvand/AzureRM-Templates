@@ -713,7 +713,7 @@ configuration ConfigureSPVM
             Description                  = "Federation with $DomainFQDN"
             Realm                        = "https://$SPTrustedSitesName.$DomainFQDN"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
-            IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+            IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
             ClaimsMappings               = @(
                 MSFT_SPClaimTypeMapping{
                     Name = "Email"
@@ -732,6 +732,8 @@ configuration ConfigureSPVM
             DependsOn                    = "[SPFarmSolution]InstallLdapcp"
             PsDscRunAsCredential         = $SPSetupCredsQualified
         }
+
+        throw;
 
         xScript ConfigureLDAPCP
         {
