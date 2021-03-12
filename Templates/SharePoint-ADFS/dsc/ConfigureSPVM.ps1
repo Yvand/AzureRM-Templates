@@ -733,8 +733,6 @@ configuration ConfigureSPVM
             PsDscRunAsCredential         = $SPSetupCredsQualified
         }
 
-        throw;
-
         xScript ConfigureLDAPCP
         {
             SetScript = 
