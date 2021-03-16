@@ -261,8 +261,8 @@
 c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
 => issue(
 store = "Active Directory", 
-types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"), 
-query = ";mail,tokenGroups(longDomainQualifiedName);{0}", 
+types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"), 
+query = ";mail,userPrincipalName,tokenGroups(longDomainQualifiedName);{0}", 
 param = c.Value);
 "@
             ProtocolProfile = "WsFed-SAML"
@@ -351,4 +351,26 @@ https://github.com/PowerShell/xActiveDirectory/issues/27
 Uninstall-WindowsFeature "ADFS-Federation"
 https://msdn.microsoft.com/library/mt238290.aspx
 \\.\pipe\MSSQL$MICROSOFT##SSEE\sql\query
+
+
+
+#$identifier = [Guid]::NewGuid()
+$identifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
+$redirectUri = "https://spvnextsites2102.conto2016.local/"
+$agName = "OIDCShell"
+
+$issuanceTransformRules = @"
+@RuleTemplate = "PassThroughClaims"
+@RuleName = "Email"
+c:[Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]
+=> issue(claim = c);
+"@
+
+# Get-AdfsApplicationGroup
+New-AdfsApplicationGroup -Name "$agName"
+$ag = Get-AdfsApplicationGroup -Name "$agName"
+
+Add-AdfsNativeClientApplication -ApplicationGroup $ag -Name "$agName - Native application" -Identifier $identifier -RedirectUri $redirectUri
+Add-AdfsWebApiApplication -ApplicationGroup $ag -Name "$agName - Web application" -Identifier $identifier -IssuanceTransformRules $issuanceTransformRules -AccessControlPolicyName "Permit everyone"
+
 #>
