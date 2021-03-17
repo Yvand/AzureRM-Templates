@@ -8,7 +8,7 @@
         [Parameter(Mandatory)] [String]$PrivateIP
     )
 
-    Import-DscResource -ModuleName ActiveDirectoryDsc, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, cADFS, xDnsServer, ComputerManagementDsc
+    Import-DscResource -ModuleName ActiveDirectoryDsc, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, cADFS, xDnsServer, ComputerManagementDsc, AdfsDsc
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
@@ -19,6 +19,8 @@
     [String] $ADFSSiteName = "ADFS"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
+    [String] $AdfsOidcAGName = "SPS-OIDC"
+    [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
 
     Node localhost
     {
@@ -247,12 +249,12 @@
             DependsOn = "[WindowsFeature]AddADFS"
         }
 
-        cADFSRelyingPartyTrust CreateADFSRelyingParty
+        ADFSRelyingPartyTrust CreateADFSRelyingParty
         {
             Name = $SPTrustedSitesName
             Identifier = "https://$SPTrustedSitesName.$DomainFQDN"
             ClaimsProviderName = @("Active Directory")
-            WsFederationEndpoint = "https://$SPTrustedSitesName.$DomainFQDN/_trust/"
+            WSFedEndpoint            = "https://$SPTrustedSitesName.$DomainFQDN/_trust/"
             AdditionalWSFedEndpoint = @("https://*.$DomainFQDN/")
             IssuanceAuthorizationRules = '=> issue(Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
             IssuanceTransformRules = @"
@@ -269,6 +271,57 @@ param = c.Value);
             Ensure= 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[cADFSFarm]CreateADFSFarm"
+        }
+
+        AdfsApplicationGroup OidcGroup
+        {
+            Name        = $AdfsOidcAGName
+            Description = "OIDC setup for SharePoint"
+            DependsOn   = "[cADFSFarm]CreateADFSFarm"
+        }
+
+        AdfsNativeClientApplication OidcNativeApp
+        {
+            Name                       = "$AdfsOidcAGName - Native application"
+            ApplicationGroupIdentifier = $AdfsOidcAGName
+            Identifier                 = $AdfsOidcIdentifier
+            RedirectUri                = "https://$SPTrustedSitesName.$DomainFQDN/"
+            DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
+        }
+
+        AdfsWebApiApplication OidcWebApiApp
+        {
+            Name                          = "$AdfsOidcAGName - Web API"
+            ApplicationGroupIdentifier    = $AdfsOidcAGName
+            Identifier                    = $AdfsOidcIdentifier
+            AccessControlPolicyName       = "Permit everyone"
+            AlwaysRequireAuthentication   = $false
+            AllowedClientTypes            = "Public", "Confidential"
+            IssueOAuthRefreshTokensTo     = "AllDevices"
+            NotBeforeSkew                 = 0
+            RefreshTokenProtectionEnabled = $false
+            RequestMFAFromClaimsProviders = $false
+            TokenLifetime                 = 0
+            IssuanceTransformRules        = @(
+                MSFT_AdfsIssuanceTransformRule
+                {
+                    TemplateName = "PassThroughClaims"
+                    Name         = "Email"
+                    CustomRule   = @"
+c:[Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]
+=> issue(claim = c);
+"@
+                }
+            )
+            DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
+        }
+
+        AdfsApplicationPermission OidcWebApiAppPermission
+        {
+            ClientRoleIdentifier = $AdfsOidcIdentifier
+            ServerRoleIdentifier = $AdfsOidcIdentifier
+            ScopeNames           = "openid"
+            DependsOn            = "[AdfsNativeClientApplication]OidcNativeApp", "[AdfsWebApiApplication]OidcWebApiApp"
         }
 
         WindowsFeature AddADTools             { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
@@ -372,5 +425,5 @@ $ag = Get-AdfsApplicationGroup -Name "$agName"
 
 Add-AdfsNativeClientApplication -ApplicationGroup $ag -Name "$agName - Native application" -Identifier $identifier -RedirectUri $redirectUri
 Add-AdfsWebApiApplication -ApplicationGroup $ag -Name "$agName - Web application" -Identifier $identifier -IssuanceTransformRules $issuanceTransformRules -AccessControlPolicyName "Permit everyone"
-
+Grant-AdfsApplicationPermission -ServerRoleIdentifier $identifier -ScopeNames "openid" -ClientRoleIdentifier $identifier
 #>
