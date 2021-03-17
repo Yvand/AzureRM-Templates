@@ -257,16 +257,19 @@
             WSFedEndpoint            = "https://$SPTrustedSitesName.$DomainFQDN/_trust/"
             AdditionalWSFedEndpoint = @("https://*.$DomainFQDN/")
             IssuanceAuthorizationRules = '=> issue(Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
-            IssuanceTransformRules = @"
-@RuleTemplate = "LdapClaims"
-@RuleName = "AD"
-c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+            IssuanceTransformRules        = @(
+                MSFT_AdfsIssuanceTransformRule
+                {
+                    TemplateName = "LdapClaims"
+                    Name         = "AD"
+                    CustomRule   = 'c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
 => issue(
 store = "Active Directory", 
 types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"), 
 query = ";mail,userPrincipalName,tokenGroups(longDomainQualifiedName);{0}", 
-param = c.Value);
-"@
+param = c.Value);'
+                }
+            )
             ProtocolProfile = "WsFed-SAML"
             Ensure= 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
@@ -305,12 +308,10 @@ param = c.Value);
             IssuanceTransformRules        = @(
                 MSFT_AdfsIssuanceTransformRule
                 {
-                    TemplateName = "PassThroughClaims"
+                    TemplateName = "LdapClaims"
                     Name         = "Email"
-                    CustomRule   = @"
-c:[Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]
-=> issue(claim = c);
-"@
+                    CustomRule   = 'c:[Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]
+ => issue(claim = c);'
                 }
             )
             DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
@@ -374,6 +375,8 @@ function Get-AppDomain
     return $appDomain
 }
 
+ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+
 <#
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.80.0.0
 # Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork
@@ -393,9 +396,9 @@ help ConfigureDCVM
 $Admincreds = Get-Credential -Credential "yvand"
 $AdfsSvcCreds = Get-Credential -Credential "adfssvc"
 $DomainFQDN = "contoso.local"
-$PrivateIP = "10.1.1.4"
+$PrivateIP = "10.0.1.4"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.3\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.0.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
 ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
