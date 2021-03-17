@@ -260,14 +260,26 @@
             IssuanceTransformRules        = @(
                 MSFT_AdfsIssuanceTransformRule
                 {
-                    TemplateName = "LdapClaims"
-                    Name         = "AD"
-                    CustomRule   = 'c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
-=> issue(
-store = "Active Directory", 
-types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"), 
-query = ";mail,userPrincipalName,tokenGroups(longDomainQualifiedName);{0}", 
-param = c.Value);'
+                    TemplateName   = 'LdapClaims'
+                    Name           = 'Claims from Active Directory attributes'
+                    AttributeStore = 'Active Directory'
+                    LdapMapping    = @(
+                        MSFT_AdfsLdapMapping
+                        {
+                            LdapAttribute     = 'userPrincipalName'
+                            OutgoingClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn'
+                        }
+                        MSFT_AdfsLdapMapping
+                        {
+                            LdapAttribute     = 'mail'
+                            OutgoingClaimType = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
+                        }
+                        MSFT_AdfsLdapMapping
+                        {
+                            LdapAttribute     = 'tokenGroups(longDomainQualifiedName)'
+                            OutgoingClaimType = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+                        }
+                    )
                 }
             )
             ProtocolProfile = "WsFed-SAML"
@@ -308,10 +320,10 @@ param = c.Value);'
             IssuanceTransformRules        = @(
                 MSFT_AdfsIssuanceTransformRule
                 {
-                    TemplateName = "LdapClaims"
+                    TemplateName = "CustomClaims"
                     Name         = "Email"
                     CustomRule   = 'c:[Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]
- => issue(claim = c);'
+=> issue(claim = c);'
                 }
             )
             DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
@@ -375,6 +387,8 @@ function Get-AppDomain
     return $appDomain
 }
 
+ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 <#
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.80.0.0
 # Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork
