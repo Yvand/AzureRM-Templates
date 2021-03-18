@@ -249,13 +249,6 @@
             DependsOn = "[WindowsFeature]AddADFS"
         }
 
-        AdfsApplicationGroup OidcGroup
-        {
-            Name        = $AdfsOidcAGName
-            Description = "OIDC setup for SharePoint"
-            DependsOn   = "[cADFSFarm]CreateADFSFarm"
-        }
-
         ADFSRelyingPartyTrust CreateADFSRelyingParty
         {
             Name = $SPTrustedSitesName
@@ -293,6 +286,13 @@
             Ensure= 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn = "[cADFSFarm]CreateADFSFarm"
+        }
+
+        AdfsApplicationGroup OidcGroup
+        {
+            Name        = $AdfsOidcAGName
+            Description = "OIDC setup for SharePoint"
+            DependsOn   = "[cADFSFarm]CreateADFSFarm"
         }
 
         AdfsNativeClientApplication OidcNativeApp
