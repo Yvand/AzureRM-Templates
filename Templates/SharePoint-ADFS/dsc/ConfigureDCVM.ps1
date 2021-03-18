@@ -288,11 +288,42 @@
             DependsOn = "[cADFSFarm]CreateADFSFarm"
         }
 
-        AdfsApplicationGroup OidcGroup
+        # AdfsApplicationGroup OidcGroup
+        # {
+        #     Name        = $AdfsOidcAGName
+        #     Description = "OIDC setup for SharePoint"
+        #     PsDscRunAsCredential = $DomainCredsNetbios
+        #     DependsOn   = "[cADFSFarm]CreateADFSFarm"
+        # }
+
+        xScript OidcGroup
         {
-            Name        = $AdfsOidcAGName
-            Description = "OIDC setup for SharePoint"
+            SetScript = 
+            {
+                $agName = $using:AdfsOidcAGName
+                # Add-Type -AssemblyName "ldapcp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
+                New-AdfsApplicationGroup -Name $agName
+				
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                $agName = $using:AdfsOidcAGName
+                $ag = Get-AdfsApplicationGroup -Name $agName
+				if ($ag -eq $null) {
+					return $false
+				}
+				else {
+					return $true
+				}
+            }
             DependsOn   = "[cADFSFarm]CreateADFSFarm"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
         AdfsNativeClientApplication OidcNativeApp
@@ -301,7 +332,7 @@
             ApplicationGroupIdentifier = $AdfsOidcAGName
             Identifier                 = $AdfsOidcIdentifier
             RedirectUri                = "https://$SPTrustedSitesName.$DomainFQDN/"
-            DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
+            DependsOn                  = "[xScript]OidcGroup"
         }
 
         AdfsWebApiApplication OidcWebApiApp
@@ -326,7 +357,7 @@
 => issue(claim = c);'
                 }
             )
-            DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
+            DependsOn                  = "[xScript]OidcGroup"
         }
 
         AdfsApplicationPermission OidcWebApiAppPermission
