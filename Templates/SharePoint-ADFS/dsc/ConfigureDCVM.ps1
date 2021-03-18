@@ -227,12 +227,6 @@
             DependsOn = "[WaitForADDomain]WaitForDCReady"
         }
 
-        WindowsFeature AddADTools             { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
-        WindowsFeature AddADPowerShell        { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
-        WindowsFeature AddDnsTools            { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
-        WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
-        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
-
         # Since 2019-10, DSC regularly fails at cADFSFarm CreateADFSFarm with error below, but I don't know why or how to fix it.
         # Machine restart message is present even when there is no error and PendingReboot before cADFSFarm detects no pending reboot
         # VERBOSE: [2019-10-04 11:14:42Z] [VERBOSE] [DC]: [[cADFSFarm]CreateADFSFarm] Entering function InstallADFSFarm
@@ -373,6 +367,12 @@
             ScopeNames           = "openid"
             DependsOn            = "[AdfsNativeClientApplication]OidcNativeApp", "[AdfsWebApiApplication]OidcWebApiApp"
         }
+
+        WindowsFeature AddADTools             { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature AddADPowerShell        { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        WindowsFeature AddDnsTools            { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
+        WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
+        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
     }
 }
 
