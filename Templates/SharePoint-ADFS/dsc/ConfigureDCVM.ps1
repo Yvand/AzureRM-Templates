@@ -33,7 +33,9 @@
         #**********************************************************
         # Create AD domain
         #**********************************************************
-        WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; }
+        # Install AD FS early (before reboot) to workaround error below on resource AdfsApplicationGroup:
+        # "System.InvalidOperationException: The test script threw an error. ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.IdentityServer.Diagnostics, Version=10.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35' or one of its dependencie"
+        WindowsFeature AddADFS { Name = "ADFS-Federation";    Ensure = "Present"; }
         WindowsFeature AddADDS { Name = "AD-Domain-Services"; Ensure = "Present" }
         WindowsFeature AddDNS  { Name = "DNS";                Ensure = "Present" }
         DnsServerAddress SetDNS { Address = '127.0.0.1' ; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
@@ -288,43 +290,43 @@
             DependsOn = "[cADFSFarm]CreateADFSFarm"
         }
 
-        # AdfsApplicationGroup OidcGroup
-        # {
-        #     Name        = $AdfsOidcAGName
-        #     Description = "OIDC setup for SharePoint"
-        #     PsDscRunAsCredential = $DomainCredsNetbios
-        #     DependsOn   = "[cADFSFarm]CreateADFSFarm"
-        # }
-
-        xScript OidcGroup
+        AdfsApplicationGroup OidcGroup
         {
-            SetScript = 
-            {
-                $agName = $using:AdfsOidcAGName
-                # Add-Type -AssemblyName "ldapcp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
-                New-AdfsApplicationGroup -Name $agName
-				
-            }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                $agName = $using:AdfsOidcAGName
-                $ag = Get-AdfsApplicationGroup -Name $agName
-				if ($ag -eq $null) {
-					return $false
-				}
-				else {
-					return $true
-				}
-            }
+            Name        = $AdfsOidcAGName
+            Description = "OIDC setup for SharePoint"
+            PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn   = "[cADFSFarm]CreateADFSFarm"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
         }
+
+        # xScript OidcGroup
+        # {
+        #     SetScript = 
+        #     {
+        #         $agName = $using:AdfsOidcAGName
+        #         # Add-Type -AssemblyName "ldapcp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
+        #         New-AdfsApplicationGroup -Name $agName
+				
+        #     }
+        #     GetScript =  
+        #     {
+        #         # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #         return @{ "Result" = "false" }
+        #     }
+        #     TestScript = 
+        #     {
+        #         # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #         $agName = $using:AdfsOidcAGName
+        #         $ag = Get-AdfsApplicationGroup -Name $agName
+		# 		if ($ag -eq $null) {
+		# 			return $false
+		# 		}
+		# 		else {
+		# 			return $true
+		# 		}
+        #     }
+        #     DependsOn   = "[cADFSFarm]CreateADFSFarm"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        # }
 
         AdfsNativeClientApplication OidcNativeApp
         {
@@ -332,7 +334,7 @@
             ApplicationGroupIdentifier = $AdfsOidcAGName
             Identifier                 = $AdfsOidcIdentifier
             RedirectUri                = "https://$SPTrustedSitesName.$DomainFQDN/"
-            DependsOn                  = "[xScript]OidcGroup"
+            DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
         }
 
         AdfsWebApiApplication OidcWebApiApp
@@ -357,7 +359,7 @@
 => issue(claim = c);'
                 }
             )
-            DependsOn                  = "[xScript]OidcGroup"
+            DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
         }
 
         AdfsApplicationPermission OidcWebApiAppPermission
