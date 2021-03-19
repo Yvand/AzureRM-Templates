@@ -33,6 +33,7 @@
         #**********************************************************
         # Create AD domain
         #**********************************************************
+        WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; }
         WindowsFeature AddADDS { Name = "AD-Domain-Services"; Ensure = "Present" }
         WindowsFeature AddDNS  { Name = "DNS";                Ensure = "Present" }
         DnsServerAddress SetDNS { Address = '127.0.0.1' ; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
@@ -206,7 +207,6 @@
             DependsOn              = "[CertReq]GenerateADFSSiteCertificate", "[CertReq]GenerateADFSSigningCertificate", "[CertReq]GenerateADFSDecryptionCertificate"
         }
 
-        WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[ADUser]CreateAdfsSvcAccount" }
 
         xDnsRecord AddADFSHostDNS {
             Name = $ADFSSiteName
