@@ -109,6 +109,7 @@ configuration ConfigureSQLVM
         {
             DomainName           = $DomainFQDN
             UserName             = $SqlSvcCreds.UserName
+            UserPrincipalName    = "$($SqlSvcCreds.UserName)@$DomainFQDN"
             Password             = $SQLCredsQualified
             PasswordNeverExpires = $true
             ServicePrincipalNames = @("MSSQLSvc/$ComputerName.$($DomainFQDN):1433", "MSSQLSvc/$ComputerName.$DomainFQDN", "MSSQLSvc/$($ComputerName):1433", "MSSQLSvc/$ComputerName")
@@ -170,6 +171,7 @@ configuration ConfigureSQLVM
         {
             DomainName           = $DomainFQDN
             UserName             = $SPSetupCreds.UserName
+            UserPrincipalName    = "$($SPSetupCreds.UserName)@$DomainFQDN"
             Password             = $SPSetupCredsQualified
             PasswordNeverExpires = $true
             PsDscRunAsCredential = $DomainAdminCredsQualified

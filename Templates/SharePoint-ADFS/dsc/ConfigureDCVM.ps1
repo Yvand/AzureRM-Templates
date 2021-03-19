@@ -89,6 +89,7 @@
             DomainName           = $DomainFQDN
             UserName             = $Admincreds.UserName
             EmailAddress         = "$($Admincreds.UserName)@$DomainFQDN"
+            UserPrincipalName    = "$($Admincreds.UserName)@$DomainFQDN"
             PasswordNeverExpires = $true
             Ensure               = "Present"
             DependsOn            = "[WaitForADDomain]WaitForDCReady"
@@ -202,6 +203,7 @@
         {
             DomainName             = $DomainFQDN
             UserName               = $AdfsSvcCreds.UserName
+            UserPrincipalName      = "$($AdfsSvcCreds.UserName)@$DomainFQDN"
             Password               = $AdfsSvcCreds
             PasswordAuthentication = 'Negotiate'
             PasswordNeverExpires   = $true

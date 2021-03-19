@@ -42,6 +42,7 @@ configuration ConfigureSPVM
     [String] $HNSC1Alias = "HNSC1"
     [String] $AddinsSiteDNSAlias = "addins"
     [String] $AddinsSiteName = "Provider-hosted addins"
+    [String] $TrustedIdChar = "e"
 
     Node localhost
     {
@@ -373,6 +374,7 @@ configuration ConfigureSPVM
             DomainName                    = $DomainFQDN
             UserName                      = $SPSetupCreds.UserName
             Password                      = $SPSetupCreds
+            UserPrincipalName             = "$($SPSetupCreds.UserName)@$DomainFQDN"
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -383,6 +385,7 @@ configuration ConfigureSPVM
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPFarmCreds.UserName
+            UserPrincipalName             = "$($SPFarmCreds.UserName)@$DomainFQDN"
             Password                      = $SPFarmCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
@@ -404,6 +407,7 @@ configuration ConfigureSPVM
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPSvcCreds.UserName
+            UserPrincipalName             = "$($SPSvcCreds.UserName)@$DomainFQDN"
             Password                      = $SPSvcCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
@@ -415,6 +419,7 @@ configuration ConfigureSPVM
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPAppPoolCreds.UserName
+            UserPrincipalName             = "$($SPAppPoolCreds.UserName)@$DomainFQDN"
             Password                      = $SPAppPoolCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
@@ -427,6 +432,7 @@ configuration ConfigureSPVM
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPSuperUserCreds.UserName
+            UserPrincipalName             = "$($SPSuperUserCreds.UserName)@$DomainFQDN"
             Password                      = $SPSuperUserCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
@@ -438,6 +444,7 @@ configuration ConfigureSPVM
         {
             DomainName                    = $DomainFQDN
             UserName                      = $SPSuperReaderCreds.UserName
+            UserPrincipalName             = "$($SPSuperReaderCreds.UserName)@$DomainFQDN"
             Password                      = $SPSuperReaderCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
@@ -841,7 +848,7 @@ configuration ConfigureSPVM
         {
             Url                  = "http://$SPTrustedSitesName/"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
             Template             = "STS#0"
             CreateDefaultGroups  = $true
@@ -854,7 +861,7 @@ configuration ConfigureSPVM
         {
             Url                  = "http://$SPTrustedSitesName/sites/AppCatalog"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "AppCatalog"
             Template             = "APPCATALOG#0"
             PsDscRunAsCredential = $SPSetupCredsQualified
@@ -869,7 +876,7 @@ configuration ConfigureSPVM
             Url                      = "http://$MySiteHostAlias/"
             HostHeaderWebApplication = "http://$SPTrustedSitesName/"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
             Template                 = "SPSMSITEHOST#0"
             PsDscRunAsCredential     = $SPSetupCredsQualified
@@ -911,7 +918,7 @@ configuration ConfigureSPVM
         {
             Url                  = "http://$SPTrustedSitesName/sites/dev"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Developer site"
             Template             = "DEV#0"
             PsDscRunAsCredential = $SPSetupCredsQualified
@@ -923,7 +930,7 @@ configuration ConfigureSPVM
             Url                      = "http://$HNSC1Alias/"
             HostHeaderWebApplication = "http://$SPTrustedSitesName/"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias      = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "$HNSC1Alias site"
             Template                 = "STS#0"
             CreateDefaultGroups      = $true
@@ -1052,7 +1059,7 @@ configuration ConfigureSPVM
         {
             Url                  = "http://$SPTrustedSitesName/sites/team"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:05.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+            SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
             Template             = "STS#0"
             CreateDefaultGroups  = $true
