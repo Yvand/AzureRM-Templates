@@ -8,7 +8,7 @@
         [Parameter(Mandatory)] [String]$PrivateIP
     )
 
-    Import-DscResource -ModuleName ActiveDirectoryDsc, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, cADFS, xDnsServer, ComputerManagementDsc, AdfsDsc
+    Import-DscResource -ModuleName ActiveDirectoryDsc, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, xDnsServer, ComputerManagementDsc, AdfsDsc
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
@@ -236,32 +236,45 @@
         # VERBOSE: [2019-10-04 11:14:42Z] [VERBOSE] [DC]: [[cADFSFarm]CreateADFSFarm] Entering function InstallADFSFarm
         # VERBOSE: [2019-10-04 11:14:42Z] [WARNING] [DC]: [[cADFSFarm]CreateADFSFarm] A machine restart is required to complete ADFS service configuration. For more information, see: http://go.microsoft.com/fwlink/?LinkId=798725
         # VERBOSE: [2019-10-04 11:19:14Z] [ERROR] ADMIN0121: An attempt to update service settings failed because the data set that was used for updating was stale. Refresh the data in your session or console view, and then try the update again.
-        cADFSFarm CreateADFSFarm
+        # cADFSFarm CreateADFSFarm
+        # {
+        #     ServiceCredential = $AdfsSvcCredsQualified
+        #     InstallCredential = $DomainCredsNetbios
+        #     #CertificateThumbprint = $siteCert
+        #     DisplayName = "$ADFSSiteName.$DomainFQDN"
+        #     ServiceName = "$ADFSSiteName.$DomainFQDN"
+        #     #SigningCertificateThumbprint = $signingCert
+        #     #DecryptionCertificateThumbprint = $decryptionCert
+        #     CertificateName = "$ADFSSiteName.$DomainFQDN"
+        #     SigningCertificateName = "$ADFSSiteName.Signing"
+        #     DecryptionCertificateName = "$ADFSSiteName.Decryption"
+        #     Ensure= 'Present'
+        #     PsDscRunAsCredential = $DomainCredsNetbios
+        #     DependsOn = "[WindowsFeature]AddADFS"
+        # }
+
+        AdfsFarm CreateADFSFarm
         {
-            ServiceCredential = $AdfsSvcCredsQualified
-            InstallCredential = $DomainCredsNetbios
-            #CertificateThumbprint = $siteCert
-            DisplayName = "$ADFSSiteName.$DomainFQDN"
-            ServiceName = "$ADFSSiteName.$DomainFQDN"
-            #SigningCertificateThumbprint = $signingCert
-            #DecryptionCertificateThumbprint = $decryptionCert
-            CertificateName = "$ADFSSiteName.$DomainFQDN"
-            SigningCertificateName = "$ADFSSiteName.Signing"
-            DecryptionCertificateName = "$ADFSSiteName.Decryption"
-            Ensure= 'Present'
-            PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[WindowsFeature]AddADFS"
+            FederationServiceName        = "$ADFSSiteName.$DomainFQDN"
+            FederationServiceDisplayName = "$ADFSSiteName.$DomainFQDN"
+            #CertificateThumbprint       = '8169c52b4ec6e77eb2ae17f028fe5da4e35c0bed'
+            CertificateName              = "$ADFSSiteName.$DomainFQDN"
+            SigningCertificateName       = "$ADFSSiteName.Signing"
+            DecryptionCertificateName    = "$ADFSSiteName.Decryption"
+            ServiceAccountCredential     = $AdfsSvcCredsQualified
+            Credential                   = $DomainCredsNetbios
         }
 
         ADFSRelyingPartyTrust CreateADFSRelyingParty
         {
-            Name = $SPTrustedSitesName
-            Identifier = "https://$SPTrustedSitesName.$DomainFQDN"
-            ClaimsProviderName = @("Active Directory")
-            WSFedEndpoint            = "https://$SPTrustedSitesName.$DomainFQDN/_trust/"
-            AdditionalWSFedEndpoint = @("https://*.$DomainFQDN/")
+            Name                       = $SPTrustedSitesName
+            Identifier                 = "urn:sharepoint:$($SPTrustedSitesName)"
+            ClaimsProviderName         = @("Active Directory")
+            WSFedEndpoint              = "https://$SPTrustedSitesName.$DomainFQDN/_trust/"
+            ProtocolProfile            = "WsFed-SAML"
+            AdditionalWSFedEndpoint    = @("https://*.$DomainFQDN/")
             IssuanceAuthorizationRules = '=> issue(Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
-            IssuanceTransformRules        = @(
+            IssuanceTransformRules     = @(
                 MSFT_AdfsIssuanceTransformRule
                 {
                     TemplateName   = 'LdapClaims'
@@ -286,10 +299,9 @@
                     )
                 }
             )
-            ProtocolProfile = "WsFed-SAML"
-            Ensure= 'Present'
+            Ensure               = 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn = "[cADFSFarm]CreateADFSFarm"
+            DependsOn            = "[AdfsFarm]CreateADFSFarm"
         }
 
         AdfsApplicationGroup OidcGroup
@@ -297,38 +309,8 @@
             Name        = $AdfsOidcAGName
             Description = "OIDC setup for SharePoint"
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn   = "[cADFSFarm]CreateADFSFarm"
+            DependsOn   = "[AdfsFarm]CreateADFSFarm"
         }
-
-        # xScript OidcGroup
-        # {
-        #     SetScript = 
-        #     {
-        #         $agName = $using:AdfsOidcAGName
-        #         # Add-Type -AssemblyName "ldapcp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
-        #         New-AdfsApplicationGroup -Name $agName
-				
-        #     }
-        #     GetScript =  
-        #     {
-        #         # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-        #         return @{ "Result" = "false" }
-        #     }
-        #     TestScript = 
-        #     {
-        #         # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-        #         $agName = $using:AdfsOidcAGName
-        #         $ag = Get-AdfsApplicationGroup -Name $agName
-		# 		if ($ag -eq $null) {
-		# 			return $false
-		# 		}
-		# 		else {
-		# 			return $true
-		# 		}
-        #     }
-        #     DependsOn   = "[cADFSFarm]CreateADFSFarm"
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        # }
 
         AdfsNativeClientApplication OidcNativeApp
         {
