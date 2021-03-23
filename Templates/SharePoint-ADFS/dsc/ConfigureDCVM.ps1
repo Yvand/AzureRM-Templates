@@ -15,8 +15,8 @@
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     $ComputerName = Get-Content env:computername
-    [String] $SPTrustedSitesName = "SPSites"
-    [String] $ADFSSiteName = "ADFS"
+    [String] $SPTrustedSitesName = "spsites"
+    [String] $ADFSSiteName = "adfs"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
     [String] $AdfsOidcAGName = "SPS-OIDC"
@@ -328,7 +328,7 @@
             AllowedClientTypes            = "Public", "Confidential"
             IssueOAuthRefreshTokensTo     = "AllDevices"
             NotBeforeSkew                 = 0
-            RefreshTokenProtectionEnabled = $false
+            RefreshTokenProtectionEnabled = $true
             RequestMFAFromClaimsProviders = $false
             TokenLifetime                 = 0
             IssuanceTransformRules        = @(
