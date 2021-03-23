@@ -23,7 +23,7 @@ configuration ConfigureFEVM
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
-    [String] $SPTrustedSitesName = "SPSites"
+    [String] $SPTrustedSitesName = "spsites"
     [String] $ComputerName = Get-Content env:computername
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
     [String] $MySiteHostAlias = "OhMy"
@@ -306,14 +306,14 @@ configuration ConfigureFEVM
             Name                 = "ulsviewer"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[cChocoInstaller]InstallChoco"
+            DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         #********************************************************************
         # Wait for SharePoint app server to be ready
         #********************************************************************
         # The best test is to check the latest HTTP team site to be created, after all SharePoint services are provisioned.
-        # If this server joins the farm while a SharePoint service is creating, it may block its creation forever.
+        # If this server joins the farm while a SharePoint service is being created on the 1st server, it may block its creation forever.
         # Not testing HTTPS avoid potential issues with the root CA cert maybe not present in the machine store yet
         xScript WaitForSPFarmReadyToJoin
         {
@@ -368,6 +368,20 @@ configuration ConfigureFEVM
             Ensure               = "Present"
             MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
             Credential           = $DomainAdminCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
+        }
+
+        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", to prevent error when issuing a certificate request
+        # At this point it is safe to assume that the DC finished provisioning AD CS
+        xScript UpdateGPOToTrustRootCACert
+        {
+            SetScript =
+            {
+                gpupdate.exe /force
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false }
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
         }
@@ -476,19 +490,6 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
-        xScript UpdateGPOToTrustRootCACert
-        {
-            SetScript =
-            {
-                gpupdate.exe /force
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false }
-            DependsOn            = "[SPFarm]JoinSPFarm"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-        }
-
         CertReq SPSSiteCert
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
@@ -518,7 +519,7 @@ configuration ConfigureFEVM
             }
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[CertReq]SPSSiteCert"
+            DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
         }
     }
 }
