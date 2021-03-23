@@ -370,7 +370,8 @@
       "spSvcPassword": "[parameters('serviceAccountsPassword')]",
       "spAppPoolUserName": "spapppool",
       "spAppPoolPassword": "[parameters('serviceAccountsPassword')]",
-      "spPassphrase": "[parameters('serviceAccountsPassword')]"
+      "spPassphrase": "[parameters('serviceAccountsPassword')]",
+      "localAdminUserName": "[concat('local-', parameters('adminUserName'))]"
     },
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
@@ -794,7 +795,7 @@
         },
         "osProfile": {
           "computerName": "[variables('generalSettings').vmSQLName]",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[variables('generalSettings').localAdminUserName]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
@@ -895,7 +896,7 @@
         },
         "osProfile": {
           "computerName": "[variables('generalSettings').vmSPName]",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[variables('generalSettings').localAdminUserName]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
@@ -1137,7 +1138,7 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('generalSettings').vmFEName, '-', copyIndex())]",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[variables('generalSettings').localAdminUserName]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
