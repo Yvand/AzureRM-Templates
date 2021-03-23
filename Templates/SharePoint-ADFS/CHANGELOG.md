@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-* Setup an OIDC application in ADFS
 * Rename local admin on VM SQL/SP/FE to local-<adminUserName>, to avoid using the local admin instead of the domain admin
+* Change the identity claim type to use the UPN in federated authentication
+* Setup an OIDC application in ADFS
 * Add new SQL permissions to spsetup account to work with updated SPFarm resource
 * Set dependency of xScript UpdateGPOToTrustRootCACert to RestartSPTimerAfterCreateSPFarm
 * Replaced outdated DSC module cADFS with AdfsDsc 1.1
