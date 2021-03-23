@@ -236,35 +236,33 @@
         # VERBOSE: [2019-10-04 11:14:42Z] [VERBOSE] [DC]: [[cADFSFarm]CreateADFSFarm] Entering function InstallADFSFarm
         # VERBOSE: [2019-10-04 11:14:42Z] [WARNING] [DC]: [[cADFSFarm]CreateADFSFarm] A machine restart is required to complete ADFS service configuration. For more information, see: http://go.microsoft.com/fwlink/?LinkId=798725
         # VERBOSE: [2019-10-04 11:19:14Z] [ERROR] ADMIN0121: An attempt to update service settings failed because the data set that was used for updating was stale. Refresh the data in your session or console view, and then try the update again.
-        # cADFSFarm CreateADFSFarm
-        # {
-        #     ServiceCredential = $AdfsSvcCredsQualified
-        #     InstallCredential = $DomainCredsNetbios
-        #     #CertificateThumbprint = $siteCert
-        #     DisplayName = "$ADFSSiteName.$DomainFQDN"
-        #     ServiceName = "$ADFSSiteName.$DomainFQDN"
-        #     #SigningCertificateThumbprint = $signingCert
-        #     #DecryptionCertificateThumbprint = $decryptionCert
-        #     CertificateName = "$ADFSSiteName.$DomainFQDN"
-        #     SigningCertificateName = "$ADFSSiteName.Signing"
-        #     DecryptionCertificateName = "$ADFSSiteName.Decryption"
-        #     Ensure= 'Present'
-        #     PsDscRunAsCredential = $DomainCredsNetbios
-        #     DependsOn = "[WindowsFeature]AddADFS"
-        # }
-
-        AdfsFarm CreateADFSFarm
+        cADFSFarm CreateADFSFarm
         {
-            FederationServiceName        = "$ADFSSiteName.$DomainFQDN"
-            FederationServiceDisplayName = "$ADFSSiteName.$DomainFQDN"
-            CertificateName              = "$ADFSSiteName.$DomainFQDN"
-            SigningCertificateName       = "$ADFSSiteName.Signing"
-            DecryptionCertificateName    = "$ADFSSiteName.Decryption"
-            ServiceAccountCredential     = $AdfsSvcCredsQualified
-            Credential                   = $DomainCredsNetbios
-            PsDscRunAsCredential         = $DomainCredsNetbios
-            DependsOn                    = "[WindowsFeature]AddADFS"
+            ServiceCredential         = $AdfsSvcCredsQualified
+            InstallCredential         = $DomainCredsNetbios
+            DisplayName               = "$ADFSSiteName.$DomainFQDN"
+            ServiceName               = "$ADFSSiteName.$DomainFQDN"
+            CertificateName           = "$ADFSSiteName.$DomainFQDN"
+            SigningCertificateName    = "$ADFSSiteName.Signing"
+            DecryptionCertificateName = "$ADFSSiteName.Decryption"
+            Ensure                    = 'Present'
+            PsDscRunAsCredential      = $DomainCredsNetbios
+            DependsOn                 = "[WindowsFeature]AddADFS"
         }
+
+        # This triggers a reboot of the VM, which ruins the deployment of other VMs
+        # AdfsFarm CreateADFSFarm
+        # {
+        #     FederationServiceName        = "$ADFSSiteName.$DomainFQDN"
+        #     FederationServiceDisplayName = "$ADFSSiteName.$DomainFQDN"
+        #     CertificateName              = "$ADFSSiteName.$DomainFQDN"
+        #     SigningCertificateName       = "$ADFSSiteName.Signing"
+        #     DecryptionCertificateName    = "$ADFSSiteName.Decryption"
+        #     ServiceAccountCredential     = $AdfsSvcCredsQualified
+        #     Credential                   = $DomainCredsNetbios
+        #     PsDscRunAsCredential         = $DomainCredsNetbios
+        #     DependsOn                    = "[WindowsFeature]AddADFS"
+        # }
 
         ADFSRelyingPartyTrust CreateADFSRelyingParty
         {
@@ -302,7 +300,7 @@
             )
             Ensure               = 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn            = "[AdfsFarm]CreateADFSFarm"
+            DependsOn            = "[cADFSFarm]CreateADFSFarm"
         }
 
         AdfsApplicationGroup OidcGroup
@@ -310,7 +308,7 @@
             Name        = $AdfsOidcAGName
             Description = "OIDC setup for SharePoint"
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn   = "[AdfsFarm]CreateADFSFarm"
+            DependsOn   = "[cADFSFarm]CreateADFSFarm"
         }
 
         AdfsNativeClientApplication OidcNativeApp
