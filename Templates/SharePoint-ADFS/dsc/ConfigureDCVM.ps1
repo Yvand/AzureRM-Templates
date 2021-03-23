@@ -298,7 +298,7 @@
             )
             Ensure               = 'Present'
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn            = "[cADFSFarm]CreateADFSFarm"
+            DependsOn            = "[AdfsFarm]CreateADFSFarm"
         }
 
         AdfsApplicationGroup OidcGroup
@@ -306,7 +306,7 @@
             Name        = $AdfsOidcAGName
             Description = "OIDC setup for SharePoint"
             PsDscRunAsCredential = $DomainCredsNetbios
-            DependsOn   = "[cADFSFarm]CreateADFSFarm"
+            DependsOn   = "[AdfsFarm]CreateADFSFarm"
         }
 
         AdfsNativeClientApplication OidcNativeApp
