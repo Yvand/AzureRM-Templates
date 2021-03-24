@@ -339,6 +339,13 @@
                     CustomRule   = 'c:[Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]
 => issue(claim = c);'
                 }
+                MSFT_AdfsIssuanceTransformRule
+                {
+                    TemplateName = "CustomClaims"
+                    Name         = "nbf"
+                    CustomRule   = 'c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname"] 
+=> issue(Type = "nbf", Value = "0");'
+                }
             )
             DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
         }
