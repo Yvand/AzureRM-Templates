@@ -4,10 +4,12 @@
 
 * Rename local admin on VM SQL/SP/FE to local-<adminUserName>, to avoid using the local admin instead of the domain admin
 * Change the identity claim type to use the UPN in federated authentication
+* Fix the reboot issue on SP and FE VMs when they join the AD domain
 * Setup an OIDC application in ADFS
 * Add new SQL permissions to spsetup account to work with updated SPFarm resource
 * Update dependencies of DSC resources in SP and FE configs
-* Replaced outdated DSC module cADFS with AdfsDsc 1.1
+* Add AD CS and AD LDS RSAT to SP and FE configs
+* Replace outdated DSC module cADFS with AdfsDsc 1.1
 * Update DSC module SharePointDSC from 4.3 to 4.5.1
 * Update DSC module SqlServerDsc from 15.0 to 15.1.1
 * Update DSC module NetworkingDsc from 8.1 to 8.2
