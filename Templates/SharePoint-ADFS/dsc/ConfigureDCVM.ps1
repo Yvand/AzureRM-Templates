@@ -231,25 +231,6 @@
             DependsOn = "[WaitForADDomain]WaitForDCReady"
         }
 
-        # # Since 2019-10, DSC regularly fails at cADFSFarm CreateADFSFarm with error below, but I don't know why or how to fix it.
-        # # Machine restart message is present even when there is no error and PendingReboot before cADFSFarm detects no pending reboot
-        # # VERBOSE: [2019-10-04 11:14:42Z] [VERBOSE] [DC]: [[cADFSFarm]CreateADFSFarm] Entering function InstallADFSFarm
-        # # VERBOSE: [2019-10-04 11:14:42Z] [WARNING] [DC]: [[cADFSFarm]CreateADFSFarm] A machine restart is required to complete ADFS service configuration. For more information, see: http://go.microsoft.com/fwlink/?LinkId=798725
-        # # VERBOSE: [2019-10-04 11:19:14Z] [ERROR] ADMIN0121: An attempt to update service settings failed because the data set that was used for updating was stale. Refresh the data in your session or console view, and then try the update again.
-        # cADFSFarm CreateADFSFarm
-        # {
-        #     ServiceCredential         = $AdfsSvcCredsQualified
-        #     InstallCredential         = $DomainCredsNetbios
-        #     DisplayName               = "$ADFSSiteName.$DomainFQDN"
-        #     ServiceName               = "$ADFSSiteName.$DomainFQDN"
-        #     CertificateName           = "$ADFSSiteName.$DomainFQDN"
-        #     SigningCertificateName    = "$ADFSSiteName.Signing"
-        #     DecryptionCertificateName = "$ADFSSiteName.Decryption"
-        #     Ensure                    = 'Present'
-        #     PsDscRunAsCredential      = $DomainCredsNetbios
-        #     DependsOn                 = "[WindowsFeature]AddADFS"
-        # }
-
         AdfsFarm CreateADFSFarm
         {
             FederationServiceName        = "$ADFSSiteName.$DomainFQDN"
@@ -438,26 +419,4 @@ https://github.com/PowerShell/xActiveDirectory/issues/27
 Uninstall-WindowsFeature "ADFS-Federation"
 https://msdn.microsoft.com/library/mt238290.aspx
 \\.\pipe\MSSQL$MICROSOFT##SSEE\sql\query
-
-
-
-#$identifier = [Guid]::NewGuid()
-$identifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
-$redirectUri = "https://spvnextsites2102.conto2016.local/"
-$agName = "OIDCShell"
-
-$issuanceTransformRules = @"
-@RuleTemplate = "PassThroughClaims"
-@RuleName = "Email"
-c:[Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]
-=> issue(claim = c);
-"@
-
-# Get-AdfsApplicationGroup
-New-AdfsApplicationGroup -Name "$agName"
-$ag = Get-AdfsApplicationGroup -Name "$agName"
-
-Add-AdfsNativeClientApplication -ApplicationGroup $ag -Name "$agName - Native application" -Identifier $identifier -RedirectUri $redirectUri
-Add-AdfsWebApiApplication -ApplicationGroup $ag -Name "$agName - Web application" -Identifier $identifier -IssuanceTransformRules $issuanceTransformRules -AccessControlPolicyName "Permit everyone"
-Grant-AdfsApplicationPermission -ServerRoleIdentifier $identifier -ScopeNames "openid" -ClientRoleIdentifier $identifier
 #>
