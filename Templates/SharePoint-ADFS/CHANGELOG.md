@@ -10,6 +10,7 @@
 * Add a retry download logic to DSC resource cChocoInstaller to improve reliability
 * Update dependencies of DSC resources in SP and FE configs
 * Add AD CS and AD LDS RSAT to SP and FE configs
+* Update schema of ARM resources
 * Replace outdated DSC module cADFS with AdfsDsc 1.1
 * Update DSC module SharePointDSC from 4.3 to 4.5.1
 * Update DSC module SqlServerDsc from 15.0 to 15.1.1
