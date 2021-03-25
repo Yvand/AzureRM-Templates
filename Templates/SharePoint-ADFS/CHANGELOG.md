@@ -7,6 +7,7 @@
 * Fix the reboot issue on SP and FE VMs when they join the AD domain
 * Setup an OIDC application in ADFS
 * Add new SQL permissions to spsetup account to work with updated SPFarm resource
+* Add a retry download logic to DSC resource cChocoInstaller to improve reliability
 * Update dependencies of DSC resources in SP and FE configs
 * Add AD CS and AD LDS RSAT to SP and FE configs
 * Replace outdated DSC module cADFS with AdfsDsc 1.1
