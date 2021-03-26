@@ -378,6 +378,7 @@
       "vNetPrivatePrefix": "10.0.0.0/16",
       "subnetDCName": "Subnet-DC",
       "subnetDCPrefix": "10.0.1.0/24",
+      "dcPrivateIPAddress": "10.0.1.4",
       "subnetSQLName": "Subnet-SQL",
       "subnetSQLPrefix": "10.0.2.0/24",
       "subnetSPName": "Subnet-SP",
@@ -421,7 +422,6 @@
       "vmOSDiskName": "Disk-DC-OS",
       "vmVmSize": "[parameters('vmDCSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmDCName, '-0')]",
-      "nicPrivateIPAddress": "10.0.1.4",
       "vmPublicIPName": "[concat('PublicIP-', variables('generalSettings').vmDCName)]",
       "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmDCName), '_', '-'))]",
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmDCName)]"
@@ -620,7 +620,7 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables('vmDC').nicPrivateIPAddress]",
+              "privateIPAddress": "[variables('networkSettings').dcPrivateIPAddress]",
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetDCName)]"
               },
@@ -709,7 +709,7 @@
               },
               "configurationArguments": {
                 "domainFQDN": "[parameters('domainFQDN')]",
-                "PrivateIP": "[variables('vmDC').nicPrivateIPAddress]"
+                "PrivateIP": "[variables('networkSettings').dcPrivateIPAddress]"
               },
               "privacy": {
                 "dataCollection": "enable"
@@ -959,7 +959,7 @@
             "function": "[variables('dscConfigureSQLVM').function]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
+            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]"
           },
           "privacy": {
@@ -1009,7 +1009,7 @@
             "function": "[variables('dscConfigureSPVM').function]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
+            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
@@ -1205,7 +1205,7 @@
             "function": "[variables('dscConfigureFEVM').function]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
+            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",

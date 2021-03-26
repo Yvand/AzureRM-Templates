@@ -334,7 +334,7 @@ $SPSetupCreds = Get-Credential -Credential "spsetup"
 $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.0.0\DSCWork\ConfigureSQLVM.0"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureSQLVM.0"
 ConfigureSQLVM -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 

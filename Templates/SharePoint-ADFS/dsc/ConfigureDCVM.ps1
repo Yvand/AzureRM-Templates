@@ -410,7 +410,7 @@ $AdfsSvcCreds = Get-Credential -Credential "adfssvc"
 $DomainFQDN = "contoso.local"
 $PrivateIP = "10.0.1.4"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.0.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
 ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
