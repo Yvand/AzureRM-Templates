@@ -189,6 +189,23 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
+        xScript EnableFileSharing
+        {
+            TestScript = {
+                # Test if firewall rules for file sharing already exist
+                $rulesSet = Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}
+                if ($null -eq $rulesSet) {
+                    return $false   # Run SetScript
+                } else {
+                    return $true    # Rules already set
+                }
+            }
+            SetScript = {
+                Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false
+            }
+            GetScript = { }
+        }
+
         #**********************************************************
         # Install applications using Chocolatey
         #**********************************************************

@@ -7,6 +7,7 @@
 * Change the identity claim type to use the UPN in federated authentication
 * Change the format of the realm / identifier in federated authentication
 * Fix the reboot issue on SP and FE VMs when they join the AD domain
+* Enable file sharing (on Domain network profile) on SP and FE VMs
 * Setup an OIDC application in ADFS
 * Add new SQL permissions to spsetup account to work with updated SPFarm resource
 * Add a retry download logic to DSC resource cChocoInstaller to improve reliability
