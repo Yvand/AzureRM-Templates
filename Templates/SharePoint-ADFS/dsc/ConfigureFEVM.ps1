@@ -168,6 +168,17 @@ configuration ConfigureFEVM
             GetScript = { }
         }
 
+        xScript EnableFileSharing
+        {
+            TestScript = {
+                return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            }
+            SetScript = {
+                Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false
+            }
+            GetScript = { }
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
