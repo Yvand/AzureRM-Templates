@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Rename local admin on VM SQL/SP/FE to local-<adminUserName>, to avoid using the local admin instead of the domain admin
+* Set UserPrincipalName of all AD accounts
 * Change the identity claim type to use the UPN in federated authentication
 * Fix the reboot issue on SP and FE VMs when they join the AD domain
 * Setup an OIDC application in ADFS
