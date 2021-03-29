@@ -708,7 +708,7 @@
               },
               "configurationArguments": {
                 "domainFQDN": "[parameters('domainFQDN')]",
-                "PrivateIP": "[variables('vmDC').nicPrivateIPAddress]",
+                "PrivateIP": "[variables('networkSettings').dcPrivateIPAddress]",
                 "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]"
               },
               "privacy": {
@@ -857,7 +857,7 @@
             "function": "[variables('dscConfigureSQLVM').function]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
+            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]"
           },
           "privacy": {
@@ -1011,7 +1011,7 @@
             "function": "[variables('dscConfigureSPVM').function]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
+            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
@@ -1178,7 +1178,7 @@
             "function": "[variables('dscConfigureSPVM').function]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
+            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
@@ -1345,7 +1345,7 @@
             "function": "[variables('dscConfigureSPVM').function]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('vmDC').nicPrivateIPAddress]",
+            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
