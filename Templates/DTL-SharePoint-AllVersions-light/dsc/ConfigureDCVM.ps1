@@ -201,8 +201,6 @@
                 DependsOn              = "[CertReq]GenerateADFSSiteCertificate", "[CertReq]GenerateADFSSigningCertificate", "[CertReq]GenerateADFSDecryptionCertificate"
             }
 
-            WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[ADUser]CreateAdfsSvcAccount" }
-
             xDnsRecord AddADFSHostDNS
             {
                 Name = $ADFSSiteName
