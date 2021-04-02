@@ -1,5 +1,9 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+* Return useful information as output of the template deployment
+
 ## Enhancements & bug-fixes - Published in March 29, 2021
 
 * Set local admin name on VM SQL/SP/FE with a unique string, to avoid using the local admin instead of the domain admin

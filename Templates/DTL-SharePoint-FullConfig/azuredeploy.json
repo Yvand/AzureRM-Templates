@@ -349,7 +349,7 @@
       "spAppPoolUserName": "spapppool",
       "spAppPoolPassword": "[parameters('serviceAccountsPassword')]",
       "spPassphrase": "[parameters('serviceAccountsPassword')]",
-      "localAdminUserName": "[concat('local-', parameters('adminUserName'))]"
+      "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]"
     },
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
@@ -1365,5 +1365,29 @@
       }
     }
   ],
-  "outputs": {}
+  "outputs": {
+    "domainAdminAccount": {
+      "type": "string",
+      "value": "[concat(substring(parameters('domainFQDN'), 0, indexOf(parameters('domainFQDN'), '.')), '\\', parameters('adminUserName'))]"
+    },
+    "localAdminAccount": {
+      "type": "string",
+      "value": "[variables('generalSettings').localAdminUserName]"
+    },
+    "publicIPAddressSP": {
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)).dnsSettings.fqdn]"
+    },
+    "publicIPAddressSQL": {
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)).dnsSettings.fqdn]"
+    },
+    "publicIPAddressDC": {
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)).dnsSettings.fqdn]"
+    }
+  }
 }

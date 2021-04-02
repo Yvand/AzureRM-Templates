@@ -1492,10 +1492,20 @@
       "type": "string",
       "value": "[variables('generalSettings').localAdminUserName]"
     },
-    "publicIPAddressSharePointVM": {
+    "publicIPAddressSP": {
       "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)).dnsSettings.fqdn]"
+    },
+    "publicIPAddressSQL": {
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)).dnsSettings.fqdn]"
+    },
+    "publicIPAddressDC": {
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)).dnsSettings.fqdn]"
     }
   }
 }

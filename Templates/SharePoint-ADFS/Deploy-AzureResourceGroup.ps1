@@ -80,10 +80,10 @@ if ($checkTemplate.Count -eq 0) {
 
         $outputs = (Get-AzResourceGroupDeployment `
             -ResourceGroupName $resourceGroupName `
-            -Name $resourceDeploymentName).Outputs #.domainAdminAccount.value
+            -Name $resourceDeploymentName).Outputs
         
         $outputMessage = "Use the account ""$($outputs.domainAdminAccount.value)"" to sign-in"
-        $outputMessage += $outputs.ContainsKey("publicIPAddressSharePointVM") ? " using DNS name ""$($outputs.publicIPAddressSharePointVM.value)""" : "."
+        $outputMessage += $outputs.ContainsKey("publicIPAddressSP") ? " using DNS name ""$($outputs.publicIPAddressSP.value)""" : "."
         Write-Host $outputMessage -ForegroundColor Green
     }
     else {
