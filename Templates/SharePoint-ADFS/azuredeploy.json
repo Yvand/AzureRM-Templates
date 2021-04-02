@@ -1506,6 +1506,14 @@
       "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)).dnsSettings.fqdn]"
+    },
+    "publicIPAddressFEs": {
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
+      "type": "array",
+      "copy": {
+        "count": "[parameters('numberOfAdditionalFrontEnd')]",
+        "input": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmFE').vmPublicIPName, '-', copyIndex()))).dnsSettings.fqdn]"
+      }
     }
   }
 }
