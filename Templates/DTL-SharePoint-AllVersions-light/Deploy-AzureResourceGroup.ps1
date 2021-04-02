@@ -78,6 +78,14 @@ if ($checkTemplate.Count -eq 0) {
     $result
     if ($result.ProvisioningState -eq "Succeeded") {
         Write-Host "Deployment completed successfully in $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Green
+
+        $outputs = (Get-AzResourceGroupDeployment `
+            -ResourceGroupName $resourceGroupName `
+            -Name $resourceDeploymentName).Outputs
+        
+        $outputMessage = "Use the account ""$($outputs.domainAdminAccount.value)"" to sign-in"
+        $outputMessage += $outputs.ContainsKey("publicIPAddressSP2019") ? " using DNS name ""$($outputs.publicIPAddressSP2019.value)""" : "."
+        Write-Host $outputMessage -ForegroundColor Green
     }
     else {
         Write-Host "Deployment failed after $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Red

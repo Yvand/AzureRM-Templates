@@ -1,8 +1,13 @@
 # Change log for Azure DevTest Labs template SharePoint-AllVersions
 
+## Unreleased
+
+* Set local admin name on VM SQL/SP/FE with a unique string, to avoid using the local admin instead of the domain admin
+* Return useful information as output of the template deployment
+
 ## Enhancements & bug-fixes - Published in March 29, 2021
 
-* Rename local admin on VM SQL/SP/FE to local-<adminUserName>, to avoid using the local admin instead of the domain admin
+* Rename local admin on VM SQL/SP/FE to local-'adminUserName', to avoid using the local admin instead of the domain admin
 * Set UserPrincipalName of all AD accounts
 * Change the identity claim type to use the UPN in federated authentication
 * Change the format of the realm / identifier in federated authentication
