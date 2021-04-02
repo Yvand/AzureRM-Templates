@@ -1484,9 +1484,18 @@
     }
   ],
   "outputs": {
-    "localAdminUserName": {
+    "domainAdminAccount": {
+      "type": "string",
+      "value": "[concat(substring(parameters('domainFQDN'), 0, indexOf(parameters('domainFQDN'), '.')), '\\', parameters('adminUserName'))]"
+    },
+    "localAdminAccount": {
       "type": "string",
       "value": "[variables('generalSettings').localAdminUserName]"
+    },
+    "publicIPAddressSharePointVM": {
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)).dnsSettings.fqdn]"
     }
   }
 }
