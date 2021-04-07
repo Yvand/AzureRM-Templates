@@ -235,6 +235,13 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
+        cChocoPackageInstaller InstallVscode
+        {
+            Name                 = "vscode.portable"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************

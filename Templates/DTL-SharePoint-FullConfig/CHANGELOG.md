@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Install Visual Studio Code in SP and FE VMs
 * Set local admin name on VM SQL/SP/FE with a unique string, to avoid using the local admin instead of the domain admin
 * Return useful information as output of the template deployment
 

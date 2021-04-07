@@ -309,6 +309,13 @@ configuration ConfigureFEVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
+        cChocoPackageInstaller InstallVscode
+        {
+            Name                 = "vscode.portable"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
         # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
         cChocoPackageInstaller InstallFiddler
         {
