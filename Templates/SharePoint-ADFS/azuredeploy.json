@@ -1484,18 +1484,18 @@
     }
   ],
   "outputs": {
-    "domainAdminAccount": {
-      "type": "string",
-      "value": "[concat(substring(parameters('domainFQDN'), 0, indexOf(parameters('domainFQDN'), '.')), '\\', parameters('adminUserName'))]"
-    },
-    "localAdminAccount": {
-      "type": "string",
-      "value": "[variables('generalSettings').localAdminUserName]"
-    },
-    "publicIPAddressSP": {
+     "publicIPAddressSP": {
       "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)).dnsSettings.fqdn]"
+    },
+    "publicIPAddressFEs": {
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
+      "type": "array",
+      "copy": {
+        "count": "[parameters('numberOfAdditionalFrontEnd')]",
+        "input": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmFE').vmPublicIPName, '-', copyIndex()))).dnsSettings.fqdn]"
+      }
     },
     "publicIPAddressSQL": {
       "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
@@ -1507,13 +1507,13 @@
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)).dnsSettings.fqdn]"
     },
-    "publicIPAddressFEs": {
-      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
-      "type": "array",
-      "copy": {
-        "count": "[parameters('numberOfAdditionalFrontEnd')]",
-        "input": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmFE').vmPublicIPName, '-', copyIndex()))).dnsSettings.fqdn]"
-      }
-    }
+    "domainAdminAccount": {
+      "type": "string",
+      "value": "[concat(substring(parameters('domainFQDN'), 0, indexOf(parameters('domainFQDN'), '.')), '\\', parameters('adminUserName'))]"
+    },
+    "localAdminAccount": {
+      "type": "string",
+      "value": "[variables('generalSettings').localAdminUserName]"
+    }   
   }
 }
