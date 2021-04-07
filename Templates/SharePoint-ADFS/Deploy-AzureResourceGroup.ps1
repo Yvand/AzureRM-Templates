@@ -82,7 +82,7 @@ if ($checkTemplate.Count -eq 0) {
             -ResourceGroupName $resourceGroupName `
             -Name $resourceDeploymentName).Outputs
         
-        $outputMessage = "Use the account ""$($outputs.domainAdminAccount.value)"" to sign in"
+        $outputMessage = "Use the account ""$($outputs.domainAdminAccount.value)"" (""$($outputs.domainAdminAccountFormatForBastion.value)"") to sign in"
         $outputMessage += $outputs.ContainsKey("publicIPAddressSP") ? " to ""$($outputs.publicIPAddressSP.value)""" : "."
         Write-Host $outputMessage -ForegroundColor Green
     }

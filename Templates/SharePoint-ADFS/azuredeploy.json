@@ -1490,7 +1490,7 @@
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)).dnsSettings.fqdn]"
     },
     "publicIPAddressFEs": {
-      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
+      "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), equals(parameters('addPublicIPAddressToEachVM'), 'Yes'))]",
       "type": "array",
       "copy": {
         "count": "[parameters('numberOfAdditionalFrontEnd')]",
@@ -1510,6 +1510,10 @@
     "domainAdminAccount": {
       "type": "string",
       "value": "[concat(substring(parameters('domainFQDN'), 0, indexOf(parameters('domainFQDN'), '.')), '\\', parameters('adminUserName'))]"
+    },
+    "domainAdminAccountFormatForBastion": {
+      "type": "string",
+      "value": "[concat(parameters('adminUserName'), '@', parameters('domainFQDN'))]"
     },
     "localAdminAccount": {
       "type": "string",
