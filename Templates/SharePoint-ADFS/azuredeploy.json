@@ -1484,7 +1484,7 @@
     }
   ],
   "outputs": {
-     "publicIPAddressSP": {
+    "publicIPAddressSP": {
       "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)).dnsSettings.fqdn]"

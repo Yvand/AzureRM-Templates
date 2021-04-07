@@ -70,7 +70,7 @@ if ($checkTemplate.Count -eq 0) {
         -TemplateFile $TemplateFile `
         -Verbose -Force `
         -TemplateParameterFile $templateParametersFile `
-        @passwords `
+        @passwords 
         # -TemplateParameterObject $parameters
 
     $elapsedTime = New-TimeSpan $startTime $(get-date)
@@ -82,8 +82,8 @@ if ($checkTemplate.Count -eq 0) {
             -ResourceGroupName $resourceGroupName `
             -Name $resourceDeploymentName).Outputs
         
-        $outputMessage = "Use the account ""$($outputs.domainAdminAccount.value)"" to sign-in"
-        $outputMessage += $outputs.ContainsKey("publicIPAddressSP") ? " using DNS name ""$($outputs.publicIPAddressSP.value)""" : "."
+        $outputMessage = "Use the account ""$($outputs.domainAdminAccount.value)"" (""$($outputs.domainAdminAccountFormatForBastion.value)"") to sign in"
+        $outputMessage += $outputs.ContainsKey("publicIPAddressSP") ? " to ""$($outputs.publicIPAddressSP.value)""" : "."
         Write-Host $outputMessage -ForegroundColor Green
     }
     else {
