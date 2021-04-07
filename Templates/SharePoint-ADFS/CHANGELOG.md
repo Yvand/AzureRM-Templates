@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Install Visual Studio Code in SP and FE VMs
 * Return useful information as output of the template deployment
 
 ## Enhancements & bug-fixes - Published in March 29, 2021

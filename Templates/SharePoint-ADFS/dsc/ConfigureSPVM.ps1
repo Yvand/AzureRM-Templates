@@ -235,7 +235,7 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller Installvscode
+        cChocoPackageInstaller InstallVscode
         {
             Name                 = "vscode.portable"
             Ensure               = "Present"
