@@ -43,7 +43,10 @@ configuration ConfigureSPVM
     [String] $AddinsSiteDNSAlias = "addins"
     [String] $AddinsSiteName = "Provider-hosted addins"
     [String] $TrustedIdChar = "e"
-    [String] $SPTeamSiteTemplate = ([String]::Equals($SharePointVersion, "2013") -or [String]::Equals($SharePointVersion, "2016")) ? "STS#0" : "STS#3"
+    [String] $SPTeamSiteTemplate = "STS#3"
+    if ([String]::Equals($SharePointVersion, "2013") -or [String]::Equals($SharePointVersion, "2016")) {
+        $SPTeamSiteTemplate = "STS#0"
+    }
 
     Node localhost
     {
