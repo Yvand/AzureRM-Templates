@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Install Visual Studio Code in SP and FE VMs
+* Create modern team sites instead of classic team sites in SharePoint 2019
 * Return useful information as output of the template deployment
 
 ## Enhancements & bug-fixes - Published in March 29, 2021

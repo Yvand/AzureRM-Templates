@@ -43,6 +43,7 @@ configuration ConfigureSPVM
     [String] $AddinsSiteDNSAlias = "addins"
     [String] $AddinsSiteName = "Provider-hosted addins"
     [String] $TrustedIdChar = "e"
+    [String] $SPTeamSiteTemplate = ([String]::Equals($SharePointVersion, "2013") -or [String]::Equals($SharePointVersion, "2016")) ? "STS#0" : "STS#3"
 
     Node localhost
     {
@@ -876,7 +877,7 @@ configuration ConfigureSPVM
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
-            Template             = "STS#0"
+            Template             = $SPTeamSiteTemplate
             CreateDefaultGroups  = $true
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
@@ -958,7 +959,7 @@ configuration ConfigureSPVM
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "$HNSC1Alias site"
-            Template                 = "STS#0"
+            Template                 = $SPTeamSiteTemplate
             CreateDefaultGroups      = $true
             PsDscRunAsCredential     = $SPSetupCredsQualified
             DependsOn                = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
@@ -1062,7 +1063,7 @@ configuration ConfigureSPVM
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
-            Template             = "STS#0"
+            Template             = $SPTeamSiteTemplate
             CreateDefaultGroups  = $true
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication", "[SPWebApplicationAppDomain]ConfigureAppDomainDefaultZone", "[SPWebApplicationAppDomain]ConfigureAppDomainIntranetZone", "[SPAppCatalog]SetAppCatalogUrl"
