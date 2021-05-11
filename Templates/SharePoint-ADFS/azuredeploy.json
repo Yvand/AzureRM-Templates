@@ -732,6 +732,24 @@
       ]
     },
     {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('generalSettings').vmDCName, '/Microsoft.Azure.Geneva.GenevaMonitoring')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Geneva",
+        "type": "GenevaMonitoring",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {},
+        "protectedSettings": {}
+      }
+    },
+    {
       "condition": "[equals(parameters('addPublicIPAddressToEachVM'), 'Yes')]",
       "name": "[variables('vmSQL').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -985,6 +1003,24 @@
       }
     },
     {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('generalSettings').vmSQLName, '/Microsoft.Azure.Geneva.GenevaMonitoring')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Geneva",
+        "type": "GenevaMonitoring",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {},
+        "protectedSettings": {}
+      }
+    },
+    {
       "name": "[concat(variables('generalSettings').vmSPName,'/ConfigureSPVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
@@ -1056,6 +1092,24 @@
             }
           }
         }
+      }
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('generalSettings').vmSPName, '/Microsoft.Azure.Geneva.GenevaMonitoring')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Geneva",
+        "type": "GenevaMonitoring",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {},
+        "protectedSettings": {}
       }
     },
     {
@@ -1187,7 +1241,7 @@
       "tags": {
         "displayName": "[concat(variables('generalSettings').vmFEName, '-', copyIndex(),'/ConfigureFEVM')]"
       },
-       "copy": {
+      "copy": {
           "name": "frontendVirtualMachineExtensions",
           "count": "[parameters('numberOfAdditionalFrontEnd')]"
       },
@@ -1236,6 +1290,29 @@
             }
           }
         }
+      }
+    },
+    {
+      "condition": "[greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1)]",
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('generalSettings').vmFEName, '-', copyIndex(), '/Microsoft.Azure.Geneva.GenevaMonitoring')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "frontendVirtualMachines"
+      ],
+      "copy": {
+          "name": "frontendVirtualMachineExtensions",
+          "count": "[parameters('numberOfAdditionalFrontEnd')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Geneva",
+        "type": "GenevaMonitoring",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {},
+        "protectedSettings": {}
       }
     },
     {
