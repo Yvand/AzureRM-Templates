@@ -185,13 +185,6 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller InstallPython
-        {
-            Name                 = "python"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
         #**********************************************************
         # Join AD forest
         #**********************************************************
@@ -1188,16 +1181,27 @@ configuration ConfigureSPVM
             DependsOn            = "[SPTrustedSecurityTokenIssuer]CreateHighTrustAddinsTrustedIssuer"
         }
 
-        xScript copyScript
+        # BOTH RESOURCES BELOW ARE FOR ANALYSIS ONLY
+        cChocoPackageInstaller InstallPython
+        {
+            Name                 = "python"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        xScript parseDscLogs
         {
             TestScript = { return $false }
             SetScript = {
                 $SetupPath = $using:SetupPath
-                net use z: \\yvandcustshare.file.core.windows.net\public /u:yvandcustshare ghNyfzBeN9r1voS7/50sis06doCWWp5K8aSsjtoOXcNRLAdrLjJ1r4uCkFTo7uRv45rYHJ0d78Ha++Dd9KfxZg==
-                Copy-Item "Z:\parse-dsc-logs.py" -Destination $SetupPath
-                python3 "$SetupPath\parse-dsc-logs.py" "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.1.0"
+                $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/6f3a11aa3b5aa1d2a9cd5695994d65e02fff32e2/parse-dsc-logs.py"
+                $file = "$SetupPath\parse-dsc-logs.py"
+                $downloader = New-Object -TypeName System.Net.WebClient
+                $downloader.DownloadFile($url, $file)
+                python "$SetupPath\parse-dsc-logs.py" "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.1.0"
             }
             GetScript = { }
+            DependsOn            = "[cChocoPackageInstaller]InstallPython"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
     }
