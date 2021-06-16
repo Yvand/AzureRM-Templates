@@ -1238,7 +1238,7 @@ configuration ConfigureSPVM
             TestScript = { return $false }
             SetScript = {
                 $SetupPath = $using:SetupPath
-                $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/6f3a11aa3b5aa1d2a9cd5695994d65e02fff32e2/parse-dsc-logs.py"
+                $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
                 $file = "$SetupPath\parse-dsc-logs.py"
                 $downloader = New-Object -TypeName System.Net.WebClient
                 $downloader.DownloadFile($url, $file)
