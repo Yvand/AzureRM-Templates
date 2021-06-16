@@ -7,7 +7,7 @@
 * Return various information as output of the template deployment
 * Update TLS 1.2 settings in SP and FE VMs
 * Enable file sharing (on Domain network profile) also on SQL VM (it is already enabled on SP and FE VMs)
-* Update DSC module SharePointDSC from 4.5.1 to 4.6 and remove the now useless dependency on ReverseDSC
+* Update DSC module SharePointDSC from 4.5.1 to 4.7 and remove the now useless dependency on ReverseDSC
 
 ## Enhancements & bug-fixes - Published in March 29, 2021
 
