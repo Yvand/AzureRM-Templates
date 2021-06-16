@@ -565,16 +565,16 @@ configuration ConfigureSPVM
             DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
         }
 
-        # SPDistributedCacheService EnableDistributedCache
-        # {
-        #     Name                 = "AppFabricCachingService"
-        #     CacheSizeInMB        = 2000
-        #     CreateFirewallRules  = $true
-        #     ServiceAccount       = $SPFarmCredsQualified.UserName
-        #     InstallAccount       = $SPSetupCredsQualified
-        #     Ensure               = "Present"
-        #     DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        # }
+        SPDistributedCacheService EnableDistributedCache
+        {
+            Name                 = "AppFabricCachingService"
+            CacheSizeInMB        = 1000
+            CreateFirewallRules  = $true
+            ServiceAccount       = $SPFarmCredsQualified.UserName
+            InstallAccount       = $SPSetupCredsQualified
+            Ensure               = "Present"
+            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+        }
 
         #**********************************************************
         # Service instances are started at the beginning of the deployment to give some time between this and creation of service applications
