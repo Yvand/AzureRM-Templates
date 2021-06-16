@@ -1242,7 +1242,8 @@ configuration ConfigureSPVM
                 $file = "$SetupPath\parse-dsc-logs.py"
                 $downloader = New-Object -TypeName System.Net.WebClient
                 $downloader.DownloadFile($url, $file)
-                python "$SetupPath\parse-dsc-logs.py" "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.1.0"
+                # Start new process to ensure that python.exe is in the PATH
+                Start-Process powershell { python "$SetupPath\parse-dsc-logs.py" "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.1.0" }
             }
             GetScript = { }
             DependsOn            = "[cChocoPackageInstaller]InstallPython"
