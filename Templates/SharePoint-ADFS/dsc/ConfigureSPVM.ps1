@@ -1238,17 +1238,18 @@ configuration ConfigureSPVM
         {
             TestScript = { return $false }
             SetScript = {
-                $SetupPath = $using:SetupPath
-                $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
-                $file = "$SetupPath\parse-dsc-logs.py"
-                $downloader = New-Object -TypeName System.Net.WebClient
-                $downloader.DownloadFile($url, $file)
+                $setupPath = $using:SetupPath
+                $localScriptPath = "$setupPath\parse-dsc-logs.py"
 
-                $dscExtensionFolder = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
-                $folderWithVersionNumber = Get-ChildItem -Directory -Path $dscExtensionFolder | Sort-Object -Descending -Property $_.Name -Top 1
-                $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionFolder, $folderWithVersionNumber)
-                # Start script in a new process to ensure that python.exe is in the PATH
-                Start-Process powershell { python "$SetupPath\parse-dsc-logs.py" $fullPathToDscLogs }
+                $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
+                $downloader = New-Object -TypeName System.Net.WebClient
+                $downloader.DownloadFile($url, $localScriptPath)
+
+                $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
+                $folderWithVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property $_.Name | Select-Object -First 1
+                $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithVersionNumber)
+                
+                python $localScriptPath "$fullPathToDscLogs"
             }
             GetScript = { }
             DependsOn            = "[cChocoPackageInstaller]InstallPython"
