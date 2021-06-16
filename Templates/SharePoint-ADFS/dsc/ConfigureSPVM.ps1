@@ -686,7 +686,19 @@ configuration ConfigureSPVM
                 gpupdate.exe /force
             }
             GetScript            = { }
-            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            TestScript           = 
+            {
+                $domainNetbiosName = $using.DomainNetbiosName
+                $dcName = $using.DCName
+                $rootCAName = "$domainNetbiosName-$dcName-CA"
+                $cert = Get-ChildItem -Path "cert:\LocalMachine\Root\" -DnsName "$rootCAName"
+                
+                if ($null -eq $cert) {
+                    return $false   # Run SetScript
+                } else {
+                    return $true    # Root CA already present
+                }
+            }
             DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }

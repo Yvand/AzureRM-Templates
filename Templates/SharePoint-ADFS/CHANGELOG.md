@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Reduce deployment time by enabling the distributed cache service during the SharePoint farm creation
+* Reduce deployment time by running script UpdateGPOToTrustRootCACert only if necessary
 * Install Visual Studio Code in SP and FE VMs
 * Create modern team sites instead of classic team sites in SharePoint 2019
 * Return various information as output of the template deployment
