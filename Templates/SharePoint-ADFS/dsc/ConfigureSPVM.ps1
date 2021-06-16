@@ -1258,8 +1258,8 @@ configuration ConfigureSPVM
                 $downloader.DownloadFile($url, $localScriptPath)
 
                 $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
-                $folderWithVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property $_.Name | Select-Object -First 1
-                $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithVersionNumber)
+                $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property $_.Name | Select-Object -First 1
+                $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                 
                 python $localScriptPath "$fullPathToDscLogs"
             }
