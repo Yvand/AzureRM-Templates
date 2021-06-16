@@ -149,6 +149,49 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
+        # Create the rules in the firewall required for the distributed cache
+        xScript CreateFirewallRulesForDistributedCache
+        {
+            TestScript = {
+                # Test if firewall rules already exist
+                $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
+                $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
+                $spRuleName = "SharePoint Distributed Cache"
+                $firewallRule = Get-NetFirewallRule -DisplayName $spRuleName -ErrorAction SilentlyContinue
+                if ($null -eq $icmpFirewallRule -or $null -eq $firewallRule) {
+                    return $false   # Run SetScript
+                } else {
+                    return $true    # Rules already set
+                }
+            }
+            SetScript = {
+                $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
+                $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
+                if ($null -eq $icmpFirewallRule) {
+                    New-NetFirewallRule -Name Allow_Ping -DisplayName $icmpRuleName `
+                        -Description "Allow ICMPv4 ping" `
+                        -Protocol ICMPv4 `
+                        -IcmpType 8 `
+                        -Enabled True `
+                        -Profile Any `
+                        -Action Allow
+                }
+                Enable-NetFirewallRule -DisplayName $icmpRuleName
+
+                $spRuleName = "SharePoint Distributed Cache"
+                $firewallRule = Get-NetFirewallRule -DisplayName $spRuleName -ErrorAction SilentlyContinue
+                if ($null -eq $firewallRule) {
+                    New-NetFirewallRule -Name "SPDistCache" `
+                        -DisplayName $spRuleName `
+                        -Protocol TCP `
+                        -LocalPort 22233-22236 `
+                        -Group "SharePoint"
+                }                
+                Enable-NetFirewallRule -DisplayName $spRuleName
+            }
+            GetScript = { }
+        }
+
         #**********************************************************
         # Install applications using Chocolatey
         #**********************************************************
@@ -565,16 +608,17 @@ configuration ConfigureSPVM
             DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
         }
 
-        SPDistributedCacheService EnableDistributedCache
-        {
-            Name                 = "AppFabricCachingService"
-            CacheSizeInMB        = 1000
-            CreateFirewallRules  = $true
-            ServiceAccount       = $SPFarmCredsQualified.UserName
-            InstallAccount       = $SPSetupCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        }
+        # Distributed Cache is now enabled directly by the SPFarm resource
+        # SPDistributedCacheService EnableDistributedCache
+        # {
+        #     Name                 = "AppFabricCachingService"
+        #     CacheSizeInMB        = 1000 # Default size is 819MB on a server with 16GB of RAM (5%)
+        #     CreateFirewallRules  = $true
+        #     ServiceAccount       = $SPFarmCredsQualified.UserName
+        #     InstallAccount       = $SPSetupCredsQualified
+        #     Ensure               = "Present"
+        #     DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+        # }
 
         #**********************************************************
         # Service instances are started at the beginning of the deployment to give some time between this and creation of service applications
