@@ -185,6 +185,13 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
+        cChocoPackageInstaller InstallPython
+        {
+            Name                 = "python"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
@@ -565,16 +572,16 @@ configuration ConfigureSPVM
             DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
         }
 
-        SPDistributedCacheService EnableDistributedCache
-        {
-            Name                 = "AppFabricCachingService"
-            CacheSizeInMB        = 2000
-            CreateFirewallRules  = $true
-            ServiceAccount       = $SPFarmCredsQualified.UserName
-            InstallAccount       = $SPSetupCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
-        }
+        # SPDistributedCacheService EnableDistributedCache
+        # {
+        #     Name                 = "AppFabricCachingService"
+        #     CacheSizeInMB        = 2000
+        #     CreateFirewallRules  = $true
+        #     ServiceAccount       = $SPFarmCredsQualified.UserName
+        #     InstallAccount       = $SPSetupCredsQualified
+        #     Ensure               = "Present"
+        #     DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+        # }
 
         #**********************************************************
         # Service instances are started at the beginning of the deployment to give some time between this and creation of service applications
@@ -1168,7 +1175,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                $SetupPath = $using:DCSetupPath
+                $SetupPath = $using:SetupPath
                 $ComputerName = $using:ComputerName
                 $DestinationPath = "$SetupPath\SPDSCFinished.txt"
                 $Contents = "DSC Configuration on $ComputerName finished successfully."
@@ -1179,6 +1186,19 @@ configuration ConfigureSPVM
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPTrustedSecurityTokenIssuer]CreateHighTrustAddinsTrustedIssuer"
+        }
+
+        xScript copyScript
+        {
+            TestScript = { return $false }
+            SetScript = {
+                $SetupPath = $using:SetupPath
+                net use z: \\yvandcustshare.file.core.windows.net\public /u:yvandcustshare ghNyfzBeN9r1voS7/50sis06doCWWp5K8aSsjtoOXcNRLAdrLjJ1r4uCkFTo7uRv45rYHJ0d78Ha++Dd9KfxZg==
+                Copy-Item "Z:\parse-dsc-logs.py" -Destination $SetupPath
+                python3 "$SetupPath\parse-dsc-logs.py" "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.1.0"
+            }
+            GetScript = { }
+            PsDscRunAsCredential = $DomainAdminCredsQualified
         }
     }
 }
