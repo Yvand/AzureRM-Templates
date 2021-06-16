@@ -228,6 +228,14 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
+        # THIS RESOURCE IS FOR ANALYSIS OF DSC LOGS ONLY AND TOTALLY OPTIONNAL
+        cChocoPackageInstaller InstallPython
+        {
+            Name                 = "python"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
@@ -1225,14 +1233,7 @@ configuration ConfigureSPVM
             DependsOn            = "[SPTrustedSecurityTokenIssuer]CreateHighTrustAddinsTrustedIssuer"
         }
 
-        # BOTH RESOURCES BELOW ARE FOR ANALYSIS ONLY
-        cChocoPackageInstaller InstallPython
-        {
-            Name                 = "python"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
+        # THIS RESOURCE IS FOR ANALYSIS OF DSC LOGS ONLY AND TOTALLY OPTIONNAL
         xScript parseDscLogs
         {
             TestScript = { return $false }
