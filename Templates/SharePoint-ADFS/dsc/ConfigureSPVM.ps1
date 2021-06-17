@@ -688,8 +688,8 @@ configuration ConfigureSPVM
             GetScript            = { }
             TestScript           = 
             {
-                $domainNetbiosName = $using.DomainNetbiosName
-                $dcName = $using.DCName
+                $domainNetbiosName = $using:DomainNetbiosName
+                $dcName = $using:DCName
                 $rootCAName = "$domainNetbiosName-$dcName-CA"
                 $cert = Get-ChildItem -Path "cert:\LocalMachine\Root\" -DnsName "$rootCAName"
                 
@@ -947,16 +947,17 @@ configuration ConfigureSPVM
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]CreateMySiteHost"
         }
 
-        SPSite CreateDevSite
-        {
-            Url                  = "http://$SPTrustedSitesName/sites/dev"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "Developer site"
-            Template             = "DEV#0"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
-        }
+        # Creating this site takes about 1 min but it is not so useful, skip it
+        # SPSite CreateDevSite
+        # {
+        #     Url                  = "http://$SPTrustedSitesName/sites/dev"
+        #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+        #     SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
+        #     Name                 = "Developer site"
+        #     Template             = "DEV#0"
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+        # }
 
         SPSite CreateHNSC1
         {
@@ -1258,7 +1259,7 @@ configuration ConfigureSPVM
                 $downloader.DownloadFile($url, $localScriptPath)
 
                 $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
-                $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property $_.Name | Select-Object -First 1
+                $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
                 $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                 
                 python $localScriptPath "$fullPathToDscLogs"

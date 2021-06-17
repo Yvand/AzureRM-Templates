@@ -398,7 +398,7 @@ configuration ConfigureFEVM
             DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
         }
 
-        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", to prevent error when issuing a certificate request
+        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
         # At this point it is safe to assume that the DC finished provisioning AD CS
         xScript UpdateGPOToTrustRootCACert
         {
@@ -406,10 +406,22 @@ configuration ConfigureFEVM
             {
                 gpupdate.exe /force
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false }
-            PsDscRunAsCredential = $DomainAdminCredsQualified
+            GetScript            = { }
+            TestScript           = 
+            {
+                $domainNetbiosName = $using:DomainNetbiosName
+                $dcName = $using:DCName
+                $rootCAName = "$domainNetbiosName-$dcName-CA"
+                $cert = Get-ChildItem -Path "cert:\LocalMachine\Root\" -DnsName "$rootCAName"
+                
+                if ($null -eq $cert) {
+                    return $false   # Run SetScript
+                } else {
+                    return $true    # Root CA already present
+                }
+            }
             DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
         # If multiple servers join the SharePoint farm at the same time, resource JoinSPFarm may fail on a server with this error:
