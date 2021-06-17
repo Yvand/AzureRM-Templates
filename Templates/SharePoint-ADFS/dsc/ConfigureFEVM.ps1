@@ -469,6 +469,7 @@ configuration ConfigureFEVM
                 # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
                 RunCentralAdmin           = $false
                 IsSingleInstance          = "Yes"
+                SkipRegisterAsDistributedCacheHost = $true
                 Ensure                    = "Present"
                 DependsOn                 = "[xScript]WaitToAvoidServersJoiningFarmSimultaneously"
             }
@@ -487,6 +488,7 @@ configuration ConfigureFEVM
                 RunCentralAdmin           = $false
                 IsSingleInstance          = "Yes"
                 ServerRole                = "WebFrontEnd"
+                SkipRegisterAsDistributedCacheHost = $true
                 Ensure                    = "Present"
                 DependsOn                 = "[xScript]WaitToAvoidServersJoiningFarmSimultaneously"
             }

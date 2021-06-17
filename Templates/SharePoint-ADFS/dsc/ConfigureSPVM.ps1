@@ -544,6 +544,7 @@ configuration ConfigureSPVM
             # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
             RunCentralAdmin           = $true
             IsSingleInstance          = "Yes"
+            SkipRegisterAsDistributedCacheHost = $false
             Ensure                    = "Present"
             DependsOn                 = "[xScript]WaitForSQL"
         }

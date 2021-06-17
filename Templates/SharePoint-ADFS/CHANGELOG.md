@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Reduce deployment time by enabling the distributed cache service during the SharePoint farm creation
+* Reduce deployment time by enabling the distributed cache service during the SharePoint farm creation (in SP VM only)
 * Reduce deployment time by running script UpdateGPOToTrustRootCACert only if necessary
 * Reduce deployment time by skipping creating of developer site, not so useful
 * Install Visual Studio Code in SP and FE VMs
