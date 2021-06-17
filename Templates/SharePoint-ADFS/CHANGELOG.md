@@ -4,13 +4,14 @@
 
 * Reduce deployment time by enabling the distributed cache service during the SharePoint farm creation (in SP VM only)
 * Reduce deployment time by running script UpdateGPOToTrustRootCACert only if necessary
-* Reduce deployment time by skipping creating of developer site, not so useful
+* Reduce deployment time by skipping creating of developer site /sites/dev, not so useful
 * Install Visual Studio Code in SP and FE VMs
 * Create modern team sites instead of classic team sites in SharePoint 2019
 * Return various information as output of the template deployment
 * Update TLS 1.2 settings in SP and FE VMs
 * Enable file sharing (on Domain network profile) also on SQL VM (it is already enabled on SP and FE VMs)
-* Update DSC module SharePointDSC from 4.5.1 to 4.7 and remove the now useless dependency on ReverseDSC
+* Update DSC module SharePointDSC from 4.5.1 to 4.7, removed the now useless dependency on ReverseDSC and manually added the changes in PR #1325
+* Update DSC module xDnsServer from 1.16.0 to 2.0
 
 ## Enhancements & bug-fixes - Published in March 29, 2021
 
