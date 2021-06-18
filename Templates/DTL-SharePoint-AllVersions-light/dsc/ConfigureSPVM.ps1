@@ -691,6 +691,29 @@ configuration ConfigureSPVM
                 DependsOn            = "[SPWebApplication]CreateMainWebApp"
             }
         }
+
+        # THIS RESOURCE IS FOR ANALYSIS OF DSC LOGS ONLY AND TOTALLY OPTIONNAL
+        xScript parseDscLogs
+        {
+            TestScript = { return $false }
+            SetScript = {
+                $setupPath = $using:SetupPath
+                $localScriptPath = "$setupPath\parse-dsc-logs.py"
+
+                $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
+                $downloader = New-Object -TypeName System.Net.WebClient
+                $downloader.DownloadFile($url, $localScriptPath)
+
+                $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
+                $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
+                $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
+                
+                python $localScriptPath "$fullPathToDscLogs"
+            }
+            GetScript = { }
+            DependsOn            = "[cChocoPackageInstaller]InstallPython"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
     }
 }
 
