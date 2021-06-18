@@ -699,6 +699,7 @@ configuration ConfigureSPVM
             SetScript = {
                 $setupPath = $using:SetupPath
                 $localScriptPath = "$setupPath\parse-dsc-logs.py"
+                New-Item -ItemType Directory -Force -Path $setupPath
 
                 $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
                 $downloader = New-Object -TypeName System.Net.WebClient
