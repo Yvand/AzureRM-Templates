@@ -2,10 +2,9 @@
 
 ## Unreleased
 
-* Reduce deployment time by removing the no longer needed workaround to reboot SP VM before creating the site in SP2019
+* Reduce deployment time by removing the (no longer needed) workaround that reboots SP VM before creating the site in SharePoint 2019
 * Reduce deployment time by enabling the distributed cache service during the SharePoint farm creation (in SP VM only)
 * Reduce deployment time by running script UpdateGPOToTrustRootCACert only if necessary
-* Reduce deployment time by skipping creating of developer site /sites/dev, not so useful
 * Install Visual Studio Code in SP and FE VMs
 * Create modern team sites instead of classic team sites in SharePoint 2019
 * Return various information as output of the template deployment
