@@ -1,6 +1,6 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Unreleased
+## Enhancements & bug-fixes - Published in June 22, 2021
 
 * Reduce deployment time by skipping creation of developer site /sites/dev, not so useful
 * Reduce deployment time by enabling the distributed cache service during the SharePoint farm creation (in SP VM only)

@@ -1,6 +1,6 @@
 # Change log for Azure DevTest Labs template SharePoint-AllVersions
 
-## Unreleased
+## Enhancements & bug-fixes - Published in June 22, 2021
 
 * Reduce deployment time by removing the (no longer needed) workaround that reboots SP VM before creating the site in SharePoint 2019
 * Reduce deployment time by enabling the distributed cache service during the SharePoint farm creation (in SP VM only)

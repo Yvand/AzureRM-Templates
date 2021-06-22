@@ -1,6 +1,6 @@
 # Change log for Azure DevTest Labs template DTL-SharePoint-FullConfig
 
-## Unreleased
+## Enhancements & bug-fixes - Published in June 22, 2021
 
 * Reduce deployment time by skipping creation of developer site /sites/dev, not so useful
 * Reduce deployment time by enabling the distributed cache service during the SharePoint farm creation (in SP VM only)
@@ -272,7 +272,7 @@
 ## May 2017.2 update
 
 * SQL machine name is retrieved dynamically in DSC configuration for SP
-* Changed passwods settings so they never expire
+* Changed password settings so they never expire
 * LDAPCP is downloaded from GitHub instead of Codeplex
 * Default zone of web app now uses DNS alias too instead of machine name
 * Updated xPSDesiredStateConfiguration from 6.0.0.0 to 6.4.0.0
