@@ -70,13 +70,21 @@ if ($checkTemplate.Count -eq 0) {
         -TemplateFile $TemplateFile `
         -Verbose -Force `
         -TemplateParameterFile $templateParametersFile `
-        @passwords `
+        @passwords 
         # -TemplateParameterObject $parameters
 
     $elapsedTime = New-TimeSpan $startTime $(get-date)
     $result
     if ($result.ProvisioningState -eq "Succeeded") {
         Write-Host "Deployment completed successfully in $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Green
+
+        $outputs = (Get-AzResourceGroupDeployment `
+            -ResourceGroupName $resourceGroupName `
+            -Name $resourceDeploymentName).Outputs
+        
+        $outputMessage = "Use the account ""$($outputs.domainAdminAccount.value)"" (""$($outputs.domainAdminAccountFormatForBastion.value)"") to sign in"
+        $outputMessage += $outputs.ContainsKey("publicIPAddressSP") ? " to ""$($outputs.publicIPAddressSP.value)""" : "."
+        Write-Host $outputMessage -ForegroundColor Green
     }
     else {
         Write-Host "Deployment failed after $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Red
