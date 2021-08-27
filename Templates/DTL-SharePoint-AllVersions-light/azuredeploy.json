@@ -332,6 +332,20 @@
         "description": "Specify if each VM should have a public IP and be reachable from Internet."
       }
     },
+    "existingLogAnalyticsWorkspaceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "If you have an existing Log Analytics workspace, type its workspaceId to provision the Log Analytics agent on virtual machines. Leave empty otherwise."
+      }
+    },
+    "existingLogAnalyticsWorkspaceKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "If you have an existing Log Analytics workspace, type its workspaceKey to provision the Log Analytics agent on virtual machines. Leave empty otherwise."
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/DTL-SharePoint-AllVersions-light",
@@ -1380,6 +1394,31 @@
               "Password": "[variables('generalSettings').spPassphrase]"
             }
           }
+        }
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('provisionSharePoint2019'), 'Yes'), not(empty(parameters('existingLogAnalyticsWorkspaceId'))))]",
+      "name": "[concat(variables('generalSettings').vmSP2019Name, '/EnableMicrosoftMonitoringAgent')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[parameters('location')]",
+      "apiVersion": "2020-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSP2019Name)]"
+      ],
+      "tags": {
+        "displayName": "[concat(variables('generalSettings').vmSP2019Name, '/EnableMicrosoftMonitoringAgent')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+        "type": "MicrosoftMonitoringAgent",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+            "workspaceId": "[parameters('existingLogAnalyticsWorkspaceId')]"
+        },
+        "protectedSettings": {
+            "workspaceKey": "[parameters('existingLogAnalyticsWorkspaceKey')]"
         }
       }
     },
