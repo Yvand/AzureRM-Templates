@@ -9,7 +9,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [Boolean]$ConfigureADFS,
-        [Parameter(Mandatory)] [Boolean]$Debug,
+        [Parameter]            [Boolean]$EnableAnalysis,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -214,8 +214,8 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        if ($Debug) {
-            # This resource is for analysis of dsc logs only and totally optionnal
+        if ($EnableAnalysis) {
+            # This resource is for  of dsc logs only and totally optionnal
             cChocoPackageInstaller InstallPython
             {
                 Name                 = "python"
@@ -695,7 +695,7 @@ configuration ConfigureSPVM
             }
         }
 
-        if ($Debug) {
+        if ($EnableAnalysis) {
             # This resource is for analysis of dsc logs only and totally optionnal
             xScript parseDscLogs
             {
@@ -766,8 +766,9 @@ $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
 $SharePointVersion = "2019"
 $ConfigureADFS = $false
+$EnableAnalysis = $true
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
 ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigureADFS $ConfigureADFS -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
