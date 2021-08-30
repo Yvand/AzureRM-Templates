@@ -341,20 +341,6 @@
         "description": "Specify if each VM should have a public IP and be reachable from Internet."
       }
     },
-    "existingLogAnalyticsWorkspaceId": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "If you have an existing Log Analytics workspace, type its workspaceId to provision the Log Analytics agent on virtual machines. Leave empty otherwise."
-      }
-    },
-    "existingLogAnalyticsWorkspaceKey": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "If you have an existing Log Analytics workspace, type its workspaceKey to provision the Log Analytics agent on virtual machines. Leave empty otherwise."
-      }
-    },
     "_artifactsLocation": {
       "type": "string",
       "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/DTL-SharePoint-AllVersions-light",
@@ -751,31 +737,6 @@
               }
             }
           }
-        },
-        {
-          "condition": "[not(empty(parameters('existingLogAnalyticsWorkspaceId')))]",
-          "name": "EnableMonitoringAgent",
-          "type": "extensions",
-          "location": "[parameters('location')]",
-          "apiVersion": "2021-04-01",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
-          ],
-          "tags": {
-            "displayName": "EnableMonitoringAgent"
-          },
-          "properties": {
-            "publisher": "Microsoft.EnterpriseCloud.Monitoring",
-            "type": "MicrosoftMonitoringAgent",
-            "typeHandlerVersion": "1.0",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-                "workspaceId": "[parameters('existingLogAnalyticsWorkspaceId')]"
-            },
-            "protectedSettings": {
-                "workspaceKey": "[parameters('existingLogAnalyticsWorkspaceKey')]"
-            }
-          }
         }
       ]
     },
@@ -927,31 +888,6 @@
               "Password": "[variables('generalSettings').spSetupPassword]"
             }
           }
-        }
-      }
-    },
-    {
-      "condition": "[not(empty(parameters('existingLogAnalyticsWorkspaceId')))]",
-      "name": "[concat(variables('generalSettings').vmSQLName, '/EnableMonitoringAgent')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[parameters('location')]",
-      "apiVersion": "2021-04-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
-      ],
-      "tags": {
-        "displayName": "[concat(variables('generalSettings').vmSQLName, '/EnableMonitoringAgent')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
-        "type": "MicrosoftMonitoringAgent",
-        "typeHandlerVersion": "1.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-            "workspaceId": "[parameters('existingLogAnalyticsWorkspaceId')]"
-        },
-        "protectedSettings": {
-            "workspaceKey": "[parameters('existingLogAnalyticsWorkspaceKey')]"
         }
       }
     },
@@ -1123,31 +1059,6 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('provisionSharePoint2013'), 'Yes'), not(empty(parameters('existingLogAnalyticsWorkspaceId'))))]",
-      "name": "[concat(variables('generalSettings').vmSP2013Name, '/EnableMonitoringAgent')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[parameters('location')]",
-      "apiVersion": "2021-04-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSP2013Name)]"
-      ],
-      "tags": {
-        "displayName": "[concat(variables('generalSettings').vmSP2013Name, '/EnableMonitoringAgent')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
-        "type": "MicrosoftMonitoringAgent",
-        "typeHandlerVersion": "1.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-            "workspaceId": "[parameters('existingLogAnalyticsWorkspaceId')]"
-        },
-        "protectedSettings": {
-            "workspaceKey": "[parameters('existingLogAnalyticsWorkspaceKey')]"
-        }
-      }
-    },
-    {
       "condition": "[and(equals(parameters('provisionSharePoint2016'), 'Yes'), equals(parameters('addPublicIPAddressToEachVM'), 'Yes'))]",
       "name": "[variables('vmSP2016').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -1315,31 +1226,6 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('provisionSharePoint2016'), 'Yes'), not(empty(parameters('existingLogAnalyticsWorkspaceId'))))]",
-      "name": "[concat(variables('generalSettings').vmSP2016Name, '/EnableMonitoringAgent')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[parameters('location')]",
-      "apiVersion": "2021-04-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSP2016Name)]"
-      ],
-      "tags": {
-        "displayName": "[concat(variables('generalSettings').vmSP2016Name, '/EnableMonitoringAgent')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
-        "type": "MicrosoftMonitoringAgent",
-        "typeHandlerVersion": "1.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-            "workspaceId": "[parameters('existingLogAnalyticsWorkspaceId')]"
-        },
-        "protectedSettings": {
-            "workspaceKey": "[parameters('existingLogAnalyticsWorkspaceKey')]"
-        }
-      }
-    },
-    {
       "condition": "[and(equals(parameters('provisionSharePoint2019'), 'Yes'), equals(parameters('addPublicIPAddressToEachVM'), 'Yes'))]",
       "name": "[variables('vmSP2019').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -1503,31 +1389,6 @@
               "Password": "[variables('generalSettings').spPassphrase]"
             }
           }
-        }
-      }
-    },
-    {
-      "condition": "[and(equals(parameters('provisionSharePoint2019'), 'Yes'), not(empty(parameters('existingLogAnalyticsWorkspaceId'))))]",
-      "name": "[concat(variables('generalSettings').vmSP2019Name, '/EnableMonitoringAgent')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[parameters('location')]",
-      "apiVersion": "2021-04-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSP2019Name)]"
-      ],
-      "tags": {
-        "displayName": "[concat(variables('generalSettings').vmSP2019Name, '/EnableMonitoringAgent')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
-        "type": "MicrosoftMonitoringAgent",
-        "typeHandlerVersion": "1.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-            "workspaceId": "[parameters('existingLogAnalyticsWorkspaceId')]"
-        },
-        "protectedSettings": {
-            "workspaceKey": "[parameters('existingLogAnalyticsWorkspaceKey')]"
         }
       }
     },
