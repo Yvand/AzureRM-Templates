@@ -378,7 +378,8 @@
       "spAppPoolUserName": "spapppool",
       "spAppPoolPassword": "[parameters('serviceAccountsPassword')]",
       "spPassphrase": "[parameters('serviceAccountsPassword')]",
-      "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]"
+      "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
+      "enableAnalysis": "Yes"
     },
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
@@ -1027,7 +1028,7 @@
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "2013",
             "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]",
-            "Debug": true
+            "EnableAnalysis": "[if(equals(variables('generalSettings').enableAnalysis, 'Yes'), 1, 0)]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1195,7 +1196,7 @@
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "2016",
             "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]",
-            "Debug": true
+            "EnableAnalysis": "[if(equals(variables('generalSettings').enableAnalysis, 'Yes'), 1, 0)]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1363,7 +1364,7 @@
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "2019",
             "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]",
-            "Debug": true
+            "EnableAnalysis": "[if(equals(variables('generalSettings').enableAnalysis, 'Yes'), 1, 0)]"
           },
           "privacy": {
             "dataCollection": "enable"
