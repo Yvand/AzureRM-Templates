@@ -9,7 +9,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [Boolean]$ConfigureADFS,
-        [Parameter()] [Boolean]$Debug = $false,
+        [Parameter]            [Boolean]$Debug = $false,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,

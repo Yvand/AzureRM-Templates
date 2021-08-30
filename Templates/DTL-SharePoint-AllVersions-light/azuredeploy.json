@@ -1026,7 +1026,8 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "2013",
-            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]"
+            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]",
+            "Debug": true
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1193,7 +1194,8 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "2016",
-            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]"
+            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]",
+            "Debug": true
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1360,7 +1362,8 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "2019",
-            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]"
+            "ConfigureADFS": "[if(equals(parameters('configureADFS'), 'Yes'), 1, 0)]",
+            "Debug": true
           },
           "privacy": {
             "dataCollection": "enable"
