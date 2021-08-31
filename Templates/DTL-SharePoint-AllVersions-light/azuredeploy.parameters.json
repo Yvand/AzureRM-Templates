@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "provisionSharePoint2013": { "value": "Yes" },
+    "provisionSharePoint2013": { "value": "No" },
     "provisionSharePoint2016": { "value": "Yes" },
     "provisionSharePoint2019": { "value": "Yes" },
     "configureADFS": { "value": "Yes" },
@@ -13,10 +13,10 @@
     "enableHybridBenefitServerLicenses": { "value": "Yes" },
     "enableAutomaticUpdates": { "value": "No" },    
     "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-AllVersions-light" },
-    "vmDCStorageAccountType": { "value": "Premium_LRS" },
+    "vmDCStorageAccountType": { "value": "Standard_LRS" },
     // "vmSQLSize": { "value": "Standard_E2as_v4" },
-    "vmSQLStorageAccountType": { "value": "Premium_LRS" },
+    "vmSQLStorageAccountType": { "value": "Standard_LRS" },
     // "vmSPSize": { "value": "Standard_E2as_v4" },
-    "vmSPStorageAccountType": { "value": "Premium_LRS" }
+    "vmSPStorageAccountType": { "value": "StandardSSD_LRS" }
   }
 }

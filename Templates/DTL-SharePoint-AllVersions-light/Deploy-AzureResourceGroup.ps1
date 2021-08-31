@@ -4,7 +4,7 @@
 ### Define variables
 $resourceGroupLocation = 'westeurope'
 # $resourceGroupLocation = 'francecentral'
-$resourceGroupName = 'yddtl-light-2'
+$resourceGroupName = 'ydtlight1'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
@@ -71,7 +71,7 @@ if ($checkTemplate.Count -eq 0) {
         -TemplateFile $TemplateFile `
         -Verbose -Force `
         -TemplateParameterFile $templateParametersFile `
-        @passwords `
+        @passwords #`
         # -TemplateParameterObject $parameters
 
     $elapsedTime = New-TimeSpan $startTime $(get-date)
