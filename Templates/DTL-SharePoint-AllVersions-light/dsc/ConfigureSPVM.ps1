@@ -118,6 +118,24 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
+        Script EnableLongPath
+        {
+            GetScript = { }
+            TestScript = {
+                return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            }
+            SetScript = 
+            {
+                $longPathEnabled = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled
+                if (-not $longPathEnabled) {
+                    New-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled -Value 1 -PropertyType DWord
+                }
+                else {
+                    Set-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled -Value 1
+                }
+            }
+        }
+
         xScript EnableFileSharing
         {
             TestScript = {
@@ -693,6 +711,17 @@ configuration ConfigureSPVM
                 PsDscRunAsCredential = $SPSetupCredsQualified
                 DependsOn            = "[SPWebApplication]CreateMainWebApp"
             }
+        }
+
+        SPSite CreateTestClassicSite
+        {
+            Url                  = "http://$SPTrustedSitesName/sites/testclassic"
+            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
+            Name                 = "Team site"
+            Template             = "STS#0"
+            CreateDefaultGroups  = $true
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplication]CreateMainWebApp"
         }
 
         if ($EnableAnalysis) {
