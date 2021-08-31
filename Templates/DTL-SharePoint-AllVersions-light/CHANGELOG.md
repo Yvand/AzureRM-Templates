@@ -1,5 +1,10 @@
 # Change log for Azure DevTest Labs template SharePoint-AllVersions
 
+## Unreleased
+
+* Change default size of virtual machines to use B-series burstable, ideal for such template and much cheaper than other comparable series.
+* Update the list of disks available for virtual machines.
+
 ## Enhancements & bug-fixes - Published in June 22, 2021
 
 * Reduce deployment time by removing the (no longer needed) workaround that reboots SP VM before creating the site in SharePoint 2019
