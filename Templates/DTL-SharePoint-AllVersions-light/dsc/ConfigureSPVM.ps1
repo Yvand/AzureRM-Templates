@@ -713,17 +713,6 @@ configuration ConfigureSPVM
             }
         }
 
-        SPSite CreateTestClassicSite
-        {
-            Url                  = "http://$SPTrustedSitesName/sites/testclassic"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            Name                 = "Team site"
-            Template             = "STS#0"
-            CreateDefaultGroups  = $true
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]CreateMainWebApp"
-        }
-
         if ($EnableAnalysis) {
             # This resource is for analysis of dsc logs only and totally optionnal
             xScript parseDscLogs
