@@ -4,6 +4,7 @@
 
 * Change default size of virtual machines to use B-series burstable, ideal for such template and much cheaper than other comparable series.
 * Update the list of disks available for virtual machines.
+* Fix the site collection navigation error in SharePoint 2019 by updating SharePointDSC to 4.8.
 * Update DSC module SharePointDSC from 4.7 to 4.8, which no longer needs custom changes.
 
 ## Enhancements & bug-fixes - Published in June 22, 2021
