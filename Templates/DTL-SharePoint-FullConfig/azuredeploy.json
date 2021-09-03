@@ -62,7 +62,7 @@
     },
     "vmDCSize": {
       "type": "string",
-      "defaultValue": "Standard_DS2_v2",
+      "defaultValue": "Standard_B2s",
       "metadata": {
         "description": "Size of the DC VM"
       }
@@ -72,16 +72,19 @@
       "defaultValue": "Standard_LRS",
       "allowedValues": [
         "Standard_LRS",
-        "Standard_GRS",
-        "Premium_LRS"
+        "StandardSSD_LRS",
+        "Premium_LRS",
+        "Premium_ZRS",
+        "StandardSSD_ZRS",
+        "UltraSSD_LRS"
       ],
       "metadata": {
-        "description": "Type of storage for the managed disks. Allowed values are 'Standard_LRS', 'Standard_GRS' and 'Premium_LRS'"
+        "description": "Type of storage for the managed disks. Visit 'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes' for more information"
       }
     },
     "vmSQLSize": {
       "type": "string",
-      "defaultValue": "Standard_E2ds_v4",
+      "defaultValue": "Standard_B2ms",
       "metadata": {
         "description": "Size of the SQL VM"
       }
@@ -91,30 +94,36 @@
       "defaultValue": "Standard_LRS",
       "allowedValues": [
         "Standard_LRS",
-        "Standard_GRS",
-        "Premium_LRS"
+        "StandardSSD_LRS",
+        "Premium_LRS",
+        "Premium_ZRS",
+        "StandardSSD_ZRS",
+        "UltraSSD_LRS"
       ],
       "metadata": {
-        "description": "Type of storage for the managed disks. Allowed values are 'Standard_LRS', 'Standard_GRS' and 'Premium_LRS'"
+        "description": "Type of storage for the managed disks. Visit 'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes' for more information"
       }
     },
     "vmSPSize": {
       "type": "string",
-      "defaultValue": "Standard_E2ds_v4",
+      "defaultValue": "Standard_B4ms",
       "metadata": {
         "description": "Size of the SharePoint VM"
       }
     },
     "vmSPStorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "StandardSSD_LRS",
       "allowedValues": [
         "Standard_LRS",
-        "Standard_GRS",
-        "Premium_LRS"
+        "StandardSSD_LRS",
+        "Premium_LRS",
+        "Premium_ZRS",
+        "StandardSSD_ZRS",
+        "UltraSSD_LRS"
       ],
       "metadata": {
-        "description": "Type of storage for the managed disks. Allowed values are 'Standard_LRS', 'Standard_GRS' and 'Premium_LRS'"
+        "description": "Type of storage for the managed disks. Visit 'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes' for more information"
       }
     },
     "vmsTimeZone": {
@@ -349,7 +358,8 @@
       "spAppPoolUserName": "spapppool",
       "spAppPoolPassword": "[parameters('serviceAccountsPassword')]",
       "spPassphrase": "[parameters('serviceAccountsPassword')]",
-      "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]"
+      "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
+      "enableAnalysis": true
     },
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
@@ -992,7 +1002,8 @@
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
-            "SharePointVersion": "[parameters('sharePointVersion')]"
+            "SharePointVersion": "[parameters('sharePointVersion')]",
+            "EnableAnalysis": "[if(variables('generalSettings').enableAnalysis, true(), false())]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1188,7 +1199,8 @@
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
-            "SharePointVersion": "[parameters('sharePointVersion')]"
+            "SharePointVersion": "[parameters('sharePointVersion')]",
+            "EnableAnalysis": "[if(variables('generalSettings').enableAnalysis, true(), false())]"
           },
           "privacy": {
             "dataCollection": "enable"
