@@ -18,16 +18,16 @@
       "value": 2
     },
     "enableHybridBenefitServerLicenses": {
-      "value": "Yes"
+      "value": true
     },
     "sharePointDataDiskSize": {
       "value": 0
     },
     "addAzureBastion": {
-      "value": "Yes"
+      "value": true
     },
-    "addPublicIPAddressToEachVM": {
-      "value": "Yes"
+    "ipToAllowInFirewall": {
+        "value": "*"
     },
     // "vmSQLSize": { "value": "Standard_E2as_v4" },
     // "vmSPSize": { "value": "Standard_E2as_v4" },

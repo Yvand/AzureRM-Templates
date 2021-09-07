@@ -293,23 +293,15 @@
       }
     },
     "enableAutomaticUpdates": {
-      "type": "string",
-      "allowedValues": [
-        "Yes",
-        "No"
-      ],
-      "defaultValue": "Yes",
+      "type": "bool",
+      "defaultValue": true,
       "metadata": {
         "description": "Enable automatic Windows Updates."
       }
     },
     "enableHybridBenefitServerLicenses": {
-      "type": "string",
-      "allowedValues": [
-        "Yes",
-        "No"
-      ],
-      "defaultValue": "No",
+      "type": "bool",
+      "defaultValue": false,
       "metadata": {
         "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
       }
@@ -322,12 +314,8 @@
       }
     },
     "addAzureBastion": {
-      "type": "string",
-      "allowedValues": [
-        "Yes",
-        "No"
-      ],
-      "defaultValue": "No",
+      "type": "bool",
+      "defaultValue": false,
       "metadata": {
         "description": "Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information."
       }
@@ -658,7 +646,7 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]",
+            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
             "provisionVMAgent": true
           }
         },
@@ -687,7 +675,7 @@
             }
           ]
         },
-        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
+        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', json('null'))]"
       },
       "resources": [
         {
@@ -806,7 +794,7 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]",
+            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
             "provisionVMAgent": true
           }
         },
@@ -835,7 +823,7 @@
             }
           ]
         },
-        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
+        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', json('null'))]"
       },
       "resources": []
     },
@@ -907,7 +895,7 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]",
+            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
             "provisionVMAgent": true
           }
         },
@@ -937,7 +925,7 @@
             }
           ]
         },
-        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
+        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', json('null'))]"
       },
       "resources": []
     },
@@ -1150,7 +1138,7 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]",
+            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
             "provisionVMAgent": true
           }
         },
@@ -1179,7 +1167,7 @@
             }
           ]
         },
-        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
+        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', json('null'))]"
       },
       "resources": []
     },
@@ -1344,7 +1332,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('addAzureBastion'), 'Yes')]",
+      "condition": "[equals(parameters('addAzureBastion'), true())]",
       "apiVersion": "2020-07-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "NSG-Subnet-AzureBastion",
@@ -1428,7 +1416,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('addAzureBastion'), 'Yes')]",
+      "condition": "[equals(parameters('addAzureBastion'), true())]",
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('networkSettings').vNetPrivateName, '/', 'AzureBastionSubnet')]",
       "apiVersion": "2020-07-01",
@@ -1445,7 +1433,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('addAzureBastion'), 'Yes')]",
+      "condition": "[equals(parameters('addAzureBastion'), true())]",
       "name": "PublicIP-Bastion",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -1465,7 +1453,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('addAzureBastion'), 'Yes')]",
+      "condition": "[equals(parameters('addAzureBastion'), true())]",
       "name": "Bastion",
       "type": "Microsoft.Network/bastionHosts",
       "location": "[parameters('location')]",

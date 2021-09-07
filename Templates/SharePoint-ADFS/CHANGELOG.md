@@ -6,6 +6,7 @@
 * Change default storage of SharePoint virtual machines to use StandardSSD_LRS.
 * Replace parameter 'addPublicIPAddressToEachVM' with 'ipToAllowInFirewall', to give more flexibility to configure what incoming traffic is allowed (none / unrestricted / individual IP only / range of IPs only)
 * Update the list of disks available for virtual machines.
+* Use type boolean for parameters for which this is possible.
 * Update DSC module SharePointDSC from 4.7 to 4.8, which no longer needs custom changes.
 * Update DSC module SqlServerDsc from 15.1.1 to 15.2
 
