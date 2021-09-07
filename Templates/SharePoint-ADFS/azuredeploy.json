@@ -629,7 +629,7 @@
       "name": "[variables('generalSettings').vmDCName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
       ],
@@ -647,7 +647,11 @@
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
             "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
-            "provisionVMAgent": true
+            "provisionVMAgent": true,
+            "patchSettings": {
+              "patchMode": "AutomaticByOS",
+              "assessmentMode": "ImageDefault"
+            }
           }
         },
         "storageProfile": {
@@ -777,7 +781,7 @@
       "name": "[variables('generalSettings').vmSQLName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
       ],
@@ -795,7 +799,11 @@
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
             "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
-            "provisionVMAgent": true
+            "provisionVMAgent": true,
+            "patchSettings": {
+              "patchMode": "AutomaticByOS",
+              "assessmentMode": "ImageDefault"
+            }
           }
         },
         "storageProfile": {
@@ -878,7 +886,7 @@
       "name": "[variables('generalSettings').vmSPName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
       ],
@@ -896,7 +904,11 @@
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
             "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
-            "provisionVMAgent": true
+            "provisionVMAgent": true,
+            "patchSettings": {
+              "patchMode": "AutomaticByOS",
+              "assessmentMode": "ImageDefault"
+            }
           }
         },
         "storageProfile": {
@@ -1117,7 +1129,7 @@
       "name": "[concat(variables('generalSettings').vmFEName, '-', copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "frontendNetworkInterfaces"
       ],
@@ -1139,7 +1151,11 @@
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
             "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
-            "provisionVMAgent": true
+            "provisionVMAgent": true,
+            "patchSettings": {
+              "patchMode": "AutomaticByOS",
+              "assessmentMode": "ImageDefault"
+            }
           }
         },
         "storageProfile": {
