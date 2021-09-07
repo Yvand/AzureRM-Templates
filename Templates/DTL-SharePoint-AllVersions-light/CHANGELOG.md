@@ -7,6 +7,7 @@
 * Update the list of disks available for virtual machines.
 * Fix the error when browsing the team site collection in SharePoint 2019 by updating SharePointDSC to 4.8.
 * Update DSC module SharePointDSC from 4.7 to 4.8, which no longer needs custom changes.
+* Update DSC module SqlServerDsc from 15.1.1 to 15.2
 
 ## Enhancements & bug-fixes - Published in June 22, 2021
 
