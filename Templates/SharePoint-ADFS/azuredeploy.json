@@ -331,7 +331,7 @@
       "type": "string",
       "defaultValue": "*",
       "metadata": {
-        "description": "- If empty: Firewall denies all incoming requests from Internet.<br>- If '*' (default): Firewall accepts all incoming requests from Internet.<br>- If 'IPAddress': Firewall accepts incoming requests only from the specified 'IPAddress'."
+        "description": "Specify which IP addresses will be allowed to connect to the VMs using RDP:<br>- If empty: Firewall denies all incoming requests from Internet.<br>- If '*' (default): Firewall accepts all incoming requests from Internet.<br>- If 'IPAddress': Firewall accepts incoming requests only from the specified 'IPAddress'."
       }
     },
     "_artifactsLocation": {
