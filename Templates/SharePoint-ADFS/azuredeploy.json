@@ -331,7 +331,7 @@
       "type": "string",
       "defaultValue": "*",
       "metadata": {
-        "description": "- If empty: Firewall denies all incoming requests from Internet.<br>- If '*': Firewall accepts all incoming requests from Internet.<br>- If 'YourIPAddress': Firewall accepts incoming requests only from the specified 'YourIPAddress'."
+        "description": "- If empty: Firewall denies all incoming requests from Internet.<br>- If '*' (default): Firewall accepts all incoming requests from Internet.<br>- If 'IPAddress': Firewall accepts incoming requests only from the specified 'IPAddress'."
       }
     },
     "_artifactsLocation": {
@@ -1119,7 +1119,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
               },
-              "publicIPAddress": "[if(parameters('addPublicIPAddressToEachVM'), json(concat('{\"id\":\"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmFE').vmPublicIPName, '-', copyIndex())), '\"}')), json('null'))]"
+              "publicIPAddress": "[if(parameters('addPublicIPAddressToEachVM'), json(concat('{\"id\": \"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmFE').vmPublicIPName, '-', copyIndex())), '\" }')), json('null'))]"
             }
           }
         ]
