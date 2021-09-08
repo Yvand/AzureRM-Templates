@@ -327,7 +327,7 @@
         "description": "Specify if each VM should have a public IP and be reachable from Internet."
       }
     },
-    "ipToAllowInFirewall": {
+    "incomingIPToAllowInFirewall": {
       "type": "string",
       "defaultValue": "*",
       "metadata": {
@@ -404,7 +404,7 @@
             "protocol": "Tcp",
             "sourcePortRange": "*",
             "destinationPortRange": "3389",
-            "sourceAddressPrefix": "[if(equals(parameters('ipToAllowInFirewall'), '*'), 'Internet', parameters('ipToAllowInFirewall'))]",
+            "sourceAddressPrefix": "[if(equals(parameters('incomingIPToAllowInFirewall'), '*'), 'Internet', parameters('incomingIPToAllowInFirewall'))]",
             "destinationAddressPrefix": "*",
             "access": "Allow",
             "priority": 110,
@@ -503,7 +503,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetDCName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('ipToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(empty(parameters('incomingIPToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
@@ -515,7 +515,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetSQLName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('ipToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(empty(parameters('incomingIPToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
@@ -527,7 +527,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetSPName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('ipToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(empty(parameters('incomingIPToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
