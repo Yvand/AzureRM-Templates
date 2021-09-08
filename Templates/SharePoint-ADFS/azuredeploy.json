@@ -331,7 +331,7 @@
       "type": "string",
       "defaultValue": "*",
       "metadata": {
-        "description": "If empty: Firewall denies all incoming requests from Internet; <br>If '*': Firewall accepts all incoming requests from Internet; <br>If 'YourIPAddress': Firewall accepts incoming requests only from the specified 'YourIPAddress'."
+        "description": "- If empty: Firewall denies all incoming requests from Internet.<br>- If '*': Firewall accepts all incoming requests from Internet.<br>- If 'YourIPAddress': Firewall accepts incoming requests only from the specified 'YourIPAddress'."
       }
     },
     "_artifactsLocation": {
