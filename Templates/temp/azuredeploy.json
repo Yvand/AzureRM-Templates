@@ -324,7 +324,7 @@
       "type": "string",
       "defaultValue": "*",
       "metadata": {
-        "description": "If empty: Firewall denies all incoming requests from Internet; If '*': Firewall accepts all incoming requests from Internet; If 'IPAddress': Firewall accepts only the incoming requests from the specified 'IPAddress'."
+        "description": "If empty: Firewall denies all incoming requests from Internet; If '*': Firewall accepts all incoming requests from Internet; If 'YourIPAddress': Firewall accepts incoming requests only from the specified 'YourIPAddress'."
       }
     },
     "_artifactsLocation": {
@@ -492,7 +492,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSubnetDCName]",
       "location": "[parameters('location')]",
@@ -504,7 +504,7 @@
       }
     },
     {
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSubnetSQLName]",
       "location": "[parameters('location')]",
@@ -516,7 +516,7 @@
       }
     },
     {
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSubnetSPName]",
       "location": "[parameters('location')]",
@@ -531,7 +531,7 @@
       "name": "[variables('networkSettings').vNetPrivateName]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetDCName)]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetSQLName)]",
@@ -582,7 +582,7 @@
       "name": "[variables('vmDC').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "tags": {
         "displayName": "[variables('vmDC').vmPublicIPName]"
       },
@@ -601,7 +601,7 @@
       "name": "[variables('vmDC').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
@@ -629,7 +629,7 @@
       "name": "[variables('generalSettings').vmDCName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
       ],
@@ -646,8 +646,12 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
-            "provisionVMAgent": true
+            "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]",
+            "provisionVMAgent": true,
+            "patchSettings": {
+              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByPlatform', 'Manual')]",
+              "assessmentMode": "ImageDefault"
+            }
           }
         },
         "storageProfile": {
@@ -682,7 +686,7 @@
           "name": "ConfigureDCVM",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2020-06-01",
+          "apiVersion": "2021-04-01",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
           ],
@@ -731,7 +735,7 @@
       "name": "[variables('vmSQL').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "tags": {
         "displayName": "[variables('vmSQL').vmPublicIPName]"
       },
@@ -750,7 +754,7 @@
       "name": "[variables('vmSQL').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)]"
@@ -777,7 +781,7 @@
       "name": "[variables('generalSettings').vmSQLName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
       ],
@@ -794,8 +798,12 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
-            "provisionVMAgent": true
+            "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]",
+            "provisionVMAgent": true,
+            "patchSettings": {
+              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByOS', 'Manual')]",
+              "assessmentMode": "ImageDefault"
+            }
           }
         },
         "storageProfile": {
@@ -832,7 +840,7 @@
       "name": "[variables('vmSP').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "tags": {
         "displayName": "[variables('vmSP').vmPublicIPName]"
       },
@@ -851,7 +859,7 @@
       "name": "[variables('vmSP').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
@@ -878,7 +886,7 @@
       "name": "[variables('generalSettings').vmSPName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
       ],
@@ -895,8 +903,12 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
-            "provisionVMAgent": true
+            "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]",
+            "provisionVMAgent": true,
+            "patchSettings": {
+              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByOS', 'Manual')]",
+              "assessmentMode": "ImageDefault"
+            }
           }
         },
         "storageProfile": {
@@ -933,7 +945,7 @@
       "name": "[concat(variables('generalSettings').vmSQLName,'/ConfigureSQLVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
       ],
@@ -983,7 +995,7 @@
       "name": "[concat(variables('generalSettings').vmSPName,'/ConfigureSPVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
       ],
@@ -1010,7 +1022,7 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[parameters('sharePointVersion')]",
-            "EnableAnalysis": "[if(variables('generalSettings').enableAnalysis, true(), false())]"
+            "EnableAnalysis": "[variables('generalSettings').enableAnalysis]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1059,7 +1071,7 @@
       "name": "[concat(variables('vmFE').vmPublicIPName, '-', copyIndex())]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "tags": {
         "displayName": "[concat(variables('vmFE').vmPublicIPName, '-', copyIndex())]"
       },
@@ -1083,7 +1095,7 @@
       "name": "[concat(variables('vmFE').vmNicName, '-', copyIndex())]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "frontendPublicIPAddresses"
@@ -1117,7 +1129,7 @@
       "name": "[concat(variables('generalSettings').vmFEName, '-', copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "frontendNetworkInterfaces"
       ],
@@ -1138,8 +1150,12 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
-            "provisionVMAgent": true
+            "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]",
+            "provisionVMAgent": true,
+            "patchSettings": {
+              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByOS', 'Manual')]",
+              "assessmentMode": "ImageDefault"
+            }
           }
         },
         "storageProfile": {
@@ -1176,7 +1192,7 @@
       "name": "[concat(variables('generalSettings').vmFEName, '-', copyIndex(),'/ConfigureFEVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2021-04-01",
       "dependsOn": [
         "frontendVirtualMachines"
       ],
@@ -1207,7 +1223,7 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[parameters('sharePointVersion')]",
-            "EnableAnalysis": "[if(variables('generalSettings').enableAnalysis, true(), false())]"
+            "EnableAnalysis": "[variables('generalSettings').enableAnalysis]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1333,7 +1349,7 @@
     },
     {
       "condition": "[equals(parameters('addAzureBastion'), true())]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "NSG-Subnet-AzureBastion",
       "location": "[parameters('location')]",
@@ -1419,7 +1435,7 @@
       "condition": "[equals(parameters('addAzureBastion'), true())]",
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('networkSettings').vNetPrivateName, '/', 'AzureBastionSubnet')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
@@ -1437,7 +1453,7 @@
       "name": "PublicIP-Bastion",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "tags": {
         "displayName": "PublicIP-Bastion"
       },
@@ -1457,7 +1473,7 @@
       "name": "Bastion",
       "type": "Microsoft.Network/bastionHosts",
       "location": "[parameters('location')]",
-      "apiVersion": "2020-07-01",
+      "apiVersion": "2021-02-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', 'PublicIP-Bastion')]",
         "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, 'AzureBastionSubnet')]"
