@@ -327,11 +327,11 @@
         "description": "Specify if each VM should have a public IP and be reachable from Internet."
       }
     },
-    "incomingIPToAllowInFirewall": {
+    "incomingIPAllowedForRDP": {
       "type": "string",
       "defaultValue": "*",
       "metadata": {
-        "description": "Specify which IP addresses will be allowed to connect to the VMs using RDP:<br>- If empty: Firewall denies all incoming requests from Internet.<br>- If '*' (default): Firewall accepts all incoming requests from Internet.<br>- If 'IPAddress': Firewall accepts incoming requests only from the specified 'IPAddress'."
+        "description": "Specify which IP addresses will be allowed to use RDP to connect to the VMs:<br>- If empty: Firewall denies all incoming RDP traffic from Internet.<br>- If '*' (default): Firewall accepts all incoming RDP traffic from Internet.<br>- If 'IPAddress': Firewall accepts incoming RDP traffic only from the specified 'IPAddress'."
       }
     },
     "_artifactsLocation": {
@@ -404,7 +404,7 @@
             "protocol": "Tcp",
             "sourcePortRange": "*",
             "destinationPortRange": "3389",
-            "sourceAddressPrefix": "[if(equals(parameters('incomingIPToAllowInFirewall'), '*'), 'Internet', parameters('incomingIPToAllowInFirewall'))]",
+            "sourceAddressPrefix": "[if(equals(parameters('incomingIPAllowedForRDP'), '*'), 'Internet', parameters('incomingIPAllowedForRDP'))]",
             "destinationAddressPrefix": "*",
             "access": "Allow",
             "priority": 110,
@@ -503,7 +503,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetDCName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('incomingIPToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
@@ -515,7 +515,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetSQLName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('incomingIPToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
@@ -527,7 +527,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetSPName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('incomingIPToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
