@@ -1000,7 +1000,7 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[parameters('sharePointVersion')]",
-            "EnableAnalysis": "[if(variables('generalSettings').enableAnalysis, true(), false())]"
+            "EnableAnalysis": "[variables('generalSettings').enableAnalysis]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1201,7 +1201,7 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[parameters('sharePointVersion')]",
-            "EnableAnalysis": "[if(variables('generalSettings').enableAnalysis, true(), false())]"
+            "EnableAnalysis": "[variables('generalSettings').enableAnalysis]"
           },
           "privacy": {
             "dataCollection": "enable"
