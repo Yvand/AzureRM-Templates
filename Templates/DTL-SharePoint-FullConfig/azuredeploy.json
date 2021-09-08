@@ -624,10 +624,10 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
+            "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]",
             "provisionVMAgent": true,
             "patchSettings": {
-              "patchMode": "AutomaticByOS",
+              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByPlatform', 'Manual')]",
               "assessmentMode": "ImageDefault"
             }
           }
@@ -776,10 +776,10 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
+            "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]",
             "provisionVMAgent": true,
             "patchSettings": {
-              "patchMode": "AutomaticByOS",
+              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByOS', 'Manual')]",
               "assessmentMode": "ImageDefault"
             }
           }
@@ -881,10 +881,10 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
+            "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]",
             "provisionVMAgent": true,
             "patchSettings": {
-              "patchMode": "AutomaticByOS",
+              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByOS', 'Manual')]",
               "assessmentMode": "ImageDefault"
             }
           }
@@ -1128,10 +1128,10 @@
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "timeZone": "[parameters('vmsTimeZone')]",
-            "enableAutomaticUpdates": "[if(parameters('enableAutomaticUpdates'), true(), false())]",
+            "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]",
             "provisionVMAgent": true,
             "patchSettings": {
-              "patchMode": "AutomaticByOS",
+              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByOS', 'Manual')]",
               "assessmentMode": "ImageDefault"
             }
           }
