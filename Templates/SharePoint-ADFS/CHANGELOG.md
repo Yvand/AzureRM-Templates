@@ -2,9 +2,10 @@
 
 ## Unreleased
 
+* Fix the deployment error when parameter 'addPublicIPAddressToEachVM' is false and 'numberOfAdditionalFrontEnd' is greater than 0
+* Add new parameter 'incomingIPAllowedForRDP', to specify which IP addresses are allowed to use RDP to connect to the VMs (none / unrestricted / individual IP only / range of IPs only).
 * Change default size of virtual machines to use B-series burstable, ideal for such template and much cheaper than other comparable series.
 * Change default storage of SharePoint virtual machines to use StandardSSD_LRS.
-* Replace parameter 'addPublicIPAddressToEachVM' with 'ipToAllowInFirewall', to give more flexibility to configure what incoming traffic is allowed (none / unrestricted / individual IP only / range of IPs only)
 * Update the list of disk types available for virtual machines.
 * Improve management of automatic Windows updates
 * Use type boolean for parameters for which this is possible.
