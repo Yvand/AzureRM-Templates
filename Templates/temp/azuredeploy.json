@@ -413,8 +413,8 @@
             "protocol": "Tcp",
             "sourcePortRange": "*",
             "destinationPortRange": "3389",
-            "sourceAddressPrefix": "Internet",
-            "destinationAddressPrefix": "[if(empty(parameters('ipToAllowInFirewall')), '', parameters('ipToAllowInFirewall'))]",
+            "sourceAddressPrefix": "[if(equals(parameters('ipToAllowInFirewall'), '*'), 'Internet', parameters('ipToAllowInFirewall'))]",
+            "destinationAddressPrefix": "*",
             "access": "Allow",
             "priority": 110,
             "direction": "Inbound"
