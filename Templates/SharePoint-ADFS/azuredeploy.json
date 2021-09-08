@@ -320,6 +320,13 @@
         "description": "Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information."
       }
     },
+    "addPublicIPAddressToEachVM": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specify if each VM should have a public IP and be reachable from Internet."
+      }
+    },
     "ipToAllowInFirewall": {
       "type": "string",
       "defaultValue": "*",
@@ -368,7 +375,6 @@
       "enableAnalysis": true
     },
     "networkSettings": {
-      "addPublicIPAddressToEachVM": true,
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
       "vNetPrivatePrefix": "10.0.0.0/16",
       "subnetDCName": "Subnet-DC",
@@ -575,7 +581,7 @@
       }
     },
     {
-      "condition": "[equals(variables('networkSettings').addPublicIPAddressToEachVM, true())]",
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "name": "[variables('vmDC').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -616,7 +622,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetDCName)]"
               },
-              "publicIPAddress": "[if(variables('networkSettings').addPublicIPAddressToEachVM, variables('networkSettings').vmDCPublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(parameters('addPublicIPAddressToEachVM'), variables('networkSettings').vmDCPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -728,7 +734,7 @@
       ]
     },
     {
-      "condition": "[equals(variables('networkSettings').addPublicIPAddressToEachVM, true())]",
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "name": "[variables('vmSQL').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -768,7 +774,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSQLName)]"
               },
-              "publicIPAddress": "[if(variables('networkSettings').addPublicIPAddressToEachVM, variables('networkSettings').vmSQLPublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(parameters('addPublicIPAddressToEachVM'), variables('networkSettings').vmSQLPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -833,7 +839,7 @@
       "resources": []
     },
     {
-      "condition": "[equals(variables('networkSettings').addPublicIPAddressToEachVM, true())]",
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "name": "[variables('vmSP').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -873,7 +879,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
               },
-              "publicIPAddress": "[if(variables('networkSettings').addPublicIPAddressToEachVM, variables('networkSettings').vmSPPublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(parameters('addPublicIPAddressToEachVM'), variables('networkSettings').vmSPPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -1064,7 +1070,7 @@
       }
     },
     {
-      "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), equals(variables('networkSettings').addPublicIPAddressToEachVM, true()))]",
+      "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), equals(parameters('addPublicIPAddressToEachVM'), true()))]",
       "name": "[concat(variables('vmFE').vmPublicIPName, '-', copyIndex())]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -1114,7 +1120,7 @@
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
               },
               "publicIPAddress": "[
-                if(variables('networkSettings').addPublicIPAddressToEachVM, 
+                if(parameters('addPublicIPAddressToEachVM'), 
                 json(concat('{\"id\":\"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmFE').vmPublicIPName, '-', copyIndex())), '\"}')), 
                 json('null'))]"
             }
@@ -1496,12 +1502,12 @@
   ],
   "outputs": {
     "publicIPAddressSP": {
-      "condition": "[equals(variables('networkSettings').addPublicIPAddressToEachVM, true())]",
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)).dnsSettings.fqdn]"
     },
     "publicIPAddressFEs": {
-      "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), equals(variables('networkSettings').addPublicIPAddressToEachVM, true()))]",
+      "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), equals(parameters('addPublicIPAddressToEachVM'), true()))]",
       "type": "array",
       "copy": {
         "count": "[parameters('numberOfAdditionalFrontEnd')]",
@@ -1509,12 +1515,12 @@
       }
     },
     "publicIPAddressSQL": {
-      "condition": "[equals(variables('networkSettings').addPublicIPAddressToEachVM, true())]",
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)).dnsSettings.fqdn]"
     },
     "publicIPAddressDC": {
-      "condition": "[equals(variables('networkSettings').addPublicIPAddressToEachVM, true())]",
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)).dnsSettings.fqdn]"
     },
