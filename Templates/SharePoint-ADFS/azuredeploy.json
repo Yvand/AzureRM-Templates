@@ -1119,10 +1119,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
               },
-              "publicIPAddress": "[
-                if(parameters('addPublicIPAddressToEachVM'), 
-                json(concat('{\"id\":\"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmFE').vmPublicIPName, '-', copyIndex())), '\"}')), 
-                json('null'))]"
+              "publicIPAddress": "[if(parameters('addPublicIPAddressToEachVM'), json(concat('{\"id\":\"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmFE').vmPublicIPName, '-', copyIndex())), '\"}')), json('null'))]"
             }
           }
         ]
