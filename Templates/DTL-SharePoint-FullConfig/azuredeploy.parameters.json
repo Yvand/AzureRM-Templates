@@ -15,21 +15,17 @@
       "value": "Romance Standard Time"
     },
     "numberOfAdditionalFrontEnd": {
-      "value": 1
+      "value": 0
     },
     "enableHybridBenefitServerLicenses": {
-      "value": "Yes"
+      "value": true
     },
     "addAzureBastion": {
-      "value": "Yes"
+      "value": true
     },
-    "addPublicIPAddressToEachVM": {
-      "value": "Yes"
+    "ipToAllowInFirewall": {
+      "value": "*"
     },
-    // "vmSQLSize": { "value": "Standard_E2as_v4" },
-    //  "vmSQLStorageAccountType": { "value": "Premium_LRS" },
-    //  "vmSPSize": { "value": "Standard_E2as_v4" },
-    //  "vmSPStorageAccountType": { "value": "Premium_LRS" },
     "_artifactsLocation": {
       "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-FullConfig"
     }     
