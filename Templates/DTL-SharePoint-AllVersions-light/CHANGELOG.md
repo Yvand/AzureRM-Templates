@@ -2,10 +2,14 @@
 
 ## Unreleased
 
+* Fix the error when browsing the team site collection in SharePoint 2019 by updating SharePointDSC to 4.8.
 * Change default size of virtual machines to use B-series burstable, ideal for such template and much cheaper than other comparable series.
 * Change default storage of SharePoint virtual machines to use StandardSSD_LRS.
+* Replace parameter 'addPublicIPAddressToEachVM' with 'ipToAllowInFirewall', to give more flexibility to configure what incoming traffic is allowed (none / unrestricted / individual IP only / range of IPs only)
 * Update the list of disks available for virtual machines.
-* Fix the error when browsing the team site collection in SharePoint 2019 by updating SharePointDSC to 4.8.
+* Improve management of automatic Windows updates
+* Use type boolean for parameters for which this is possible.
+* Update apiVersion of all resources to latest version.
 * Update DSC module SharePointDSC from 4.7 to 4.8, which no longer needs custom changes.
 * Update DSC module SqlServerDsc from 15.1.1 to 15.2
 
