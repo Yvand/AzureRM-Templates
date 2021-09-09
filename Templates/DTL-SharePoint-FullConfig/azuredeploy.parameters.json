@@ -7,7 +7,7 @@
     "adminUserName": { "value": "yvand" },
     "vmsTimeZone": { "value": "Romance Standard Time" },
     "addPublicIPAddressToEachVM": { "value": true },
-    "incomingIPAllowedForRDP": { "value": "20.21.22.23" },
+    "RDPTrafficAllowed": { "value": "No" },
     "numberOfAdditionalFrontEnd": { "value": 1 },
     "enableHybridBenefitServerLicenses": { "value": true },
     "enableAutomaticUpdates": { "value": true },
