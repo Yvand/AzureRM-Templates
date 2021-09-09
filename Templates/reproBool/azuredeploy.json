@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "boolParam1": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Portal will set the default value to true as expected."
+      }
+    },
+	"boolParam2": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Portal will not set the default value."
+      }
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+  ],
+  "outputs": {
+  }
+}
