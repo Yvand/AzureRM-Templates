@@ -57,11 +57,11 @@
         "description": "Specify if each VM should have a public IP and be reachable from Internet."
       }
     },
-    "incomingIPAllowedForRDP": {
+    "RDPTrafficAllowed": {
       "type": "string",
-      "defaultValue": "*",
+      "defaultValue": "No",
       "metadata": {
-        "description": "Specify which IP addresses are allowed to use RDP to connect to the VMs:<br>- If empty: Firewall denies all incoming RDP traffic from Internet.<br>- If '*' (default): Firewall accepts all incoming RDP traffic from Internet.<br>- If 'IPAddress': Firewall accepts incoming RDP traffic only from the specified 'IPAddress'."
+        "description": "Specify if RDP is allowed to connect to the VMs:<br>- If 'No' (default): Firewall denies all incoming RDP traffic from Internet.<br>- If '*': Firewall accepts all incoming RDP traffic from Internet.<br>- If 'IPAddress': Firewall accepts incoming RDP traffic only from the specified 'IPAddress'."
       }
     },
     "adminUserName": {
@@ -386,7 +386,7 @@
             "protocol": "Tcp",
             "sourcePortRange": "*",
             "destinationPortRange": "3389",
-            "sourceAddressPrefix": "[if(equals(parameters('incomingIPAllowedForRDP'), '*'), 'Internet', parameters('incomingIPAllowedForRDP'))]",
+            "sourceAddressPrefix": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), if (equals(parameters('RDPTrafficAllowed'), '*'), 'Internet', parameters('RDPTrafficAllowed')))]",
             "destinationAddressPrefix": "*",
             "access": "Allow",
             "priority": 110,
@@ -485,7 +485,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetDCName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
@@ -497,7 +497,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetSQLName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
@@ -509,7 +509,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetSPName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
