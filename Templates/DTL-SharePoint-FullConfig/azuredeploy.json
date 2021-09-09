@@ -61,7 +61,7 @@
       "type": "string",
       "defaultValue": "No",
       "metadata": {
-        "description": "Specify if RDP is allowed to connect to the VMs:<br>- If 'No' (default): Firewall denies all incoming RDP traffic from Internet.<br>- If '*': Firewall accepts all incoming RDP traffic from Internet.<br>- If 'IPAddress': Firewall accepts incoming RDP traffic only from the specified 'IPAddress'."
+        "description": "Specify if RDP traffic is allowed to connect to the VMs:<br>- If 'No' (default): Firewall denies all incoming RDP traffic from Internet.<br>- If '*': Firewall accepts all incoming RDP traffic from Internet.<br>- If 'xx.xx.xx.xx': Firewall accepts incoming RDP traffic only from the IP 'xx.xx.xx.xx'."
       }
     },
     "adminUserName": {
