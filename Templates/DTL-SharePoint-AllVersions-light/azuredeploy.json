@@ -316,6 +316,7 @@
     "incomingIPAllowedForRDP": {
       "type": "string",
       "defaultValue": "*",
+      "minLength": 0,
       "metadata": {
         "description": "Specify which IP addresses are allowed to use RDP to connect to the VMs:<br>- If empty: Firewall denies all incoming RDP traffic from Internet.<br>- If '*' (default): Firewall accepts all incoming RDP traffic from Internet.<br>- If 'IPAddress': Firewall accepts incoming RDP traffic only from the specified 'IPAddress'."
       }
