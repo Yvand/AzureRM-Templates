@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "2.0.0.0",
+  "parameters": {
+    "incomingIPAllowedForRDP": {
+      "type": "string",
+      "defaultValue": "*",
+      "minLength": 0,
+      "metadata": {
+        "description": "Specify which IP addresses are allowed to use RDP to connect to the VMs:<br>- If empty: Firewall denies all incoming RDP traffic from Internet.<br>- If '*' (default): Firewall accepts all incoming RDP traffic from Internet.<br>- If 'IPAddress': Firewall accepts incoming RDP traffic only from the specified 'IPAddress'."
+      }
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+  ],
+  "outputs": {
+  }
+}
