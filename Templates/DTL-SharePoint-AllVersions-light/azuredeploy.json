@@ -1,6 +1,10 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
+  "contentVersion": "2.0.0.0",
+  "metadata": {
+    "description": "Deploy SharePoint 2019 / 2016 / 2013 with a lightweight configuration. Each version is independent and may or may not be deployed.",
+    "author": "Yvand"
+  },
   "parameters": {
     "location": {
       "type": "string",
@@ -302,11 +306,18 @@
         "description": "Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information."
       }
     },
-    "ipToAllowInFirewall": {
+    "addPublicIPAddressToEachVM": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specify if each VM should have a public IP and be reachable from Internet."
+      }
+    },
+    "incomingIPAllowedForRDP": {
       "type": "string",
       "defaultValue": "*",
       "metadata": {
-        "description": "If empty: Firewall denies all incoming requests from Internet; If '*': Firewall accepts all incoming requests from Internet; If 'YourIPAddress': Firewall accepts incoming requests only from the specified 'YourIPAddress'."
+        "description": "Specify which IP addresses are allowed to use RDP to connect to the VMs:<br>- If empty: Firewall denies all incoming RDP traffic from Internet.<br>- If '*' (default): Firewall accepts all incoming RDP traffic from Internet.<br>- If 'IPAddress': Firewall accepts incoming RDP traffic only from the specified 'IPAddress'."
       }
     },
     "_artifactsLocation": {
@@ -350,7 +361,6 @@
       "enableAnalysis": false
     },
     "networkSettings": {
-      "addPublicIPAddressToEachVM": true,
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
       "vNetPrivatePrefix": "10.1.0.0/16",
       "subnetDCName": "Subnet-DC",
@@ -386,7 +396,7 @@
             "protocol": "Tcp",
             "sourcePortRange": "*",
             "destinationPortRange": "3389",
-            "sourceAddressPrefix": "[if(equals(parameters('ipToAllowInFirewall'), '*'), 'Internet', parameters('ipToAllowInFirewall'))]",
+            "sourceAddressPrefix": "[if(equals(parameters('incomingIPAllowedForRDP'), '*'), 'Internet', parameters('incomingIPAllowedForRDP'))]",
             "destinationAddressPrefix": "*",
             "access": "Allow",
             "priority": 110,
@@ -483,7 +493,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetDCName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('ipToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
@@ -495,7 +505,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetSQLName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('ipToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
@@ -507,7 +517,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetSPName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('ipToAllowInFirewall')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
@@ -561,7 +571,7 @@
       }
     },
     {
-      "condition": "[equals(variables('networkSettings').addPublicIPAddressToEachVM, true())]",
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "name": "[variables('vmDC').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -602,7 +612,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetDCName)]"
               },
-              "publicIPAddress": "[if(equals(variables('networkSettings').addPublicIPAddressToEachVM, true()), variables('networkSettings').vmDCPublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(parameters('addPublicIPAddressToEachVM'), variables('networkSettings').vmDCPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -715,7 +725,7 @@
       ]
     },
     {
-      "condition": "[equals(variables('networkSettings').addPublicIPAddressToEachVM, true())]",
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "name": "[variables('vmSQL').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -755,7 +765,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSQLName)]"
               },
-              "publicIPAddress": "[if(equals(variables('networkSettings').addPublicIPAddressToEachVM, true()), variables('networkSettings').vmSQLPublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(parameters('addPublicIPAddressToEachVM'), variables('networkSettings').vmSQLPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -870,7 +880,7 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('provisionSharePoint2013'), true()), equals(variables('networkSettings').addPublicIPAddressToEachVM, true()))]",
+      "condition": "[and(equals(parameters('provisionSharePoint2013'), true()), equals(parameters('addPublicIPAddressToEachVM'), true()))]",
       "name": "[variables('vmSP2013').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -911,7 +921,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
               },
-              "publicIPAddress": "[if(equals(variables('networkSettings').addPublicIPAddressToEachVM, true()), variables('networkSettings').vmSP2013PublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(parameters('addPublicIPAddressToEachVM'), variables('networkSettings').vmSP2013PublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -1042,7 +1052,7 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('provisionSharePoint2016'), true()), equals(variables('networkSettings').addPublicIPAddressToEachVM, true()))]",
+      "condition": "[and(equals(parameters('provisionSharePoint2016'), true()), equals(parameters('addPublicIPAddressToEachVM'), true()))]",
       "name": "[variables('vmSP2016').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -1083,7 +1093,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
               },
-              "publicIPAddress": "[if(equals(variables('networkSettings').addPublicIPAddressToEachVM, true()), variables('networkSettings').vmSP2016PublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(parameters('addPublicIPAddressToEachVM'), variables('networkSettings').vmSP2016PublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -1214,7 +1224,7 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('provisionSharePoint2019'), true()), equals(variables('networkSettings').addPublicIPAddressToEachVM, true()))]",
+      "condition": "[and(equals(parameters('provisionSharePoint2019'), true()), equals(parameters('addPublicIPAddressToEachVM'), true()))]",
       "name": "[variables('vmSP2019').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
@@ -1255,7 +1265,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
               },
-              "publicIPAddress": "[if(equals(variables('networkSettings').addPublicIPAddressToEachVM, true()), variables('networkSettings').vmSP2019PublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(parameters('addPublicIPAddressToEachVM'), variables('networkSettings').vmSP2019PublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -1544,27 +1554,27 @@
       "value": "[variables('generalSettings').localAdminUserName]"
     },
     "publicIPAddressSP2019": {
-      "condition": "[and(equals(parameters('provisionSharePoint2019'), true()), equals(variables('networkSettings').addPublicIPAddressToEachVM, true()))]",
+      "condition": "[and(equals(parameters('provisionSharePoint2019'), true()), equals(parameters('addPublicIPAddressToEachVM'), true()))]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP2019').vmPublicIPName)).dnsSettings.fqdn]"
     },
     "publicIPAddressSP2016": {
-      "condition": "[and(equals(parameters('provisionSharePoint2016'), true()), equals(variables('networkSettings').addPublicIPAddressToEachVM, true()))]",
+      "condition": "[and(equals(parameters('provisionSharePoint2016'), true()), equals(parameters('addPublicIPAddressToEachVM'), true()))]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP2016').vmPublicIPName)).dnsSettings.fqdn]"
     },
     "publicIPAddressSP2013": {
-      "condition": "[and(equals(parameters('provisionSharePoint2013'), true()), equals(variables('networkSettings').addPublicIPAddressToEachVM, true()))]",
+      "condition": "[and(equals(parameters('provisionSharePoint2013'), true()), equals(parameters('addPublicIPAddressToEachVM'), true()))]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP2013').vmPublicIPName)).dnsSettings.fqdn]"
     },
     "publicIPAddressSQL": {
-      "condition": "[equals(variables('networkSettings').addPublicIPAddressToEachVM, true())]",
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)).dnsSettings.fqdn]"
     },
     "publicIPAddressDC": {
-      "condition": "[equals(variables('networkSettings').addPublicIPAddressToEachVM, true())]",
+      "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)).dnsSettings.fqdn]"
     }
