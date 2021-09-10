@@ -3,12 +3,13 @@
 ## Unreleased
 
 * Fix the deployment error when parameter 'addPublicIPAddressToEachVM' is false and 'numberOfAdditionalFrontEnd' is greater than 0
-* Add new parameter 'incomingIPAllowedForRDP', to specify which IP addresses are allowed to use RDP to connect to the VMs (none / unrestricted / individual IP only / range of IPs only).
 * Change default size of virtual machines to use B-series burstable, ideal for such template and much cheaper than other comparable series.
-* Change default storage of SharePoint virtual machines to use StandardSSD_LRS.
+* Change default storage type of SharePoint virtual machines to 'StandardSSD_LRS'.
+* Change type of parameters to boolean when possible.
+* Introduce new parameter 'RDPTrafficAllowed', to finely configure if/how RDP traffic should be allowed.
+* Reorder parameters to have a more logical display when deploying the template from the portal.
 * Update the list of disk types available for virtual machines.
 * Improve management of automatic Windows updates
-* Use type boolean for parameters for which this is possible.
 * Update apiVersion of all resources to latest version.
 * Update DSC module SharePointDSC from 4.7 to 4.8, which no longer needs custom changes.
 * Update DSC module SqlServerDsc from 15.1.1 to 15.2
