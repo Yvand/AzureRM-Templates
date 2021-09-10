@@ -25,12 +25,12 @@ You can connect to virtual machines using:
 
 About network security:
 
-* All subnets are protected by a [Network Security Group](https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview)].
-* Parameter 'RDPTrafficAllowed' may add an incoming rule to the Network Security Groups to allow RDP traffic, depending on how it is set.
-* If parameter 'addPublicIPToVMs' is set to true, each machine gets a public IP and a DNS name, and may be reachable from Internet (depending on the configuration of its Network Security Group associated).
+* All subnets are protected by a [Network Security Group](https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview).
+* Parameter 'RDPTrafficAllowed' may add an incoming rule to the Network Security Groups to allow RDP traffic, depending on how you set it.
+* If parameter 'addPublicIPToVMs' is set to true, each machine gets a public IP, a DNS name, and may be reachable from Internet (depending on the configuration of the Network Security Group it depends on).
 
 Default size of virtual machines use [B-series burstable](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable), ideal for such template and much cheaper than other comparable series.  
-Below is the list of default size and storage type per virtual machine role. Prices shown are per month, as of 2021-09-10, in region West US, without enabling the '[Azure Hybrid Benefit](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/)' licensing benefit:
+Below is the default size and storage type per virtual machine role. Prices shown are per month, as of 2021-09-10, in region West US, without enabling the '[Azure Hybrid Benefit](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/)' licensing benefit, assuming they run 24*7:
 
 * DC: Size [Standard_B2s](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) ($42.05) and OS disk is a 64 GiB standard HDD ($3.01).
 * SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) ($78.11) and OS disk is a 128 GiB standard HDD ($5.89).
@@ -41,4 +41,4 @@ Additional notes:
 * I strongly recommend to update SharePoint to a recent build after the deployment completed.  
 * With the default settings, the deployment takes about 1h to complete.  
 * Once it is completed, the template will return valuable information in the 'Outputs' of the deployment.  
-* For various reasons, the template sets the local (not domain) administrator name with a string that is unique to your subscription (e.g. 'local-q1w2e3r4t5'). You can find the name of the local admin in the 'Outputs' of the deployment once it is completed.  
+* For various (very good) reasons, the template sets the local (not domain) administrator name with a string that is unique to your subscription (e.g. 'local-q1w2e3r4t5'). You can find the name of the local admin in the 'Outputs' of the deployment once it is completed.  
