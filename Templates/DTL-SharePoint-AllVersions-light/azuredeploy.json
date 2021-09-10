@@ -49,6 +49,28 @@
         "description": "Specify if ADFS shoulde be provisioned, and used in SharePoint in an extended zone."
       }
     },
+    "addAzureBastion": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information."
+      }
+    },
+    "addPublicIPAddressToEachVM": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Specify if each VM should have a public IP and be reachable from Internet."
+      }
+    },
+    "RDPTrafficAllowed": {
+      "type": "string",
+      "defaultValue": "No",
+      "minLength": 1,
+      "metadata": {
+        "description": "Specify if RDP traffic is allowed to connect to the VMs:<br>- If 'No' (default): Firewall denies all incoming RDP traffic from Internet.<br>- If '*' or 'Internet': Firewall accepts all incoming RDP traffic from Internet.<br>- If 'ServiceTagName': Firewall accepts all incoming RDP traffic from the specified 'ServiceTagName'.<br>- If 'xx.xx.xx.xx': Firewall accepts incoming RDP traffic only from the IP 'xx.xx.xx.xx'."
+      }
+    },
     "adminUserName": {
       "type": "string",
       "minLength": 1,
@@ -68,72 +90,6 @@
       "minLength": 8,
       "metadata": {
         "description": "Password for all service account and SharePoint passphrase. It must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
-      }
-    },
-    "vmDCSize": {
-      "type": "string",
-      "defaultValue": "Standard_B2s",
-      "metadata": {
-        "description": "Size of the DC VM"
-      }
-    },
-    "vmDCStorageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "StandardSSD_LRS",
-        "Premium_LRS",
-        "Premium_ZRS",
-        "StandardSSD_ZRS",
-        "UltraSSD_LRS"
-      ],
-      "metadata": {
-        "description": "Type of storage for the managed disks. Visit 'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes' for more information"
-      }
-    },
-    "vmSQLSize": {
-      "type": "string",
-      "defaultValue": "Standard_B2ms",
-      "metadata": {
-        "description": "Size of the SQL VM"
-      }
-    },
-    "vmSQLStorageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "StandardSSD_LRS",
-        "Premium_LRS",
-        "Premium_ZRS",
-        "StandardSSD_ZRS",
-        "UltraSSD_LRS"
-      ],
-      "metadata": {
-        "description": "Type of storage for the managed disks. Visit 'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes' for more information"
-      }
-    },
-    "vmSPSize": {
-      "type": "string",
-      "defaultValue": "Standard_B4ms",
-      "metadata": {
-        "description": "Size of the SharePoint VM"
-      }
-    },
-    "vmSPStorageAccountType": {
-      "type": "string",
-      "defaultValue": "StandardSSD_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "StandardSSD_LRS",
-        "Premium_LRS",
-        "Premium_ZRS",
-        "StandardSSD_ZRS",
-        "UltraSSD_LRS"
-      ],
-      "metadata": {
-        "description": "Type of storage for the managed disks. Visit 'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes' for more information"
       }
     },
     "vmsTimeZone": {
@@ -299,26 +255,70 @@
         "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
       }
     },
-    "addAzureBastion": {
-      "type": "bool",
-      "defaultValue": false,
-      "metadata": {
-        "description": "Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information."
-      }
-    },
-    "addPublicIPAddressToEachVM": {
-      "type": "bool",
-      "defaultValue": true,
-      "metadata": {
-        "description": "Specify if each VM should have a public IP and be reachable from Internet."
-      }
-    },
-    "incomingIPAllowedForRDP": {
+    "vmDCSize": {
       "type": "string",
-      "defaultValue": "*",
-      "minLength": 0,
+      "defaultValue": "Standard_B2s",
       "metadata": {
-        "description": "Specify which IP addresses are allowed to use RDP to connect to the VMs:<br>- If empty: Firewall denies all incoming RDP traffic from Internet.<br>- If '*' (default): Firewall accepts all incoming RDP traffic from Internet.<br>- If 'IPAddress': Firewall accepts incoming RDP traffic only from the specified 'IPAddress'."
+        "description": "Size of the DC VM"
+      }
+    },
+    "vmDCStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "StandardSSD_LRS",
+        "Premium_LRS",
+        "Premium_ZRS",
+        "StandardSSD_ZRS",
+        "UltraSSD_LRS"
+      ],
+      "metadata": {
+        "description": "Type of storage for the managed disks. Visit 'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes' for more information"
+      }
+    },
+    "vmSQLSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2ms",
+      "metadata": {
+        "description": "Size of the SQL VM"
+      }
+    },
+    "vmSQLStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "StandardSSD_LRS",
+        "Premium_LRS",
+        "Premium_ZRS",
+        "StandardSSD_ZRS",
+        "UltraSSD_LRS"
+      ],
+      "metadata": {
+        "description": "Type of storage for the managed disks. Visit 'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes' for more information"
+      }
+    },
+    "vmSPSize": {
+      "type": "string",
+      "defaultValue": "Standard_B4ms",
+      "metadata": {
+        "description": "Size of the SharePoint VM"
+      }
+    },
+    "vmSPStorageAccountType": {
+      "type": "string",
+      "defaultValue": "StandardSSD_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "StandardSSD_LRS",
+        "Premium_LRS",
+        "Premium_ZRS",
+        "StandardSSD_ZRS",
+        "UltraSSD_LRS"
+      ],
+      "metadata": {
+        "description": "Type of storage for the managed disks. Visit 'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes' for more information"
       }
     },
     "_artifactsLocation": {
@@ -397,7 +397,7 @@
             "protocol": "Tcp",
             "sourcePortRange": "*",
             "destinationPortRange": "3389",
-            "sourceAddressPrefix": "[if(equals(parameters('incomingIPAllowedForRDP'), '*'), 'Internet', parameters('incomingIPAllowedForRDP'))]",
+            "sourceAddressPrefix": "[parameters('RDPTrafficAllowed')]",
             "destinationAddressPrefix": "*",
             "access": "Allow",
             "priority": 110,
@@ -494,7 +494,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetDCName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
@@ -506,7 +506,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetSQLName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
@@ -518,7 +518,7 @@
         "displayName": "[variables('networkSettings').nsgSubnetSPName]"
       },
       "properties": {
-        "securityRules": "[if(empty(parameters('incomingIPAllowedForRDP')), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
+        "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
