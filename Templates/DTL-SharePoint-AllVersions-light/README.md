@@ -22,11 +22,13 @@ About network security:
 * If parameter 'addPublicIPToVMs' is set to true, each machine gets a public IP, a DNS name, and may be reachable from Internet (depending on the configuration of the Network Security Group it depends on).
 
 Default size of virtual machines use [B-series burstable](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable), ideal for such template and much cheaper than other comparable series.  
-Below is the default size and storage type per virtual machine role. Prices shown are per month, as of 2021-09-10, in region West US, without enabling the '[Azure Hybrid Benefit](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/)' licensing benefit, assuming they run 24*7:
+Below is the default size and storage type per virtual machine role. Prices shown are in US dollar, per month, as of 2021-09-10, in region West Europe, without enabling the '[Azure Hybrid Benefit](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/)' licensing benefit, assuming they run 24*7:
 
-* DC: Size [Standard_B2s](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) ($42.05) and OS disk is a 128 GiB standard HDD ($5.89).
-* SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) ($78.11) and OS disk is a 128 GiB standard HDD ($5.89).
-* SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) ($156.22) and OS disk is a 128 GiB [standard SSD](https://azure.microsoft.com/en-us/blog/preview-standard-ssd-disks-for-azure-virtual-machine-workloads/) ($9.60).
+* DC: Size [Standard_B2s](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) ($40.88) and OS disk is a 128 GiB standard HDD ($5.89).
+* SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) ($75.92) and OS disk is a 128 GiB standard HDD ($5.89).
+* SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) ($151.84) and OS disk is a 128 GiB [standard SSD](https://azure.microsoft.com/en-us/blog/preview-standard-ssd-disks-for-azure-virtual-machine-workloads/) ($9.60).
+
+You can visit <https://azure.com/e/cec4eb6f853d43c6bcfaf56be0363ee4> to view the up-to-date cost of the template when provisioned with the default resources, in the region/currency of your choice.
 
 Additional notes:
 
