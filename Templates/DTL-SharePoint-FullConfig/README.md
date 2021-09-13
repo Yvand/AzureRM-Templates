@@ -22,21 +22,26 @@ This template deploys SharePoint 2019, 2016 or 2013 with the following configura
 
 ## Remote access and security
 
-You can connect to virtual machines using:
+The template creates 1 virtual network with 3 subnets. All subnets are protected by a [Network Security Group](https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview) with no custom rule by default.
 
-* [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) if you set parameter 'addAzureBastion' to true.
-* RDP protocol if you set parameter 'addPublicIPToVMs' to true AND configured parameter 'RDPTrafficAllowed' accordingly.
+The following parameters impact the remote access of the virtual machines, and the network security:
 
-About network security:
-
-* All subnets are protected by a [Network Security Group](https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview).
-* Parameter 'RDPTrafficAllowed' may add an incoming rule to the Network Security Groups to allow RDP traffic, depending on how you set it.
-* If parameter 'addPublicIPToVMs' is set to true, each machine gets a public IP, a DNS name, and may be reachable from Internet (depending on the configuration of the Network Security Group it depends on).
+* Parameter 'addPublicIPAddressToEachVM':
+  * if true (default value): Each virtual machine gets a public IP, a DNS name, and may be reachable from Internet.
+  * if false: No public IP resource is created.
+* Parameter 'RDPTrafficAllowed':
+  * If 'No' (default value): Firewall denies all incoming RDP traffic from Internet.
+  * If '*' or 'Internet': Firewall accepts all incoming RDP traffic from Internet.
+  * If 'ServiceTagName': Firewall accepts all incoming RDP traffic from the specified 'ServiceTagName'.
+  * If 'xx.xx.xx.xx': Firewall accepts incoming RDP traffic only from the IP 'xx.xx.xx.xx'.
+* Parameter 'addAzureBastion':
+  * if true: Configure service [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) to allow a secure remote access.
+  * if false (default value): Service is not created.
 
 ## Cost
 
 By default, virtual machines use [B-series burstable](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable), ideal for such template and much cheaper than other comparable series.  
-Below is the default size and storage type per virtual machine role. Prices shown are in US Dollar, per month, as of 2021-09-10, in region West Europe, without enabling the '[Azure Hybrid Benefit](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/)' licensing benefit, assuming they run 24*7:
+Below is the default size and storage type per virtual machine role. Prices are shown in US Dollar, per month, as of 2021-09-13, in region West Europe, without enabling the '[Azure Hybrid Benefit](https://azure.microsoft.com/en-us/pricing/hybrid-benefit/)' licensing benefit, assuming they run 24*7:
 
 * DC: Size [Standard_B2s](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) ($40.88) and OS disk is a 128 GiB standard HDD ($5.89).
 * SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) ($75.92) and OS disk is a 128 GiB standard HDD ($5.89).
