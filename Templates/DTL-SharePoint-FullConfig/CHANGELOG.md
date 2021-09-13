@@ -1,6 +1,6 @@
 # Change log for Azure DevTest Labs template DTL-SharePoint-FullConfig
 
-## Unreleased
+## Enhancements & bug-fixes - Published in September 13, 2021
 
 * Change default size of virtual machines to use B-series burstable, ideal for such template and much cheaper than other comparable series.
 * Change default storage type of SharePoint virtual machines to 'StandardSSD_LRS'.

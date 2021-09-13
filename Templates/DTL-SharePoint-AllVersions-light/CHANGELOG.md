@@ -1,6 +1,6 @@
 # Change log for Azure DevTest Labs template SharePoint-AllVersions
 
-## Unreleased
+## Enhancements & bug-fixes - Published in September 13, 2021
 
 * Fix the error when browsing the team site collection in SharePoint 2019 by updating SharePointDSC to 4.8.
 * Change default size of virtual machines to use B-series burstable, ideal for such template and much cheaper than other comparable series.

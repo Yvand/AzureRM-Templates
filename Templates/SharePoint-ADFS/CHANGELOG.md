@@ -1,6 +1,6 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Unreleased
+## Enhancements & bug-fixes - Published in September 13, 2021
 
 * Fix the deployment error when parameter 'addPublicIPAddressToEachVM' is false and 'numberOfAdditionalFrontEnd' is greater than 0
 * Change default size of virtual machines to use B-series burstable, ideal for such template and much cheaper than other comparable series.
