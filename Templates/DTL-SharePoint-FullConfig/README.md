@@ -36,7 +36,7 @@ The following parameters impact the remote access of the virtual machines, and t
   * If 'xx.xx.xx.xx': Firewall accepts incoming RDP traffic only from the IP 'xx.xx.xx.xx'.
 * Parameter 'addAzureBastion':
   * if true: Configure service [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) to allow a secure remote access.
-  * if false (default value): Service is not created.
+  * if false (default value): Service Azure Bastion is not created.
 
 ## Cost
 
@@ -47,7 +47,7 @@ Below is the default size and storage type per virtual machine role. Prices are 
 * SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) ($75.92) and OS disk is a 128 GiB standard HDD ($5.89).
 * SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) ($151.84) and OS disk is a 128 GiB [standard SSD](https://azure.microsoft.com/en-us/blog/preview-standard-ssd-disks-for-azure-virtual-machine-workloads/) ($9.60).
 
-You can visit <https://azure.com/e/cec4eb6f853d43c6bcfaf56be0363ee4> to view the up-to-date cost of the template when provisioned with the default resources, in the region/currency of your choice.
+You can visit <https://azure.com/e/cec4eb6f853d43c6bcfaf56be0363ee4> to view the global, up-to-date cost of the template when it is provisioned with the default resources, in the region/currency of your choice.
 
 ## More information
 
