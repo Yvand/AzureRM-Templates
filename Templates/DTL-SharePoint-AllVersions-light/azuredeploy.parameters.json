@@ -2,21 +2,21 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "provisionSharePoint2013": { "value": "Yes" },
-    "provisionSharePoint2016": { "value": "Yes" },
-    "provisionSharePoint2019": { "value": "Yes" },
-    "configureADFS": { "value": "Yes" },
+    "provisionSharePoint2013": { "value": false },
+    "provisionSharePoint2016": { "value": true },
+    "provisionSharePoint2019": { "value": false },
+    "configureADFS": { "value": true },
     "domainFQDN": { "value": "contoso.local" },
     "adminUserName": { "value": "Yvand" },
-    "addAzureBastion": { "value": "Yes" },
-    "addPublicIPAddressToEachVM": { "value": "Yes" },
-    "enableHybridBenefitServerLicenses": { "value": "Yes" },
-    "enableAutomaticUpdates": { "value": "No" },    
+    "addPublicIPAddressToEachVM": { "value": true },
+    "RDPTrafficAllowed": { "value": "12.33.22.22" },
+    "addAzureBastion": { "value": false },
+    "enableHybridBenefitServerLicenses": { "value": true },
+    "enableAutomaticUpdates": { "value": false },
     "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-AllVersions-light" },
-    "vmDCStorageAccountType": { "value": "Premium_LRS" },
     // "vmSQLSize": { "value": "Standard_E2as_v4" },
-    "vmSQLStorageAccountType": { "value": "Premium_LRS" },
+    // "vmSQLStorageAccountType": { "value": "Standard_LRS" },
     // "vmSPSize": { "value": "Standard_E2as_v4" },
-    "vmSPStorageAccountType": { "value": "Premium_LRS" }
+    "vmSPStorageAccountType": { "value": "StandardSSD_LRS" }
   }
 }

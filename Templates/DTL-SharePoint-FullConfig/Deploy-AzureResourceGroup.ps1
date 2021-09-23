@@ -3,7 +3,7 @@
 ### Define variables
 $resourceGroupLocation = 'westeurope'
 #$resourceGroupLocation = 'northeurope'
-$resourceGroupName = 'yddtl-full-1'
+$resourceGroupName = 'ydtlfull1'
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
@@ -57,7 +57,7 @@ $checkTemplate = Test-AzResourceGroupDeployment `
     -TemplateFile $TemplateFile `
     -Verbose `
     -TemplateParameterFile $templateParametersFile `
-    @passwords
+    @passwords # `
     # -TemplateParameterObject $parameters
 
 if ($checkTemplate.Count -eq 0) {
@@ -70,7 +70,7 @@ if ($checkTemplate.Count -eq 0) {
         -TemplateFile $TemplateFile `
         -Verbose -Force `
         -TemplateParameterFile $templateParametersFile `
-        @passwords 
+        @passwords # `
         # -TemplateParameterObject $parameters
 
     $elapsedTime = New-TimeSpan $startTime $(get-date)

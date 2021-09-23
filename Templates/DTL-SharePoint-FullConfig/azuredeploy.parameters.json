@@ -2,36 +2,16 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "sharePointVersion": {
-      "value": "2019"
-    },
-    "domainFQDN": {
-      "value": "contoso.local"
-    },
-    "adminUserName": { 
-      "value": "yvand"
-    },
-    "vmsTimeZone": {
-      "value": "Romance Standard Time"
-    },
-    "numberOfAdditionalFrontEnd": {
-      "value": 1
-    },
-    "enableHybridBenefitServerLicenses": {
-      "value": "Yes"
-    },
-    "addAzureBastion": {
-      "value": "Yes"
-    },
-    "addPublicIPAddressToEachVM": {
-      "value": "Yes"
-    },
-    // "vmSQLSize": { "value": "Standard_E2as_v4" },
-    //  "vmSQLStorageAccountType": { "value": "Premium_LRS" },
-    //  "vmSPSize": { "value": "Standard_E2as_v4" },
-    //  "vmSPStorageAccountType": { "value": "Premium_LRS" },
-    "_artifactsLocation": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-FullConfig"
-    }     
+    "sharePointVersion": { "value": "2019" },
+    "domainFQDN": { "value": "contoso.local" },
+    "adminUserName": { "value": "yvand" },
+    "vmsTimeZone": { "value": "Romance Standard Time" },
+    "addPublicIPAddressToEachVM": { "value": true },
+    "RDPTrafficAllowed": { "value": "No" },
+    "numberOfAdditionalFrontEnd": { "value": 1 },
+    "enableHybridBenefitServerLicenses": { "value": true },
+    "enableAutomaticUpdates": { "value": true },
+    "addAzureBastion": { "value": true },
+    "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-FullConfig" }     
   }
 }

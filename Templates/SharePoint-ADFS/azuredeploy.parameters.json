@@ -2,39 +2,19 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "sharePointVersion": {
-      "value": "2019"
-    },
-    "dnsLabelPrefix": {
-      "value": "ydspfull1"
-    },
-    "domainFQDN": {
-      "value": "contoso.local"
-    },
-    "vmsTimeZone": {
-      "value": "Romance Standard Time"
-    },
-    "numberOfAdditionalFrontEnd": {
-      "value": 2
-    },
-    "enableHybridBenefitServerLicenses": {
-      "value": "Yes"
-    },
-    "sharePointDataDiskSize": {
-      "value": 0
-    },
-    "addAzureBastion": {
-      "value": "Yes"
-    },
-    "addPublicIPAddressToEachVM": {
-      "value": "Yes"
-    },
+    "sharePointVersion": { "value": "2019" },
+    "dnsLabelPrefix": { "value": "ydspfull4" },
+    "domainFQDN": { "value": "contoso.local" },
+    "vmsTimeZone": { "value": "Romance Standard Time" },
+    "addPublicIPAddressToEachVM": { "value": false },
+    "RDPTrafficAllowed": { "value": "No" },
+    "numberOfAdditionalFrontEnd": { "value": 0 },
+    "enableHybridBenefitServerLicenses": { "value": true },
+    "enableAutomaticUpdates": { "value": true },
+    "sharePointDataDiskSize": { "value": 0 },
+    "addAzureBastion": { "value": true },
     // "vmSQLSize": { "value": "Standard_E2as_v4" },
-    // "vmSQLStorageAccountType": { "value": "Premium_LRS" },
     // "vmSPSize": { "value": "Standard_E2as_v4" },
-    // "vmSPStorageAccountType": { "value": "Premium_LRS" },
-    "_artifactsLocation": {
-      "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/"
-    }
+    "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" }
   }
 }
