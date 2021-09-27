@@ -1551,7 +1551,6 @@
       "value": "[concat(substring(parameters('domainFQDN'), 0, indexOf(parameters('domainFQDN'), '.')), '\\', parameters('adminUserName'))]"
     },
     "domainAdminAccountFormatForBastion": {
-      "condition": "[equals(parameters('addAzureBastion'), true())]",
       "type": "string",
       "value": "[concat(parameters('adminUserName'), '@', parameters('domainFQDN'))]"
     },
