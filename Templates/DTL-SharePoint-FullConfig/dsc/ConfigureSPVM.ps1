@@ -558,6 +558,7 @@ configuration ConfigureSPVM
             {
                 # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
                 Restart-Service SPTimerV4
+                Restart-Service SPAdminV4
             }
             GetScript            = { }
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
