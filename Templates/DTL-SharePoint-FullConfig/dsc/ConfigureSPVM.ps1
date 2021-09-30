@@ -558,6 +558,7 @@ configuration ConfigureSPVM
             {
                 # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
                 Restart-Service SPTimerV4
+                # 2021-09: In SharePoint 2013, solution deployment failed multiple times with an error that SPAdminV4 was not started
                 Restart-Service SPAdminV4
             }
             GetScript            = { }
