@@ -285,9 +285,9 @@ function Populate-ActiveDirectory
             $adminName = "Yvand"
             $groupName = "Group1"
             $users = @( 
-                @{Name = "user1"; AddToGroup = $true; OtherAttributes = @{'mail'="user1@yvand.net"; 'displayName'="user1"} }, 
-                @{Name = "user2"; AddToGroup = $false; OtherAttributes = @{'mail'="user2@yvand.net"; 'displayName'="firstname user2"; 'givenName'="firstname user2"} },
-                @{Name = "user3"; AddToGroup = $false; OtherAttributes = @{'mail'="user3@yvand.net"; 'displayName'="user3"} }
+                @{Name = "user1"; AddToGroup = $true; OtherAttributes = @{'userPrincipalName'="user1@yvand.net"; 'mail'="user1@yvand.net"; 'displayName'="user1"} }, 
+                @{Name = "user2"; AddToGroup = $false; OtherAttributes = @{'userPrincipalName'="user2@yvand.net"; 'mail'="user2@yvand.net"; 'displayName'="firstname user2"; 'givenName'="firstname user2"} },
+                @{Name = "user3"; AddToGroup = $false; OtherAttributes = @{'userPrincipalName'="user3@yvand.net"; 'mail'="user3@yvand.net"; 'displayName'="user3"} }
                     )
 
             if ($null -eq (Get-ADGroup -Filter {SamAccountName -eq $groupName})) {
