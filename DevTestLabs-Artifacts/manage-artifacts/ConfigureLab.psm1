@@ -37,6 +37,10 @@ function Configure-Lab
 
     try
     {
+		Write-Host "Restarting SharePoint services to improve reliability of farm solution deployment..."
+		Restart-Service SPTimerV4
+		Restart-Service SPAdminV4
+		
         Write-Host "Populating Active Directory..."
         Populate-ActiveDirectory -adminUserName $adminUserName -adminPassword $adminPassword
 
