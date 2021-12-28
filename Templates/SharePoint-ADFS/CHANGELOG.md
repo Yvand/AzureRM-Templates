@@ -1,5 +1,10 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+* Change Windows image of VM DC to Windows Server 2022 Azure Edition
+* Change disk size of VM DC to 32 GB
+
 ## Enhancements & bug-fixes - Published in October 4, 2021
 
 * Improve reliability of DSC module cChoco, which caused most of the deployment errors.

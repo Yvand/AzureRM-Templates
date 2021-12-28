@@ -420,7 +420,7 @@
     "vmDC": {
       "vmImagePublisher": "MicrosoftWindowsServer",
       "vmImageOffer": "WindowsServer",
-      "vmImageSKU": "2019-Datacenter",
+      "vmImageSKU": "2022-datacenter-azure-edition-smalldisk",
       "vmOSDiskName": "Disk-DC-OS",
       "vmVmSize": "[parameters('vmDCSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmDCName, '-0')]",
@@ -673,7 +673,7 @@
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
-            "diskSizeGB": 128,
+            "diskSizeGB": 32,
             "managedDisk": {
               "storageAccountType": "[parameters('vmDCStorageAccountType')]"
             }
