@@ -630,7 +630,7 @@ configuration ConfigureSPVM
         #     CacheSizeInMB        = 1000 # Default size is 819MB on a server with 16GB of RAM (5%)
         #     CreateFirewallRules  = $true
         #     ServiceAccount       = $SPFarmCredsQualified.UserName
-        #     InstallAccount       = $SPSetupCredsQualified
+        #     PsDscRunAsCredential       = $SPSetupCredsQualified
         #     Ensure               = "Present"
         #     DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
         # }
@@ -834,7 +834,6 @@ configuration ConfigureSPVM
             AllowAnonymous         = $false
             Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
             Zone                   = "Intranet"
-            UseSSL                 = $true
             Port                   = 443
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
@@ -992,7 +991,7 @@ configuration ConfigureSPVM
             Name                 = "Subscription Settings Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
-            InstallAccount       = $SPSetupCredsQualified
+            PsDscRunAsCredential       = $SPSetupCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance", "[xScript]ConfigureLDAPCP"
         }
 
@@ -1001,7 +1000,7 @@ configuration ConfigureSPVM
             Name                 = "App Management Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)AppManagement"
-            InstallAccount       = $SPSetupCredsQualified
+            PsDscRunAsCredential       = $SPSetupCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
         }
 
