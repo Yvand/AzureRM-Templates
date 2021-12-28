@@ -430,7 +430,7 @@
     },
     "vmSQL": {
       "vmImagePublisher": "MicrosoftSQLServer",
-      "vmImageOffer": "sql2019-ws2019",
+      "vmImageOffer": "sql2019-ws2022",
       "vmImageSKU": "sqldev",
       "vmOSDiskName": "Disk-SQL-OS",
       "vmVmSize": "[parameters('vmSQLSize')]",
