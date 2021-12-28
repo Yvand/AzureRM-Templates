@@ -656,7 +656,7 @@
             "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]",
             "provisionVMAgent": true,
             "patchSettings": {
-              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByPlatform', 'Manual')]",
+              "patchMode": "[if(parameters('enableAutomaticUpdates'), 'AutomaticByOS', 'Manual')]",
               "assessmentMode": "ImageDefault"
             }
           }
