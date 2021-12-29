@@ -19,7 +19,8 @@
       "allowedValues": [
         "2013",
         "2016",
-        "2019"
+        "2019",
+        "Subscription"
       ],
       "metadata": {
         "description": "Version of SharePoint farm to create."
@@ -440,9 +441,9 @@
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSQLName)]"
     },
     "vmSP": {
-      "vmImagePublisher": "MicrosoftSharePoint",
-      "vmImageOffer": "MicrosoftSharePointServer",
-      "vmImageSKU": "[concat('sp', parameters('sharePointVersion'))]",
+      "vmImagePublisher": "[if(equals(toLower(parameters('sharePointVersion')), 'subscription'), 'MicrosoftWindowsServer', 'MicrosoftSharePoint')]",
+      "vmImageOffer": "[if(equals(toLower(parameters('sharePointVersion')), 'subscription'), 'WindowsServer', 'MicrosoftSharePointServer')]",
+      "vmImageSKU": "[if(equals(toLower(parameters('sharePointVersion')), 'subscription'), '2022-datacenter-azure-edition', concat('sp', parameters('sharePointVersion')))]",
       "vmOSDiskName": "Disk-SP-OS",
       "vmDataDiskName": "Disk-SP-Data",
       "vmVmSize": "[parameters('vmSPSize')]",
@@ -472,7 +473,7 @@
       "forceUpdateTag": "1.0"
     },
     "dscConfigureSPVM": {
-      "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('dsc/ConfigureSPVM.zip', parameters('_artifactsLocationSasToken')))]",
+      "scriptFileUri": "[if(equals(toLower(parameters('sharePointVersion')), 'subscription'), uri(parameters('_artifactsLocation'), concat('dsc/ConfigureSPSubscriptionVM.zip', parameters('_artifactsLocationSasToken'))), uri(parameters('_artifactsLocation'), concat('dsc/ConfigureSPVM.zip', parameters('_artifactsLocationSasToken'))))]",
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM",
       "forceUpdateTag": "1.0"
