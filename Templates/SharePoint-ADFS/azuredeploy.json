@@ -474,7 +474,7 @@
     },
     "dscConfigureSPVM": {
       "scriptFileUri": "[if(equals(toLower(parameters('sharePointVersion')), 'subscription'), uri(parameters('_artifactsLocation'), concat('dsc/ConfigureSPSubscriptionVM.zip', parameters('_artifactsLocationSasToken'))), uri(parameters('_artifactsLocation'), concat('dsc/ConfigureSPVM.zip', parameters('_artifactsLocationSasToken'))))]",
-      "script": "ConfigureSPVM.ps1",
+      "script": "[if(equals(toLower(parameters('sharePointVersion')), 'subscription'), 'ConfigureSPSubscriptionVM.ps1', 'ConfigureSPVM.ps1')]",
       "function": "ConfigureSPVM",
       "forceUpdateTag": "1.0"
     },
