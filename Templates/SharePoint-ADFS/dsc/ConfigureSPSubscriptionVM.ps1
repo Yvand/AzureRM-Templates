@@ -48,6 +48,7 @@ configuration ConfigureSPVM
     if ([String]::Equals($SharePointVersion, "2013") -or [String]::Equals($SharePointVersion, "2016")) {
         $SPTeamSiteTemplate = "STS#0"
     }
+    [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
 
     Node localhost
     {
@@ -229,15 +230,15 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        # if ($EnableAnalysis) {
-        #     # This resource is for  of dsc logs only and totally optionnal
-        #     cChocoPackageInstaller InstallPython
-        #     {
-        #         Name                 = "python"
-        #         Ensure               = "Present"
-        #         DependsOn            = "[cChocoInstaller]InstallChoco"
-        #     }
-        # }
+        if ($EnableAnalysis) {
+            # This resource is for  of dsc logs only and totally optionnal
+            cChocoPackageInstaller InstallPython
+            {
+                Name                 = "python"
+                Ensure               = "Present"
+                DependsOn            = "[cChocoInstaller]InstallChoco"
+            }
+        }
 
         #**********************************************************
         # Download and install for SharePoint
@@ -618,6 +619,7 @@ configuration ConfigureSPVM
                 # 2021-09: In SharePoint 2013, solution deployment failed multiple times with error "Admin SVC must be running in order to create deployment timer job."
                 # So ensure that SPAdminV4 is started
                 Restart-Service SPAdminV4
+                # Start-Sleep -Seconds 10
             }
             GetScript            = { }
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
@@ -809,12 +811,60 @@ configuration ConfigureSPVM
             DependsOn        = "[xScript]ForceRebootBeforeCreatingSPTrust"
         }
 
+        xScript SetFarmPropertiesForOIDC
+        {
+            SetScript = 
+            {
+                # Import-Module SharePointServer | Out-Null
+                # Setup farm properties to work with OIDC
+                # Create a self-signed certificate in one SharePoint Server in the farm
+                $cert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=SharePoint Cookie Cert"
+
+                # Grant access to the certificate private key.
+                $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
+                $fileName = $rsaCert.key.UniqueName
+                $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
+                $permissions = Get-Acl -Path $path
+                #please replace the <web application pool account> with real application pool account of your web application
+                $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule("contoso\spapppool", 'Read', 'None', 'None', 'Allow')
+                $permissions.AddAccessRule($access_rule)
+                Set-Acl -Path $path -AclObject $permissions
+
+                # Set farm properties
+                $f = Get-SPFarm
+                $f.Farm.Properties['SP-NonceCookieCertificateThumbprint']=$cert.Thumbprint
+                $f.Farm.Properties['SP-NonceCookieHMACSecretKey']='seed'
+                $f.Farm.Update()
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                # Import-Module SharePointServer | Out-Null
+                # $f = Get-SPFarm
+				# if ($f.Farm.Properties.ContainsKey('SP-NonceCookieCertificateThumbprint') -eq $false) {
+                if ((Get-ChildItem -Path "cert:\LocalMachine\My\"| Where-Object{$_.Subject -eq "CN=SharePoint Cookie Cert"}) -eq $null) {
+					return $false
+				}
+				else {
+					return $true
+				}
+            }
+            DependsOn            = "[SPFarmSolution]InstallLdapcp"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+        }        
+
         SPTrustedIdentityTokenIssuer CreateSPTrust
         {
             Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
-            Realm                        = "urn:sharepoint:$($SPTrustedSitesName)"
-            SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
+            RegisteredIssuerName         = "https://adfs.$DomainFQDN/adfs"
+            AuthorizationEndPointUri     = "https://adfs.$DomainFQDN/adfs/oauth2/authorize"
+            DefaultClientIdentifier      = $AdfsOidcIdentifier
             IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
             ClaimsMappings               = @(
                 MSFT_SPClaimTypeMapping{
@@ -828,10 +878,10 @@ configuration ConfigureSPVM
             )
             SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
             ClaimProviderName            = "LDAPCP"
-            ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
+            ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/oauth2/logout"
             UseWReplyParameter           = $true
-            Ensure                       = "Present"
-            DependsOn                    = "[SPFarmSolution]InstallLdapcp"
+            Ensure                       = "Present" 
+            DependsOn                    = "[xScript]SetFarmPropertiesForOIDC"
             PsDscRunAsCredential         = $SPSetupCredsQualified
         }
 
@@ -1307,31 +1357,31 @@ configuration ConfigureSPVM
             DependsOn            = "[SPTrustedSecurityTokenIssuer]CreateHighTrustAddinsTrustedIssuer"
         }
 
-        # if ($EnableAnalysis) {
-        #     # This resource is for analysis of dsc logs only and totally optionnal
-        #     xScript parseDscLogs
-        #     {
-        #         TestScript = { return $false }
-        #         SetScript = {
-        #             $setupPath = $using:SetupPath
-        #             $localScriptPath = "$setupPath\parse-dsc-logs.py"
-        #             New-Item -ItemType Directory -Force -Path $setupPath
+        if ($EnableAnalysis) {
+            # This resource is for analysis of dsc logs only and totally optionnal
+            xScript parseDscLogs
+            {
+                TestScript = { return $false }
+                SetScript = {
+                    $setupPath = $using:SetupPath
+                    $localScriptPath = "$setupPath\parse-dsc-logs.py"
+                    New-Item -ItemType Directory -Force -Path $setupPath
 
-        #             $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
-        #             $downloader = New-Object -TypeName System.Net.WebClient
-        #             $downloader.DownloadFile($url, $localScriptPath)
+                    $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
+                    $downloader = New-Object -TypeName System.Net.WebClient
+                    $downloader.DownloadFile($url, $localScriptPath)
 
-        #             $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
-        #             $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
-        #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
+                    $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
+                    $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
+                    $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
-        #             python $localScriptPath "$fullPathToDscLogs"
-        #         }
-        #         GetScript = { }
-        #         DependsOn            = "[cChocoPackageInstaller]InstallPython"
-        #         PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     }
-        # }
+                    python $localScriptPath "$fullPathToDscLogs"
+                }
+                GetScript = { }
+                DependsOn            = "[cChocoPackageInstaller]InstallPython"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+            }
+        }
     }
 }
 
@@ -1421,10 +1471,11 @@ $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = 2019
+$SharePointVersion = "Subscription"
+$EnableAnalysis = $true
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPSubscriptionVM.0"
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
