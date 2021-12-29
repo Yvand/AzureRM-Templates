@@ -18,7 +18,7 @@ This template deploys SharePoint 2019, 2016 or 2013 with the following configura
 * Add-ins service application is provisioned and an app catalog is created.
 * 2 app domains are set (1 for for each zone of the web application) and corresponding DNS zones are created.
 * Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured.
-* A 2nd SharePoint server can optionally be added to the farm.
+* Multiple SharePoint Web Front End servers can optionally be created.
 
 ## Remote access and security
 
@@ -43,11 +43,11 @@ The following parameters impact the remote access of the virtual machines, and t
 By default, virtual machines use [B-series burstable](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable), ideal for such template and much cheaper than other comparable series.  
 Here is the default size and storage type per virtual machine role:
 
-* DC: Size [Standard_B2s](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) and OS disk is a 128 GiB standard HDD.
+* DC: Size [Standard_B2s](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) and OS disk is a 32 GiB standard HDD.
 * SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) and OS disk is a 128 GiB standard HDD.
 * SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) and OS disk is a 128 GiB [standard SSD](https://azure.microsoft.com/en-us/blog/preview-standard-ssd-disks-for-azure-virtual-machine-workloads/).
 
-You can visit <https://azure.com/e/cec4eb6f853d43c6bcfaf56be0363ee4> to view the global cost of the template when it is deployed using the default settings, in the region/currency of your choice.
+You can visit <https://azure.com/e/d87e1510faeb48a7a9cae71ba7dfd4ca> to view the global cost of the template when it is deployed using the default settings, in the region/currency of your choice.
 
 ## More information
 
