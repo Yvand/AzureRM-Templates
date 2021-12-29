@@ -18,7 +18,7 @@ This template deploys SharePoint 2019, 2016 or 2013 with the following configura
 * Add-ins service application is provisioned and an app catalog is created.
 * 2 app domains are set (1 for for each zone of the web application) and corresponding DNS zones are created.
 * Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured.
-* A 2nd SharePoint server can optionally be added to the farm.
+* Multiple SharePoint Web Front End servers can optionally be created.
 
 ## Remote access and security
 
