@@ -19,7 +19,7 @@
     [String] $ADFSSiteName = "adfs"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
-    [String] $AdfsOidcAGName = "SPS-OIDC"
+    [String] $AdfsOidcAGName = "SPS-Subscription-OIDC"
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
 
     Node localhost
@@ -285,7 +285,7 @@
         AdfsApplicationGroup OidcGroup
         {
             Name        = $AdfsOidcAGName
-            Description = "OIDC setup for SharePoint"
+            Description = "OIDC for SharePoint Subscription"
             PsDscRunAsCredential = $DomainCredsNetbios
             DependsOn   = "[AdfsFarm]CreateADFSFarm"
         }
