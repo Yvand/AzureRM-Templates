@@ -1,6 +1,6 @@
 {
-  "itemDisplayName": "SharePoint 2019 / 2016 / 2013 with an extensive configuration",
-  "description": "Create a SharePoint 2019 / 2016 / 2013 farm with a web application set with Windows and ADFS authentication, and some path based and host-named site collections. It also provisions User Profiles and Apps service applications and installs claims provider LDAPCP.",
+  "itemDisplayName": "Deploy SharePoint Subscription / 2019 / 2016 / 2013",
+  "description": "Create a SharePoint Subscription / 2019 / 2016 / 2013 farm with a web application set with Windows and ADFS authentication, and some path based and host-named site collections. It also provisions User Profiles and Apps service applications and installs claims provider LDAPCP.",
   "summary": "Create a SharePoint farm with a web application set with Windows and ADFS, some path based and host-named site collections, User Profiles and Apps services, and install claims provider LDAPCP.",
   "githubUsername": "Yvand",
   "dateUpdated": "2021-10-04"

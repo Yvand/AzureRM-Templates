@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Add SharePoint Server Subscription
 * Change Windows image of VM DC to Windows Server 2022 Azure Edition
 * Change disk size of VM DC to 32 GB
 * Change image of VM SQL to SQL Server 2019 on Windows Server 2022
