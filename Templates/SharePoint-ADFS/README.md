@@ -1,4 +1,4 @@
-# Azure template for SharePoint 2019 / 2016 / 2013
+# Azure template for SharePoint Subscription / 2019 / 2016 / 2013
 
 ## Presentation
 
@@ -8,17 +8,18 @@
 
 > **Note:** A public version of this template is available at <https://azure.microsoft.com/en-us/resources/templates/sharepoint-adfs/>
 
-This template deploys SharePoint 2019, 2016 or 2013 with the following configuration:
+This template deploys SharePoint Subscription, 2019, 2016 or 2013 with the following configuration:
 
 * 1 web application created with 2 zones: Windows NTLM on Default zone and ADFS on Intranet zone.
-* ADFS is installed on the DC, and SAML trust is configured in SharePoint.
+* ADFS is installed on the DC.
+* If SharePoint Subscription is selected, an Open ID Connect trust is configured between SharePoint and ADFS. Otherwise, a SAML trust is configured.
 * A certificate authority (ADCS) is provisioned on the DC and issues all certificates needed for ADFS and SharePoint.
 * A couple of site collections are created, including [host-named site collections](https://docs.microsoft.com/en-us/SharePoint/administration/host-named-site-collection-architecture-and-deployment) that are configured for both zones.
 * User Profiles Application service is provisioned and personal sites are configured as [host-named site collections](https://docs.microsoft.com/en-us/SharePoint/administration/host-named-site-collection-architecture-and-deployment).
 * Add-ins service application is provisioned and an app catalog is created.
-* 2 app domains are set (1 for for each zone of the web application) and corresponding DNS zones are created.
+* 2 add-in domains / DNS zones are created (1 for for each zone of the web application).
 * Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured.
-* Multiple SharePoint Web Front End servers can optionally be created.
+* Multiple SharePoint Web Front End servers can optionally be created and joined to the farm.
 
 ## Remote access and security
 
