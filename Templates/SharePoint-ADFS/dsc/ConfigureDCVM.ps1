@@ -295,7 +295,7 @@
             Name                       = "$AdfsOidcAGName - Native application"
             ApplicationGroupIdentifier = $AdfsOidcAGName
             Identifier                 = $AdfsOidcIdentifier
-            RedirectUri                = "https://$SPTrustedSitesName.$DomainFQDN/"
+            RedirectUri                = "https://*.$DomainFQDN/"
             DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
         }
 
