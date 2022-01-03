@@ -637,7 +637,7 @@ configuration ConfigureSPVM
                             return $true
                         }
                     }
-                    DependsOn            = "[SPFarmSolution]InstallLdapcp"
+                    DependsOn            = "[SPFarm]CreateSPFarm"
                     PsDscRunAsCredential = $SPSetupCredsQualified
                 }        
     

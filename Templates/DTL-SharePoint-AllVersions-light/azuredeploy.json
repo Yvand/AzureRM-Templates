@@ -682,7 +682,7 @@
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
-            "diskSizeGB": 128,
+            "diskSizeGB": 32,
             "managedDisk": {
               "storageAccountType": "[parameters('vmDCStorageAccountType')]"
             }
