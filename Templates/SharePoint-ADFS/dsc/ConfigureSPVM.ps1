@@ -815,10 +815,12 @@ configuration ConfigureSPVM
         }
 
         if ($SharePointVersion -eq "Subscription") {
+            $apppoolUserName = $SPAppPoolCredsQualified.UserName
             xScript SetFarmPropertiesForOIDC
             {
                 SetScript = 
                 {
+                    $apppoolUserName = $using:apppoolUserName
                     # Import-Module SharePointServer | Out-Null
                     # Setup farm properties to work with OIDC
                     # Create a self-signed certificate in one SharePoint Server in the farm
@@ -830,7 +832,7 @@ configuration ConfigureSPVM
                     $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
                     $permissions = Get-Acl -Path $path
                     #please replace the <web application pool account> with real application pool account of your web application
-                    $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule("contoso\spapppool", 'Read', 'None', 'None', 'Allow')
+                    $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($apppoolUserName, 'Read', 'None', 'None', 'Allow')
                     $permissions.AddAccessRule($access_rule)
                     Set-Acl -Path $path -AclObject $permissions
 

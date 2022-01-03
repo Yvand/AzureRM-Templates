@@ -15,7 +15,7 @@
     },
     "sharePointVersion": {
       "type": "string",
-      "defaultValue": "2019",
+      "defaultValue": "Subscription",
       "allowedValues": [
         "2013",
         "2016",
