@@ -651,11 +651,12 @@ configuration ConfigureFEVM
                     $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
                     $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
-                    python $localScriptPath "$fullPathToDscLogs"
+                    # Start python in a new process to ensure python.exe is in the path
+                    Write-Verbose -Message "Run python $localScriptPath `"$fullPathToDscLogs`" in a new PowerShell process..."
+                    Start-Process -FilePath "powershell" -ArgumentList "python $localScriptPath `"$fullPathToDscLogs`""
                 }
                 GetScript = { }
-                DependsOn            = "[cChocoPackageInstaller]InstallPython"
-                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn = "[cChocoPackageInstaller]InstallPython"
             }
         }
     }
