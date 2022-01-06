@@ -48,7 +48,7 @@ Here is the default size and storage type per virtual machine role:
 * SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) and OS disk is a 128 GiB standard HDD.
 * SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) and OS disk is a 128 GiB [standard SSD](https://azure.microsoft.com/en-us/blog/preview-standard-ssd-disks-for-azure-virtual-machine-workloads/).
 
-You can visit <https://azure.com/e/d87e1510faeb48a7a9cae71ba7dfd4ca> to view the global cost of the template when it is deployed using the default settings, in the region/currency of your choice.
+You can visit <https://azure.com/e/a2349269adde449396e4a39163692ec1> to view the global cost of the template when it is deployed using the default settings, in the region/currency of your choice.
 
 ## More information
 

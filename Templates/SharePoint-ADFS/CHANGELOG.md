@@ -6,6 +6,7 @@
 * Change Windows image of VM DC to Windows Server 2022 Azure Edition.
 * Change disk size of VM DC to 32 GB.
 * Change image of VM SQL to SQL Server 2019 on Windows Server 2022.
+* Change disk type of all virtual machines to StandardSSD_LRS.
 * Update DSC module SharePointDSC from 4.8 to 5.0.
 * Update DSC module ComputerManagementDsc from 8.4 to 8.5.
 

@@ -271,7 +271,7 @@
     },
     "vmDCStorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "StandardSSD_LRS",
       "allowedValues": [
         "Standard_LRS",
         "StandardSSD_LRS",
@@ -293,7 +293,7 @@
     },
     "vmSQLStorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "StandardSSD_LRS",
       "allowedValues": [
         "Standard_LRS",
         "StandardSSD_LRS",
