@@ -233,15 +233,15 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        if ($EnableAnalysis) {
-            # This resource is for  of dsc logs only and totally optionnal
-            cChocoPackageInstaller InstallPython
-            {
-                Name                 = "python"
-                Ensure               = "Present"
-                DependsOn            = "[cChocoInstaller]InstallChoco"
-            }
-        }
+        # if ($EnableAnalysis) {
+        #     # This resource is for  of dsc logs only and totally optionnal
+        #     cChocoPackageInstaller InstallPython
+        #     {
+        #         Name                 = "python"
+        #         Ensure               = "Present"
+        #         DependsOn            = "[cChocoInstaller]InstallChoco"
+        #     }
+        # }
 
         if ($SharePointVersion -eq "Subscription") {
             #**********************************************************
