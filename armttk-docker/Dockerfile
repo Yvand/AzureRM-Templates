@@ -13,7 +13,7 @@ RUN git clone https://github.com/Azure/arm-ttk.git /src/arm-ttk
 RUN git clone https://github.com/Yvand/AzureRM-Templates.git /src/AzureRM-Templates
 
 # Copy the Entrypoint file from the current directory (the one the Dockerfile is located in)
-COPY runarmttk.ps1 /src/runarmttk.ps1
+COPY entrypoint.ps1 /src/entrypoint.ps1
 
 # Start using the Entrypoint file.
-ENTRYPOINT [ "pwsh", "/src/runarmttk.ps1" ]
+ENTRYPOINT [ "pwsh", "/src/entrypoint.ps1" ]
