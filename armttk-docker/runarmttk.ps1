@@ -1,18 +1,22 @@
 Import-Module /src/arm-ttk/arm-ttk/arm-ttk.psd1
-# Get-ChildItem -Path "C:\Dev\Projets\AzureRM-Templates\Templates" -Recurse *.json | Test-AzTemplate
-$testResults = Test-AzTemplate -TemplatePath /src/AzureRM-Templates/Templates/
-$testFailures =  $testResults | Where-Object {$false -eq $_.Passed}
 
-# If files are returning invalid configurations
-# Using exit code "1" to let Github actions node the test failed
-if ($null -eq $testFailures) {
+#$testsResults = Test-AzTemplate -TemplatePath /src/AzureRM-Templates/Templates/SharePoint-ADFS
+$testsResults = $null
+$directories = Get-ChildItem -Path "/src/AzureRM-Templates/Templates" -Recurse -Filter "azuredeploy.parameters.json" | %{[System.IO.Path]::GetDirectoryName($_)}
+foreach ($directory in $directories) {
+	$testsResults += Test-AzTemplate -TemplatePath $directory
+}
+
+$testsErrors =  $testsResults | Where-Object {$false -eq $_.Passed}
+
+if ($null -eq $testsErrors) {
 	Write-Host "All tests passed"
     exit 0
 } 
 else {
-	Write-Host "Template did not pass the following tests:"
-    $testFailures.file.name | select-object -unique
-    Write-Host "Results:"
-    Write-Output $testFailures
+	Write-Host "The following files did not pass the Azure Resource Manager Template Toolkit tests:"
+    $testsErrors.File.FullPath | Select-Object -Unique
+    Write-Host "Detailed errors:"
+    Write-Output $testsErrors
     exit 1    
 }
