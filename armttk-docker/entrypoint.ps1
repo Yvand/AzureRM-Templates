@@ -1,22 +1,21 @@
-Import-Module /src/arm-ttk/arm-ttk/arm-ttk.psd1
+Import-Module "${Env:ARMTTK_PATH}/arm-ttk/arm-ttk.psd1"
 
-#$testsResults = Test-AzTemplate -TemplatePath /src/AzureRM-Templates/Templates/SharePoint-ADFS
-$testsResults = $null
-$directories = Get-ChildItem -Path "/src/AzureRM-Templates/Templates" -Recurse -Filter "azuredeploy.parameters.json" | %{[System.IO.Path]::GetDirectoryName($_)}
+$testResults = $null
+#$testResults = Test-AzTemplate -TemplatePath "${Env:REPO_PATH}/Templates/SharePoint-ADFS"
+$directories = Get-ChildItem -Path "${Env:REPO_PATH}/Templates" -Recurse -Filter "azuredeploy.parameters.json" | %{[System.IO.Path]::GetDirectoryName($_)}
 foreach ($directory in $directories) {
-	$testsResults += Test-AzTemplate -TemplatePath $directory
+	$testResults += Test-AzTemplate -TemplatePath $directory
 }
 
-$testsErrors =  $testsResults | Where-Object {$false -eq $_.Passed}
-
-if ($null -eq $testsErrors) {
+$testErrors =  $testResults | Where-Object {$false -eq $_.Passed}
+if ($null -eq $testErrors) {
 	Write-Host "All tests passed"
     exit 0
 } 
 else {
 	Write-Host "The following files did not pass the Azure Resource Manager Template Toolkit tests:"
-    $testsErrors.File.FullPath | Select-Object -Unique
-    Write-Host "Detailed errors:"
-    Write-Output $testsErrors
+    $testErrors.File.FullPath | Select-Object -Unique
+    Write-Host "Errors:"
+    Write-Output $testErrors
     exit 1    
 }
