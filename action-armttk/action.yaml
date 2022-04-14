@@ -1,9 +1,5 @@
 name: 'Run ARM TTK'
 description: 'Run ARM TTK'
-inputs:
-
-outputs:
-
 runs:
   using: 'docker'
   image: 'Dockerfile'
