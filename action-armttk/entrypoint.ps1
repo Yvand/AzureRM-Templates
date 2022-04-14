@@ -1,8 +1,8 @@
 Import-Module "${Env:ARMTTK_PATH}/arm-ttk/arm-ttk.psd1"
 
 $testResults = $null
-#$testResults = Test-AzTemplate -TemplatePath "${Env:REPO_PATH}/Templates/SharePoint-ADFS"
-$directories = Get-ChildItem -Path "${Env:REPO_PATH}/Templates" -Recurse -Filter "azuredeploy.parameters.json" | %{[System.IO.Path]::GetDirectoryName($_)}
+#$testResults = Test-AzTemplate -TemplatePath "/github/workspace/Templates/SharePoint-ADFS"
+$directories = Get-ChildItem -Path "/github/workspace/Templates" -Recurse -Filter "azuredeploy.parameters.json" | %{[System.IO.Path]::GetDirectoryName($_)}
 foreach ($directory in $directories) {
 	$testResults += Test-AzTemplate -TemplatePath $directory
 }
