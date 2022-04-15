@@ -8,6 +8,9 @@ RUN apt-get update && \
 #	apt-get upgrade -y && \
 	apt-get install -y git curl wget unzip
 
+# Clone repo in local executions only
+#RUN git clone --depth 1 https://github.com/Yvand/AzureRM-Templates.git /github/workspace
+
 # Clone ARM-TTK Repo
 ENV ARMTTK_PATH="/src/arm-ttk"
 # RUN git clone --depth 1 https://github.com/Azure/arm-ttk.git $ARMTTK_PATH
