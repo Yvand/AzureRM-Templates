@@ -1,13 +1,11 @@
 Import-Module "${Env:ARMTTK_PATH}/arm-ttk/arm-ttk.psd1"
 
-# Remove arm-ttk test that causes an error for DevTest Labs templates, because they cannot use deployment().properties.templateLink.uri - https://github.com/Azure/azure-devtestlab/issues/833
-Remove-Item -Path "${Env:ARMTTK_PATH}/arm-ttk/testcases/deploymentTemplate/artifacts-parameter.test.ps1" -Confirm:$false
-
 $testResults = $null
 #$testResults = Test-AzTemplate -TemplatePath "/github/workspace/Templates/SharePoint-ADFS"
 $directories = Get-ChildItem -Path "/github/workspace/Templates" -Recurse -Filter "azuredeploy.parameters.json" | %{[System.IO.Path]::GetDirectoryName($_)}
 foreach ($directory in $directories) {
-    $testResults += Test-AzTemplate -TemplatePath $directory
+	# Skip test artifacts-parameter - https://github.com/Azure/arm-ttk/issues/637
+    $testResults += Test-AzTemplate -TemplatePath $directory -Skip "artifacts-parameter" #-TestParameter @{RawRepoPath="https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/"}
 }
 
 $testErrors =  $testResults | Where-Object {$false -eq $_.Passed}
