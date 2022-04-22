@@ -351,7 +351,7 @@
       "vmSP2013Name": "SP2013",
       "vmSP2016Name": "SP2016",
       "vmSP2019Name": "SP2019",
-      "vmSPSubscriptionName": "SPSubscription",
+      "vmSPSubscriptionName": "SPvNext",
       "sqlAlias": "SQLAlias",
       "spSuperUserName": "spSuperUser",
       "spSuperReaderName": "spSuperReader",
@@ -1556,7 +1556,7 @@
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
-            "SharePointVersion": "Subscription",
+            "SharePointVersion": "vNext",
             "ConfigureADFS": "[parameters('configureADFS')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]"
           },

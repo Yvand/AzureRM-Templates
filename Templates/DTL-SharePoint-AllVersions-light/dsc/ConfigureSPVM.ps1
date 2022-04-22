@@ -243,7 +243,7 @@ configuration ConfigureSPVM
         #     }
         # }
 
-        if ($SharePointVersion -eq "Subscription") {
+        if ($SharePointVersion -eq "vNext") {
             #**********************************************************
             # Download and install for SharePoint
             #**********************************************************
@@ -593,7 +593,7 @@ configuration ConfigureSPVM
                 DependsOn            = "[SPFarm]CreateSPFarm"
             }
 
-            if ($SharePointVersion -eq "Subscription") {
+            if ($SharePointVersion -eq "vNext") {
                 $apppoolUserName = $SPAppPoolCredsQualified.UserName
                 xScript SetOidcCertificate
                 {
