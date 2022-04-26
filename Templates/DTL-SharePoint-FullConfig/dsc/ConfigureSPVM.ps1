@@ -49,6 +49,7 @@ configuration ConfigureSPVM
         $SPTeamSiteTemplate = "STS#0"
     }
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
+    [Boolean] $IsSharePointvNext = [String]::Equals($SharePointVersion, "vNext") ? $true : $false
 
     Node localhost
     {
@@ -240,7 +241,7 @@ configuration ConfigureSPVM
         #     }
         # }
 
-        if ($SharePointVersion -eq "Subscription") {
+        if ($true -eq $IsSharePointvNext) {
             #**********************************************************
             # Download and install for SharePoint
             #**********************************************************
@@ -790,7 +791,7 @@ configuration ConfigureSPVM
         # Installing LDAPCP somehow updates SPClaimEncodingManager 
         # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
         # The only solution I've found is to force a reboot in SharePoint 2019
-        if ($SharePointVersion -eq "2019" -or $SharePointVersion -eq "Subscription") {
+        if ($SharePointVersion -eq "2019" -or $true -eq $IsSharePointvNext) {
             xScript ForceRebootBeforeCreatingSPTrust
             {
                 # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
@@ -814,7 +815,7 @@ configuration ConfigureSPVM
             }
         }
 
-        if ($SharePointVersion -eq "Subscription") {
+        if ($true -eq $IsSharePointvNext) {
             $apppoolUserName = $SPAppPoolCredsQualified.UserName
             xScript SetFarmPropertiesForOIDC
             {
@@ -1504,7 +1505,7 @@ $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "Subscription"
+$SharePointVersion = "vNext"
 $EnableAnalysis = $true
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"

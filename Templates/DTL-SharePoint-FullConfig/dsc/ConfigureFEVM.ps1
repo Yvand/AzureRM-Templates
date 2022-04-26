@@ -30,6 +30,7 @@ configuration ConfigureFEVM
     [String] $SetupPath = "C:\Setup"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
+    [Boolean] $IsSharePointvNext = [String]::Equals($SharePointVersion, "vNext") ? $true : $false
 
     Node localhost
     {
@@ -347,7 +348,7 @@ configuration ConfigureFEVM
         #     }
         # }
 
-        if ($SharePointVersion -eq "Subscription") {
+        if ($true -eq $IsSharePointvNext) {
             #**********************************************************
             # Download and install for SharePoint
             #**********************************************************
@@ -729,7 +730,7 @@ $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = 2019
+$SharePointVersion = "vNext"
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
 ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
