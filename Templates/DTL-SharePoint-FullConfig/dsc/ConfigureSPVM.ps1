@@ -49,7 +49,10 @@ configuration ConfigureSPVM
         $SPTeamSiteTemplate = "STS#0"
     }
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
-    [Boolean] $IsSharePointvNext = [String]::Equals($SharePointVersion, "vNext") ? $true : $false
+    [Boolean] $IsSharePointvNext = $false
+    if ([String]::Equals($SharePointVersion, "vNext")) {
+        $IsSharePointvNext = $true
+    }
 
     Node localhost
     {

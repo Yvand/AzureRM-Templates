@@ -30,7 +30,10 @@ configuration ConfigureFEVM
     [String] $SetupPath = "C:\Setup"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
-    [Boolean] $IsSharePointvNext = [String]::Equals($SharePointVersion, "vNext") ? $true : $false
+    [Boolean] $IsSharePointvNext = $false
+    if ([String]::Equals($SharePointVersion, "vNext")) {
+        $IsSharePointvNext = $true
+    }
 
     Node localhost
     {
