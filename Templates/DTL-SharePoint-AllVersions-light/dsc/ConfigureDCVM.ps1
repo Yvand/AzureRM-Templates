@@ -3,8 +3,8 @@
     param
     (
         [Parameter(Mandatory)] [String]$DomainFQDN,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$Admincreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds,
+        [Parameter(Mandatory)] [PSCredential]$Admincreds,
+        [Parameter(Mandatory)] [PSCredential]$AdfsSvcCreds,
         [Parameter(Mandatory)] [String]$PrivateIP,
         [Parameter(Mandatory)] [Boolean]$ConfigureADFS
     )
@@ -22,8 +22,8 @@
 
     Node localhost
     {
-        [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
-        [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
+        [PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
+        [PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
 
         LocalConfigurationManager
         {
@@ -46,8 +46,8 @@
         ADDomain CreateADForest
         {
             DomainName                    = $DomainFQDN
-            Credential                    = $DomainCredsNetbios
-            SafemodeAdministratorPassword = $DomainCredsNetbios
+            Credential                    = $Admincreds
+            SafemodeAdministratorPassword = $Admincreds
             DatabasePath                  = "C:\NTDS"
             LogPath                       = "C:\NTDS"
             SysvolPath                    = "C:\SYSVOL"
