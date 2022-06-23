@@ -1,15 +1,16 @@
 ﻿configuration ConfigureDCVM
-{
+{    
     param
     (
-        [Parameter(Mandatory)] [String]$DomainFQDN,
-        [Parameter(Mandatory)] [PSCredential]$Admincreds,
-        [Parameter(Mandatory)] [PSCredential]$AdfsSvcCreds,
-        [Parameter(Mandatory)] [String]$PrivateIP,
+        [Parameter(Mandatory)] [ValidateNotNullorEmpty()] [String]$DomainFQDN,
+        [Parameter(Mandatory)] [ValidateNotNullorEmpty()] [PSCredential]$Admincreds,
+        [Parameter(Mandatory)] [ValidateNotNullorEmpty()] [PSCredential]$AdfsSvcCreds,
+        [Parameter(Mandatory)] [ValidateNotNullorEmpty()] [String]$PrivateIP,
         [Parameter(Mandatory)] [Boolean]$ConfigureADFS
     )
+    
 
-    Import-DscResource -ModuleName ActiveDirectoryDsc, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, xDnsServer, ComputerManagementDsc, AdfsDsc
+    Import-DscResource -ModuleName ActiveDirectoryDsc, NetworkingDsc, PSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, xDnsServer, ComputerManagementDsc, AdfsDsc
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -162,7 +163,7 @@
                 DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
             }
 
-            xScript ExportCertificates
+            Script ExportCertificates
             {
                 SetScript = 
                 {
