@@ -1009,7 +1009,7 @@
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
-            "SharePointVersion": "[if(variables('generalSettings').isSharePointvNext, 'vNext', parameters('sharePointVersion'))]",
+            "SharePointVersion": "[if(variables('generalSettings').isSharePointvNext, 'SE', parameters('sharePointVersion'))]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]"
           },
           "privacy": {
@@ -1208,7 +1208,7 @@
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
-            "SharePointVersion": "[if(variables('generalSettings').isSharePointvNext, 'vNext', parameters('sharePointVersion'))]",
+            "SharePointVersion": "[if(variables('generalSettings').isSharePointvNext, 'SE', parameters('sharePointVersion'))]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]"
           },
           "privacy": {

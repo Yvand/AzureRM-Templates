@@ -1556,7 +1556,7 @@
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
-            "SharePointVersion": "vNext",
+            "SharePointVersion": "SE",
             "ConfigureADFS": "[parameters('configureADFS')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]"
           },

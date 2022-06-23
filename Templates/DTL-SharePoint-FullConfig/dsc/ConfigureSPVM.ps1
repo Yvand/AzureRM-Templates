@@ -50,7 +50,7 @@ configuration ConfigureSPVM
     }
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
     [Boolean] $IsSharePointvNext = $false
-    if ([String]::Equals($SharePointVersion, "vNext")) {
+    if ([String]::Equals($SharePointVersion, "SE")) {
         $IsSharePointvNext = $true
     }
 
@@ -1508,7 +1508,7 @@ $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "vNext"
+$SharePointVersion = "SE"
 $EnableAnalysis = $true
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"

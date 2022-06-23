@@ -2,18 +2,18 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "sharePointVersion": { "value": "2019" },
+    "sharePointVersion": { "value": "Subscription" },
     "domainFQDN": { "value": "contoso.local" },
     "adminUserName": { "value": "yvand" },
     "adminPassword": { "value": null },
     "serviceAccountsPassword": { "value": null },
     "vmsTimeZone": { "value": "Romance Standard Time" },
     "addPublicIPAddressToEachVM": { "value": true },
-    "RDPTrafficAllowed": { "value": "No" },
-    "numberOfAdditionalFrontEnd": { "value": 1 },
+    "RDPTrafficAllowed": { "value": "109.18.198.230" },
+    "numberOfAdditionalFrontEnd": { "value": 0 },
     "enableHybridBenefitServerLicenses": { "value": true },
     "enableAutomaticUpdates": { "value": true },
-    "addAzureBastion": { "value": true },
+    "addAzureBastion": { "value": false },
     "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-FullConfig" }     
   }
 }

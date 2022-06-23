@@ -31,7 +31,7 @@ configuration ConfigureFEVM
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
     [Boolean] $IsSharePointvNext = $false
-    if ([String]::Equals($SharePointVersion, "vNext")) {
+    if ([String]::Equals($SharePointVersion, "SE")) {
         $IsSharePointvNext = $true
     }
 
@@ -733,7 +733,7 @@ $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "vNext"
+$SharePointVersion = "SE"
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
 ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
