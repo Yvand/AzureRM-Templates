@@ -424,6 +424,7 @@
       "vmImagePublisher": "[if(variables('generalSettings').isSharePointvNext, 'MicrosoftWindowsServer', 'MicrosoftSharePoint')]",
       "vmImageOffer": "[if(variables('generalSettings').isSharePointvNext, 'WindowsServer', 'MicrosoftSharePointServer')]",
       "vmImageSKU": "[if(variables('generalSettings').isSharePointvNext, '2022-datacenter-azure-edition', concat('sp', parameters('sharePointVersion')))]",
+      "vmImageVersion": "[if(equals(toLower(parameters('sharePointVersion')), 'subscription'), '20348.707.220505', 'latest')]",
       "vmOSDiskName": "Disk-SP-OS",
       "vmDataDiskName": "Disk-SP-Data",
       "vmVmSize": "[parameters('vmSPSize')]",
@@ -647,7 +648,7 @@
             "publisher": "[variables('vmDC').vmImagePublisher]",
             "offer": "[variables('vmDC').vmImageOffer]",
             "sku": "[variables('vmDC').vmImageSKU]",
-            "version": "latest"
+            "version": "20348.707.220505"
           },
           "osDisk": {
             "name": "[variables('vmDC').vmOSDiskName]",
@@ -798,8 +799,8 @@
           "imageReference": {
             "publisher": "[variables('vmSQL').vmImagePublisher]",
             "offer": "[variables('vmSQL').vmImageOffer]",
-            "sku": "[variables('vmSQL').vmImageSKU]",
-            "version": "latest"
+.           "sku": "[variables('vmSQL').vmImageSKU]",
+            "version": "15.0.220607"
           },
           "osDisk": {
             "name": "[variables('vmSQL').vmOSDiskName]",
@@ -904,7 +905,7 @@
             "publisher": "[variables('vmSP').vmImagePublisher]",
             "offer": "[variables('vmSP').vmImageOffer]",
             "sku": "[variables('vmSP').vmImageSKU]",
-            "version": "latest"
+            "version": "[variables('vmSP').vmImageVersion]"
           },
           "osDisk": {
             "name": "[variables('vmSP').vmOSDiskName]",
@@ -1149,7 +1150,7 @@
             "publisher": "[variables('vmSP').vmImagePublisher]",
             "offer": "[variables('vmSP').vmImageOffer]",
             "sku": "[variables('vmSP').vmImageSKU]",
-            "version": "latest"
+            "version": "[variables('vmSP').vmImageVersion]"
           },
           "osDisk": {
             "name": "[concat(variables('vmFE').vmOSDiskName, '-', copyIndex())]",
