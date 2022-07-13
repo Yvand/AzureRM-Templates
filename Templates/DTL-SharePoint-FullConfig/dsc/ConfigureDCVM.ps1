@@ -360,6 +360,25 @@
         WindowsFeature AddDnsTools            { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
         WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
         WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
+
+        #******************************************************************
+        # Set insecure LDAP configurations from default 1 to 2 to avoid elevation of priviledge vulnerability on AD domain controller
+        # Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2017-8563 using https://support.microsoft.com/en-us/topic/use-the-ldapenforcechannelbinding-registry-entry-to-make-ldap-authentication-over-ssl-tls-more-secure-e9ecfa27-5e57-8519-6ba3-d2c06b21812e
+        #******************************************************************
+        Script EnforceLdapAuthOverTls {
+            SetScript  = {
+                $domain = Get-ADDomain -Current LocalComputer
+                $key = "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\NTDS\Parameters"
+                if ($null -eq (Get-GPO -Name "LDAP_LdapEnforceChannelBinding" -ErrorAction SilentlyContinue)) {
+                    New-GPO -name "LDAP_LdapEnforceChannelBinding" -comment "GPO For LdapEnforceChannelBinding" | Set-GPRegistryValue -key $key -ValueName "LdapEnforceChannelBinding" -Type DWORD -value 2 |New-GPLink -Target $domain.DomainControllersContainer -order 1
+                }
+                if ($null -eq (Get-GPO -Name "LDAP_LDAPServerIntegrity" -ErrorAction SilentlyContinue)) {
+                    New-GPO -name "LDAP_LDAPServerIntegrity" -comment "GPO For LDAPServerIntegrity" | Set-GPRegistryValue -key $key -ValueName "ldapserverintegrity" -Type DWORD -value 2 | New-GPLink -Target $domain.DomainControllersContainer -order 1
+                }
+            }
+            GetScript  = { return @{ "Result" = "false" } }
+            TestScript = { return $false }
+          }
     }
 }
 
