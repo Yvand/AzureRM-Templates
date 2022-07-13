@@ -799,7 +799,7 @@
           "imageReference": {
             "publisher": "[variables('vmSQL').vmImagePublisher]",
             "offer": "[variables('vmSQL').vmImageOffer]",
-.           "sku": "[variables('vmSQL').vmImageSKU]",
+            "sku": "[variables('vmSQL').vmImageSKU]",
             "version": "15.0.220607"
           },
           "osDisk": {
