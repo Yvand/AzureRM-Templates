@@ -17,7 +17,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco
+    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xDnsServer, CertificateDsc, SqlServerDsc, cChoco
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -77,7 +77,7 @@ configuration ConfigureSPVM
 
         SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
 
-        xScript DisableIESecurity
+        Script DisableIESecurity
         {
             TestScript = {
                 return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
@@ -128,7 +128,7 @@ configuration ConfigureSPVM
             }
         }
 
-        xScript EnableFileSharing
+        Script EnableFileSharing
         {
             TestScript = {
                 # Test if firewall rules for file sharing already exist
@@ -146,7 +146,7 @@ configuration ConfigureSPVM
         }
 
         # Create the rules in the firewall required for the distributed cache
-        xScript CreateFirewallRulesForDistributedCache
+        Script CreateFirewallRulesForDistributedCache
         {
             TestScript = {
                 # Test if firewall rules already exist
@@ -340,7 +340,7 @@ configuration ConfigureSPVM
         }
 
         # This script is still needed
-        xScript CreateWSManSPNsIfNeeded
+        Script CreateWSManSPNsIfNeeded
         {
             SetScript =
             {
@@ -467,7 +467,7 @@ configuration ConfigureSPVM
             Type                 = "File"
             Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPAppPoolAccount", "[xScript]CreateWSManSPNsIfNeeded"
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPAppPoolAccount", "[Script]CreateWSManSPNsIfNeeded"
         }
 
         # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
@@ -489,7 +489,7 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        xScript WaitForSQL
+        Script WaitForSQL
         {
             SetScript =
             {
@@ -534,7 +534,7 @@ configuration ConfigureSPVM
             IsSingleInstance          = "Yes"
             SkipRegisterAsDistributedCacheHost = $false
             Ensure                    = "Present"
-            DependsOn                 = "[xScript]WaitForSQL"
+            DependsOn                 = "[Script]WaitForSQL"
         }
 
         # Distributed Cache is now enabled directly by the SPFarm resource
@@ -595,7 +595,7 @@ configuration ConfigureSPVM
 
             if ($SharePointVersion -eq "SE") {
                 $apppoolUserName = $SPAppPoolCredsQualified.UserName
-                xScript SetOidcCertificate
+                Script SetOidcCertificate
                 {
                     SetScript = 
                     {
@@ -664,7 +664,7 @@ configuration ConfigureSPVM
                     SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
                     UseWReplyParameter           = $true
                     Ensure                       = "Present" 
-                    DependsOn                    = "[xScript]SetOidcCertificate"
+                    DependsOn                    = "[Script]SetOidcCertificate"
                     PsDscRunAsCredential         = $SPSetupCredsQualified
                 }
             } else {
@@ -696,7 +696,7 @@ configuration ConfigureSPVM
             }
 
             # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
-            xScript UpdateGPOToTrustRootCACert
+            Script UpdateGPOToTrustRootCACert
             {
                 SetScript =
                 {
@@ -734,7 +734,7 @@ configuration ConfigureSPVM
                 CertificateTemplate    = 'WebServer'
                 AutoRenew              = $true
                 Credential             = $DomainAdminCredsQualified
-                DependsOn              = '[xScript]UpdateGPOToTrustRootCACert'
+                DependsOn              = '[Script]UpdateGPOToTrustRootCACert'
             }
 
             SPWebApplicationExtension ExtendMainWebApp
@@ -824,7 +824,7 @@ configuration ConfigureSPVM
 
         # if ($EnableAnalysis) {
         #     # This resource is for analysis of dsc logs only and totally optionnal
-        #     xScript parseDscLogs
+        #     Script parseDscLogs
         #     {
         #         TestScript = { return $false }
         #         SetScript = {
