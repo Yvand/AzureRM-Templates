@@ -110,7 +110,37 @@ configuration ConfigureSPVM
         Registry SystemDefaultTlsVersions   { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
         Registry SystemDefaultTlsVersions32 { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
 
-        xRemoteFile DownloadLdapcp { Uri = $LdapcpLink; DestinationPath = "$SetupPath\LDAPCP.wsp" }
+        # xRemoteFile DownloadLdapcp { Uri = $LdapcpLink; DestinationPath = "$SetupPath\LDAPCP.wsp" }
+        Script DownloadLDAPCP
+        {
+            SetScript = {
+                $ldapcpLink = $using:LdapcpLink
+                $setupPath = $using:SetupPath
+                $setupFile = Join-Path -Path $setupPath -ChildPath "LDAPCP.wsp"
+                $count = 0
+                $maxCount = 10
+                
+                while (($count -lt $maxCount) -and (-not(Test-Path $setupFile)))
+                {
+                    try {
+                        Start-BitsTransfer -Source $ldapcpLink -Destination $setupFile
+                    }
+                    catch {
+                        $count++
+                    }
+                }
+
+                if (-not(Test-Path $setupFile)) {
+                    Write-Error -Message "Failed to download '$ldapcpLink' after $count attempts"
+                }
+            }
+            TestScript = {
+                $setupPath = $using:SetupPath
+                $setupFile = Join-Path -Path $setupPath -ChildPath "LDAPCP.wsp"
+                return Test-Path $setupFile
+            }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        }
 
         SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
 
