@@ -8,7 +8,14 @@
         [Parameter(Mandatory)] [String]$PrivateIP
     )
 
-    Import-DscResource -ModuleName ActiveDirectoryDsc, NetworkingDsc, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, xDnsServer, ComputerManagementDsc, AdfsDsc
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.0.1
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 8.2.0
+    Import-DscResource -ModuleName ActiveDirectoryCSDsc -ModuleVersion 5.0.0 # toupdate
+    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
+    Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
+    Import-DscResource -ModuleName AdfsDsc -ModuleVersion 1.1.0 # With custom changes in AdfsFarm to set certificates based on their names
+
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
@@ -172,7 +179,7 @@
             DependsOn                 = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
-        xScript ExportCertificates
+        Script ExportCertificates
         {
             SetScript = 
             {

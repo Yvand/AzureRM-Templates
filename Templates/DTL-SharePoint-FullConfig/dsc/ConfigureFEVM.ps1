@@ -15,7 +15,15 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 8.2.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.0.1
+    Import-DscResource -ModuleName xWebAdministration -ModuleVersion 3.2.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.2.0
+    Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
+    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
+    Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -141,7 +149,7 @@ configuration ConfigureFEVM
             TcpPort              = 1433
         }
 
-        xScript DisableIESecurity
+        Script DisableIESecurity
         {
             TestScript = {
                 return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
@@ -174,7 +182,7 @@ configuration ConfigureFEVM
             GetScript = { }
         }
 
-        xScript EnableFileSharing
+        Script EnableFileSharing
         {
             TestScript = {
                 # Test if firewall rules for file sharing already exist
@@ -229,7 +237,7 @@ configuration ConfigureFEVM
         }
         
         # This script is still needed
-        xScript CreateWSManSPNsIfNeeded
+        Script CreateWSManSPNsIfNeeded
         {
             SetScript =
             {
@@ -416,7 +424,7 @@ configuration ConfigureFEVM
         # The best test is to check the latest HTTP team site to be created, after all SharePoint services are provisioned.
         # If this server joins the farm while a SharePoint service is being created on the 1st server, it may block its creation forever.
         # Not testing HTTPS avoid potential issues with the root CA cert maybe not present in the machine store yet
-        xScript WaitForSPFarmReadyToJoin
+        Script WaitForSPFarmReadyToJoin
         {
             SetScript =
             {
@@ -459,7 +467,7 @@ configuration ConfigureFEVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]CreateWSManSPNsIfNeeded"
+            DependsOn            = "[Script]CreateWSManSPNsIfNeeded"
         }
 
         # Setup account is created by SP VM so it must be added to local admins group after the waiting script, to be sure it was created
@@ -470,12 +478,12 @@ configuration ConfigureFEVM
             MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
             Credential           = $DomainAdminCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
+            DependsOn            = "[Script]WaitForSPFarmReadyToJoin"
         }
 
         # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
         # At this point it is safe to assume that the DC finished provisioning AD CS
-        xScript UpdateGPOToTrustRootCACert
+        Script UpdateGPOToTrustRootCACert
         {
             SetScript =
             {
@@ -495,14 +503,14 @@ configuration ConfigureFEVM
                     return $true    # Root CA already present
                 }
             }
-            DependsOn            = "[xScript]WaitForSPFarmReadyToJoin"
+            DependsOn            = "[Script]WaitForSPFarmReadyToJoin"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
         # If multiple servers join the SharePoint farm at the same time, resource JoinSPFarm may fail on a server with this error:
         # "Scheduling DiagnosticsService timer job failed" (SharePoint event id aitap or aitaq)
         # This script uses the computer name (FE-0 FE-1) to sequence the time when servers join the farm
-        xScript WaitToAvoidServersJoiningFarmSimultaneously
+        Script WaitToAvoidServersJoiningFarmSimultaneously
         {
             SetScript =
             {                
@@ -546,7 +554,7 @@ configuration ConfigureFEVM
                 IsSingleInstance          = "Yes"
                 SkipRegisterAsDistributedCacheHost = $true
                 Ensure                    = "Present"
-                DependsOn                 = "[xScript]WaitToAvoidServersJoiningFarmSimultaneously"
+                DependsOn                 = "[Script]WaitToAvoidServersJoiningFarmSimultaneously"
             }
         } else {
             # Set property ServerRole in all SharePoint versions that support it
@@ -565,7 +573,7 @@ configuration ConfigureFEVM
                 ServerRole                = "WebFrontEnd"
                 SkipRegisterAsDistributedCacheHost = $true
                 Ensure                    = "Present"
-                DependsOn                 = "[xScript]WaitToAvoidServersJoiningFarmSimultaneously"
+                DependsOn                 = "[Script]WaitToAvoidServersJoiningFarmSimultaneously"
             }
         }
 
@@ -619,7 +627,7 @@ configuration ConfigureFEVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
+            DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
         }
 
         xWebsite SetHTTPSCertificate
@@ -639,7 +647,7 @@ configuration ConfigureFEVM
 
         # if ($EnableAnalysis) {
         #     # This resource is for analysis of dsc logs only and totally optionnal
-        #     xScript parseDscLogs
+        #     Script parseDscLogs
         #     {
         #         TestScript = { return $false }
         #         SetScript = {

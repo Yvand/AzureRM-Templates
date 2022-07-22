@@ -19,7 +19,16 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, ActiveDirectoryDsc, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, cChoco
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 8.2.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.0.1
+    Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.3.0.0
+    Import-DscResource -ModuleName xWebAdministration -ModuleVersion 3.2.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.2.0
+    Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
+    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
+    Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -105,7 +114,7 @@ configuration ConfigureSPVM
 
         SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
 
-        xScript DisableIESecurity
+        Script DisableIESecurity
         {
             TestScript = {
                 return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
@@ -138,7 +147,7 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
-        xScript EnableFileSharing
+        Script EnableFileSharing
         {
             TestScript = {
                 # Test if firewall rules for file sharing already exist
@@ -156,7 +165,7 @@ configuration ConfigureSPVM
         }
 
         # Create the rules in the firewall required for the distributed cache
-        xScript CreateFirewallRulesForDistributedCache
+        Script CreateFirewallRulesForDistributedCache
         {
             TestScript = {
                 # Test if firewall rules already exist
@@ -341,7 +350,7 @@ configuration ConfigureSPVM
         }
 
         # This script is still needed
-        xScript CreateWSManSPNsIfNeeded
+        Script CreateWSManSPNsIfNeeded
         {
             SetScript =
             {
@@ -546,7 +555,7 @@ configuration ConfigureSPVM
             Type                 = "File"
             Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[xScript]CreateWSManSPNsIfNeeded"
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[Script]CreateWSManSPNsIfNeeded"
         }
         
         # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
@@ -568,7 +577,7 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        xScript WaitForSQL
+        Script WaitForSQL
         {
             SetScript =
             {
@@ -613,10 +622,10 @@ configuration ConfigureSPVM
             IsSingleInstance          = "Yes"
             SkipRegisterAsDistributedCacheHost = $false
             Ensure                    = "Present"
-            DependsOn                 = "[xScript]WaitForSQL"
+            DependsOn                 = "[Script]WaitForSQL"
         }
 
-        xScript RestartSPTimerAfterCreateSPFarm
+        Script RestartSPTimerAfterCreateSPFarm
         {
             SetScript =
             {
@@ -641,7 +650,7 @@ configuration ConfigureSPVM
             SourcePath      = "$DCSetupPath"
             DestinationPath = "$SetupPath\Certificates"
             Credential      = $DomainAdminCredsQualified
-            DependsOn       = "[xScript]RestartSPTimerAfterCreateSPFarm"
+            DependsOn       = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPTrustedRootAuthority TrustRootCA
@@ -660,7 +669,7 @@ configuration ConfigureSPVM
             Deployed             = $true
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+            DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPManagedAccount CreateSPSvcManagedAccount
@@ -668,7 +677,7 @@ configuration ConfigureSPVM
             AccountName          = $SPSvcCredsQualified.UserName
             Account              = $SPSvcCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+            DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPManagedAccount CreateSPAppPoolManagedAccount
@@ -676,7 +685,7 @@ configuration ConfigureSPVM
             AccountName          = $SPAppPoolCredsQualified.UserName
             Account              = $SPAppPoolCredsQualified
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+            DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPStateServiceApp StateServiceApp
@@ -684,7 +693,7 @@ configuration ConfigureSPVM
             Name                 = "State Service Application"
             DatabaseName         = $SPDBPrefix + "StateService"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+            DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         # Distributed Cache is now enabled directly by the SPFarm resource
@@ -696,7 +705,7 @@ configuration ConfigureSPVM
         #     ServiceAccount       = $SPFarmCredsQualified.UserName
         #     PsDscRunAsCredential       = $SPSetupCredsQualified
         #     Ensure               = "Present"
-        #     DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+        #     DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         # }
 
         #**********************************************************
@@ -708,7 +717,7 @@ configuration ConfigureSPVM
             Name                 = "User Profile Service"
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+            DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPServiceInstance StartSubscriptionSettingsServiceInstance
@@ -716,7 +725,7 @@ configuration ConfigureSPVM
             Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+            DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPServiceInstance StartAppManagementServiceInstance
@@ -724,7 +733,7 @@ configuration ConfigureSPVM
             Name                 = "App Management Service"
             Ensure               = "Present"
             PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+            DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPServiceAppPool MainServiceAppPool
@@ -746,11 +755,11 @@ configuration ConfigureSPVM
             Port                   = 80
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[xScript]RestartSPTimerAfterCreateSPFarm"
+            DependsOn              = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
-        xScript UpdateGPOToTrustRootCACert
+        Script UpdateGPOToTrustRootCACert
         {
             SetScript =
             {
@@ -770,7 +779,7 @@ configuration ConfigureSPVM
                     return $true    # Root CA already present
                 }
             }
-            DependsOn            = "[xScript]RestartSPTimerAfterCreateSPFarm"
+            DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
@@ -788,14 +797,14 @@ configuration ConfigureSPVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
+            DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
         }
 
         # Installing LDAPCP somehow updates SPClaimEncodingManager 
         # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
         # The only solution I've found is to force a reboot in SharePoint 2019
         if ($SharePointVersion -eq "2019" -or $true -eq $IsSharePointvNext) {
-            xScript ForceRebootBeforeCreatingSPTrust
+            Script ForceRebootBeforeCreatingSPTrust
             {
                 # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
                 TestScript = {
@@ -814,13 +823,13 @@ configuration ConfigureSPVM
             {
                 Name             = "RebootOnSignalFromForceRebootBeforeCreatingSPTrust"
                 SkipCcmClientSDK = $true
-                DependsOn        = "[xScript]ForceRebootBeforeCreatingSPTrust"
+                DependsOn        = "[Script]ForceRebootBeforeCreatingSPTrust"
             }
         }
 
         if ($true -eq $IsSharePointvNext) {
             $apppoolUserName = $SPAppPoolCredsQualified.UserName
-            xScript SetFarmPropertiesForOIDC
+            Script SetFarmPropertiesForOIDC
             {
                 SetScript = 
                 {
@@ -891,7 +900,7 @@ configuration ConfigureSPVM
                 ClaimProviderName            = "LDAPCP"
                 UseWReplyParameter           = $true
                 Ensure                       = "Present" 
-                DependsOn                    = "[xScript]SetFarmPropertiesForOIDC"
+                DependsOn                    = "[Script]SetFarmPropertiesForOIDC"
                 PsDscRunAsCredential         = $SPSetupCredsQualified
             }
         } else {
@@ -922,7 +931,7 @@ configuration ConfigureSPVM
             }
         }
 
-        xScript ConfigureLDAPCP
+        Script ConfigureLDAPCP
         {
             SetScript = 
             {
@@ -979,7 +988,7 @@ configuration ConfigureSPVM
             Port                   = 443
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[CertReq]GenerateMainWebAppCertificate", "[SPWebApplication]CreateMainWebApp", "[xScript]ConfigureLDAPCP"
+            DependsOn              = "[CertReq]GenerateMainWebAppCertificate", "[SPWebApplication]CreateMainWebApp", "[Script]ConfigureLDAPCP"
         }
 
         SPWebAppAuthentication ConfigureMainWebAppAuthentication
@@ -1134,7 +1143,7 @@ configuration ConfigureSPVM
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
             PsDscRunAsCredential       = $SPSetupCredsQualified
-            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance", "[xScript]ConfigureLDAPCP"
+            DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance", "[Script]ConfigureLDAPCP"
         }
 
         SPAppManagementServiceApp CreateAppManagementServiceApp
@@ -1157,7 +1166,7 @@ configuration ConfigureSPVM
                     AccessLevels = @("Full Control")
             })
             PsDscRunAsCredential = $SPSetupCredsQualified
-            #DependsOn           = "[xScript]RefreshLocalConfigCache"
+            #DependsOn           = "[Script]RefreshLocalConfigCache"
             DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
 
@@ -1239,7 +1248,7 @@ configuration ConfigureSPVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
+            DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
         }
 
         File CreateAddinsSiteDirectory
@@ -1247,7 +1256,7 @@ configuration ConfigureSPVM
             DestinationPath = "C:\inetpub\wwwroot\addins"
             Type            = "Directory"
             Ensure          = "Present"
-            DependsOn       = "[SPFarm]CreateSPFarm", "[xScript]ConfigureLDAPCP"
+            DependsOn       = "[SPFarm]CreateSPFarm", "[Script]ConfigureLDAPCP"
         }
 
         xWebAppPool CreateAddinsSiteApplicationPool
@@ -1294,7 +1303,7 @@ configuration ConfigureSPVM
             DependsOn            = "[CertReq]GenerateAddinsSiteCertificate", "[File]CreateAddinsSiteDirectory", "[xWebAppPool]CreateAddinsSiteApplicationPool"
         }
 
-        xScript CopyIISWelcomePageToAddinsSite
+        Script CopyIISWelcomePageToAddinsSite
         {
             SetScript = 
             {
@@ -1334,10 +1343,10 @@ configuration ConfigureSPVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[xScript]UpdateGPOToTrustRootCACert"
+            DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
         }
 
-        xScript ExportHighTrustAddinsCert
+        Script ExportHighTrustAddinsCert
         {
             SetScript = 
             {
@@ -1372,12 +1381,12 @@ configuration ConfigureSPVM
             IsTrustBroker                  = $true
             SigningCertificateFilePath     = "$SetupPath\Certificates\HighTrustAddins.cer"
             Ensure                         = "Present"
-            DependsOn                      = "[xScript]ExportHighTrustAddinsCert"
+            DependsOn                      = "[Script]ExportHighTrustAddinsCert"
             PsDscRunAsCredential           = $SPSetupCredsQualified
         }
 
-        # DSC resource File throws an access denied when accessing a remote location, so use xScript instead
-        xScript CreateDSCCompletionFile
+        # DSC resource File throws an access denied when accessing a remote location, so use Script instead
+        Script CreateDSCCompletionFile
         {
             SetScript =
             {
@@ -1396,7 +1405,7 @@ configuration ConfigureSPVM
 
         # if ($EnableAnalysis) {
         #     # This resource is for analysis of dsc logs only and totally optionnal
-        #     xScript parseDscLogs
+        #     Script parseDscLogs
         #     {
         #         TestScript = { return $false }
         #         SetScript = {
