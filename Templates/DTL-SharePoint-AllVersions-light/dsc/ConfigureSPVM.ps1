@@ -844,7 +844,7 @@ configuration ConfigureSPVM
                     }
                     Ensure               = "Present"
                     PsDscRunAsCredential = $DomainAdminCredsQualified
-                    DependsOn            = "[CertReq]ConfigureMainWebAppAuthentication"
+                    DependsOn            = "[CertReq]GenerateMainWebAppCertificate"
                 }
             }
 
