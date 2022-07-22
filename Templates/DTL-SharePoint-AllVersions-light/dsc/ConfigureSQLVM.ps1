@@ -13,8 +13,7 @@ configuration ConfigureSQLVM
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 8.2.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.0.1
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
-    # Import-DscResource -ModuleName PSDesiredStateConfiguration # -ModuleVersion 2.0.5 # Cannot set -ModuleVersion because module is not included in zip package
-
+    
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1

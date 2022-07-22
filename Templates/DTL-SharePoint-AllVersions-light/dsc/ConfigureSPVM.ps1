@@ -811,7 +811,7 @@ configuration ConfigureSPVM
                             return $true    # Certificate is already created
                         }
                     }
-                    DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+                    DependsOn            = "[Script]UpdateGPOToTrustRootCACert", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
                     PsDscRunAsCredential = $DomainAdminCredsQualified
                 }
             } else {
@@ -828,7 +828,7 @@ configuration ConfigureSPVM
                     KeyUsage               = '0xa0'
                     CertificateTemplate    = 'WebServer'
                     AutoRenew              = $true
-                    DependsOn              = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+                    DependsOn              = "[Script]UpdateGPOToTrustRootCACert", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
                     Credential             = $DomainAdminCredsQualified
                 }
 
