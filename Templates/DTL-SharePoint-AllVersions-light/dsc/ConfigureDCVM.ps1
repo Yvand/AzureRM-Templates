@@ -9,8 +9,14 @@
         [Parameter(Mandatory)] [Boolean]$ConfigureADFS
     )
     
-
-    Import-DscResource -ModuleName ActiveDirectoryDsc, NetworkingDsc, PSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, xDnsServer, ComputerManagementDsc, AdfsDsc
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.0.1
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 8.2.0
+    Import-DscResource -ModuleName PSDesiredStateConfiguration -ModuleVersion 2.0.5
+    Import-DscResource -ModuleName ActiveDirectoryCSDsc -ModuleVersion 5.0.0 # toupdate
+    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
+    Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
+    Import-DscResource -ModuleName AdfsDsc -ModuleVersion 1.1.0
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
