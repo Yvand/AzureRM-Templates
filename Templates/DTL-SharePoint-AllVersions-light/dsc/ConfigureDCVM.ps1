@@ -11,7 +11,7 @@
     
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.0.1
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 8.2.0
-    Import-DscResource -ModuleName PSDesiredStateConfiguration -ModuleVersion 2.0.5
+    # Import-DscResource -ModuleName PSDesiredStateConfiguration # -ModuleVersion 2.0.5 # Cannot set -ModuleVersion because module is not included in zip package
     Import-DscResource -ModuleName ActiveDirectoryCSDsc -ModuleVersion 5.0.0 # toupdate
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
