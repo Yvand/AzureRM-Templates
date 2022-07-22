@@ -783,23 +783,6 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
-        CertReq GenerateMainWebAppCertificate
-        {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
-            Subject                = "$SPTrustedSitesName.$DomainFQDN"
-            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
-            KeyLength              = '2048'
-            Exportable             = $true
-            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
-            OID                    = '1.3.6.1.5.5.7.3.1'
-            KeyUsage               = '0xa0'
-            CertificateTemplate    = 'WebServer'
-            AutoRenew              = $true
-            Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
-        }
-
         # Installing LDAPCP somehow updates SPClaimEncodingManager 
         # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
         # The only solution I've found is to force a reboot in SharePoint 2019
@@ -988,7 +971,7 @@ configuration ConfigureSPVM
             Port                   = 443
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[CertReq]GenerateMainWebAppCertificate", "[SPWebApplication]CreateMainWebApp", "[Script]ConfigureLDAPCP"
+            DependsOn              = "[SPWebApplication]CreateMainWebApp", "[Script]ConfigureLDAPCP"
         }
 
         SPWebAppAuthentication ConfigureMainWebAppAuthentication
@@ -1010,19 +993,92 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp", "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
         }
 
-        xWebsite SetHTTPSCertificate
-        {
-            Name                 = "SharePoint - 443"
-            BindingInfo          = MSFT_xWebBindingInformation
+        if ($SharePointVersion -eq "SE") {
+            # Use SharePoint SE to generate the CSR and give the private key so it can manage it
+            Script GenerateMainWebAppCertificate
             {
-                Protocol             = "HTTPS"
-                Port                 = 443
-                CertificateStoreName = "My"
-                CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
+                SetScript =
+                {
+                    $dcName = $using:DCName
+                    $dcSetupPath = $using:DCSetupPath
+                    $domainFQDN = $using:DomainFQDN
+                    $domainNetbiosName = $using:DomainNetbiosName
+                    $spTrustedSitesName = $using:SPTrustedSitesName
+                    $appDomainIntranetFQDN = $using:AppDomainIntranetFQDN
+
+                    # Generate CSR
+                    New-SPCertificate -FriendlyName "$spTrustedSitesName Certificate" -KeySize 2048 -CommonName "$spTrustedSitesName.$domainFQDN" -AlternativeNames @("*.$domainFQDN", "*.$appDomainIntranetFQDN") -Organization "$domainNetbiosName" -Exportable -HashAlgorithm SHA256 -Path "$dcSetupPath\$spTrustedSitesName.csr"
+
+                    # Submit CSR to CA
+                    & certreq.exe -submit -config "$dcName.$domainFQDN\$domainNetbiosName-$dcName-CA" -attrib "CertificateTemplate:Webserver" "$dcSetupPath\$spTrustedSitesName.csr" "$dcSetupPath\$spTrustedSitesName.cer" "$dcSetupPath\$spTrustedSitesName.p7b" "$dcSetupPath\$spTrustedSitesName.ful"
+
+                    # Install certificate with its private key to certificate store
+                    # certreq -accept –machine "$dcSetupPath\$spTrustedSitesName.cer"
+
+                    # Find the certificate
+                    # Get-ChildItem -Path cert:\localMachine\my | Where-Object{ $_.Subject -eq "CN=$spTrustedSitesName.$domainFQDN, O=$domainNetbiosName" } | Select-Object Thumbprint
+
+                    # # Export private key of the certificate
+                    # certutil -f -p "superpasse" -exportpfx A74D118AABD5B42F23BCD9083D3F6A3EF3BFD904 "$dcSetupPath\$spTrustedSitesName.pfx"
+
+                    # # Import private key of the certificate into SharePoint
+                    # $password = ConvertTo-SecureString -AsPlainText -Force "<superpasse>"
+                    # Import-SPCertificate -Path "$dcSetupPath\$spTrustedSitesName.pfx" -Password $password -Exportable
+                    $spCert = Import-SPCertificate -Path "$dcSetupPath\$spTrustedSitesName.cer" -Exportable -Store EndEntity
+
+                    Set-SPWebApplication -Identity "http://$spTrustedSitesName" -Zone Intranet -Port 443 -Certificate $spCert `
+                        -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url "https://$spTrustedSitesName.$domainFQDN"
+                }
+                GetScript            = { }
+                TestScript           = 
+                {
+                    $domainFQDN = $using:DomainFQDN
+                    $domainNetbiosName = $using:DomainNetbiosName
+                    $spTrustedSitesName = $using:SPTrustedSitesName
+                    
+                    # $cert = Get-ChildItem -Path cert:\localMachine\my | Where-Object{ $_.Subject -eq "CN=$spTrustedSitesName.$domainFQDN, O=$domainNetbiosName" }
+                    $cert = Get-SPCertificate -Identity "$spTrustedSitesName Certificate" -ErrorAction SilentlyContinue
+                    if ($null -eq $cert) {
+                        return $false   # Run SetScript
+                    } else {
+                        return $true    # Certificate is already created
+                    }
+                }
+                DependsOn            = "[Script]UpdateGPOToTrustRootCACert", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
             }
-            Ensure               = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp"
+        } else {
+            CertReq GenerateMainWebAppCertificate
+            {
+                CARootName             = "$DomainNetbiosName-$DCName-CA"
+                CAServerFQDN           = "$DCName.$DomainFQDN"
+                Subject                = "$SPTrustedSitesName.$DomainFQDN"
+                SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
+                KeyLength              = '2048'
+                Exportable             = $true
+                ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+                OID                    = '1.3.6.1.5.5.7.3.1'
+                KeyUsage               = '0xa0'
+                CertificateTemplate    = 'WebServer'
+                AutoRenew              = $true
+                Credential             = $DomainAdminCredsQualified
+                DependsOn              = "[Script]UpdateGPOToTrustRootCACert", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+            }
+
+            xWebsite SetHTTPSCertificate
+            {
+                Name                 = "SharePoint - 443"
+                BindingInfo          = MSFT_xWebBindingInformation
+                {
+                    Protocol             = "HTTPS"
+                    Port                 = 443
+                    CertificateStoreName = "My"
+                    CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
+                }
+                Ensure               = "Present"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[CertReq]GenerateMainWebAppCertificate"
+            }
         }
 
         SPCacheAccounts SetCacheAccounts

@@ -613,37 +613,39 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        CertReq SPSSiteCert
-        {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
-            Subject                = "$SPTrustedSitesName.$DomainFQDN"
-            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
-            KeyLength              = '2048'
-            Exportable             = $true
-            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
-            OID                    = '1.3.6.1.5.5.7.3.1'
-            KeyUsage               = '0xa0'
-            CertificateTemplate    = 'WebServer'
-            AutoRenew              = $true
-            Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
-        }
-
-        xWebsite SetHTTPSCertificate
-        {
-            Name                 = "SharePoint - 443"
-            BindingInfo          = MSFT_xWebBindingInformation
+        if ($SharePointVersion -ne "SE") {
+            CertReq SPSSiteCert
             {
-                Protocol             = "HTTPS"
-                Port                 = 443
-                CertificateStoreName = "My"
-                CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
+                CARootName             = "$DomainNetbiosName-$DCName-CA"
+                CAServerFQDN           = "$DCName.$DomainFQDN"
+                Subject                = "$SPTrustedSitesName.$DomainFQDN"
+                SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
+                KeyLength              = '2048'
+                Exportable             = $true
+                ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+                OID                    = '1.3.6.1.5.5.7.3.1'
+                KeyUsage               = '0xa0'
+                CertificateTemplate    = 'WebServer'
+                AutoRenew              = $true
+                Credential             = $DomainAdminCredsQualified
+                DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
             }
-            Ensure               = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
-        }
+
+            xWebsite SetHTTPSCertificate
+            {
+                Name                 = "SharePoint - 443"
+                BindingInfo          = MSFT_xWebBindingInformation
+                {
+                    Protocol             = "HTTPS"
+                    Port                 = 443
+                    CertificateStoreName = "My"
+                    CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
+                }
+                Ensure               = "Present"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
+            }
+        }        
 
         # if ($EnableAnalysis) {
         #     # This resource is for analysis of dsc logs only and totally optionnal
