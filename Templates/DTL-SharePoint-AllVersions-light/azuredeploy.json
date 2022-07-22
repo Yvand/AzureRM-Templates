@@ -1752,6 +1752,11 @@
       "type": "string",
       "value": "[variables('generalSettings').localAdminUserName]"
     },
+    "publicIPAddressSPSE": {
+      "condition": "[and(equals(parameters('provisionSharePointSubscription'), true()), equals(parameters('addPublicIPAddressToEachVM'), true()))]",
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmSPSubscription').vmPublicIPName)).dnsSettings.fqdn]"
+    },
     "publicIPAddressSP2019": {
       "condition": "[and(equals(parameters('provisionSharePoint2019'), true()), equals(parameters('addPublicIPAddressToEachVM'), true()))]",
       "type": "string",
