@@ -841,14 +841,14 @@ configuration ConfigureSPVM
         }
 
         if ($true -eq $IsSharePointvNext) {
-            # $apppoolUserName = $SPAppPoolCredsQualified.UserName
-            # $spSetupCredsQualified = $SPSetupCredsQualified.UserName
+            $apppoolUserName = $SPAppPoolCredsQualified.UserName
+            $spSetupUserName = $SPSetupCredsQualified.UserName
             Script SetFarmPropertiesForOIDC
             {
                 SetScript = 
                 {
                     $apppoolUserName = $using:SPAppPoolCredsQualified.UserName
-                    $spSetupCredsQualified = $using:SPSetupCredsQualified.UserName
+                    $spSetupUserName = $using:spSetupUserName.UserName
                     $dcSetupPath = $using:DCSetupPath
                     
                     # Setup farm properties to work with OIDC
@@ -857,7 +857,7 @@ configuration ConfigureSPVM
                     $cookieCertificateFilePath = Join-Path -Path $dcSetupPath -ChildPath "$cookieCertificateName"
                     $cert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=$cookieCertificateName"
                     Export-Certificate -Cert $cert -FilePath "$cookieCertificateFilePath.cer"
-                    Export-PfxCertificate -Cert $cert -FilePath "$cookieCertificateFilePath.pfx" -ProtectTo "$spSetupCredsQualified"
+                    Export-PfxCertificate -Cert $cert -FilePath "$cookieCertificateFilePath.pfx" -ProtectTo "$spSetupUserName"
 
                     # Grant access to the certificate private key.
                     $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
@@ -893,7 +893,7 @@ configuration ConfigureSPVM
                     }
                 }
                 DependsOn            = "[SPFarmSolution]InstallLdapcp"
-                PsDscRunAsCredential = $SPSetupCredsQualified
+                PsDscRunAsCredential = $DomainAdminCredsQualified
             }
 
             SPTrustedIdentityTokenIssuer CreateSPTrust
@@ -1613,7 +1613,7 @@ $SharePointVersion = "SE"
 $EnableAnalysis = $true
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 

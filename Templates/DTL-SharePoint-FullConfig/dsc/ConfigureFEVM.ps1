@@ -689,7 +689,7 @@ configuration ConfigureFEVM
                     }
                 }
                 DependsOn            = "[SPFarm]JoinSPFarm"
-                PsDscRunAsCredential = $SPSetupCredsQualified
+                PsDscRunAsCredential = $DomainAdminCredsQualified
             }
         }        
 
