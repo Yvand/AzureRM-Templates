@@ -117,9 +117,9 @@ configuration ConfigureSPVM
                 $ldapcpLink = $using:LdapcpLink
                 $setupPath = $using:SetupPath
                 $setupFile = Join-Path -Path $setupPath -ChildPath "LDAPCP.wsp"
+                New-Item -Path $setupPath -ItemType directory -ErrorAction SilentlyContinue
                 $count = 0
-                $maxCount = 10
-                
+                $maxCount = 10                
                 while (($count -lt $maxCount) -and (-not(Test-Path $setupFile)))
                 {
                     try {
