@@ -841,31 +841,37 @@ configuration ConfigureSPVM
         }
 
         if ($true -eq $IsSharePointvNext) {
-            $apppoolUserName = $SPAppPoolCredsQualified.UserName
+            # $apppoolUserName = $SPAppPoolCredsQualified.UserName
+            # $spSetupCredsQualified = $SPSetupCredsQualified.UserName
             Script SetFarmPropertiesForOIDC
             {
                 SetScript = 
                 {
-                    $apppoolUserName = $using:apppoolUserName
-                    # Import-Module SharePointServer | Out-Null
+                    $apppoolUserName = $using:SPAppPoolCredsQualified.UserName
+                    $spSetupCredsQualified = $using:SPSetupCredsQualified.UserName
+                    $dcSetupPath = $using:DCSetupPath
+                    
                     # Setup farm properties to work with OIDC
-                    # Create a self-signed certificate in one SharePoint Server in the farm
-                    $cert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=SharePoint Cookie Cert"
+                    # Create a self-signed certificate in 1st SharePoint Server of the farm
+                    $cookieCertificateName = "SharePoint Cookie Cert"
+                    $cookieCertificateFilePath = Join-Path -Path $dcSetupPath -ChildPath "$cookieCertificateName"
+                    $cert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=$cookieCertificateName"
+                    Export-Certificate -Cert $cert -FilePath "$cookieCertificateFilePath.cer"
+                    Export-PfxCertificate -Cert $cert -FilePath "$cookieCertificateFilePath.pfx" -ProtectTo "$spSetupCredsQualified"
 
                     # Grant access to the certificate private key.
                     $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
                     $fileName = $rsaCert.key.UniqueName
                     $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
                     $permissions = Get-Acl -Path $path
-                    #please replace the <web application pool account> with real application pool account of your web application
                     $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($apppoolUserName, 'Read', 'None', 'None', 'Allow')
                     $permissions.AddAccessRule($access_rule)
                     Set-Acl -Path $path -AclObject $permissions
 
                     # Set farm properties
                     $f = Get-SPFarm
-                    $f.Farm.Properties['SP-NonceCookieCertificateThumbprint']=$cert.Thumbprint
-                    $f.Farm.Properties['SP-NonceCookieHMACSecretKey']='seed'
+                    $f.Farm.Properties['SP-NonceCookieCertificateThumbprint'] = $cert.Thumbprint
+                    $f.Farm.Properties['SP-NonceCookieHMACSecretKey'] = 'seed'
                     $f.Farm.Update()
                 }
                 GetScript =  
@@ -888,7 +894,7 @@ configuration ConfigureSPVM
                 }
                 DependsOn            = "[SPFarmSolution]InstallLdapcp"
                 PsDscRunAsCredential = $SPSetupCredsQualified
-            }        
+            }
 
             SPTrustedIdentityTokenIssuer CreateSPTrust
             {

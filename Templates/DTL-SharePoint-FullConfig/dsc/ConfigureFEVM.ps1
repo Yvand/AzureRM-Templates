@@ -645,6 +645,52 @@ configuration ConfigureFEVM
                 PsDscRunAsCredential = $DomainAdminCredsQualified
                 DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
             }
+        } else {
+            Script SetFarmPropertiesForOIDC
+            {
+                SetScript = 
+                {
+                    # $apppoolUserName = $using:SPAppPoolCredsQualified.UserName
+                    $apppoolUserName = "contoso\spapppool"
+                    $spSetupCredsQualified = $using:SPSetupCredsQualified.UserName
+                    $dcSetupPath = $using:DCSetupPath
+                    
+                    # Setup farm properties to work with OIDC
+                    # Import self-signed certificate created in 1st SharePoint Server of the farm
+                    $cookieCertificateName = "SharePoint Cookie Cert"
+                    $cookieCertificateFilePath = Join-Path -Path $dcSetupPath -ChildPath "$cookieCertificateName"
+                    Import-PfxCertificate -FilePath "$cookieCertificateFilePath.pfx" -CertStoreLocation Cert:\localMachine\My -Exportable
+
+                    # Grant access to the certificate private key.
+                    $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
+                    $fileName = $rsaCert.key.UniqueName
+                    $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
+                    $permissions = Get-Acl -Path $path
+                    $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($apppoolUserName, 'Read', 'None', 'None', 'Allow')
+                    $permissions.AddAccessRule($access_rule)
+                    Set-Acl -Path $path -AclObject $permissions
+                }
+                GetScript =  
+                {
+                    # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                    return @{ "Result" = "false" }
+                }
+                TestScript = 
+                {
+                    # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                    # Import-Module SharePointServer | Out-Null
+                    # $f = Get-SPFarm
+                    # if ($f.Farm.Properties.ContainsKey('SP-NonceCookieCertificateThumbprint') -eq $false) {
+                    if ((Get-ChildItem -Path "cert:\LocalMachine\My\"| Where-Object{$_.Subject -eq "CN=SharePoint Cookie Cert"}) -eq $null) {
+                        return $false
+                    }
+                    else {
+                        return $true
+                    }
+                }
+                DependsOn            = "[SPFarm]JoinSPFarm"
+                PsDscRunAsCredential = $SPSetupCredsQualified
+            }
         }        
 
         # if ($EnableAnalysis) {
