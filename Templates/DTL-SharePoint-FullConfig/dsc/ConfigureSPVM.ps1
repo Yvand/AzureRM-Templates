@@ -842,13 +842,13 @@ configuration ConfigureSPVM
 
         if ($true -eq $IsSharePointvNext) {
             $apppoolUserName = $SPAppPoolCredsQualified.UserName
-            $spSetupUserName = $SPSetupCredsQualified.UserName
+            $domainAdminUserName = $DomainAdminCredsQualified.UserName
             Script SetFarmPropertiesForOIDC
             {
                 SetScript = 
                 {
                     $apppoolUserName = $using:apppoolUserName
-                    $spSetupUserName = $using:spSetupUserName
+                    $domainAdminUserName = $using:domainAdminUserName
                     $dcSetupPath = $using:DCSetupPath
                     
                     # Setup farm properties to work with OIDC
@@ -857,7 +857,7 @@ configuration ConfigureSPVM
                     $cookieCertificateFilePath = Join-Path -Path $dcSetupPath -ChildPath "$cookieCertificateName"
                     $cert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=$cookieCertificateName"
                     Export-Certificate -Cert $cert -FilePath "$cookieCertificateFilePath.cer"
-                    Export-PfxCertificate -Cert $cert -FilePath "$cookieCertificateFilePath.pfx" -ProtectTo "$spSetupUserName"
+                    Export-PfxCertificate -Cert $cert -FilePath "$cookieCertificateFilePath.pfx" -ProtectTo "$domainAdminUserName"
 
                     # Grant access to the certificate private key.
                     $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
