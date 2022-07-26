@@ -950,6 +950,21 @@ configuration ConfigureSPVM
             }
         }
 
+        # ExtendMainWebApp might fail with error: "The web.config could not be saved on this IIS Web Site: C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config.\r\nThe process cannot access the file 'C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config' because it is being used by another process."
+        # So I added resources between it and CreateMainWebApp to avoid it
+        SPWebApplicationExtension ExtendMainWebApp
+        {
+            WebAppUrl              = "http://$SPTrustedSitesName/"
+            Name                   = "SharePoint - 443"
+            AllowAnonymous         = $false
+            Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
+            Zone                   = "Intranet"
+            Port                   = 443
+            Ensure                 = "Present"
+            PsDscRunAsCredential   = $SPSetupCredsQualified
+            DependsOn              = "[SPWebApplication]CreateMainWebApp"
+        }
+
         Script ConfigureLDAPCP
         {
             SetScript = 
@@ -993,21 +1008,6 @@ configuration ConfigureSPVM
             }
             DependsOn            = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-        }
-
-        # ExtendMainWebApp might fail with error: "The web.config could not be saved on this IIS Web Site: C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config.\r\nThe process cannot access the file 'C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config' because it is being used by another process."
-        # So I added resources between it and CreateMainWebApp to avoid it
-        SPWebApplicationExtension ExtendMainWebApp
-        {
-            WebAppUrl              = "http://$SPTrustedSitesName/"
-            Name                   = "SharePoint - 443"
-            AllowAnonymous         = $false
-            Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
-            Zone                   = "Intranet"
-            Port                   = 443
-            Ensure                 = "Present"
-            PsDscRunAsCredential   = $SPSetupCredsQualified
-            DependsOn              = "[SPWebApplication]CreateMainWebApp", "[Script]ConfigureLDAPCP"
         }
 
         SPWebAppAuthentication ConfigureMainWebAppAuthentication
