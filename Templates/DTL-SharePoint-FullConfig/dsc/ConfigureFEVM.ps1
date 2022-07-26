@@ -652,7 +652,6 @@ configuration ConfigureFEVM
                 {
                     # $apppoolUserName = $using:SPAppPoolCredsQualified.UserName
                     $apppoolUserName = "contoso\spapppool"
-                    $spSetupCredsQualified = $using:SPSetupCredsQualified.UserName
                     $dcSetupPath = $using:DCSetupPath
                     
                     # Setup farm properties to work with OIDC

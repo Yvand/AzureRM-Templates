@@ -847,8 +847,8 @@ configuration ConfigureSPVM
             {
                 SetScript = 
                 {
-                    $apppoolUserName = $using:SPAppPoolCredsQualified.UserName
-                    $spSetupUserName = $using:spSetupUserName.UserName
+                    $apppoolUserName = $using:apppoolUserName
+                    $spSetupUserName = $using:spSetupUserName
                     $dcSetupPath = $using:DCSetupPath
                     
                     # Setup farm properties to work with OIDC
