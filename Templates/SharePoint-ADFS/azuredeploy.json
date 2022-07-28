@@ -505,9 +505,6 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSubnetDCName]",
       "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "[variables('networkSettings').nsgSubnetDCName]"
-      },
       "properties": {
         "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
@@ -517,9 +514,6 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSubnetSQLName]",
       "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "[variables('networkSettings').nsgSubnetSQLName]"
-      },
       "properties": {
         "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
@@ -529,9 +523,6 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSubnetSPName]",
       "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "[variables('networkSettings').nsgSubnetSPName]"
-      },
       "properties": {
         "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
@@ -546,9 +537,6 @@
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetSQLName)]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetSPName)]"
       ],
-      "tags": {
-        "displayName": "[variables('networkSettings').vNetPrivateName]"
-      },
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -592,9 +580,6 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
       "apiVersion": "2021-08-01",
-      "tags": {
-        "displayName": "[variables('vmDC').vmPublicIPName]"
-      },
       "sku": {
         "name": "Basic",
         "tier": "Regional"
@@ -615,9 +600,6 @@
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
       ],
-      "tags": {
-        "displayName": "[variables('vmDC').vmNicName]"
-      },
       "properties": {
         "ipConfigurations": [
           {
@@ -642,9 +624,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
       ],
-      "tags": {
-        "displayName": "[variables('generalSettings').vmDCName]"
-      },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmDC').vmVmSize]"
@@ -699,9 +678,6 @@
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
           ],
-          "tags": {
-            "displayName": "ConfigureDCVM"
-          },
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
@@ -745,9 +721,6 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
       "apiVersion": "2021-08-01",
-      "tags": {
-        "displayName": "[variables('vmSQL').vmPublicIPName]"
-      },
       "sku": {
         "name": "Basic",
         "tier": "Regional"
@@ -768,9 +741,6 @@
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)]"
       ],
-      "tags": {
-        "displayName": "[variables('vmSQL').vmNicName]"
-      },
       "properties": {
         "ipConfigurations": [
           {
@@ -794,9 +764,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
       ],
-      "tags": {
-        "displayName": "[variables('generalSettings').vmSQLName]"
-      },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSQL').vmVmSize]"
@@ -850,9 +817,6 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
       "apiVersion": "2021-08-01",
-      "tags": {
-        "displayName": "[variables('vmSP').vmPublicIPName]"
-      },
       "sku": {
         "name": "Basic",
         "tier": "Regional"
@@ -873,9 +837,6 @@
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
       ],
-      "tags": {
-        "displayName": "[variables('vmSP').vmNicName]"
-      },
       "properties": {
         "ipConfigurations": [
           {
@@ -899,9 +860,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
       ],
-      "tags": {
-        "displayName": "[variables('generalSettings').vmSPName]"
-      },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSP').vmVmSize]"
@@ -958,9 +916,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
       ],
-      "tags": {
-        "displayName": "[concat(variables('generalSettings').vmSQLName,'/ConfigureSQLVM')]"
-      },
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
@@ -1008,9 +963,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
       ],
-      "tags": {
-        "displayName": "[concat(variables('generalSettings').vmSPName,'/ConfigureSPVM')]"
-      },
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
@@ -1081,9 +1033,6 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
       "apiVersion": "2021-08-01",
-      "tags": {
-        "displayName": "[concat(variables('vmFE').vmPublicIPName, '-', copyIndex())]"
-      },
       "copy": {
           "name": "frontendPublicIPAddresses",
           "count": "[parameters('numberOfAdditionalFrontEnd')]"
@@ -1109,9 +1058,6 @@
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "frontendPublicIPAddresses"
       ],
-      "tags": {
-        "displayName": "[concat(variables('vmFE').vmNicName, '-', copyIndex())]"
-      },
       "copy": {
           "name": "frontendNetworkInterfaces",
           "count": "[parameters('numberOfAdditionalFrontEnd')]"
@@ -1140,9 +1086,6 @@
       "dependsOn": [
         "frontendNetworkInterfaces"
       ],
-      "tags": {
-        "displayName": "[concat(variables('generalSettings').vmFEName, '-', copyIndex())]"
-      },
       "copy": {
           "name": "frontendVirtualMachines",
           "count": "[parameters('numberOfAdditionalFrontEnd')]"
@@ -1203,9 +1146,6 @@
       "dependsOn": [
         "frontendVirtualMachines"
       ],
-      "tags": {
-        "displayName": "[concat(variables('generalSettings').vmFEName, '-', copyIndex(),'/ConfigureFEVM')]"
-      },
        "copy": {
           "name": "frontendVirtualMachineExtensions",
           "count": "[parameters('numberOfAdditionalFrontEnd')]"
@@ -1360,9 +1300,6 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "NSG-Subnet-AzureBastion",
       "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "NSG-Subnet-AzureBastion"
-      },
       "properties": {
         "securityRules": [
           {
@@ -1461,9 +1398,6 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
       "apiVersion": "2021-08-01",
-      "tags": {
-        "displayName": "PublicIP-Bastion"
-      },
       "sku": {
         "name": "Standard",
         "tier": "Regional"
