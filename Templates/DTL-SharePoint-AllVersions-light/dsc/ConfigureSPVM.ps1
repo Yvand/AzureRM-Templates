@@ -302,7 +302,7 @@ configuration ConfigureSPVM
             }
         }
 
-        # IIS cleanup cannot be executed before of SharePoint SE: It uses a base image of Windows Server without IIS (it gets installed by SPInstallPrereqs)
+        # IIS cleanup cannot be executed earlier in SharePoint SE: It uses a base image of Windows Server without IIS (installed by SPInstallPrereqs)
         xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
         xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
         xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; }
