@@ -1,3 +1,13 @@
+---
+description: Create a SharePoint Subscription / 2019 / 2016 / 2013 farm with a web application set with Windows and ADFS authentication, and some path based and host-named site collections. It also provisions User Profiles and Apps service applications and installs claims provider LDAPCP.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: sharepoint-adfs
+languages:
+- json
+---
 # Azure template for SharePoint Subscription / 2019 / 2016 / 2013
 
 ## Presentation
