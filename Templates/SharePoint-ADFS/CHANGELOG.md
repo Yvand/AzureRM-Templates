@@ -8,6 +8,7 @@
 * Update network address to use the same as DevTest Labs templates.
 * Update apiVersion of resources to latest version.
 * Explicitly set the version of each DSC module used.
+* Update DSC modules used to latest version available.
 * Replace all resources xScript with Script and remove dependency on module xPSDesiredStateConfiguration.
 * Revert the workaround related to decryption issue in DSC as regression was fixed in Windows.
 
