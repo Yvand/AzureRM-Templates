@@ -3,18 +3,18 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "provisionSharePoint2013": { "value": false },
-    "provisionSharePoint2016": { "value": true },
+    "provisionSharePoint2016": { "value": false },
     "provisionSharePoint2019": { "value": false },
     "provisionSharePointSubscription": { "value": true },
-    "configureADFS": { "value": true },
+    "configureADFS": { "value": false },
     "domainFQDN": { "value": "contoso.local" },
     "adminUserName": { "value": "Yvand" },
     "addPublicIPAddressToEachVM": { "value": true },
     "RDPTrafficAllowed": { "value": "12.33.22.22" },
     "addAzureBastion": { "value": false },
     "enableHybridBenefitServerLicenses": { "value": true },
-    "enableAutomaticUpdates": { "value": false },
+    "enableAutomaticUpdates": { "value": true },
     "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-AllVersions-light" },
-    "vmSPStorageAccountType": { "value": "StandardSSD_LRS" }
+    "vmSPStorageAccountType": { "value": "Premium_LRS" }
   }
 }
