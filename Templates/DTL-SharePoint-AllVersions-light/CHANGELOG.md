@@ -1,6 +1,6 @@
 # Change log for Azure DevTest Labs template SharePoint-AllVersions
 
-## Unreleased
+## Enhancements & bug-fixes - Published in August 8, 2022
 
 * In SP SE, import site certificate in SharePoint, so it can manage the certificate itself.
 * Update LDAP security settings to mitigate CVE-2017-8563.
