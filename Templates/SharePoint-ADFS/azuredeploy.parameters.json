@@ -7,17 +7,17 @@
     "adminPassword": { "value": null },
     "serviceAccountsPassword": { "value": null },
     "sharePointVersion": { "value": "Subscription" },
-    // "sharePointVersion": { "value": "2013" },
+    // "sharePointVersion": { "value": "2016" },
     "domainFQDN": { "value": "contoso.local" },
     "vmsTimeZone": { "value": "Romance Standard Time" },
     "vmSPStorageAccountType": { "value": "Premium_LRS" },
     "addPublicIPAddressToEachVM": { "value": true },
-    "RDPTrafficAllowed": { "value": "No" },
-    "numberOfAdditionalFrontEnd": { "value": 2 },
+    "RDPTrafficAllowed": { "value": "10.20.30.40" },
+    "numberOfAdditionalFrontEnd": { "value": 0 },
     "enableHybridBenefitServerLicenses": { "value": true },
-    "enableAutomaticUpdates": { "value": false },
+    "enableAutomaticUpdates": { "value": true },
     "sharePointDataDiskSize": { "value": 0 },
-    "addAzureBastion": { "value": true },
+    "addAzureBastion": { "value": false },
     "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" }
   }
 }

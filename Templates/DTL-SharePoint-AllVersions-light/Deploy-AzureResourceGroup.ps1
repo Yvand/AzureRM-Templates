@@ -84,7 +84,7 @@ if ($checkTemplate.Count -eq 0) {
             -Name $resourceDeploymentName).Outputs
         
         $outputMessage = "Use the account ""$($outputs.domainAdminAccount.value)"" to sign-in"
-        $outputMessage += $outputs.ContainsKey("publicIPAddressSP2019") ? " using DNS name ""$($outputs.publicIPAddressSP2019.value)""" : "."
+        $outputMessage += $outputs.ContainsKey("publicIPAddressSPSE") ? " using DNS name ""$($outputs.publicIPAddressSPSE.value)""" : "."
         Write-Host $outputMessage -ForegroundColor Green
     }
     else {
