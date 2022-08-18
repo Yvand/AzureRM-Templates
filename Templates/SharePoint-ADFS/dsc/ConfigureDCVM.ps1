@@ -128,7 +128,7 @@
         {
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
-            Subject                   = "$ComputerName.$DomainFQDN"
+            Subject                   = "CN=$ComputerName.$DomainFQDN"
             FriendlyName              = "LDAPS certificate for $ADFSSiteName.$DomainFQDN"
             KeyLength                 = '2048'
             Exportable                = $true
