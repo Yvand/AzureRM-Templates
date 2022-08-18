@@ -433,7 +433,7 @@
     "vmSQL": {
       "vmImagePublisher": "MicrosoftSQLServer",
       "vmImageOffer": "sql2019-ws2022",
-      "vmImageSKU": "sqldev",
+      "vmImageSKU": "sqldev-gen2",
       "vmOSDiskName": "Disk-SQL-OS",
       "vmVmSize": "[parameters('vmSQLSize')]",
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmSQLName, '-0')]",
