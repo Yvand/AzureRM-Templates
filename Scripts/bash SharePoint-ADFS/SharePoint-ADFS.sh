@@ -12,8 +12,9 @@ usage() { echo "Usage: $0 -g <resourceGroupName> -l <resourceGroupLocation> -p <
 # DEMO_NAME=$(($RANDOM % 10000)) && echo $DEMO_NAME
 location="west europe"
 resourceGroupName=""
-spVersion="Subscription"
+spVersion="SE"
 adminUserName="yvand"
+# The password length must be between 12 and 72. Password must have the 3 of the following: 1 lower case character, 1 upper case character, 1 number and 1 special character.
 adminPassword=""
 artifactsURI="https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/SharePoint-ADFS/"
 domainFQDN="contoso.local"
@@ -35,7 +36,7 @@ while getopts ":g:l:p:" arg; do
             resourceGroupName=${OPTARG}
             ;;
         l)
-            resourceGroupLocation=${OPTARG}
+            location=${OPTARG}
             ;;
         p)
             adminPassword=${OPTARG}
