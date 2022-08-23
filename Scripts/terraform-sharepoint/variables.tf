@@ -8,8 +8,8 @@ variable "resourceGroupName" {
 }
 
 variable "sharePointVersion" {
-  default     = "2019"
-  description = "Name of the ARM resource group to create"  
+  default     = "SE"
+  description = "Name of the ARM resource group to create"
 }
 
 variable "dnsLabelPrefix" {
@@ -63,11 +63,11 @@ variable "generalSettings" {
 variable "networkSettings" {
   type = map(string)
   default = {
-    vNetPrivatePrefix          = "10.0.0.0/16"
-    vNetPrivateSubnetDCPrefix  = "10.0.1.0/24"
-    vNetPrivateSubnetSQLPrefix = "10.0.2.0/24"
-    vNetPrivateSubnetSPPrefix  = "10.0.3.0/24"
-    vmDCPrivateIPAddress       = "10.0.1.4"
+    vNetPrivatePrefix          = "10.1.0.0/16"
+    vNetPrivateSubnetDCPrefix  = "10.1.1.0/24"
+    vNetPrivateSubnetSQLPrefix = "10.1.2.0/24"
+    vNetPrivateSubnetSPPrefix  = "10.1.3.0/24"
+    vmDCPrivateIPAddress       = "10.1.1.4"
   }
 }
 
@@ -75,10 +75,10 @@ variable "vmDC" {
   type = map(string)
   default = {
     vmName             = "DC"
-    vmSize             = "Standard_DS2_v2"
+    vmSize             = "Standard_B2s"
     vmImagePublisher   = "MicrosoftWindowsServer"
     vmImageOffer       = "WindowsServer"
-    vmImageSKU         = "2019-Datacenter"
+    vmImageSKU         = "2022-datacenter-azure-edition-smalldisk"
     storageAccountType = "Standard_LRS"
   }
 }
@@ -87,10 +87,10 @@ variable "vmSQL" {
   type = map(string)
   default = {
     vmName             = "SQL"
-    vmSize             = "Standard_E2ds_v4"
+    vmSize             = "Standard_B2ms"
     vmImagePublisher   = "MicrosoftSQLServer"
-    vmImageOffer       = "SQL2019-WS2019"
-    vmImageSKU         = "sqldev"
+    vmImageOffer       = "sql2019-ws2022"
+    vmImageSKU         = "sqldev-gen2"
     storageAccountType = "Standard_LRS"
   }
 }
@@ -98,12 +98,22 @@ variable "vmSQL" {
 variable "vmSP" {
   type = map(string)
   default = {
-    vmName             = "SP"
-    vmSize             = "Standard_E2ds_v4"
-    vmImagePublisher   = "MicrosoftSharePoint"
-    vmImageOffer       = "MicrosoftSharePointServer"
-    //vmImageSKU         = "sp2019"
+    vmName = "SP"
+    vmSize = "Standard_B4ms"
+    # vmImagePublisher   = "MicrosoftWindowsServer"
+    # vmImageOffer       = "WindowsServer"
+    # vmImageSKU         = "2022-datacenter-azure-edition"
     storageAccountType = "Standard_LRS"
+  }
+}
+
+variable "vmSP_image" {
+  type = map(any)
+  default = {
+    "SE"   = "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest"
+    "2019" = "MicrosoftSharePoint:MicrosoftSharePointServer:sp2019:latest"
+    "2016" = "MicrosoftSharePoint:MicrosoftSharePointServer:sp2016:latest"
+    "2013" = "MicrosoftSharePoint:MicrosoftSharePointServer:sp2013:latest"
   }
 }
 
@@ -111,7 +121,7 @@ variable "vmFE" {
   type = map(string)
   default = {
     vmName = "FE"
-    vmSize = "Standard_E2ds_v4"
+    vmSize = "Standard_B4ms"
   }
 }
 
@@ -162,4 +172,3 @@ variable "_artifactsLocation" {
 variable "_artifactsLocationSasToken" {
   default = ""
 }
-

@@ -1,5 +1,12 @@
 # Change log for Terraform template SharePoint-ADFS-Terraform
 
+## Unreleased
+
+* Various improvements
+* Add outputs
+* Add SharePoint Subscription
+* Update list of parameters passed to DSC script ConfigureFEVM and ConfigureSPVM
+
 ## Enhancements & bug-fixes - Published in October 13, 2020
 
 * Update list of parameters passed to DSC script ConfigureFEVM
