@@ -5,7 +5,7 @@
 * Various improvements
 * Add outputs
 * Add SharePoint Subscription
-* Update list of parameters passed to DSC script ConfigureFEVM and ConfigureSPVM
+* Update list of parameters passed to DSC scripts ConfigureFEVM and ConfigureSPVM
 
 ## Enhancements & bug-fixes - Published in October 13, 2020
 

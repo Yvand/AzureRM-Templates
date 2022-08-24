@@ -185,7 +185,7 @@ resource "azurerm_network_interface" "NIC-SP-0" {
 
 # Create virtual machines
 resource "azurerm_windows_virtual_machine" "VM-DC" {
-  name                     = "VM-${var.vmDC["vmName"]}"
+  name                     = "${var.vmDC["vmName"]}"
   computer_name            = var.vmDC["vmName"]
   location                 = azurerm_resource_group.resourceGroup.location
   resource_group_name      = azurerm_resource_group.resourceGroup.name
@@ -222,7 +222,7 @@ resource "azurerm_virtual_machine_extension" "VM-DC-DSC" {
   auto_upgrade_minor_version = true
 
   timeouts {
-    create = "45m"
+    create = "30m"
   }
 
   settings = <<SETTINGS
@@ -260,7 +260,7 @@ PROTECTED_SETTINGS
 }
 
 resource "azurerm_windows_virtual_machine" "VM-SQL" {
-  name                     = "VM-${var.vmSQL["vmName"]}"
+  name                     = "${var.vmSQL["vmName"]}"
   computer_name            = var.vmSQL["vmName"]
   location                 = azurerm_resource_group.resourceGroup.location
   resource_group_name      = azurerm_resource_group.resourceGroup.name
@@ -297,7 +297,7 @@ resource "azurerm_virtual_machine_extension" "VM-SQL-DSC" {
   auto_upgrade_minor_version = true
 
   timeouts {
-    create = "45m"
+    create = "30m"
   }
 
   settings = <<SETTINGS
@@ -339,7 +339,7 @@ PROTECTED_SETTINGS
 }
 
 resource "azurerm_windows_virtual_machine" "VM-SP" {
-  name                     = "VM-${var.vmSP["vmName"]}"
+  name                     = "${var.vmSP["vmName"]}"
   computer_name            = var.vmSP["vmName"]
   location                 = azurerm_resource_group.resourceGroup.location
   resource_group_name      = azurerm_resource_group.resourceGroup.name
@@ -376,7 +376,7 @@ resource "azurerm_virtual_machine_extension" "VM-SP-DSC" {
   auto_upgrade_minor_version = true
 
   timeouts {
-    create = "90m"
+    create = "75m"
   }
 
   settings = <<SETTINGS
@@ -468,7 +468,7 @@ resource "azurerm_network_interface" "NIC-FE-0" {
 
 resource "azurerm_windows_virtual_machine" "VM-FE" {
   count                    = var.numberOfAdditionalFrontEnd
-  name                     = "VM-${var.vmFE["vmName"]}-${count.index}"
+  name                     = "${var.vmFE["vmName"]}-${count.index}"
   computer_name            = "${var.vmFE["vmName"]}-${count.index}"
   location                 = azurerm_resource_group.resourceGroup.location
   resource_group_name      = azurerm_resource_group.resourceGroup.name
@@ -497,6 +497,7 @@ resource "azurerm_windows_virtual_machine" "VM-FE" {
 
 resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
   count                      = var.numberOfAdditionalFrontEnd
+  # count                      = 0
   name                       = "VM-${var.vmFE["vmName"]}-${count.index}-DSC"
   virtual_machine_id         = element(azurerm_windows_virtual_machine.VM-FE.*.id, count.index)
   publisher                  = "Microsoft.Powershell"
