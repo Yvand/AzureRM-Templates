@@ -3,43 +3,43 @@ variable "location" {
   description = "Location where resources will be provisioned"
 }
 
-variable "resourceGroupName" {
+variable "resource_group_name" {
   description = "Name of the ARM resource group to create"
 }
 
-variable "sharePointVersion" {
+variable "sharepoint_version" {
   default     = "SE"
   description = "Name of the ARM resource group to create"
 }
 
-variable "dnsLabelPrefix" {
-  description = "Prefix of public DNS names of VMs, e.g. 'dnsLabelPrefix-VMName.region.cloudapp.azure.com'"
+variable "dns_label_prefix" {
+  description = "Prefix of public DNS names of VMs, e.g. 'dns_label_prefix-VMName.region.cloudapp.azure.com'"
 }
 
-variable "adminUserName" {
+variable "admin_username" {
   default     = "yvand"
   description = "Name of the AD and SharePoint administrator. 'administrator' is not allowed"
 }
 
-variable "adminPassword" {
-  description = "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
+variable "admin_password" {
+  description = "Input must meet password complexity requirements as documented for property 'admin_password' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
 }
 
-variable "serviceAccountsPassword" {
-  description = "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
+variable "service_accounts_password" {
+  description = "Input must meet password complexity requirements as documented for property 'admin_password' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
 }
 
-variable "domainFQDN" {
+variable "domain_fqdn" {
   default     = "contoso.local"
   description = "FQDN of the AD forest to create"
 }
 
-variable "timeZone" {
+variable "time_zone" {
   default     = "Romance Standard Time"
   description = "Time zone of the VMs. Type '[TimeZoneInfo]::GetSystemTimeZones().Id' in PowerShell to get the list. Note that 'UTC' works but 'UTC+xx' does NOT work."
 }
 
-variable "numberOfAdditionalFrontEnd" {
+variable "number_additional_frontend" {
   default     = 0
   description = "Type how many additional front ends should be added to the SharePoint farm"
 }
@@ -49,7 +49,7 @@ variable "rdp_traffic_allowed" {
   description = "Specify if RDP traffic is allowed to connect to the VMs:<br>- If 'No' (default): Firewall denies all incoming RDP traffic from Internet.<br>- If '*' or 'Internet': Firewall accepts all incoming RDP traffic from Internet.<br>- If 'ServiceTagName': Firewall accepts all incoming RDP traffic from the specified 'ServiceTagName'.<br>- If 'xx.xx.xx.xx': Firewall accepts incoming RDP traffic only from the IP 'xx.xx.xx.xx'."
 }
 
-variable "generalSettings" {
+variable "general_settings" {
   type = map(string)
   default = {
     dscScriptsFolder  = "dsc"
@@ -65,7 +65,7 @@ variable "generalSettings" {
   }
 }
 
-variable "networkSettings" {
+variable "network_settings" {
   type = map(string)
   default = {
     vNetPrivatePrefix          = "10.1.0.0/16"
@@ -76,7 +76,7 @@ variable "networkSettings" {
   }
 }
 
-variable "vmDC" {
+variable "config_dc" {
   type = map(string)
   default = {
     vmName             = "DC"
@@ -88,7 +88,7 @@ variable "vmDC" {
   }
 }
 
-variable "vmSQL" {
+variable "config_sql" {
   type = map(string)
   default = {
     vmName             = "SQL"
@@ -100,7 +100,7 @@ variable "vmSQL" {
   }
 }
 
-variable "vmSP" {
+variable "config_sp" {
   type = map(string)
   default = {
     vmName = "SP"
@@ -112,7 +112,7 @@ variable "vmSP" {
   }
 }
 
-variable "vmSP_image" {
+variable "config_sp_image" {
   type = map(any)
   default = {
     "SE"   = "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest"
@@ -122,7 +122,7 @@ variable "vmSP_image" {
   }
 }
 
-variable "vmFE" {
+variable "config_fe" {
   type = map(string)
   default = {
     vmName = "FE"
@@ -130,7 +130,7 @@ variable "vmFE" {
   }
 }
 
-variable "dscConfigureDCVM" {
+variable "config_dc_dsc" {
   type = map(string)
   default = {
     fileName       = "ConfigureDCVM.zip"
@@ -140,7 +140,7 @@ variable "dscConfigureDCVM" {
   }
 }
 
-variable "dscConfigureSQLVM" {
+variable "config_sql_dsc" {
   type = map(string)
   default = {
     fileName       = "ConfigureSQLVM.zip"
@@ -150,7 +150,7 @@ variable "dscConfigureSQLVM" {
   }
 }
 
-variable "dscConfigureSPVM" {
+variable "config_sp_dsc" {
   type = map(string)
   default = {
     fileName       = "ConfigureSPVM.zip"
@@ -160,7 +160,7 @@ variable "dscConfigureSPVM" {
   }
 }
 
-variable "dscConfigureFEVM" {
+variable "config_fe_dsc" {
   type = map(string)
   default = {
     fileName       = "ConfigureFEVM.zip"

@@ -19,11 +19,11 @@ output "vm_fe_dns" {
 }
 
 output "domain_admin_account" {
-  value = "${split(".", var.domainFQDN)[0]}\\${var.adminUserName}"
+  value = "${split(".", var.domain_fqdn)[0]}\\${var.admin_username}"
 }
 
 output "domain_admin_account_format_bastion" {
-  value = "${var.adminUserName}@${var.domainFQDN}"
+  value = "${var.admin_username}@${var.domain_fqdn}"
 }
 
 output "local_admin_username" {

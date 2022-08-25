@@ -1,7 +1,7 @@
 location                   = "France Central"
-numberOfAdditionalFrontEnd = 2
-sharePointVersion          = "2019"
-/*vmSP = {
+number_additional_frontend = 2
+sharepoint_version          = "2019"
+/*config_sp = {
     vmName             = "SP"
     vmSize             = "Standard_E2ds_v4"
     vmImagePublisher   = "MicrosoftSharePoint"
