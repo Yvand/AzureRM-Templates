@@ -44,6 +44,11 @@ variable "numberOfAdditionalFrontEnd" {
   description = "Type how many additional front ends should be added to the SharePoint farm"
 }
 
+variable "rdp_traffic_allowed" {
+  default     = "No"
+  description = "Specify if RDP traffic is allowed to connect to the VMs:<br>- If 'No' (default): Firewall denies all incoming RDP traffic from Internet.<br>- If '*' or 'Internet': Firewall accepts all incoming RDP traffic from Internet.<br>- If 'ServiceTagName': Firewall accepts all incoming RDP traffic from the specified 'ServiceTagName'.<br>- If 'xx.xx.xx.xx': Firewall accepts incoming RDP traffic only from the IP 'xx.xx.xx.xx'."
+}
+
 variable "generalSettings" {
   type = map(string)
   default = {

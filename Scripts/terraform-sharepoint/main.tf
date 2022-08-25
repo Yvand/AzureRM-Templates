@@ -4,7 +4,8 @@ provider "azurerm" {
 
 locals {
   vmSP_image = lookup(var.vmSP_image, var.sharePointVersion)
-  source_ip = "10.20.30.40"
+  # source_ip = "10.20.30.40"
+  create_rdp_rule = lower(var.rdp_traffic_allowed) == "no" ? 0 : 1
 }
 
 # Create a resource group
@@ -14,61 +15,70 @@ resource "azurerm_resource_group" "resourceGroup" {
 }
 
 # Create the network security groups
-resource "azurerm_network_security_group" "NSG-Subnet-DC" {
+resource "azurerm_network_security_group" "nsg_subnet_dc" {
   name                = "NSG-Subnet-${var.vmDC["vmName"]}"
   location            = azurerm_resource_group.resourceGroup.location
   resource_group_name = azurerm_resource_group.resourceGroup.name
+}
 
-  security_rule {
+resource "azurerm_network_security_rule" "rdp_rule_subnet_dc" {
+ count = local.create_rdp_rule
     name                       = "allow-rdp-rule"
     description                = "Allow RDP"
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "3389"
-    source_address_prefix      = local.source_ip
+    source_address_prefix      = var.rdp_traffic_allowed
     destination_address_prefix = "*"
     access                     = "Allow"
     priority                   = 100
     direction                  = "Inbound"
-  }
+  resource_group_name = azurerm_resource_group.resourceGroup.name
+  network_security_group_name = azurerm_network_security_group.nsg_subnet_dc.name
 }
 
 resource "azurerm_network_security_group" "NSG-Subnet-SQL" {
   name                = "NSG-Subnet-${var.vmSQL["vmName"]}"
   location            = azurerm_resource_group.resourceGroup.location
   resource_group_name = azurerm_resource_group.resourceGroup.name
+}
 
-  security_rule {
+resource "azurerm_network_security_rule" "rdp_rule_subnet_sql" {
+ count = local.create_rdp_rule
     name                       = "allow-rdp-rule"
     description                = "Allow RDP"
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "3389"
-    source_address_prefix      = local.source_ip
+    source_address_prefix      = var.rdp_traffic_allowed
     destination_address_prefix = "*"
     access                     = "Allow"
     priority                   = 100
     direction                  = "Inbound"
-  }
+  resource_group_name = azurerm_resource_group.resourceGroup.name
+  network_security_group_name = azurerm_network_security_group.NSG-Subnet-SQL.name
 }
 
 resource "azurerm_network_security_group" "NSG-Subnet-SP" {
   name                = "NSG-Subnet-${var.vmSP["vmName"]}"
   location            = azurerm_resource_group.resourceGroup.location
   resource_group_name = azurerm_resource_group.resourceGroup.name
+}
 
-  security_rule {
+resource "azurerm_network_security_rule" "rdp_rule_subnet_sp" {
+ count = local.create_rdp_rule
     name                       = "allow-rdp-rule"
     description                = "Allow RDP"
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "3389"
-    source_address_prefix      = local.source_ip
+    source_address_prefix      = var.rdp_traffic_allowed
     destination_address_prefix = "*"
     access                     = "Allow"
     priority                   = 100
     direction                  = "Inbound"
-  }
+  resource_group_name = azurerm_resource_group.resourceGroup.name
+  network_security_group_name = azurerm_network_security_group.NSG-Subnet-SP.name
 }
 
 # Create the virtual network, 3 subnets, and associate each subnet with its Network Security Group
@@ -89,7 +99,7 @@ resource "azurerm_subnet" "Subnet-DC" {
 
 resource "azurerm_subnet_network_security_group_association" "nsg_subnetdc_association" {
   subnet_id                 = azurerm_subnet.Subnet-DC.id
-  network_security_group_id = azurerm_network_security_group.NSG-Subnet-DC.id
+  network_security_group_id = azurerm_network_security_group.nsg_subnet_dc.id
 }
 
 resource "azurerm_subnet" "Subnet-SQL" {
@@ -213,7 +223,7 @@ resource "azurerm_windows_virtual_machine" "VM-DC" {
 }
 
 resource "azurerm_virtual_machine_extension" "VM-DC-DSC" {
-  # count = 0
+  count = 0
   name                       = "VM-${var.vmDC["vmName"]}-DSC"
   virtual_machine_id         = azurerm_windows_virtual_machine.VM-DC.id
   publisher                  = "Microsoft.Powershell"
@@ -288,7 +298,7 @@ resource "azurerm_windows_virtual_machine" "VM-SQL" {
 }
 
 resource "azurerm_virtual_machine_extension" "VM-SQL-DSC" {
-  # count = 0
+  count = 0
   name                       = "VM-${var.vmSQL["vmName"]}-DSC"
   virtual_machine_id         = azurerm_windows_virtual_machine.VM-SQL.id
   publisher                  = "Microsoft.Powershell"
@@ -367,7 +377,7 @@ resource "azurerm_windows_virtual_machine" "VM-SP" {
 }
 
 resource "azurerm_virtual_machine_extension" "VM-SP-DSC" {
-  # count = 0
+  count = 0
   name                       = "VM-${var.vmSP["vmName"]}-DSC"
   virtual_machine_id         = azurerm_windows_virtual_machine.VM-SP.id
   publisher                  = "Microsoft.Powershell"
@@ -496,8 +506,8 @@ resource "azurerm_windows_virtual_machine" "VM-FE" {
 }
 
 resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
-  count                      = var.numberOfAdditionalFrontEnd
-  # count                      = 0
+  # count                      = var.numberOfAdditionalFrontEnd
+  count                      = 0
   name                       = "VM-${var.vmFE["vmName"]}-${count.index}-DSC"
   virtual_machine_id         = element(azurerm_windows_virtual_machine.VM-FE.*.id, count.index)
   publisher                  = "Microsoft.Powershell"

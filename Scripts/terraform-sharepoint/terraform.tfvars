@@ -1,8 +1,6 @@
 location                   = "France Central"
-resourceGroupName          = "ydterraform7"
-dnsLabelPrefix             = "ydterraform7"
-numberOfAdditionalFrontEnd = 0
-sharePointVersion          = "SE"
+numberOfAdditionalFrontEnd = 2
+sharePointVersion          = "2019"
 /*vmSP = {
     vmName             = "SP"
     vmSize             = "Standard_E2ds_v4"
