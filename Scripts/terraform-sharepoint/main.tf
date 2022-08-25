@@ -9,7 +9,7 @@ locals {
 }
 
 # Create a resource group
-resource "azurerm_resource_group" "resourceGroup" {
+resource "azurerm_resource_group" "rg" {
   name     = var.resourceGroupName
   location = var.location
 }
@@ -17,8 +17,8 @@ resource "azurerm_resource_group" "resourceGroup" {
 # Create the network security groups
 resource "azurerm_network_security_group" "nsg_subnet_dc" {
   name                = "NSG-Subnet-${var.vmDC["vmName"]}"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 }
 
 resource "azurerm_network_security_rule" "rdp_rule_subnet_dc" {
@@ -33,14 +33,14 @@ resource "azurerm_network_security_rule" "rdp_rule_subnet_dc" {
     access                     = "Allow"
     priority                   = 100
     direction                  = "Inbound"
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  resource_group_name = azurerm_resource_group.rg.name
   network_security_group_name = azurerm_network_security_group.nsg_subnet_dc.name
 }
 
-resource "azurerm_network_security_group" "NSG-Subnet-SQL" {
+resource "azurerm_network_security_group" "nsg_subnet_sql" {
   name                = "NSG-Subnet-${var.vmSQL["vmName"]}"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 }
 
 resource "azurerm_network_security_rule" "rdp_rule_subnet_sql" {
@@ -55,14 +55,14 @@ resource "azurerm_network_security_rule" "rdp_rule_subnet_sql" {
     access                     = "Allow"
     priority                   = 100
     direction                  = "Inbound"
-  resource_group_name = azurerm_resource_group.resourceGroup.name
-  network_security_group_name = azurerm_network_security_group.NSG-Subnet-SQL.name
+  resource_group_name = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.nsg_subnet_sql.name
 }
 
-resource "azurerm_network_security_group" "NSG-Subnet-SP" {
+resource "azurerm_network_security_group" "nsg_subnet_sp" {
   name                = "NSG-Subnet-${var.vmSP["vmName"]}"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 }
 
 resource "azurerm_network_security_rule" "rdp_rule_subnet_sp" {
@@ -77,129 +77,129 @@ resource "azurerm_network_security_rule" "rdp_rule_subnet_sp" {
     access                     = "Allow"
     priority                   = 100
     direction                  = "Inbound"
-  resource_group_name = azurerm_resource_group.resourceGroup.name
-  network_security_group_name = azurerm_network_security_group.NSG-Subnet-SP.name
+  resource_group_name = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.nsg_subnet_sp.name
 }
 
 # Create the virtual network, 3 subnets, and associate each subnet with its Network Security Group
-resource "azurerm_virtual_network" "VNet" {
-  name                = "${azurerm_resource_group.resourceGroup.name}-vnet"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+resource "azurerm_virtual_network" "vnet" {
+  name                = "${azurerm_resource_group.rg.name}-vnet"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
   address_space       = [var.networkSettings["vNetPrivatePrefix"]]
 }
 
 # Subnet and NSG for DC
-resource "azurerm_subnet" "Subnet-DC" {
+resource "azurerm_subnet" "subnet_dc" {
   name                 = "Subnet-${var.vmDC["vmName"]}"
-  resource_group_name  = azurerm_resource_group.resourceGroup.name
-  virtual_network_name = azurerm_virtual_network.VNet.name
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = [var.networkSettings["vNetPrivateSubnetDCPrefix"]]
 }
 
 resource "azurerm_subnet_network_security_group_association" "nsg_subnetdc_association" {
-  subnet_id                 = azurerm_subnet.Subnet-DC.id
+  subnet_id                 = azurerm_subnet.subnet_dc.id
   network_security_group_id = azurerm_network_security_group.nsg_subnet_dc.id
 }
 
-resource "azurerm_subnet" "Subnet-SQL" {
+resource "azurerm_subnet" "subnet_sql" {
   name                 = "Subnet-${var.vmSQL["vmName"]}"
-  resource_group_name  = azurerm_resource_group.resourceGroup.name
-  virtual_network_name = azurerm_virtual_network.VNet.name
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = [var.networkSettings["vNetPrivateSubnetSQLPrefix"]]
 }
 
 resource "azurerm_subnet_network_security_group_association" "nsg_subnetsql_association" {
-  subnet_id                 = azurerm_subnet.Subnet-SQL.id
-  network_security_group_id = azurerm_network_security_group.NSG-Subnet-SQL.id
+  subnet_id                 = azurerm_subnet.subnet_sql.id
+  network_security_group_id = azurerm_network_security_group.nsg_subnet_sql.id
 }
 
-resource "azurerm_subnet" "Subnet-SP" {
+resource "azurerm_subnet" "subnet_sp" {
   name                 = "Subnet-${var.vmSP["vmName"]}"
-  resource_group_name  = azurerm_resource_group.resourceGroup.name
-  virtual_network_name = azurerm_virtual_network.VNet.name
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = [var.networkSettings["vNetPrivateSubnetSPPrefix"]]
 }
 
 resource "azurerm_subnet_network_security_group_association" "nsg_subnetsp_association" {
-  subnet_id                 = azurerm_subnet.Subnet-SP.id
-  network_security_group_id = azurerm_network_security_group.NSG-Subnet-SP.id
+  subnet_id                 = azurerm_subnet.subnet_sp.id
+  network_security_group_id = azurerm_network_security_group.nsg_subnet_sp.id
 }
 
 # Create artifacts for VM DC
-resource "azurerm_public_ip" "PublicIP-DC" {
+resource "azurerm_public_ip" "pip_dc" {
   name                = "PublicIP-${var.vmDC["vmName"]}"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
   domain_name_label   = "${lower(var.dnsLabelPrefix)}-${lower(var.vmDC["vmName"])}"
   allocation_method   = "Dynamic"
 }
 
-resource "azurerm_network_interface" "NIC-DC-0" {
+resource "azurerm_network_interface" "nic_dc_0" {
   name                = "NIC-${var.vmDC["vmName"]}-0"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.Subnet-DC.id
+    subnet_id                     = azurerm_subnet.subnet_dc.id
     private_ip_address_allocation = "Static"
     private_ip_address            = var.networkSettings["vmDCPrivateIPAddress"]
-    public_ip_address_id          = azurerm_public_ip.PublicIP-DC.id
+    public_ip_address_id          = azurerm_public_ip.pip_dc.id
   }
 }
 
 # Create artifacts for VM SQL
-resource "azurerm_public_ip" "PublicIP-SQL" {
+resource "azurerm_public_ip" "pip_sql" {
   name                = "PublicIP-${var.vmSQL["vmName"]}"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
   domain_name_label   = "${lower(var.dnsLabelPrefix)}-${lower(var.vmSQL["vmName"])}"
   allocation_method   = "Dynamic"
 }
 
-resource "azurerm_network_interface" "NIC-SQL-0" {
+resource "azurerm_network_interface" "nic_sql_0" {
   name                = "NIC-${var.vmSQL["vmName"]}-0"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.Subnet-SQL.id
+    subnet_id                     = azurerm_subnet.subnet_sql.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.PublicIP-SQL.id
+    public_ip_address_id          = azurerm_public_ip.pip_sql.id
   }
 }
 
 # Create artifacts for VM SP
-resource "azurerm_public_ip" "PublicIP-SP" {
+resource "azurerm_public_ip" "pip_sp" {
   name                = "PublicIP-${var.vmSP["vmName"]}"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
   domain_name_label   = "${lower(var.dnsLabelPrefix)}-${lower(var.vmSP["vmName"])}"
   allocation_method   = "Dynamic"
 }
 
-resource "azurerm_network_interface" "NIC-SP-0" {
+resource "azurerm_network_interface" "nic_sp_0" {
   name                = "NIC-${var.vmSP["vmName"]}-0"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.Subnet-SP.id
+    subnet_id                     = azurerm_subnet.subnet_sp.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.PublicIP-SP.id
+    public_ip_address_id          = azurerm_public_ip.pip_sp.id
   }
 }
 
 # Create virtual machines
-resource "azurerm_windows_virtual_machine" "VM-DC" {
+resource "azurerm_windows_virtual_machine" "vm_dc" {
   name                     = "${var.vmDC["vmName"]}"
   computer_name            = var.vmDC["vmName"]
-  location                 = azurerm_resource_group.resourceGroup.location
-  resource_group_name      = azurerm_resource_group.resourceGroup.name
-  network_interface_ids    = [azurerm_network_interface.NIC-DC-0.id]
+  location                 = azurerm_resource_group.rg.location
+  resource_group_name      = azurerm_resource_group.rg.name
+  network_interface_ids    = [azurerm_network_interface.nic_dc_0.id]
   size                     = var.vmDC["vmSize"]
   admin_username           = var.adminUserName
   admin_password           = var.adminPassword
@@ -222,10 +222,10 @@ resource "azurerm_windows_virtual_machine" "VM-DC" {
   }
 }
 
-resource "azurerm_virtual_machine_extension" "VM-DC-DSC" {
+resource "azurerm_virtual_machine_extension" "vm_dc-DSC" {
   count = 0
   name                       = "VM-${var.vmDC["vmName"]}-DSC"
-  virtual_machine_id         = azurerm_windows_virtual_machine.VM-DC.id
+  virtual_machine_id         = azurerm_windows_virtual_machine.vm_dc.id
   publisher                  = "Microsoft.Powershell"
   type                       = "DSC"
   type_handler_version       = "2.9"
@@ -269,12 +269,12 @@ SETTINGS
 PROTECTED_SETTINGS
 }
 
-resource "azurerm_windows_virtual_machine" "VM-SQL" {
+resource "azurerm_windows_virtual_machine" "vm_sql" {
   name                     = "${var.vmSQL["vmName"]}"
   computer_name            = var.vmSQL["vmName"]
-  location                 = azurerm_resource_group.resourceGroup.location
-  resource_group_name      = azurerm_resource_group.resourceGroup.name
-  network_interface_ids    = [azurerm_network_interface.NIC-SQL-0.id]
+  location                 = azurerm_resource_group.rg.location
+  resource_group_name      = azurerm_resource_group.rg.name
+  network_interface_ids    = [azurerm_network_interface.nic_sql_0.id]
   size                     = var.vmSQL["vmSize"]
   admin_username           = "local-${var.adminUserName}"
   admin_password           = var.adminPassword
@@ -297,10 +297,10 @@ resource "azurerm_windows_virtual_machine" "VM-SQL" {
   }
 }
 
-resource "azurerm_virtual_machine_extension" "VM-SQL-DSC" {
+resource "azurerm_virtual_machine_extension" "vm_sql_dsc" {
   count = 0
   name                       = "VM-${var.vmSQL["vmName"]}-DSC"
-  virtual_machine_id         = azurerm_windows_virtual_machine.VM-SQL.id
+  virtual_machine_id         = azurerm_windows_virtual_machine.vm_sql.id
   publisher                  = "Microsoft.Powershell"
   type                       = "DSC"
   type_handler_version       = "2.9"
@@ -348,12 +348,12 @@ SETTINGS
 PROTECTED_SETTINGS
 }
 
-resource "azurerm_windows_virtual_machine" "VM-SP" {
+resource "azurerm_windows_virtual_machine" "vm_sp" {
   name                     = "${var.vmSP["vmName"]}"
   computer_name            = var.vmSP["vmName"]
-  location                 = azurerm_resource_group.resourceGroup.location
-  resource_group_name      = azurerm_resource_group.resourceGroup.name
-  network_interface_ids    = [azurerm_network_interface.NIC-SP-0.id]
+  location                 = azurerm_resource_group.rg.location
+  resource_group_name      = azurerm_resource_group.rg.name
+  network_interface_ids    = [azurerm_network_interface.nic_sp_0.id]
   size                     = var.vmSP["vmSize"]
   admin_username           = "local-${var.adminUserName}"
   admin_password           = var.adminPassword
@@ -376,10 +376,10 @@ resource "azurerm_windows_virtual_machine" "VM-SP" {
   }
 }
 
-resource "azurerm_virtual_machine_extension" "VM-SP-DSC" {
+resource "azurerm_virtual_machine_extension" "vm_sp_dsc" {
   count = 0
   name                       = "VM-${var.vmSP["vmName"]}-DSC"
-  virtual_machine_id         = azurerm_windows_virtual_machine.VM-SP.id
+  virtual_machine_id         = azurerm_windows_virtual_machine.vm_sp.id
   publisher                  = "Microsoft.Powershell"
   type                       = "DSC"
   type_handler_version       = "2.9"
@@ -453,36 +453,36 @@ PROTECTED_SETTINGS
 }
 
 # Can create 0 to var.numberOfAdditionalFrontEnd FE VMs
-resource "azurerm_public_ip" "PublicIP-FE" {
+resource "azurerm_public_ip" "pip_fe" {
   count               = var.numberOfAdditionalFrontEnd
   name                = "PublicIP-${var.vmFE["vmName"]}-${count.index}"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
   domain_name_label   = "${lower(var.dnsLabelPrefix)}-${lower(var.vmFE["vmName"])}-${count.index}"
   allocation_method   = "Dynamic"
 }
 
-resource "azurerm_network_interface" "NIC-FE-0" {
+resource "azurerm_network_interface" "nic_fe_0" {
   count               = var.numberOfAdditionalFrontEnd
   name                = "NIC-${var.vmFE["vmName"]}-${count.index}-0"
-  location            = azurerm_resource_group.resourceGroup.location
-  resource_group_name = azurerm_resource_group.resourceGroup.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.Subnet-SP.id
+    subnet_id                     = azurerm_subnet.subnet_sp.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = element(azurerm_public_ip.PublicIP-FE.*.id, count.index)
+    public_ip_address_id          = element(azurerm_public_ip.pip_fe.*.id, count.index)
   }
 }
 
-resource "azurerm_windows_virtual_machine" "VM-FE" {
+resource "azurerm_windows_virtual_machine" "vm_fe" {
   count                    = var.numberOfAdditionalFrontEnd
   name                     = "${var.vmFE["vmName"]}-${count.index}"
   computer_name            = "${var.vmFE["vmName"]}-${count.index}"
-  location                 = azurerm_resource_group.resourceGroup.location
-  resource_group_name      = azurerm_resource_group.resourceGroup.name
-  network_interface_ids    = [element(azurerm_network_interface.NIC-FE-0.*.id, count.index)]
+  location                 = azurerm_resource_group.rg.location
+  resource_group_name      = azurerm_resource_group.rg.name
+  network_interface_ids    = [element(azurerm_network_interface.nic_fe_0.*.id, count.index)]
   size                     = var.vmSP["vmSize"]
   admin_username           = "local-${var.adminUserName}"
   admin_password           = var.adminPassword
@@ -505,11 +505,11 @@ resource "azurerm_windows_virtual_machine" "VM-FE" {
   }
 }
 
-resource "azurerm_virtual_machine_extension" "VM-FE-DSC" {
+resource "azurerm_virtual_machine_extension" "vm_fe_dsc" {
   # count                      = var.numberOfAdditionalFrontEnd
   count                      = 0
   name                       = "VM-${var.vmFE["vmName"]}-${count.index}-DSC"
-  virtual_machine_id         = element(azurerm_windows_virtual_machine.VM-FE.*.id, count.index)
+  virtual_machine_id         = element(azurerm_windows_virtual_machine.vm_fe.*.id, count.index)
   publisher                  = "Microsoft.Powershell"
   type                       = "DSC"
   type_handler_version       = "2.9"
