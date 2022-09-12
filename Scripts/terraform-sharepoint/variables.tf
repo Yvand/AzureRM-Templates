@@ -44,3 +44,7 @@ variable "enable_azure_bastion" {
   type        = bool
   description = "Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information."
 }
+
+variable "_artifactsLocation" {
+  default = "https://github.com/Azure/azure-quickstart-templates/raw/master/application-workloads/sharepoint/sharepoint-adfs/"
+}
