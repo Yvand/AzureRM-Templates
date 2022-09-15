@@ -15,12 +15,13 @@
     },
     "sharePointVersion": {
       "type": "string",
-      "defaultValue": "Subscription",
+      "defaultValue": "Subscription-RTM",
       "allowedValues": [
         "2013",
         "2016",
         "2019",
-        "Subscription"
+        "Subscription-RTM",
+        "Subscription-22H2"
       ],
       "metadata": {
         "description": "Version of SharePoint farm to create."
@@ -378,7 +379,7 @@
       "spPassphrase": "[parameters('serviceAccountsPassword')]",
       "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
       "enableAnalysis": false,
-      "isSharePointvNext": "[if(equals(toLower(parameters('sharePointVersion')), 'subscription'), true(), false())]"
+      "isSharePointvNext": "[if(startsWith(parameters('sharePointVersion'), 'subscription'), true(), false())]"
     },
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
@@ -474,8 +475,8 @@
       "forceUpdateTag": "1.0"
     },
     "dscConfigureSPVM": {
-      "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('dsc/ConfigureSPVM.zip', parameters('_artifactsLocationSasToken')))]",
-      "script": "ConfigureSPVM.ps1",
+      "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat(if(variables('generalSettings').isSharePointvNext, 'dsc/ConfigureSPSE.zip', 'dsc/ConfigureSPLegacy.zip'), parameters('_artifactsLocationSasToken')))]",
+      "script": "[if(variables('generalSettings').isSharePointvNext, 'ConfigureSPSE.ps1', 'ConfigureSPLegacy.ps1')]",
       "function": "ConfigureSPVM",
       "forceUpdateTag": "1.0"
     },

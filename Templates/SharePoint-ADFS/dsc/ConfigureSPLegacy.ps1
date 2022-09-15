@@ -57,11 +57,6 @@ configuration ConfigureSPVM
     if ([String]::Equals($SharePointVersion, "2013") -or [String]::Equals($SharePointVersion, "2016")) {
         $SPTeamSiteTemplate = "STS#0"
     }
-    [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
-    [Boolean] $IsSharePointvNext = $false
-    if ([String]::Equals($SharePointVersion, "SE")) {
-        $IsSharePointvNext = $true
-    }
 
     Node localhost
     {
@@ -100,6 +95,12 @@ configuration ConfigureSPVM
         Registry SchUseStrongCrypto32       { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
         Registry SystemDefaultTlsVersions   { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
         Registry SystemDefaultTlsVersions32 { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+
+        if ($SharePointVersion -eq "2013") {
+            # Those 2 registry keys are required in SPS 2013 image to fix the psconfigui timeout error - https://support.microsoft.com/en-us/topic/some-document-conversion-services-in-sharepoint-server-are-not-secure-when-they-run-in-a-particular-environment-c39cd633-1e6a-18b1-9f2f-d0e7073a26bd
+            Registry FixDocumentConversionKeyMissing  { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LauncherSettings";     ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
+            Registry FixDocumentConversionKeyMissing2 { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LoadBalancerSettings"; ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
+        }
 
         # xRemoteFile DownloadLdapcp { Uri = $LdapcpLink; DestinationPath = "$SetupPath\LDAPCP.wsp" }
         Script DownloadLDAPCP
@@ -273,65 +274,6 @@ configuration ConfigureSPVM
         #         DependsOn            = "[cChocoInstaller]InstallChoco"
         #     }
         # }
-
-        if ($true -eq $IsSharePointvNext) {
-            #**********************************************************
-            # Download and install for SharePoint
-            #**********************************************************
-            Script DownloadSharePoint
-            {
-                SetScript = {
-                    $count = 0
-                    $maxCount = 10
-                    $spIsoUrl = "https://go.microsoft.com/fwlink/?linkid=2171943"
-                    $dstFolder = Join-Path -Path $env:windir -ChildPath "Temp"
-                    $dstFile = Join-Path -Path $dstFolder -ChildPath "OfficeServer.iso"
-                    $spInstallFolder = Join-Path -Path $dstFolder -ChildPath "OfficeServer"
-                    $setupFile =  Join-Path -Path $spInstallFolder -ChildPath "setup.exe"
-                    while (($count -lt $maxCount) -and (-not(Test-Path $setupFile)))
-                    {
-                        try {
-                        # donwload the installation package
-                        Start-BitsTransfer -Source $spIsoUrl -Destination $dstFile
-                
-                        # mount the image file and copy to C:\windows\TEMP\OfficeServer folder
-                        $mountedIso = Mount-DiskImage -ImagePath $dstFile -PassThru
-                        $driverLetter =  (Get-Volume -DiskImage $mountedIso).DriveLetter
-                        Copy-Item -Path "${driverLetter}:\" -Destination $spInstallFolder -Recurse -Force -ErrorAction SilentlyContinue
-                        Dismount-DiskImage -DevicePath $mountedIso.DevicePath -ErrorAction SilentlyContinue
-                        
-                        (Get-ChildItem -Path $spInstallFolder -Recurse -File).FullName | Foreach-Object {Unblock-File $_}
-                        $count++
-                        }
-                        catch {
-                        $count++
-                        }
-                    }
-
-                    if (-not(Test-Path $setupFile)) {
-                        Write-Error -Message "Failed to download SharePoint installation package" 
-                    }
-                }
-                TestScript = { Test-Path "${env:windir}\Temp\OfficeServer\setup.exe" }
-                GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            }
-
-            SPInstallPrereqs InstallPrerequisites
-            {
-                IsSingleInstance  = "Yes"
-                InstallerPath     = "${env:windir}\Temp\OfficeServer\Prerequisiteinstaller.exe"
-                OnlineMode        = $true
-                DependsOn         = "[Script]DownloadSharePoint"
-            }
-
-            SPInstall InstallBinaries
-            {
-                IsSingleInstance = "Yes"
-                BinaryDir        = "${env:windir}\Temp\OfficeServer"
-                ProductKey       = "VW2FM-FN9FT-H22J4-WV9GT-H8VKF"
-                DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
-            }
-        }
 
         # IIS cleanup cannot be executed earlier in SharePoint SE: It uses a base image of Windows Server without IIS (installed by SPInstallPrereqs)
         xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
@@ -816,7 +758,7 @@ configuration ConfigureSPVM
         # Installing LDAPCP somehow updates SPClaimEncodingManager 
         # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
         # The only solution I've found is to force a reboot in SharePoint 2019
-        if ($SharePointVersion -eq "2019" -or $true -eq $IsSharePointvNext) {
+        if ($SharePointVersion -eq "2019") {
             Script ForceRebootBeforeCreatingSPTrust
             {
                 # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
@@ -839,115 +781,31 @@ configuration ConfigureSPVM
                 DependsOn        = "[Script]ForceRebootBeforeCreatingSPTrust"
             }
         }
-
-        if ($true -eq $IsSharePointvNext) {
-            $apppoolUserName = $SPAppPoolCredsQualified.UserName
-            $domainAdminUserName = $DomainAdminCredsQualified.UserName
-            Script SetFarmPropertiesForOIDC
-            {
-                SetScript = 
-                {
-                    $apppoolUserName = $using:apppoolUserName
-                    $domainAdminUserName = $using:domainAdminUserName
-                    $dcSetupPath = $using:DCSetupPath
-                    
-                    # Setup farm properties to work with OIDC
-                    # Create a self-signed certificate in 1st SharePoint Server of the farm
-                    $cookieCertificateName = "SharePoint Cookie Cert"
-                    $cookieCertificateFilePath = Join-Path -Path $dcSetupPath -ChildPath "$cookieCertificateName"
-                    $cert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=$cookieCertificateName"
-                    Export-Certificate -Cert $cert -FilePath "$cookieCertificateFilePath.cer"
-                    Export-PfxCertificate -Cert $cert -FilePath "$cookieCertificateFilePath.pfx" -ProtectTo "$domainAdminUserName"
-
-                    # Grant access to the certificate private key.
-                    $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
-                    $fileName = $rsaCert.key.UniqueName
-                    $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
-                    $permissions = Get-Acl -Path $path
-                    $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($apppoolUserName, 'Read', 'None', 'None', 'Allow')
-                    $permissions.AddAccessRule($access_rule)
-                    Set-Acl -Path $path -AclObject $permissions
-
-                    # Set farm properties
-                    $f = Get-SPFarm
-                    $f.Farm.Properties['SP-NonceCookieCertificateThumbprint'] = $cert.Thumbprint
-                    $f.Farm.Properties['SP-NonceCookieHMACSecretKey'] = 'seed'
-                    $f.Farm.Update()
+        
+        SPTrustedIdentityTokenIssuer CreateSPTrust
+        {
+            Name                         = $DomainFQDN
+            Description                  = "Federation with $DomainFQDN"
+            Realm                        = "urn:sharepoint:$($SPTrustedSitesName)"
+            SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
+            IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
+            ClaimsMappings               = @(
+                MSFT_SPClaimTypeMapping{
+                    Name = "upn"
+                    IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
                 }
-                GetScript =  
-                {
-                    # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                    return @{ "Result" = "false" }
+                MSFT_SPClaimTypeMapping{
+                    Name = "role"
+                    IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 }
-                TestScript = 
-                {
-                    # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                    # Import-Module SharePointServer | Out-Null
-                    # $f = Get-SPFarm
-                    # if ($f.Farm.Properties.ContainsKey('SP-NonceCookieCertificateThumbprint') -eq $false) {
-                    if ((Get-ChildItem -Path "cert:\LocalMachine\My\"| Where-Object{$_.Subject -eq "CN=SharePoint Cookie Cert"}) -eq $null) {
-                        return $false
-                    }
-                    else {
-                        return $true
-                    }
-                }
-                DependsOn            = "[SPFarmSolution]InstallLdapcp"
-                PsDscRunAsCredential = $DomainAdminCredsQualified
-            }
-
-            SPTrustedIdentityTokenIssuer CreateSPTrust
-            {
-                Name                         = $DomainFQDN
-                Description                  = "Federation with $DomainFQDN"
-                RegisteredIssuerName         = "https://adfs.$DomainFQDN/adfs"
-                AuthorizationEndPointUri     = "https://adfs.$DomainFQDN/adfs/oauth2/authorize"
-                SignOutUrl                   = "https://adfs.$DomainFQDN/adfs/oauth2/logout"
-                DefaultClientIdentifier      = $AdfsOidcIdentifier
-                IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
-                ClaimsMappings               = @(
-                    MSFT_SPClaimTypeMapping{
-                        Name = "upn"
-                        IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
-                    }
-                    MSFT_SPClaimTypeMapping{
-                        Name = "role"
-                        IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-                    }
-                )
-                SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
-                ClaimProviderName            = "LDAPCP"
-                UseWReplyParameter           = $true
-                Ensure                       = "Present" 
-                DependsOn                    = "[Script]SetFarmPropertiesForOIDC"
-                PsDscRunAsCredential         = $SPSetupCredsQualified
-            }
-        } else {
-            SPTrustedIdentityTokenIssuer CreateSPTrust
-            {
-                Name                         = $DomainFQDN
-                Description                  = "Federation with $DomainFQDN"
-                Realm                        = "urn:sharepoint:$($SPTrustedSitesName)"
-                SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
-                IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
-                ClaimsMappings               = @(
-                    MSFT_SPClaimTypeMapping{
-                        Name = "upn"
-                        IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
-                    }
-                    MSFT_SPClaimTypeMapping{
-                        Name = "role"
-                        IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-                    }
-                )
-                SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
-                ClaimProviderName            = "LDAPCP"
-                ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
-                UseWReplyParameter           = $true
-                Ensure                       = "Present"
-                DependsOn                    = "[SPFarmSolution]InstallLdapcp"
-                PsDscRunAsCredential         = $SPSetupCredsQualified
-            }
+            )
+            SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
+            ClaimProviderName            = "LDAPCP"
+            ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
+            UseWReplyParameter           = $true
+            Ensure                       = "Present"
+            DependsOn                    = "[SPFarmSolution]InstallLdapcp"
+            PsDscRunAsCredential         = $SPSetupCredsQualified
         }
 
         # ExtendMainWebApp might fail with error: "The web.config could not be saved on this IIS Web Site: C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config.\r\nThe process cannot access the file 'C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config' because it is being used by another process."
