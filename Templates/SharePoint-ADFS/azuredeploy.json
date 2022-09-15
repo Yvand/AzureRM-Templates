@@ -983,7 +983,7 @@
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
-            "SharePointVersion": "[if(variables('generalSettings').isSharePointvNext, 'SE', parameters('sharePointVersion'))]",
+            "SharePointVersion": "[parameters('sharePointVersion')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]"
           },
           "privacy": {
