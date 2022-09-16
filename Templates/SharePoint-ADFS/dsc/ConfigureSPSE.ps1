@@ -54,15 +54,13 @@ configuration ConfigureSPVM
     [String] $AddinsSiteName = "Provider-hosted addins"
     [String] $TrustedIdChar = "e"
     [String] $SPTeamSiteTemplate = "STS#3"
-    if ([String]::Equals($SharePointVersion, "2013") -or [String]::Equals($SharePointVersion, "2016")) {
-        $SPTeamSiteTemplate = "STS#0"
-    }
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
-
-    $SharePointBinaries = @(
+    $SharePointBuildsDetails = @(
         @{ Label = "RTM";  DownloadUrls = "https://go.microsoft.com/fwlink/?linkid=2171943"; }
         @{ Label = "22H2"; DownloadUrls = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe;https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; }
     )
+    $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
+    $SharePointBuildDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}
 
     Node localhost
     {
@@ -281,22 +279,17 @@ configuration ConfigureSPVM
         Script DownloadSharePoint
         {
             SetScript = {
-                $SharePointBinaries = $using:SharePointBinaries
-                $count = 0
-                $maxCount = 10
-                $spUpdate = $SharePointBinaries | Where-Object {$_.Label -eq "RTM"}
-                $spIsoUrl = $spUpdate.DownloadUrls
+                $SharePointBuildsDetails = $using:SharePointBuildsDetails
+                $sharePointRtmDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}
                 $dstFolder = [environment]::GetEnvironmentVariable("temp","machine")
                 $dstFile = Join-Path -Path $dstFolder -ChildPath "OfficeServer.iso"
                 $spInstallFolder = Join-Path -Path $dstFolder -ChildPath "OfficeServer"
                 $setupFile =  Join-Path -Path $spInstallFolder -ChildPath "setup.exe"
-                while (($count -lt $maxCount) -and (-not(Test-Path $setupFile)))
+                $count = 0
+                while (($count -lt 10) -and (-not(Test-Path $setupFile)))
                 {
                     try {
-                        # donwload the installation package
-                        Start-BitsTransfer -Source $spIsoUrl -Destination $dstFile
-                
-                        # mount the image file and copy to C:\windows\TEMP\OfficeServer folder
+                        Start-BitsTransfer -Source $sharePointRtmDetails.DownloadUrls -Destination $dstFile
                         $mountedIso = Mount-DiskImage -ImagePath $dstFile -PassThru
                         $driverLetter =  (Get-Volume -DiskImage $mountedIso).DriveLetter
                         Copy-Item -Path "${driverLetter}:\" -Destination $spInstallFolder -Recurse -Force -ErrorAction SilentlyContinue
@@ -334,13 +327,14 @@ configuration ConfigureSPVM
             DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
         }
 
-        Script DownloadSharePointUpdate
+        Script InstallSharePointUpdate
         {
             SetScript = {
-                $SharePointBinaries = $using:SharePointBinaries
+                $SharePointBuildLabel = $using:SharePointBuildLabel
+                $SharePointBuildDetails = $using:SharePointBuildDetails
+                Write-Verbose -Message "Starting installation of SharePoint build '$SharePointBuildLabel'..."
                 $exitRebootCodes = @(3010, 17022)
-                $spUpdate = $SharePointBinaries | Where-Object {$_.Label -eq "22H2"}
-                $downloadLinks = [uri []] $spUpdate.DownloadUrls.Split(";", [System.StringSplitOptions]::RemoveEmptyEntries)
+                $downloadLinks = [uri []] $SharePointBuildDetails.DownloadUrls.Split(";", [System.StringSplitOptions]::RemoveEmptyEntries)
                 $dstFiles = $downloadLinks | ForEach-Object { Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $_.Segments[$_.Segments.Count - 1] }                
                 
                 $count = 0
@@ -355,24 +349,47 @@ configuration ConfigureSPVM
                         $count++
                     }
                 }
-
-                Write-Verbose -Message "Download finished: $dstFiles" 
+                if ($false -eq $downloadComplete) {
+                    Write-Error -Message "Download of SharePoint update files for build '$SharePointBuildLabel' failed, skip installation."
+                    return;
+                }
+                Write-Verbose -Message "Download of SharePoint build '$SharePointBuildLabel' finished successfully."
 
                 $needReboot = $false
                 foreach ($dstFile in $dstFiles) {
-                    Write-Verbose -Message "Starting installation of $dstFile..."
-                    $process = Start-Process $dstFile -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
+                    $file = Get-ChildItem -LiteralPath $dstFile
+                    Write-Verbose -Message "Starting installation of SharePoint update '$($file.Name)'..."
+                    $process = Start-Process $file.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
                     if ($exitRebootCodes.Contains($process.ExitCode)) {
                         $needReboot = $true
                     }
-                    Write-Verbose -Message "Finished installation of $dstFile. Exit code: $($process.ExitCode); Exit time: $($process.ExitTime); needReboot: $needReboot"
+                    Write-Verbose -Message "Finished installation of SharePoint update '$($file.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
+                }
+                New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled -Force
+                Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
+
+                if ($true -eq $needReboot) {
+                    $global:DSCMachineStatus = 1
+                }
+            }
+            TestScript = {
+                $SharePointBuildLabel = $using:SharePointBuildLabel
+                if ($true -eq $SharePointBuildLabel.ToUpper().Equals("RTM")) {
+                    return $true
                 }
 
-                Write-Verbose -Message "Download finished: needReboot: $needReboot" 
+                # Not RTM, test if update was already installed
+                return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled)
             }
-            TestScript = { return $false }
             GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             DependsOn        = "[SPInstall]InstallBinaries"
+        }
+
+        PendingReboot RebootOnSignalFromInstallSharePointUpdate
+        {
+            Name             = "RebootOnSignalFromInstallSharePointUpdate"
+            SkipCcmClientSDK = $true
+            DependsOn        = "[Script]InstallSharePointUpdate"
         }
 
         # IIS cleanup cannot be executed earlier in SharePoint SE: It uses a base image of Windows Server without IIS (installed by SPInstallPrereqs)
@@ -1569,8 +1586,8 @@ function Get-SPDSCInstalledProductVersion
 }
 
 <#
-# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.1.0
-# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork
+# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.2.0
+# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork
 
 Install-Module -Name PendingReboot
 help ConfigureSPVM
