@@ -378,7 +378,7 @@
       "spAppPoolPassword": "[parameters('serviceAccountsPassword')]",
       "spPassphrase": "[parameters('serviceAccountsPassword')]",
       "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
-      "enableAnalysis": false,
+      "enableAnalysis": true,
       "isSharePointvNext": "[if(startsWith(parameters('sharePointVersion'), 'subscription'), true(), false())]"
     },
     "networkSettings": {
@@ -1170,7 +1170,7 @@
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
-            "SharePointVersion": "[if(variables('generalSettings').isSharePointvNext, 'SE', parameters('sharePointVersion'))]",
+            "SharePointVersion": "[parameters('sharePointVersion')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]"
           },
           "privacy": {

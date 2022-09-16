@@ -356,19 +356,19 @@ configuration ConfigureSPVM
                     }
                 }
 
-                Write-Output -Message "Download finished: $dstFiles" 
+                Write-Verbose -Message "Download finished: $dstFiles" 
 
                 $needReboot = $false
                 foreach ($dstFile in $dstFiles) {
-                    Write-Output -Message "Start installation of $dstFile..."
+                    Write-Verbose -Message "Starting installation of $dstFile..."
                     $process = Start-Process $dstFile -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
                     if ($exitRebootCodes.Contains($process.ExitCode)) {
                         $needReboot = $true
                     }
-                    Write-Output -Message "Finished installation of $dstFile. Exit code: $($process.ExitCode); Exit time: $($process.ExitTime); needReboot: $needReboot"
+                    Write-Verbose -Message "Finished installation of $dstFile. Exit code: $($process.ExitCode); Exit time: $($process.ExitTime); needReboot: $needReboot"
                 }
 
-                Write-Output -Message "Download finished: needReboot: $needReboot" 
+                Write-Verbose -Message "Download finished: needReboot: $needReboot" 
             }
             TestScript = { return $false }
             GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
