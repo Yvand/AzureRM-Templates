@@ -39,10 +39,6 @@ configuration ConfigureFEVM
     [String] $DCSetupPath = "\\$DCName\C$\Setup"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
-    [Boolean] $IsSharePointvNext = $false
-    if ([String]::Equals($SharePointVersion, "SE")) {
-        $IsSharePointvNext = $true
-    }
 
     Node localhost
     {
@@ -66,6 +62,28 @@ configuration ConfigureFEVM
         # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
         # xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
+        # Allow NTLM on HTTPS sites when site host name is different than the machine name - https://docs.microsoft.com/en-US/troubleshoot/windows-server/networking/accessing-server-locally-with-fqdn-cname-alias-denied
+        Registry DisableLoopBackCheck { Key = "HKLM:\System\CurrentControlSet\Control\Lsa"; ValueName = "DisableLoopbackCheck"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
+
+        # Enable TLS 1.2 - https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application#tls-requirements
+        # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
+        Registry EnableTLS12RegKey1 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' }
+        Registry EnableTLS12RegKey2 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'Enabled';           ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry EnableTLS12RegKey3 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' }
+        Registry EnableTLS12RegKey4 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'Enabled';           ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+
+        # Enable strong crypto by default for .NET Framework 4 applications - https://docs.microsoft.com/en-us/dotnet/framework/network-programming/tls#configuring-security-via-the-windows-registry
+        Registry SchUseStrongCrypto         { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry SchUseStrongCrypto32       { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry SystemDefaultTlsVersions   { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry SystemDefaultTlsVersions32 { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+
+        if ($SharePointVersion -eq "2013") {
+            # Those 2 registry keys are required in SPS 2013 image to fix the psconfigui timeout error - https://support.microsoft.com/en-us/topic/some-document-conversion-services-in-sharepoint-server-are-not-secure-when-they-run-in-a-particular-environment-c39cd633-1e6a-18b1-9f2f-d0e7073a26bd
+            Registry FixDocumentConversionKeyMissing  { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LauncherSettings";     ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
+            Registry FixDocumentConversionKeyMissing2 { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LoadBalancerSettings"; ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
+        }
+
         # IIS cleanup
         xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
         xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
@@ -75,80 +93,7 @@ configuration ConfigureFEVM
         xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
         xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
 
-        # Allow sign-in on HTTPS sites when site host name is different than the machine name: https://support.microsoft.com/en-us/help/926642
-        Registry DisableLoopBackCheck
-        {
-            Key       = "HKLM:\System\CurrentControlSet\Control\Lsa"
-            ValueName = "DisableLoopbackCheck"
-            ValueData = "1"
-            ValueType = "Dword"
-            Ensure    = "Present"
-        }
-
-        # Properly enable TLS 1.2 as documented in https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application
-        # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
-        Registry EnableTLS12RegKey1
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
-            ValueName = 'DisabledByDefault'
-            ValueType = 'Dword'
-            ValueData =  '0'
-            Ensure    = 'Present'
-        }
-
-        Registry EnableTLS12RegKey2
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'
-            ValueName = 'Enabled'
-            ValueType = 'Dword'
-            ValueData =  '1'
-            Ensure    = 'Present'
-        }
-
-        Registry EnableTLS12RegKey3
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
-            ValueName = 'DisabledByDefault'
-            ValueType = 'Dword'
-            ValueData =  '0'
-            Ensure    = 'Present'
-        }
-
-        Registry EnableTLS12RegKey4
-        {
-            Key       = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'
-            ValueName = 'Enabled'
-            ValueType = 'Dword'
-            ValueData =  '1'
-            Ensure    = 'Present'
-        }
-
-        Registry SchUseStrongCrypto
-        {
-            Key       = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'
-            ValueName = 'SchUseStrongCrypto'
-            ValueType = 'Dword'
-            ValueData =  '1'
-            Ensure    = 'Present'
-        }
-
-        <#Registry SchUseStrongCrypto64
-        {
-            Key                         = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'
-            ValueName                   = 'SchUseStrongCrypto'
-            ValueType                   = 'Dword'
-            ValueData                   =  '1'
-            Ensure                      = 'Present'
-        }#>
-
-        SqlAlias AddSqlAlias
-        {
-            Ensure               = "Present"
-            Name                 = $SQLAlias
-            ServerName           = $SQLName
-            Protocol             = "TCP"
-            TcpPort              = 1433
-        }
+        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
 
         Script DisableIESecurity
         {
@@ -199,6 +144,73 @@ configuration ConfigureFEVM
             }
             GetScript = { }
         }
+
+        #**********************************************************
+        # Install applications using Chocolatey
+        #**********************************************************
+        cChocoInstaller InstallChoco
+        {
+            InstallDir = "C:\Choco"
+        }
+
+        cChocoPackageInstaller InstallEdge
+        {
+            Name                 = "microsoft-edge"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller InstallChrome
+        {
+            Name                 = "GoogleChrome"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller InstallEverything
+        {
+            Name                 = "everything"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller InstallILSpy
+        {
+            Name                 = "ilspy"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller InstallNotepadpp
+        {
+            Name                 = "notepadplusplus.install"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller Install7zip
+        {
+            Name                 = "7zip.install"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller InstallVscode
+        {
+            Name                 = "vscode.portable"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        # if ($EnableAnalysis) {
+        #     # This resource is for  of dsc logs only and totally optionnal
+        #     cChocoPackageInstaller InstallPython
+        #     {
+        #         Name                 = "python"
+        #         Ensure               = "Present"
+        #         DependsOn            = "[cChocoInstaller]InstallChoco"
+        #     }
+        # }
 
         #**********************************************************
         # Join AD forest
@@ -274,63 +286,6 @@ configuration ConfigureFEVM
             DependsOn = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
-        #**********************************************************
-        # Install applications using Chocolatey
-        #**********************************************************
-        cChocoInstaller InstallChoco
-        {
-            InstallDir = "C:\Choco"
-        }
-
-        cChocoPackageInstaller InstallEdge
-        {
-            Name                 = "microsoft-edge"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
-        cChocoPackageInstaller InstallChrome
-        {
-            Name                 = "GoogleChrome"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
-        cChocoPackageInstaller InstallEverything
-        {
-            Name                 = "everything"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
-        cChocoPackageInstaller InstallILSpy
-        {
-            Name                 = "ilspy"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
-        cChocoPackageInstaller InstallNotepadpp
-        {
-            Name                 = "notepadplusplus.install"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
-        cChocoPackageInstaller Install7zip
-        {
-            Name                 = "7zip.install"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
-        cChocoPackageInstaller InstallVscode
-        {
-            Name                 = "vscode.portable"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
         # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
         cChocoPackageInstaller InstallFiddler
         {
@@ -348,75 +303,6 @@ configuration ConfigureFEVM
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
-        }
-
-        # if ($EnableAnalysis) {
-        #     # This resource is for  of dsc logs only and totally optionnal
-        #     cChocoPackageInstaller InstallPython
-        #     {
-        #         Name                 = "python"
-        #         Ensure               = "Present"
-        #         DependsOn            = "[cChocoInstaller]InstallChoco"
-        #     }
-        # }
-
-        if ($true -eq $IsSharePointvNext) {
-            #**********************************************************
-            # Download and install for SharePoint
-            #**********************************************************
-            Script DownloadSharePoint
-            {
-                SetScript = {
-                    $count = 0
-                    $maxCount = 10
-                    $spIsoUrl = "https://go.microsoft.com/fwlink/?linkid=2171943"
-                    $dstFolder = Join-Path -Path $env:windir -ChildPath "Temp"
-                    $dstFile = Join-Path -Path $dstFolder -ChildPath "OfficeServer.iso"
-                    $spInstallFolder = Join-Path -Path $dstFolder -ChildPath "OfficeServer"
-                    $setupFile =  Join-Path -Path $spInstallFolder -ChildPath "setup.exe"
-                    while (($count -lt $maxCount) -and (-not(Test-Path $setupFile)))
-                    {
-                        try {
-                        # donwload the installation package
-                        Start-BitsTransfer -Source $spIsoUrl -Destination $dstFile
-                
-                        # mount the image file and copy to C:\windows\TEMP\OfficeServer folder
-                        $mountedIso = Mount-DiskImage -ImagePath $dstFile -PassThru
-                        $driverLetter =  (Get-Volume -DiskImage $mountedIso).DriveLetter
-                        Copy-Item -Path "${driverLetter}:\" -Destination $spInstallFolder -Recurse -Force -ErrorAction SilentlyContinue
-                        Dismount-DiskImage -DevicePath $mountedIso.DevicePath -ErrorAction SilentlyContinue
-                        
-                        (Get-ChildItem -Path $spInstallFolder -Recurse -File).FullName | Foreach-Object {Unblock-File $_}
-                        $count++
-                        }
-                        catch {
-                        $count++
-                        }
-                    }
-
-                    if (-not(Test-Path $setupFile)) {
-                        Write-Error -Message "Failed to download SharePoint installation package" 
-                    }
-                }
-                TestScript = { Test-Path "${env:windir}\Temp\OfficeServer\setup.exe" }
-                GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            }
-
-            SPInstallPrereqs InstallPrerequisites
-            {
-                IsSingleInstance  = "Yes"
-                InstallerPath     = "${env:windir}\Temp\OfficeServer\Prerequisiteinstaller.exe"
-                OnlineMode        = $true
-                DependsOn         = "[Script]DownloadSharePoint"
-            }
-
-            SPInstall InstallBinaries
-            {
-                IsSingleInstance = "Yes"
-                BinaryDir        = "${env:windir}\Temp\OfficeServer"
-                ProductKey       = "VW2FM-FN9FT-H22J4-WV9GT-H8VKF"
-                DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
-            }
         }
 
         #********************************************************************
@@ -614,85 +500,37 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        if ($SharePointVersion -ne "SE") {
-            CertReq SPSSiteCert
-            {
-                CARootName             = "$DomainNetbiosName-$DCName-CA"
-                CAServerFQDN           = "$DCName.$DomainFQDN"
-                Subject                = "$SPTrustedSitesName.$DomainFQDN"
-                SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
-                KeyLength              = '2048'
-                Exportable             = $true
-                ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
-                OID                    = '1.3.6.1.5.5.7.3.1'
-                KeyUsage               = '0xa0'
-                CertificateTemplate    = 'WebServer'
-                AutoRenew              = $true
-                Credential             = $DomainAdminCredsQualified
-                DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
-            }
+        CertReq SPSSiteCert
+        {
+            CARootName             = "$DomainNetbiosName-$DCName-CA"
+            CAServerFQDN           = "$DCName.$DomainFQDN"
+            Subject                = "$SPTrustedSitesName.$DomainFQDN"
+            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
+            KeyLength              = '2048'
+            Exportable             = $true
+            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                    = '1.3.6.1.5.5.7.3.1'
+            KeyUsage               = '0xa0'
+            CertificateTemplate    = 'WebServer'
+            AutoRenew              = $true
+            Credential             = $DomainAdminCredsQualified
+            DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
+        }
 
-            xWebsite SetHTTPSCertificate
+        xWebsite SetHTTPSCertificate
+        {
+            Name                 = "SharePoint - 443"
+            BindingInfo          = MSFT_xWebBindingInformation
             {
-                Name                 = "SharePoint - 443"
-                BindingInfo          = MSFT_xWebBindingInformation
-                {
-                    Protocol             = "HTTPS"
-                    Port                 = 443
-                    CertificateStoreName = "My"
-                    CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
-                }
-                Ensure               = "Present"
-                PsDscRunAsCredential = $DomainAdminCredsQualified
-                DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
+                Protocol             = "HTTPS"
+                Port                 = 443
+                CertificateStoreName = "My"
+                CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
             }
-        } else {
-            Script SetFarmPropertiesForOIDC
-            {
-                SetScript = 
-                {
-                    # Import OIDC-specific cookie certificate and set required permissions
-                    $spTrustedSitesName = $using:SPTrustedSitesName
-                    $dcSetupPath = $using:DCSetupPath
-                    
-                    # Import OIDC-specific cookie certificate created in 1st SharePoint Server of the farm
-                    $cookieCertificateName = "SharePoint Cookie Cert"
-                    $cookieCertificateFilePath = Join-Path -Path $dcSetupPath -ChildPath "$cookieCertificateName"
-                    $cert = Import-PfxCertificate -FilePath "$cookieCertificateFilePath.pfx" -CertStoreLocation Cert:\localMachine\My -Exportable
-
-                    # Grant the application pool access to the private key of the cookie certificate
-                    $wa = Get-SPWebApplication "http://$spTrustedSitesName"
-                    $apppoolUserName = $wa.ApplicationPool.Username
-                    $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
-                    $fileName = $rsaCert.key.UniqueName
-                    $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
-                    $permissions = Get-Acl -Path $path
-                    $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($apppoolUserName, 'Read', 'None', 'None', 'Allow')
-                    $permissions.AddAccessRule($access_rule)
-                    Set-Acl -Path $path -AclObject $permissions
-                }
-                GetScript =  
-                {
-                    # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                    return @{ "Result" = "false" }
-                }
-                TestScript = 
-                {
-                    # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                    # Import-Module SharePointServer | Out-Null
-                    # $f = Get-SPFarm
-                    # if ($f.Farm.Properties.ContainsKey('SP-NonceCookieCertificateThumbprint') -eq $false) {
-                    if ((Get-ChildItem -Path "cert:\LocalMachine\My\"| Where-Object{$_.Subject -eq "CN=SharePoint Cookie Cert"}) -eq $null) {
-                        return $false
-                    }
-                    else {
-                        return $true
-                    }
-                }
-                DependsOn            = "[SPFarm]JoinSPFarm"
-                PsDscRunAsCredential = $DomainAdminCredsQualified
-            }
-        }        
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
+        }
 
         # if ($EnableAnalysis) {
         #     # This resource is for analysis of dsc logs only and totally optionnal

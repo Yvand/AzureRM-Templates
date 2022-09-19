@@ -102,38 +102,6 @@ configuration ConfigureSPVM
             Registry FixDocumentConversionKeyMissing2 { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LoadBalancerSettings"; ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
         }
 
-        # xRemoteFile DownloadLdapcp { Uri = $LdapcpLink; DestinationPath = "$SetupPath\LDAPCP.wsp" }
-        Script DownloadLDAPCP
-        {
-            SetScript = {
-                $ldapcpLink = $using:LdapcpLink
-                $setupPath = $using:SetupPath
-                $setupFile = Join-Path -Path $setupPath -ChildPath "LDAPCP.wsp"
-                New-Item -Path $setupPath -ItemType directory -ErrorAction SilentlyContinue
-                $count = 0
-                $maxCount = 10                
-                while (($count -lt $maxCount) -and (-not(Test-Path $setupFile)))
-                {
-                    try {
-                        Start-BitsTransfer -Source $ldapcpLink -Destination $setupFile
-                    }
-                    catch {
-                        $count++
-                    }
-                }
-
-                if (-not(Test-Path $setupFile)) {
-                    Write-Error -Message "Failed to download '$ldapcpLink' after $count attempts"
-                }
-            }
-            TestScript = {
-                $setupPath = $using:SetupPath
-                $setupFile = Join-Path -Path $setupPath -ChildPath "LDAPCP.wsp"
-                return Test-Path $setupFile
-            }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-        }
-
         SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
 
         Script DisableIESecurity
@@ -227,6 +195,37 @@ configuration ConfigureSPVM
                 Enable-NetFirewallRule -DisplayName $spRuleName
             }
             GetScript = { }
+        }
+
+        Script DownloadLDAPCP
+        {
+            SetScript = {
+                $ldapcpLink = $using:LdapcpLink
+                $setupPath = $using:SetupPath
+                $setupFile = Join-Path -Path $setupPath -ChildPath "LDAPCP.wsp"
+                New-Item -Path $setupPath -ItemType directory -ErrorAction SilentlyContinue
+                $count = 0
+                $maxCount = 10                
+                while (($count -lt $maxCount) -and (-not(Test-Path $setupFile)))
+                {
+                    try {
+                        Start-BitsTransfer -Source $ldapcpLink -Destination $setupFile
+                    }
+                    catch {
+                        $count++
+                    }
+                }
+
+                if (-not(Test-Path $setupFile)) {
+                    Write-Error -Message "Failed to download '$ldapcpLink' after $count attempts"
+                }
+            }
+            TestScript = {
+                $setupPath = $using:SetupPath
+                $setupFile = Join-Path -Path $setupPath -ChildPath "LDAPCP.wsp"
+                return Test-Path $setupFile
+            }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
         }
 
         #**********************************************************
