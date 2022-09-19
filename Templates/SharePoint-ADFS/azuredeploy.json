@@ -481,8 +481,8 @@
       "forceUpdateTag": "1.0"
     },
     "dscConfigureFEVM": {
-      "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('dsc/ConfigureFEVM.zip', parameters('_artifactsLocationSasToken')))]",
-      "script": "ConfigureFEVM.ps1",
+      "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat(if(variables('generalSettings').isSharePointvNext, 'dsc/ConfigureFESE.zip', 'dsc/ConfigureFELegacy.zip'), parameters('_artifactsLocationSasToken')))]",
+      "script": "[if(variables('generalSettings').isSharePointvNext, 'ConfigureFESE.ps1', 'ConfigureFELegacy.ps1')]",
       "function": "ConfigureFEVM",
       "forceUpdateTag": "1.0"
     },

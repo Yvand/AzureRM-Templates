@@ -1586,10 +1586,6 @@ function Get-SPDSCInstalledProductVersion
 }
 
 <#
-# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.2.0
-# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork
-
-Install-Module -Name PendingReboot
 help ConfigureSPVM
 
 $password = ConvertTo-SecureString -String "mytopsecurepassword" -AsPlainText -Force
@@ -1614,4 +1610,5 @@ ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -S
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
+Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.2.0
 #>
