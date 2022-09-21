@@ -39,6 +39,7 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
+    [System.Management.Automation.PSCredential] $SPADDirSyncCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPADDirSyncCreds.UserName)", $SPADDirSyncCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
     [String] $SPTrustedSitesName = "spsites"
     [String] $ComputerName = Get-Content env:computername
@@ -1289,7 +1290,7 @@ configuration ConfigureSPVM
             UserProfileService    = $UpaServiceName
             Forest                = $DomainFQDN
             Name                  = $DomainFQDN
-            ConnectionCredentials = $SPADDirSyncCreds
+            ConnectionCredentials = $SPADDirSyncCredsQualified
             Server                = "dc.contoso.local"
             UseSSL                = $false
             IncludedOUs           = @("CN=Users,DC=contoso,DC=local")
