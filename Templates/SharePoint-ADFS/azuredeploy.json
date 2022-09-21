@@ -376,6 +376,8 @@
       "spSvcPassword": "[parameters('serviceAccountsPassword')]",
       "spAppPoolUserName": "spapppool",
       "spAppPoolPassword": "[parameters('serviceAccountsPassword')]",
+      "spADDirSyncUserName": "spaddirsync",
+      "spADDirSyncPassword": "[parameters('serviceAccountsPassword')]",
       "spPassphrase": "[parameters('serviceAccountsPassword')]",
       "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
       "enableAnalysis": true,
@@ -1011,6 +1013,10 @@
             "SPAppPoolCreds": {
               "UserName": "[variables('generalSettings').spAppPoolUserName]",
               "Password": "[variables('generalSettings').spAppPoolPassword]"
+            },
+            "SPADDirSyncCreds": {
+              "UserName": "[variables('generalSettings').spADDirSyncUserName]",
+              "Password": "[variables('generalSettings').spADDirSyncPassword]"
             },
             "SPPassphraseCreds": {
               "UserName": "Passphrase",

@@ -6,7 +6,7 @@
     "adminUserName": { "value": "yvand" },
     "adminPassword": { "value": null },
     "serviceAccountsPassword": { "value": null },
-    // "sharePointVersion": { "value": "Subscription-22H2" },
+    // "sharePointVersion": { "value": "Subscription-RTM" },
     "sharePointVersion": { "value": "2019" },
     "domainFQDN": { "value": "contoso.local" },
     "vmsTimeZone": { "value": "Romance Standard Time" },

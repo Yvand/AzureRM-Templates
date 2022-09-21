@@ -14,6 +14,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSvcCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPAppPoolCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPADDirSyncCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperUserCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
@@ -636,6 +637,32 @@ configuration ConfigureSPVM
             DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
+        ADUser CreateSPADDirSyncAccount
+        {
+            DomainName                    = $DomainFQDN
+            UserName                      = $SPADDirSyncCreds.UserName
+            UserPrincipalName             = "$($SPADDirSyncCreds.UserName)@$DomainFQDN"
+            Password                      = $SPADDirSyncCreds
+            PasswordNeverExpires          = $true
+            Ensure                        = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
+        }
+
+        ADObjectPermissionEntry GrantReplicatingDirectoryChanges
+        {
+            Ensure                             = 'Present'
+            Path                               = 'DC=contoso,DC=local'
+            IdentityReference                  = $SPADDirSyncCreds.UserName
+            ActiveDirectoryRights              = 'ExtendedRight'
+            AccessControlType                  = 'Allow'
+            ObjectType                         = "1131f6aa-9c07-11d1-f79f-00c04fc2dcd2" # Replicate Directory Changes Permission
+            ActiveDirectorySecurityInheritance = 'All'
+            InheritedObjectType                = '00000000-0000-0000-0000-000000000000'
+            PsDscRunAsCredential               = $DomainAdminCredsQualified
+            DependsOn                          = "[ADUser]CreateSPADDirSyncAccount"
+        }
+
         File AccountsProvisioned
         {
             DestinationPath      = "C:\Logs\DSC1.txt"
@@ -643,7 +670,7 @@ configuration ConfigureSPVM
             Type                 = "File"
             Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[Script]CreateWSManSPNsIfNeeded"
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[ADObjectPermissionEntry]GrantReplicatingDirectoryChanges", "[Script]CreateWSManSPNsIfNeeded"
         }
         
         # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
@@ -1254,6 +1281,21 @@ configuration ConfigureSPVM
             })
             PsDscRunAsCredential = $SPSetupCredsQualified
             #DependsOn           = "[Script]RefreshLocalConfigCache"
+            DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
+        }
+
+        SPUserProfileSyncConnection ADImportConnection
+        {
+            UserProfileService    = $UpaServiceName
+            Forest                = $DomainFQDN
+            Name                  = $DomainFQDN
+            ConnectionCredentials = $SPADDirSyncCreds
+            Server                = "dc.contoso.local"
+            UseSSL                = $false
+            IncludedOUs           = @("CN=Users,DC=contoso,DC=local")
+            Force                 = $false
+            ConnectionType        = "ActiveDirectory"
+            PsDscRunAsCredential  = $SPSetupCredsQualified
             DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
 
