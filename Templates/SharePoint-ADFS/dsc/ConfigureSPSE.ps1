@@ -32,6 +32,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
+    [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split("\")[0]),DC=$($DomainFQDN.Split("\")[1])"
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
@@ -653,7 +654,7 @@ configuration ConfigureSPVM
         ADObjectPermissionEntry GrantReplicatingDirectoryChanges
         {
             Ensure                             = 'Present'
-            Path                               = 'DC=contoso,DC=local'
+            Path                               = $DomainLDAPPath
             IdentityReference                  = $SPADDirSyncCreds.UserName
             ActiveDirectoryRights              = 'ExtendedRight'
             AccessControlType                  = 'Allow'
@@ -1291,11 +1292,12 @@ configuration ConfigureSPVM
             Forest                = $DomainFQDN
             Name                  = $DomainFQDN
             ConnectionCredentials = $SPADDirSyncCredsQualified
-            Server                = "dc.contoso.local"
+            Server                = $DomainLDAPPath
             UseSSL                = $false
-            IncludedOUs           = @("CN=Users,DC=contoso,DC=local")
+            IncludedOUs           = @("CN=Users,$DomainLDAPPath")
             Force                 = $false
             ConnectionType        = "ActiveDirectory"
+            UseDisabledFilter     = $true
             PsDscRunAsCredential  = $SPSetupCredsQualified
             DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
