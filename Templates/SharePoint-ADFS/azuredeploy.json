@@ -365,20 +365,12 @@
       "spSuperUserName": "spSuperUser",
       "spSuperReaderName": "spSuperReader",
       "adfsSvcUserName": "adfssvc",
-      "adfsSvcPassword": "[parameters('serviceAccountsPassword')]",
       "sqlSvcUserName": "sqlsvc",
-      "sqlSvcPassword": "[parameters('serviceAccountsPassword')]",
       "spSetupUserName": "spsetup",
-      "spSetupPassword": "[parameters('serviceAccountsPassword')]",
       "spFarmUserName": "spfarm",
-      "spFarmPassword": "[parameters('serviceAccountsPassword')]",
       "spSvcUserName": "spsvc",
-      "spSvcPassword": "[parameters('serviceAccountsPassword')]",
       "spAppPoolUserName": "spapppool",
-      "spAppPoolPassword": "[parameters('serviceAccountsPassword')]",
       "spADDirSyncUserName": "spaddirsync",
-      "spADDirSyncPassword": "[parameters('serviceAccountsPassword')]",
-      "spPassphrase": "[parameters('serviceAccountsPassword')]",
       "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
       "enableAnalysis": true,
       "isSharePointvNext": "[if(startsWith(parameters('sharePointVersion'), 'subscription'), true(), false())]"
@@ -710,7 +702,7 @@
                 },
                 "AdfsSvcCreds": {
                   "UserName": "[variables('generalSettings').adfsSvcUserName]",
-                  "Password": "[variables('generalSettings').adfsSvcPassword]"
+                  "Password": "[parameters('serviceAccountsPassword')]"
                 }
               }
             }
@@ -948,11 +940,11 @@
             },
             "SqlSvcCreds": {
               "UserName": "[variables('generalSettings').sqlSvcUserName]",
-              "Password": "[variables('generalSettings').sqlSvcPassword]"
+              "Password": "[parameters('serviceAccountsPassword')]"
             },
             "SPSetupCreds": {
               "UserName": "[variables('generalSettings').spSetupUserName]",
-              "Password": "[variables('generalSettings').spSetupPassword]"
+              "Password": "[parameters('serviceAccountsPassword')]"
             }
           }
         }
@@ -1000,27 +992,27 @@
             },
             "SPSetupCreds": {
               "UserName": "[variables('generalSettings').spSetupUserName]",
-              "Password": "[variables('generalSettings').spSetupPassword]"
+              "Password": "[parameters('serviceAccountsPassword')]"
             },
             "SPFarmCreds": {
               "UserName": "[variables('generalSettings').spFarmUserName]",
-              "Password": "[variables('generalSettings').spFarmPassword]"
+              "Password": "[parameters('serviceAccountsPassword')]"
             },
             "SPSvcCreds": {
               "UserName": "[variables('generalSettings').spSvcUserName]",
-              "Password": "[variables('generalSettings').spSvcPassword]"
+              "Password": "[parameters('serviceAccountsPassword')]"
             },
             "SPAppPoolCreds": {
               "UserName": "[variables('generalSettings').spAppPoolUserName]",
-              "Password": "[variables('generalSettings').spAppPoolPassword]"
+              "Password": "[parameters('serviceAccountsPassword')]"
             },
             "SPADDirSyncCreds": {
               "UserName": "[variables('generalSettings').spADDirSyncUserName]",
-              "Password": "[variables('generalSettings').spADDirSyncPassword]"
+              "Password": "[parameters('serviceAccountsPassword')]"
             },
             "SPPassphraseCreds": {
               "UserName": "Passphrase",
-              "Password": "[variables('generalSettings').spPassphrase]"
+              "Password": "[parameters('serviceAccountsPassword')]"
             },
             "SPSuperUserCreds": {
               "UserName": "[variables('generalSettings').spSuperUserName]",
@@ -1191,15 +1183,15 @@
             },
             "SPSetupCreds": {
               "UserName": "[variables('generalSettings').spSetupUserName]",
-              "Password": "[variables('generalSettings').spSetupPassword]"
+              "Password": "[parameters('serviceAccountsPassword')]"
             },
             "SPFarmCreds": {
               "UserName": "[variables('generalSettings').spFarmUserName]",
-              "Password": "[variables('generalSettings').spFarmPassword]"
+              "Password": "[parameters('serviceAccountsPassword')]"
             },
             "SPPassphraseCreds": {
               "UserName": "Passphrase",
-              "Password": "[variables('generalSettings').spPassphrase]"
+              "Password": "[parameters('serviceAccountsPassword')]"
             }
           }
         }
