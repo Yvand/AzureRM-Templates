@@ -1148,20 +1148,23 @@ configuration ConfigureSPVM
             DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
 
-        SPUserProfileSyncConnection ADImportConnection
-        {
-            UserProfileService    = $UpaServiceName
-            Forest                = $DomainFQDN
-            Name                  = $DomainFQDN
-            ConnectionCredentials = $SPADDirSyncCredsQualified
-            Server                = $DomainLDAPPath
-            UseSSL                = $false
-            IncludedOUs           = @("CN=Users,$DomainLDAPPath")
-            Force                 = $false
-            ConnectionType        = "ActiveDirectory"
-            UseDisabledFilter     = $true
-            PsDscRunAsCredential  = $SPSetupCredsQualified
-            DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
+        # Cannot be done in SPS 2013 as it uses FIM
+        if ($SharePointVersion -ne "2013") {
+            SPUserProfileSyncConnection ADImportConnection
+            {
+                UserProfileService    = $UpaServiceName
+                Forest                = $DomainFQDN
+                Name                  = $DomainFQDN
+                ConnectionCredentials = $SPADDirSyncCredsQualified
+                Server                = $DomainLDAPPath
+                UseSSL                = $false
+                IncludedOUs           = @("CN=Users,$DomainLDAPPath")
+                Force                 = $false
+                ConnectionType        = "ActiveDirectory"
+                UseDisabledFilter     = $true
+                PsDscRunAsCredential  = $SPSetupCredsQualified
+                DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
+            }
         }
 
         SPSecurityTokenServiceConfig ConfigureSTS
