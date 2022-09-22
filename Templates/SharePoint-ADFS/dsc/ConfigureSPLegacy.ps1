@@ -14,6 +14,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSvcCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPAppPoolCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPADDirSyncCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperUserCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
@@ -31,6 +32,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
+    [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
@@ -38,6 +40,7 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
+    [System.Management.Automation.PSCredential] $SPADDirSyncCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPADDirSyncCreds.UserName)", $SPADDirSyncCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
     [String] $SPTrustedSitesName = "spsites"
     [String] $ComputerName = Get-Content env:computername
@@ -519,6 +522,32 @@ configuration ConfigureSPVM
             DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
+        ADUser CreateSPADDirSyncAccount
+        {
+            DomainName                    = $DomainFQDN
+            UserName                      = $SPADDirSyncCreds.UserName
+            UserPrincipalName             = "$($SPADDirSyncCreds.UserName)@$DomainFQDN"
+            Password                      = $SPADDirSyncCreds
+            PasswordNeverExpires          = $true
+            Ensure                        = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
+        }
+
+        ADObjectPermissionEntry GrantReplicatingDirectoryChanges
+        {
+            Ensure                             = 'Present'
+            Path                               = $DomainLDAPPath
+            IdentityReference                  = $SPADDirSyncCreds.UserName
+            ActiveDirectoryRights              = 'ExtendedRight'
+            AccessControlType                  = 'Allow'
+            ObjectType                         = "1131f6aa-9c07-11d1-f79f-00c04fc2dcd2" # Replicate Directory Changes Permission
+            ActiveDirectorySecurityInheritance = 'All'
+            InheritedObjectType                = '00000000-0000-0000-0000-000000000000'
+            PsDscRunAsCredential               = $DomainAdminCredsQualified
+            DependsOn                          = "[ADUser]CreateSPADDirSyncAccount"
+        }
+
         File AccountsProvisioned
         {
             DestinationPath      = "C:\Logs\DSC1.txt"
@@ -526,7 +555,7 @@ configuration ConfigureSPVM
             Type                 = "File"
             Force                = $true
             PsDscRunAsCredential = $SPSetupCredential
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[Script]CreateWSManSPNsIfNeeded"
+            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[ADObjectPermissionEntry]GrantReplicatingDirectoryChanges", "[Script]CreateWSManSPNsIfNeeded"
         }
         
         # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
@@ -1119,6 +1148,22 @@ configuration ConfigureSPVM
             DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
 
+        SPUserProfileSyncConnection ADImportConnection
+        {
+            UserProfileService    = $UpaServiceName
+            Forest                = $DomainFQDN
+            Name                  = $DomainFQDN
+            ConnectionCredentials = $SPADDirSyncCredsQualified
+            Server                = $DomainLDAPPath
+            UseSSL                = $false
+            IncludedOUs           = @("CN=Users,$DomainLDAPPath")
+            Force                 = $false
+            ConnectionType        = "ActiveDirectory"
+            UseDisabledFilter     = $true
+            PsDscRunAsCredential  = $SPSetupCredsQualified
+            DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
+        }
+
         SPSecurityTokenServiceConfig ConfigureSTS
         {
             Name                  = "SecurityTokenServiceManager"
@@ -1447,31 +1492,30 @@ function Get-SPDSCInstalledProductVersion
 }
 
 <#
-# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.1.0
-# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork
-
-Install-Module -Name PendingReboot
 help ConfigureSPVM
 
-$DomainAdminCreds = Get-Credential -Credential "yvand"
-$SPSetupCreds = Get-Credential -Credential "spsetup"
-$SPFarmCreds = Get-Credential -Credential "spfarm"
-$SPSvcCreds = Get-Credential -Credential "spsvc"
-$SPAppPoolCreds = Get-Credential -Credential "spapppool"
-$SPPassphraseCreds = Get-Credential -Credential "Passphrase"
-$SPSuperUserCreds = Get-Credential -Credential "spSuperUser"
-$SPSuperReaderCreds = Get-Credential -Credential "spSuperReader"
+$password = ConvertTo-SecureString -String "mytopsecurepassword" -AsPlainText -Force
+$DomainAdminCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "yvand", $password
+$SPSetupCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spsetup", $password
+$SPFarmCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spfarm", $password
+$SPSvcCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spsvc", $password
+$SPAppPoolCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spapppool", $password
+$SPADDirSyncCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spaddirsync", $password
+$SPPassphraseCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "Passphrase", $password
+$SPSuperUserCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperUser", $password
+$SPSuperReaderCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperReader", $password
 $DNSServer = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "SE"
+$SharePointVersion = "2019"
 $EnableAnalysis = $true
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPSE.0\ConfigureSPVM"
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
+C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.2.0
 #>
