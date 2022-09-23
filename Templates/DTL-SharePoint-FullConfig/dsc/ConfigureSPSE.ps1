@@ -57,9 +57,13 @@ configuration ConfigureSPVM
     [String] $AddinsSiteName = "Provider-hosted addins"
     [String] $TrustedIdChar = "e"
     [String] $SPTeamSiteTemplate = "STS#3"
-    if ([String]::Equals($SharePointVersion, "2013") -or [String]::Equals($SharePointVersion, "2016")) {
-        $SPTeamSiteTemplate = "STS#0"
-    }
+    [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
+    $SharePointBuildsDetails = @(
+        @{ Label = "RTM";  DownloadUrls = "https://go.microsoft.com/fwlink/?linkid=2171943"; }
+        @{ Label = "22H2"; DownloadUrls = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe;https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; }
+    )
+    $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
+    $SharePointBuildDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}
 
     Node localhost
     {
@@ -98,12 +102,6 @@ configuration ConfigureSPVM
         Registry SchUseStrongCrypto32       { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
         Registry SystemDefaultTlsVersions   { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
         Registry SystemDefaultTlsVersions32 { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
-
-        if ($SharePointVersion -eq "2013") {
-            # Those 2 registry keys are required in SPS 2013 image to fix the psconfigui timeout error - https://support.microsoft.com/en-us/topic/some-document-conversion-services-in-sharepoint-server-are-not-secure-when-they-run-in-a-particular-environment-c39cd633-1e6a-18b1-9f2f-d0e7073a26bd
-            Registry FixDocumentConversionKeyMissing  { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LauncherSettings";     ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
-            Registry FixDocumentConversionKeyMissing2 { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LoadBalancerSettings"; ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
-        }
 
         SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
 
@@ -267,15 +265,134 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        # if ($EnableAnalysis) {
-        #     # This resource is for  of dsc logs only and totally optionnal
-        #     cChocoPackageInstaller InstallPython
-        #     {
-        #         Name                 = "python"
-        #         Ensure               = "Present"
-        #         DependsOn            = "[cChocoInstaller]InstallChoco"
-        #     }
-        # }
+        if ($EnableAnalysis) {
+            # This resource is for  of dsc logs only and totally optionnal
+            cChocoPackageInstaller InstallPython
+            {
+                Name                 = "python"
+                Ensure               = "Present"
+                DependsOn            = "[cChocoInstaller]InstallChoco"
+            }
+        }
+
+        #**********************************************************
+        # Download and install for SharePoint
+        #**********************************************************
+        Script DownloadSharePoint
+        {
+            SetScript = {
+                $SharePointBuildsDetails = $using:SharePointBuildsDetails
+                $sharePointRtmDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}
+                $dstFolder = [environment]::GetEnvironmentVariable("temp","machine")
+                $dstFile = Join-Path -Path $dstFolder -ChildPath "OfficeServer.iso"
+                $spInstallFolder = Join-Path -Path $dstFolder -ChildPath "OfficeServer"
+                $setupFile =  Join-Path -Path $spInstallFolder -ChildPath "setup.exe"
+                $count = 0
+                while (($count -lt 10) -and (-not(Test-Path $setupFile)))
+                {
+                    try {
+                        Start-BitsTransfer -Source $sharePointRtmDetails.DownloadUrls -Destination $dstFile
+                        $mountedIso = Mount-DiskImage -ImagePath $dstFile -PassThru
+                        $driverLetter =  (Get-Volume -DiskImage $mountedIso).DriveLetter
+                        Copy-Item -Path "${driverLetter}:\" -Destination $spInstallFolder -Recurse -Force -ErrorAction SilentlyContinue
+                        Dismount-DiskImage -DevicePath $mountedIso.DevicePath -ErrorAction SilentlyContinue
+                        
+                        (Get-ChildItem -Path $spInstallFolder -Recurse -File).FullName | Foreach-Object {Unblock-File $_}
+                        $count++
+                    }
+                    catch {
+                        $count++
+                    }
+                }
+
+                if (-not(Test-Path $setupFile)) {
+                    Write-Error -Message "Failed to download SharePoint installation package" 
+                }
+            }
+            TestScript = { Test-Path "${env:windir}\Temp\OfficeServer\setup.exe" }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        }
+
+        SPInstallPrereqs InstallPrerequisites
+        {
+            IsSingleInstance  = "Yes"
+            InstallerPath     = "${env:windir}\Temp\OfficeServer\Prerequisiteinstaller.exe"
+            OnlineMode        = $true
+            DependsOn         = "[Script]DownloadSharePoint"
+        }
+
+        SPInstall InstallBinaries
+        {
+            IsSingleInstance = "Yes"
+            BinaryDir        = "${env:windir}\Temp\OfficeServer"
+            ProductKey       = "VW2FM-FN9FT-H22J4-WV9GT-H8VKF"
+            DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
+        }
+
+        Script InstallSharePointUpdate
+        {
+            SetScript = {
+                $SharePointBuildLabel = $using:SharePointBuildLabel
+                $SharePointBuildDetails = $using:SharePointBuildDetails
+                Write-Verbose -Message "Starting installation of SharePoint build '$SharePointBuildLabel'..."
+                $exitRebootCodes = @(3010, 17022)
+                $downloadLinks = [uri []] $SharePointBuildDetails.DownloadUrls.Split(";", [System.StringSplitOptions]::RemoveEmptyEntries)
+                $dstFiles = $downloadLinks | ForEach-Object { Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $_.Segments[$_.Segments.Count - 1] }                
+                
+                $count = 0
+                $downloadComplete = $false
+                while (($count -lt 10) -and $false -eq $downloadComplete) {
+                    try {
+                        Start-BitsTransfer -Source $downloadLinks -Destination $dstFiles
+                        Unblock-File -Path $dstFiles -Confirm:$false
+                        $downloadComplete = $true
+                    }
+                    catch {
+                        $count++
+                    }
+                }
+                if ($false -eq $downloadComplete) {
+                    Write-Error -Message "Download of SharePoint update files for build '$SharePointBuildLabel' failed, skip installation."
+                    return;
+                }
+                Write-Verbose -Message "Download of SharePoint build '$SharePointBuildLabel' finished successfully."
+
+                $needReboot = $false
+                foreach ($dstFile in $dstFiles) {
+                    $file = Get-ChildItem -LiteralPath $dstFile
+                    Write-Verbose -Message "Starting installation of SharePoint update '$($file.Name)'..."
+                    $process = Start-Process $file.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
+                    if ($exitRebootCodes.Contains($process.ExitCode)) {
+                        $needReboot = $true
+                    }
+                    Write-Verbose -Message "Finished installation of SharePoint update '$($file.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
+                }
+                New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled -Force
+                Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
+
+                if ($true -eq $needReboot) {
+                    $global:DSCMachineStatus = 1
+                }
+            }
+            TestScript = {
+                $SharePointBuildLabel = $using:SharePointBuildLabel
+                if ($true -eq $SharePointBuildLabel.ToUpper().Equals("RTM")) {
+                    return $true
+                }
+
+                # Not RTM, test if update was already installed
+                return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled)
+            }
+            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            DependsOn        = "[SPInstall]InstallBinaries"
+        }
+
+        PendingReboot RebootOnSignalFromInstallSharePointUpdate
+        {
+            Name             = "RebootOnSignalFromInstallSharePointUpdate"
+            SkipCcmClientSDK = $true
+            DependsOn        = "[Script]InstallSharePointUpdate"
+        }
 
         # IIS cleanup cannot be executed earlier in SharePoint SE: It uses a base image of Windows Server without IIS (installed by SPInstallPrereqs)
         xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
@@ -784,38 +901,93 @@ configuration ConfigureSPVM
         }
 
         # Installing LDAPCP somehow updates SPClaimEncodingManager 
-        # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
-        # The only solution I've found is to force a reboot in SharePoint 2019
-        if ($SharePointVersion -eq "2019") {
-            Script ForceRebootBeforeCreatingSPTrust
-            {
-                # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-                TestScript = {
-                    return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust)
-                }
-                SetScript = {
-                    New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust -Force
-                    $global:DSCMachineStatus = 1
-                }
-                GetScript = { }
-                PsDscRunAsCredential = $DomainAdminCredsQualified
-                DependsOn = "[SPFarmSolution]InstallLdapcp"
+        # But in SharePoint 2019 and Subscription, it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
+        # The only solution I've found is to force a reboot
+        Script ForceRebootBeforeCreatingSPTrust
+        {
+            # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            TestScript = {
+                return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust)
             }
-
-            PendingReboot RebootOnSignalFromForceRebootBeforeCreatingSPTrust
-            {
-                Name             = "RebootOnSignalFromForceRebootBeforeCreatingSPTrust"
-                SkipCcmClientSDK = $true
-                DependsOn        = "[Script]ForceRebootBeforeCreatingSPTrust"
+            SetScript = {
+                New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust -Force
+                $global:DSCMachineStatus = 1
             }
+            GetScript = { }
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn = "[SPFarmSolution]InstallLdapcp"
         }
-        
+
+        PendingReboot RebootOnSignalFromForceRebootBeforeCreatingSPTrust
+        {
+            Name             = "RebootOnSignalFromForceRebootBeforeCreatingSPTrust"
+            SkipCcmClientSDK = $true
+            DependsOn        = "[Script]ForceRebootBeforeCreatingSPTrust"
+        }
+
+        $apppoolUserName = $SPAppPoolCredsQualified.UserName
+        $domainAdminUserName = $DomainAdminCredsQualified.UserName
+        Script SetFarmPropertiesForOIDC
+        {
+            SetScript = 
+            {
+                $apppoolUserName = $using:apppoolUserName
+                $domainAdminUserName = $using:domainAdminUserName
+                $dcSetupPath = $using:DCSetupPath
+                
+                # Setup farm properties to work with OIDC
+                # Create a self-signed certificate in 1st SharePoint Server of the farm
+                $cookieCertificateName = "SharePoint Cookie Cert"
+                $cookieCertificateFilePath = Join-Path -Path $dcSetupPath -ChildPath "$cookieCertificateName"
+                $cert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=$cookieCertificateName"
+                Export-Certificate -Cert $cert -FilePath "$cookieCertificateFilePath.cer"
+                Export-PfxCertificate -Cert $cert -FilePath "$cookieCertificateFilePath.pfx" -ProtectTo "$domainAdminUserName"
+
+                # Grant access to the certificate private key.
+                $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
+                $fileName = $rsaCert.key.UniqueName
+                $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
+                $permissions = Get-Acl -Path $path
+                $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($apppoolUserName, 'Read', 'None', 'None', 'Allow')
+                $permissions.AddAccessRule($access_rule)
+                Set-Acl -Path $path -AclObject $permissions
+
+                # Set farm properties
+                $f = Get-SPFarm
+                $f.Farm.Properties['SP-NonceCookieCertificateThumbprint'] = $cert.Thumbprint
+                $f.Farm.Properties['SP-NonceCookieHMACSecretKey'] = 'seed'
+                $f.Farm.Update()
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                # Import-Module SharePointServer | Out-Null
+                # $f = Get-SPFarm
+                # if ($f.Farm.Properties.ContainsKey('SP-NonceCookieCertificateThumbprint') -eq $false) {
+                if ((Get-ChildItem -Path "cert:\LocalMachine\My\"| Where-Object{$_.Subject -eq "CN=SharePoint Cookie Cert"}) -eq $null) {
+                    return $false
+                }
+                else {
+                    return $true
+                }
+            }
+            DependsOn            = "[SPFarmSolution]InstallLdapcp"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
         SPTrustedIdentityTokenIssuer CreateSPTrust
         {
             Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
-            Realm                        = "urn:sharepoint:$($SPTrustedSitesName)"
-            SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
+            RegisteredIssuerName         = "https://adfs.$DomainFQDN/adfs"
+            AuthorizationEndPointUri     = "https://adfs.$DomainFQDN/adfs/oauth2/authorize"
+            SignOutUrl                   = "https://adfs.$DomainFQDN/adfs/oauth2/logout"
+            DefaultClientIdentifier      = $AdfsOidcIdentifier
             IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
             ClaimsMappings               = @(
                 MSFT_SPClaimTypeMapping{
@@ -829,12 +1001,12 @@ configuration ConfigureSPVM
             )
             SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
             ClaimProviderName            = "LDAPCP"
-            ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
             UseWReplyParameter           = $true
-            Ensure                       = "Present"
-            DependsOn                    = "[SPFarmSolution]InstallLdapcp"
+            Ensure                       = "Present" 
+            DependsOn                    = "[Script]SetFarmPropertiesForOIDC"
             PsDscRunAsCredential         = $SPSetupCredsQualified
         }
+
 
         # ExtendMainWebApp might fail with error: "The web.config could not be saved on this IIS Web Site: C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config.\r\nThe process cannot access the file 'C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config' because it is being used by another process."
         # So I added resources between it and CreateMainWebApp to avoid it
@@ -859,6 +1031,8 @@ configuration ConfigureSPVM
 
 				# Create LDAPCP configuration
 				$config = [ldapcp.LDAPCPConfig]::CreateConfiguration([ldapcp.ClaimsProviderConstants]::CONFIG_ID, [ldapcp.ClaimsProviderConstants]::CONFIG_NAME, $using:DomainFQDN);
+
+                # LDAP://contoso.local:636/CN=Users,DC=contoso,DC=local
 
 				# Remove unused claim types
 				$config.ClaimTypes.Remove("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")
@@ -915,92 +1089,58 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp", "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
         }
 
-        if ($SharePointVersion -eq "SE") {
-            # Use SharePoint SE to generate the CSR and give the private key so it can manage it
-            Script GenerateMainWebAppCertificate
+        # Use SharePoint SE to generate the CSR and give the private key so it can manage it
+        Script GenerateMainWebAppCertificate
+        {
+            SetScript =
             {
-                SetScript =
-                {
-                    $dcName = $using:DCName
-                    $dcSetupPath = $using:DCSetupPath
-                    $domainFQDN = $using:DomainFQDN
-                    $domainNetbiosName = $using:DomainNetbiosName
-                    $spTrustedSitesName = $using:SPTrustedSitesName
-                    $appDomainIntranetFQDN = $using:AppDomainIntranetFQDN
+                $dcName = $using:DCName
+                $dcSetupPath = $using:DCSetupPath
+                $domainFQDN = $using:DomainFQDN
+                $domainNetbiosName = $using:DomainNetbiosName
+                $spTrustedSitesName = $using:SPTrustedSitesName
+                $appDomainIntranetFQDN = $using:AppDomainIntranetFQDN
 
-                    # Generate CSR
-                    New-SPCertificate -FriendlyName "$spTrustedSitesName Certificate" -KeySize 2048 -CommonName "$spTrustedSitesName.$domainFQDN" -AlternativeNames @("*.$domainFQDN", "*.$appDomainIntranetFQDN") -Organization "$domainNetbiosName" -Exportable -HashAlgorithm SHA256 -Path "$dcSetupPath\$spTrustedSitesName.csr"
+                # Generate CSR
+                New-SPCertificate -FriendlyName "$spTrustedSitesName Certificate" -KeySize 2048 -CommonName "$spTrustedSitesName.$domainFQDN" -AlternativeNames @("*.$domainFQDN", "*.$appDomainIntranetFQDN") -Organization "$domainNetbiosName" -Exportable -HashAlgorithm SHA256 -Path "$dcSetupPath\$spTrustedSitesName.csr"
 
-                    # Submit CSR to CA
-                    & certreq.exe -submit -config "$dcName.$domainFQDN\$domainNetbiosName-$dcName-CA" -attrib "CertificateTemplate:Webserver" "$dcSetupPath\$spTrustedSitesName.csr" "$dcSetupPath\$spTrustedSitesName.cer" "$dcSetupPath\$spTrustedSitesName.p7b" "$dcSetupPath\$spTrustedSitesName.ful"
+                # Submit CSR to CA
+                & certreq.exe -submit -config "$dcName.$domainFQDN\$domainNetbiosName-$dcName-CA" -attrib "CertificateTemplate:Webserver" "$dcSetupPath\$spTrustedSitesName.csr" "$dcSetupPath\$spTrustedSitesName.cer" "$dcSetupPath\$spTrustedSitesName.p7b" "$dcSetupPath\$spTrustedSitesName.ful"
 
-                    # Install certificate with its private key to certificate store
-                    # certreq -accept –machine "$dcSetupPath\$spTrustedSitesName.cer"
+                # Install certificate with its private key to certificate store
+                # certreq -accept –machine "$dcSetupPath\$spTrustedSitesName.cer"
 
-                    # Find the certificate
-                    # Get-ChildItem -Path cert:\localMachine\my | Where-Object{ $_.Subject -eq "CN=$spTrustedSitesName.$domainFQDN, O=$domainNetbiosName" } | Select-Object Thumbprint
+                # Find the certificate
+                # Get-ChildItem -Path cert:\localMachine\my | Where-Object{ $_.Subject -eq "CN=$spTrustedSitesName.$domainFQDN, O=$domainNetbiosName" } | Select-Object Thumbprint
 
-                    # # Export private key of the certificate
-                    # certutil -f -p "superpasse" -exportpfx A74D118AABD5B42F23BCD9083D3F6A3EF3BFD904 "$dcSetupPath\$spTrustedSitesName.pfx"
+                # # Export private key of the certificate
+                # certutil -f -p "superpasse" -exportpfx A74D118AABD5B42F23BCD9083D3F6A3EF3BFD904 "$dcSetupPath\$spTrustedSitesName.pfx"
 
-                    # # Import private key of the certificate into SharePoint
-                    # $password = ConvertTo-SecureString -AsPlainText -Force "<superpasse>"
-                    # Import-SPCertificate -Path "$dcSetupPath\$spTrustedSitesName.pfx" -Password $password -Exportable
-                    $spCert = Import-SPCertificate -Path "$dcSetupPath\$spTrustedSitesName.cer" -Exportable -Store EndEntity
+                # # Import private key of the certificate into SharePoint
+                # $password = ConvertTo-SecureString -AsPlainText -Force "<superpasse>"
+                # Import-SPCertificate -Path "$dcSetupPath\$spTrustedSitesName.pfx" -Password $password -Exportable
+                $spCert = Import-SPCertificate -Path "$dcSetupPath\$spTrustedSitesName.cer" -Exportable -Store EndEntity
 
-                    Set-SPWebApplication -Identity "http://$spTrustedSitesName" -Zone Intranet -Port 443 -Certificate $spCert `
-                        -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url "https://$spTrustedSitesName.$domainFQDN"
-                }
-                GetScript            = { }
-                TestScript           = 
-                {
-                    $domainFQDN = $using:DomainFQDN
-                    $domainNetbiosName = $using:DomainNetbiosName
-                    $spTrustedSitesName = $using:SPTrustedSitesName
-                    
-                    # $cert = Get-ChildItem -Path cert:\localMachine\my | Where-Object{ $_.Subject -eq "CN=$spTrustedSitesName.$domainFQDN, O=$domainNetbiosName" }
-                    $cert = Get-SPCertificate -Identity "$spTrustedSitesName Certificate" -ErrorAction SilentlyContinue
-                    if ($null -eq $cert) {
-                        return $false   # Run SetScript
-                    } else {
-                        return $true    # Certificate is already created
-                    }
-                }
-                DependsOn            = "[Script]UpdateGPOToTrustRootCACert", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
-                PsDscRunAsCredential = $DomainAdminCredsQualified
+                Set-SPWebApplication -Identity "http://$spTrustedSitesName" -Zone Intranet -Port 443 -Certificate $spCert `
+                    -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url "https://$spTrustedSitesName.$domainFQDN"
             }
-        } else {
-            CertReq GenerateMainWebAppCertificate
+            GetScript            = { }
+            TestScript           = 
             {
-                CARootName             = "$DomainNetbiosName-$DCName-CA"
-                CAServerFQDN           = "$DCName.$DomainFQDN"
-                Subject                = "$SPTrustedSitesName.$DomainFQDN"
-                SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
-                KeyLength              = '2048'
-                Exportable             = $true
-                ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
-                OID                    = '1.3.6.1.5.5.7.3.1'
-                KeyUsage               = '0xa0'
-                CertificateTemplate    = 'WebServer'
-                AutoRenew              = $true
-                Credential             = $DomainAdminCredsQualified
-                DependsOn              = "[Script]UpdateGPOToTrustRootCACert", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
-            }
-
-            xWebsite SetHTTPSCertificate
-            {
-                Name                 = "SharePoint - 443"
-                BindingInfo          = MSFT_xWebBindingInformation
-                {
-                    Protocol             = "HTTPS"
-                    Port                 = 443
-                    CertificateStoreName = "My"
-                    CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
+                $domainFQDN = $using:DomainFQDN
+                $domainNetbiosName = $using:DomainNetbiosName
+                $spTrustedSitesName = $using:SPTrustedSitesName
+                
+                # $cert = Get-ChildItem -Path cert:\localMachine\my | Where-Object{ $_.Subject -eq "CN=$spTrustedSitesName.$domainFQDN, O=$domainNetbiosName" }
+                $cert = Get-SPCertificate -Identity "$spTrustedSitesName Certificate" -ErrorAction SilentlyContinue
+                if ($null -eq $cert) {
+                    return $false   # Run SetScript
+                } else {
+                    return $true    # Certificate is already created
                 }
-                Ensure               = "Present"
-                PsDscRunAsCredential = $DomainAdminCredsQualified
-                DependsOn            = "[CertReq]GenerateMainWebAppCertificate"
             }
+            DependsOn            = "[Script]UpdateGPOToTrustRootCACert", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
         SPCacheAccounts SetCacheAccounts
@@ -1148,24 +1288,20 @@ configuration ConfigureSPVM
             DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
 
-        # Cannot be done in SPS 2013 as it uses FIM
-        if ($SharePointVersion -ne "2013") {
-            SPUserProfileSyncConnection ADImportConnection
-            {
-                UserProfileService    = $UpaServiceName
-                Forest                = $DomainFQDN
-                Name                  = $DomainFQDN
-                ConnectionCredentials = $SPADDirSyncCredsQualified
-                Server                = $DomainLDAPPath
-                UseSSL                = $true
-                Port                  = 636
-                IncludedOUs           = @("CN=Users,$DomainLDAPPath")
-                Force                 = $false
-                ConnectionType        = "ActiveDirectory"
-                UseDisabledFilter     = $true
-                PsDscRunAsCredential  = $SPSetupCredsQualified
-                DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
-            }
+        SPUserProfileSyncConnection ADImportConnection
+        {
+            UserProfileService    = $UpaServiceName
+            Forest                = $DomainFQDN
+            Name                  = $DomainFQDN
+            ConnectionCredentials = $SPADDirSyncCredsQualified
+            Server                = $DomainLDAPPath
+            UseSSL                = $false
+            IncludedOUs           = @("CN=Users,$DomainLDAPPath")
+            Force                 = $false
+            ConnectionType        = "ActiveDirectory"
+            UseDisabledFilter     = $true
+            PsDscRunAsCredential  = $SPSetupCredsQualified
+            DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
 
         SPSecurityTokenServiceConfig ConfigureSTS
@@ -1401,31 +1537,31 @@ configuration ConfigureSPVM
             DependsOn            = "[SPTrustedSecurityTokenIssuer]CreateHighTrustAddinsTrustedIssuer"
         }
 
-        # if ($EnableAnalysis) {
-        #     # This resource is for analysis of dsc logs only and totally optionnal
-        #     Script parseDscLogs
-        #     {
-        #         TestScript = { return $false }
-        #         SetScript = {
-        #             $setupPath = $using:SetupPath
-        #             $localScriptPath = "$setupPath\parse-dsc-logs.py"
-        #             New-Item -ItemType Directory -Force -Path $setupPath
+        if ($EnableAnalysis) {
+            # This resource is for analysis of dsc logs only and totally optionnal
+            Script parseDscLogs
+            {
+                TestScript = { return $false }
+                SetScript = {
+                    $setupPath = $using:SetupPath
+                    $localScriptPath = "$setupPath\parse-dsc-logs.py"
+                    New-Item -ItemType Directory -Force -Path $setupPath
 
-        #             $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
-        #             $downloader = New-Object -TypeName System.Net.WebClient
-        #             $downloader.DownloadFile($url, $localScriptPath)
+                    $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
+                    $downloader = New-Object -TypeName System.Net.WebClient
+                    $downloader.DownloadFile($url, $localScriptPath)
 
-        #             $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
-        #             $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
-        #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
+                    $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
+                    $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
+                    $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
-        #             python $localScriptPath "$fullPathToDscLogs"
-        #         }
-        #         GetScript = { }
-        #         DependsOn            = "[cChocoPackageInstaller]InstallPython"
-        #         PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     }
-        # }
+                    python $localScriptPath "$fullPathToDscLogs"
+                }
+                GetScript = { }
+                DependsOn            = "[cChocoPackageInstaller]InstallPython"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+            }
+        }
     }
 }
 
@@ -1513,7 +1649,7 @@ $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "2019"
+$SharePointVersion = "Subscription-22H2"
 $EnableAnalysis = $true
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPSE.0\ConfigureSPVM"

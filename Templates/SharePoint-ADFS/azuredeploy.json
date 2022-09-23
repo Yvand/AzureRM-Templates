@@ -370,7 +370,7 @@
       "spFarmUserName": "spfarm",
       "spSvcUserName": "spsvc",
       "spAppPoolUserName": "spapppool",
-      "spADDirSyncUserName": "spaddirsync",
+      "spADDirSyncUserName": "spdirsync",
       "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
       "enableAnalysis": true,
       "isSharePointvNext": "[if(startsWith(parameters('sharePointVersion'), 'subscription'), true(), false())]"

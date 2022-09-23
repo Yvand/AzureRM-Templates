@@ -22,9 +22,9 @@
         {
             "type": "PowerShell",
             "request": "launch",
-            "name": "DSC for SP VM",
+            "name": "DSC for SPSE VM",
             "script": "${workspaceRoot}/Scripts/Generate-DSCArchive.ps1",
-            "args": ["-VM SP"],
+            "args": ["-VM SPSE"],
             "cwd": "${workspaceRoot}",
             "internalConsoleOptions": "openOnFirstSessionStart"
         },

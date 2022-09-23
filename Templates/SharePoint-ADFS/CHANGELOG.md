@@ -1,5 +1,12 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+* Add possibility to create a SharePoint Subscription farm running with feature update 22H2.
+* Generate a certificate to enable LDAPS (LDAP over SSL).
+* Create a new AD user to run the directory synchronization, and grant it permission "Replicate Directory Changes".
+* Create a synchronization connection in User Profile Service.
+
 ## Enhancements & bug-fixes - Published in August 8, 2022
 
 * In SP SE, import site certificate in SharePoint, so it can manage the certificate itself.
