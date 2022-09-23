@@ -1295,7 +1295,8 @@ configuration ConfigureSPVM
             Name                  = $DomainFQDN
             ConnectionCredentials = $SPADDirSyncCredsQualified
             Server                = $DomainLDAPPath
-            UseSSL                = $false
+            UseSSL                = $true
+            Port                  = 636
             IncludedOUs           = @("CN=Users,$DomainLDAPPath")
             Force                 = $false
             ConnectionType        = "ActiveDirectory"
