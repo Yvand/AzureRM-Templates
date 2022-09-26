@@ -1,5 +1,13 @@
 # Change log for Azure DevTest Labs template DTL-SharePoint-FullConfig
 
+## Unreleased
+
+* Add possibility to create a SharePoint Subscription farm running with feature update 22H2.
+* Use a gen2 image for SQL Server VM.
+* Enable LDAPS (LDAP over SSL) on the Active Directory domain.
+* Create a new AD user to run the directory synchronization, and grant it permission "Replicate Directory Changes".
+* Create a synchronization connection in User Profile Service.
+
 ## Enhancements & bug-fixes - Published in August 8, 2022
 
 * In SP SE, import site certificate in SharePoint, so it can manage the certificate itself.
