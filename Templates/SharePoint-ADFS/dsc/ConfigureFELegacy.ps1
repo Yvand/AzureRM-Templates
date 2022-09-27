@@ -18,7 +18,7 @@ configuration ConfigureFEVM
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
-    Import-DscResource -ModuleName xWebAdministration -ModuleVersion 3.3.0
+    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.0.0
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.2.0
     Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
@@ -517,10 +517,10 @@ configuration ConfigureFEVM
             DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
         }
 
-        xWebsite SetHTTPSCertificate
+        Website SetHTTPSCertificate
         {
             Name                 = "SharePoint - 443"
-            BindingInfo          = MSFT_xWebBindingInformation
+            BindingInfo          = DSC_WebBindingInformation
             {
                 Protocol             = "HTTPS"
                 Port                 = 443

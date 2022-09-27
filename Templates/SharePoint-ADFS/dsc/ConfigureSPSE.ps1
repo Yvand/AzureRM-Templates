@@ -24,7 +24,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.3.0.0
-    Import-DscResource -ModuleName xWebAdministration -ModuleVersion 3.3.0
+    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.0.0
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.2.0
     Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
@@ -1394,7 +1394,7 @@ configuration ConfigureSPVM
             DependsOn       = "[SPFarm]CreateSPFarm", "[Script]ConfigureLDAPCP"
         }
 
-        xWebAppPool CreateAddinsSiteApplicationPool
+        WebAppPool CreateAddinsSiteApplicationPool
         {
             Name                  = $AddinsSiteName
             State                 = "Started"
@@ -1408,24 +1408,24 @@ configuration ConfigureSPVM
             DependsOn             = "[SPFarm]CreateSPFarm"
         }
 
-        xWebsite CreateAddinsSite
+        Website CreateAddinsSite
         {
             Name                 = $AddinsSiteName
             State                = "Started"
             PhysicalPath         = "C:\inetpub\wwwroot\addins"
             ApplicationPool      = $AddinsSiteName
-            AuthenticationInfo   = MSFT_xWebAuthenticationInformation 
+            AuthenticationInfo   = DSC_WebAuthenticationInformation 
             {
                 Anonymous                 = $true
                 Windows                   = $true
             }
             BindingInfo          = @(
-                MSFT_xWebBindingInformation
+                DSC_WebBindingInformation
                 {
                     Protocol              = "HTTP"
                     Port                  = 20080
                 }
-                MSFT_xWebBindingInformation
+                DSC_WebBindingInformation
                 {
                     Protocol              = "HTTPS"
                     Port                 = 20443
