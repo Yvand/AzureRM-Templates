@@ -2,11 +2,13 @@
 
 ## Unreleased
 
-* Add possibility to create a SharePoint Subscription farm running with feature update 22H2.
+* Add option to create a SharePoint Subscription farm running with feature update 22H2.
 * Use a gen2 image for SQL Server VM.
 * Enable LDAPS (LDAP over SSL) on the Active Directory domain.
 * Create a new AD user to run the directory synchronization, and grant it permission "Replicate Directory Changes".
 * Create a synchronization connection in User Profile Service.
+* Update apiVersion of ARM resources.
+* Remove DSC module xWebAdministration 3.3.0 and replace it with WebAdministrationDsc 4.0.0.
 
 ## Enhancements & bug-fixes - Published in August 8, 2022
 

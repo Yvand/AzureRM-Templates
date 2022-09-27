@@ -475,27 +475,27 @@
   },
   "resources": [
     {
-      "apiVersion": "2021-08-01",
-      "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSubnetDCName]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
-      "apiVersion": "2021-08-01",
-      "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSubnetSQLName]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
       }
     },
     {
-      "apiVersion": "2021-08-01",
-      "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSubnetSPName]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": "[if(equals(toLower(parameters('RDPTrafficAllowed')), 'no'), json('null'), variables('networkSettings').nsgRuleAllowIncomingTraffic)]"
@@ -504,8 +504,8 @@
     {
       "name": "[variables('networkSettings').vNetPrivateName]",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-08-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetDCName)]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetSQLName)]",
@@ -552,8 +552,8 @@
       "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "name": "[variables('vmDC').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-08-01",
       "sku": {
         "name": "Basic",
         "tier": "Regional"
@@ -568,8 +568,8 @@
     {
       "name": "[variables('vmDC').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-08-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
@@ -593,8 +593,8 @@
     {
       "name": "[variables('generalSettings').vmDCName]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[parameters('location')]",
       "apiVersion": "2022-03-01",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
       ],
@@ -693,8 +693,8 @@
       "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "name": "[variables('vmSQL').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-08-01",
       "sku": {
         "name": "Basic",
         "tier": "Regional"
@@ -709,8 +709,8 @@
     {
       "name": "[variables('vmSQL').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-08-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)]"
@@ -733,8 +733,8 @@
     {
       "name": "[variables('generalSettings').vmSQLName]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[parameters('location')]",
       "apiVersion": "2022-03-01",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
       ],
@@ -789,8 +789,8 @@
       "condition": "[equals(parameters('addPublicIPAddressToEachVM'), true())]",
       "name": "[variables('vmSP').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-08-01",
       "sku": {
         "name": "Basic",
         "tier": "Regional"
@@ -805,8 +805,8 @@
     {
       "name": "[variables('vmSP').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-08-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
@@ -829,8 +829,8 @@
     {
       "name": "[variables('generalSettings').vmSPName]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[parameters('location')]",
       "apiVersion": "2022-03-01",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
       ],
@@ -1009,8 +1009,8 @@
       "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), equals(parameters('addPublicIPAddressToEachVM'), true()))]",
       "name": "[concat(variables('vmFE').vmPublicIPName, '-', copyIndex())]",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-08-01",
       "copy": {
           "name": "frontendPublicIPAddresses",
           "count": "[parameters('numberOfAdditionalFrontEnd')]"
@@ -1030,8 +1030,8 @@
       "condition": "[greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1)]",
       "name": "[concat(variables('vmFE').vmNicName, '-', copyIndex())]",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-08-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "frontendPublicIPAddresses"
@@ -1059,8 +1059,8 @@
       "condition": "[greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1)]",
       "name": "[concat(variables('generalSettings').vmFEName, '-', copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[parameters('location')]",
       "apiVersion": "2022-03-01",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "frontendNetworkInterfaces"
       ],
@@ -1178,7 +1178,7 @@
     },
     {
       "condition": "[equals(parameters('addAzureBastion'), true())]",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2022-01-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "NSG-Subnet-AzureBastion",
       "location": "[parameters('location')]",
@@ -1259,9 +1259,9 @@
     },
     {
       "condition": "[equals(parameters('addAzureBastion'), true())]",
-      "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('networkSettings').vNetPrivateName, '/', 'AzureBastionSubnet')]",
-      "apiVersion": "2021-08-01",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
@@ -1278,8 +1278,8 @@
       "condition": "[equals(parameters('addAzureBastion'), true())]",
       "name": "PublicIP-Bastion",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-08-01",
       "sku": {
         "name": "Standard",
         "tier": "Regional"
@@ -1296,7 +1296,7 @@
       "name": "Bastion",
       "type": "Microsoft.Network/bastionHosts",
       "location": "[parameters('location')]",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2022-01-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', 'PublicIP-Bastion')]",
         "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, 'AzureBastionSubnet')]"

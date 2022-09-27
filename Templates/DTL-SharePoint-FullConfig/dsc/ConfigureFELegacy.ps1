@@ -18,7 +18,7 @@ configuration ConfigureFEVM
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
-    Import-DscResource -ModuleName xWebAdministration -ModuleVersion 3.3.0
+    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.0.0
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.2.0
     Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
@@ -85,13 +85,13 @@ configuration ConfigureFEVM
         }
 
         # IIS cleanup
-        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
-        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
-        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; }
-        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; }
-        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; }
-        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
-        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
+        WebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
+        WebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
+        WebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; }
+        WebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; }
+        WebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; }
+        WebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
+        WebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
 
         SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
 
@@ -517,10 +517,10 @@ configuration ConfigureFEVM
             DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
         }
 
-        xWebsite SetHTTPSCertificate
+        Website SetHTTPSCertificate
         {
             Name                 = "SharePoint - 443"
-            BindingInfo          = MSFT_xWebBindingInformation
+            BindingInfo          = DSC_WebBindingInformation
             {
                 Protocol             = "HTTPS"
                 Port                 = 443

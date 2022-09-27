@@ -24,7 +24,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.3.0.0
-    Import-DscResource -ModuleName xWebAdministration -ModuleVersion 3.3.0
+    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.0.0
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.2.0
     Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
@@ -395,13 +395,13 @@ configuration ConfigureSPVM
         }
 
         # IIS cleanup cannot be executed earlier in SharePoint SE: It uses a base image of Windows Server without IIS (installed by SPInstallPrereqs)
-        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
-        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
-        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; }
-        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; }
-        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; }
-        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
-        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
+        WebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
+        WebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
+        WebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; }
+        WebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; }
+        WebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; }
+        WebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
+        WebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
 
         #**********************************************************
         # Join AD forest
@@ -1394,7 +1394,7 @@ configuration ConfigureSPVM
             DependsOn       = "[SPFarm]CreateSPFarm", "[Script]ConfigureLDAPCP"
         }
 
-        xWebAppPool CreateAddinsSiteApplicationPool
+        WebAppPool CreateAddinsSiteApplicationPool
         {
             Name                  = $AddinsSiteName
             State                 = "Started"
@@ -1408,24 +1408,24 @@ configuration ConfigureSPVM
             DependsOn             = "[SPFarm]CreateSPFarm"
         }
 
-        xWebsite CreateAddinsSite
+        Website CreateAddinsSite
         {
             Name                 = $AddinsSiteName
             State                = "Started"
             PhysicalPath         = "C:\inetpub\wwwroot\addins"
             ApplicationPool      = $AddinsSiteName
-            AuthenticationInfo   = MSFT_xWebAuthenticationInformation 
+            AuthenticationInfo   = DSC_WebAuthenticationInformation 
             {
                 Anonymous                 = $true
                 Windows                   = $true
             }
             BindingInfo          = @(
-                MSFT_xWebBindingInformation
+                DSC_WebBindingInformation
                 {
                     Protocol              = "HTTP"
                     Port                  = 20080
                 }
-                MSFT_xWebBindingInformation
+                DSC_WebBindingInformation
                 {
                     Protocol              = "HTTPS"
                     Port                 = 20443
@@ -1435,7 +1435,7 @@ configuration ConfigureSPVM
             )
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[CertReq]GenerateAddinsSiteCertificate", "[File]CreateAddinsSiteDirectory", "[xWebAppPool]CreateAddinsSiteApplicationPool"
+            DependsOn            = "[CertReq]GenerateAddinsSiteCertificate", "[File]CreateAddinsSiteDirectory", "[WebAppPool]CreateAddinsSiteApplicationPool"
         }
 
         Script CopyIISWelcomePageToAddinsSite
@@ -1461,7 +1461,7 @@ configuration ConfigureSPVM
                 }
             }
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xWebsite]CreateAddinsSite"
+            DependsOn            = "[WebSite]CreateAddinsSite"
         }
 
         CertReq GenerateHighTrustAddinsCert
