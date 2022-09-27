@@ -284,7 +284,7 @@ configuration ConfigureSPVM
         WebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; }
         WebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; }
         WebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
-        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
+        WebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
 
         #**********************************************************
         # Join AD forest
@@ -987,16 +987,18 @@ configuration ConfigureSPVM
                 DependsOn              = "[Script]UpdateGPOToTrustRootCACert", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
             }
 
-            xWebsite SetHTTPSCertificate
+            WebSite SetHTTPSCertificate
             {
                 Name                 = "SharePoint - 443"
-                BindingInfo          = MSFT_xWebBindingInformation
-                {
-                    Protocol             = "HTTPS"
-                    Port                 = 443
-                    CertificateStoreName = "My"
-                    CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
-                }
+                BindingInfo          = @(
+                    DSC_WebBindingInformation
+                    {
+                        Protocol             = "HTTPS"
+                        Port                 = 443
+                        CertificateStoreName = "My"
+                        CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
+                    }
+                )
                 Ensure               = "Present"
                 PsDscRunAsCredential = $DomainAdminCredsQualified
                 DependsOn            = "[CertReq]GenerateMainWebAppCertificate"
@@ -1324,7 +1326,7 @@ configuration ConfigureSPVM
                 }
             }
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xWebsite]CreateAddinsSite"
+            DependsOn            = "[WebSite]CreateAddinsSite"
         }
 
         CertReq GenerateHighTrustAddinsCert

@@ -401,7 +401,7 @@ configuration ConfigureSPVM
         WebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; }
         WebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; }
         WebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
-        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
+        WebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
 
         #**********************************************************
         # Join AD forest
@@ -1461,7 +1461,7 @@ configuration ConfigureSPVM
                 }
             }
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xWebsite]CreateAddinsSite"
+            DependsOn            = "[WebSite]CreateAddinsSite"
         }
 
         CertReq GenerateHighTrustAddinsCert
