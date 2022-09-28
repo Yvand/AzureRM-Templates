@@ -26,9 +26,9 @@ function Generate-DSCArchive($vmName) {
     $dscSourceFolder = Join-Path -Path $PSScriptRoot -ChildPath "..\dsc" -Resolve
 
     if (Test-Path $dscSourceFolder) {
-        $dscSourceFilePaths = @(Get-ChildItem $dscSourceFolder -File -Filter "*$vmName*.ps1" | ForEach-Object -Process {$_.FullName})
+        $dscSourceFilePaths = Get-ChildItem $dscSourceFolder -File -Filter "Configure$vmName*.ps1"
         foreach ($dscSourceFilePath in $dscSourceFilePaths) {
-            $dscArchiveFilePath = $dscSourceFilePath.Substring(0, $dscSourceFilePath.Length - 4) + ".zip"
+            $dscArchiveFilePath = "$($dscSourceFilePath.DirectoryName)\$($dscSourceFilePath.BaseName).zip"
             Publish-AzVMDscConfiguration $dscSourceFilePath -OutputArchivePath $dscArchiveFilePath -Force -Verbose
         }
     }
