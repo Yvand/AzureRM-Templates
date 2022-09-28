@@ -15,7 +15,7 @@
     },
     "sharePointVersion": {
       "type": "string",
-      "defaultValue": "Subscription-RTM",
+      "defaultValue": "Subscription-22H2",
       "allowedValues": [
         "2013",
         "2016",
