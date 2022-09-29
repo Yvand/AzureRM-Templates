@@ -1,6 +1,6 @@
 # Change log for Azure DevTest Labs template DTL-SharePoint-FullConfig
 
-## Unreleased
+## Enhancements & bug-fixes - Published in September 29, 2022
 
 * Add an option to create a SharePoint Subscription farm running with feature update 22H2.
 * Use a gen2 image for SQL Server VM.
