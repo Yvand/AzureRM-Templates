@@ -45,7 +45,7 @@ You can visit <https://azure.com/e/c86a94bb7e3943fe96e2c71cf8ece33a> to view the
 
 Additional notes:
 
-* With the default settings, the deployment takes about 1h to complete.
+* With the default settings, the deployment takes about 40 minutes to complete.
 * Once it is completed, the template will return valuable information in the 'Outputs' of the deployment.
 * For various (very good) reasons, the template sets the local (not domain) administrator name with a string that is unique to your subscription (e.g. 'local-q1w2e3r4t5'). You can find the name of the local admin in the 'Outputs' of the deployment once it is completed.
 
