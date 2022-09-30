@@ -1,6 +1,6 @@
 module "sharepoint" {
   source                     = "Yvand/sharepoint/azurerm"
-  version                    = "1.3.0"
+  version                    = ">=1.3.0"
   location                   = var.location
   resource_group_name        = var.resource_group_name
   sharepoint_version         = var.sharepoint_version
