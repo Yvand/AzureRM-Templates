@@ -1,3 +1,4 @@
-sharepoint_version   = "2019"
+location             = "France Central"
+sharepoint_version   = "Subscription-22H2"
 enable_azure_bastion = false
-_artifactsLocation   = "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/"
+admin_username       = "yvand"
