@@ -78,14 +78,14 @@
       "type": "securestring",
       "minLength": 8,
       "metadata": {
-        "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
+        "description": "Input must meet password complexity requirements as documented in https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-"
       }
     },
     "serviceAccountsPassword": {
       "type": "securestring",
       "minLength": 8,
       "metadata": {
-        "description": "Password for all service account and SharePoint passphrase. It must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
+        "description": "Password for all service accounts and SharePoint passphrase. Input must meet password complexity requirements as documented in https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-"
       }
     },
     "vmsTimeZone": {
