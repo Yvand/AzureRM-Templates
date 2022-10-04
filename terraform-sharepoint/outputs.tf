@@ -31,11 +31,11 @@ output "local_admin_username" {
 }
 
 output "admin_password" {
-  value = module.sharepoint.admin_password
+  value     = module.sharepoint.admin_password
   sensitive = true
 }
 
 output "service_accounts_password" {
-  value = module.sharepoint.service_accounts_password
+  value     = module.sharepoint.service_accounts_password
   sensitive = true
 }
