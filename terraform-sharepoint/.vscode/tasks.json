@@ -6,7 +6,7 @@
         {
             "label": "terraform apply",
             "type": "shell",
-            "command": "rm -f terraform.tfstate && terraform fmt && terraform apply -var-file=configuration.tfvars -var-file=/home/yvand/terraform-sharepoint-secrets.tfvars -lock=false",
+            "command": "rm -f terraform.tfstate && terraform fmt && terraform apply -lock=false",
             "problemMatcher": []
         }
     ]
