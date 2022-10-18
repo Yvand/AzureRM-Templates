@@ -12,8 +12,9 @@ usage() { echo "Usage: $0 -g <resourceGroupName> -l <resourceGroupLocation> -p <
 # DEMO_NAME=$(($RANDOM % 10000)) && echo $DEMO_NAME
 location="west europe"
 resourceGroupName=""
-spVersion="2019"
+spVersion="SE"
 adminUserName="yvand"
+# The password length must be between 12 and 72. Password must have the 3 of the following: 1 lower case character, 1 upper case character, 1 number and 1 special character.
 adminPassword=""
 artifactsURI="https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/SharePoint-ADFS/"
 domainFQDN="contoso.local"
@@ -35,7 +36,7 @@ while getopts ":g:l:p:" arg; do
             resourceGroupName=${OPTARG}
             ;;
         l)
-            resourceGroupLocation=${OPTARG}
+            location=${OPTARG}
             ;;
         p)
             adminPassword=${OPTARG}
@@ -110,11 +111,11 @@ if ! az network vnet show --name $vnetName -g $resourceGroupName 1> /dev/null 2>
     echo "Virtual network '$vnetName' could not be found, creating it..."
     (
         set -x
-        az network vnet create --name Vnet -g $resourceGroupName --address-prefixes 10.0.0.0/16 1> /dev/null
-        az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "Subnet-DC" --address-prefixes 10.0.1.0/24 --network-security-group "NSG-VNet-DC" 1> /dev/null
-        az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "Subnet-SQL" --address-prefixes 10.0.2.0/24 --network-security-group "NSG-VNet-SQL" 1> /dev/null
-        az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "Subnet-SP" --address-prefixes 10.0.3.0/24 --network-security-group "NSG-VNet-SP" 1> /dev/null
-        az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "AzureBastionSubnet" --address-prefixes 10.0.4.0/24 1> /dev/null
+        az network vnet create --name Vnet -g $resourceGroupName --address-prefixes 10.1.0.0/16 1> /dev/null
+        az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "Subnet-DC" --address-prefixes 10.1.1.0/24 --network-security-group "NSG-VNet-DC" 1> /dev/null
+        az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "Subnet-SQL" --address-prefixes 10.1.2.0/24 --network-security-group "NSG-VNet-SQL" 1> /dev/null
+        az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "Subnet-SP" --address-prefixes 10.1.3.0/24 --network-security-group "NSG-VNet-SP" 1> /dev/null
+        az network vnet subnet create -g $resourceGroupName --vnet-name Vnet --name "AzureBastionSubnet" --address-prefixes 10.1.4.0/24 1> /dev/null
         echo -e "${GREEN}Virtual network '$vnetName' was created successfully.${NC}"
     )
 else
@@ -130,10 +131,10 @@ if ! az vm show --resource-group $resourceGroupName --name DC 1> /dev/null 2> /d
         set -x
         az network public-ip create --allocation-method Dynamic --name PublicIP-DC --dns-name "${resourceGroupName}-dc" -g $resourceGroupName 1> /dev/null
         az network nic create --name VM-DC-NIC --public-ip-address PublicIP-DC --vnet-name Vnet --subnet Subnet-DC -g $resourceGroupName 1> /dev/null
-        az vm create --resource-group $resourceGroupName --name DC --image MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest --admin-username $adminUserName --admin-password $adminPassword --license-type Windows_Server \
+        az vm create --resource-group $resourceGroupName --name DC --image "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest" --admin-username $adminUserName --admin-password $adminPassword --license-type Windows_Server \
             --nics VM-DC-NIC --os-disk-size-gb 32 --os-disk-caching ReadWrite --os-disk-name "VM-DC-OSDisk" --size Standard_B2s --storage-sku StandardSSD_LRS 1> /dev/null
         az vm extension set --name DSC --publisher Microsoft.Powershell --version 2.9 --vm-name DC -g $resourceGroupName \
-            --settings '{"ModulesURL": "'${artifactsURI}'dsc/ConfigureDCVM.zip", "configurationFunction": "ConfigureDCVM.ps1\\ConfigureDCVM", "Properties": {"domainFQDN": "'${domainFQDN}'", "PrivateIP": "10.0.1.4"} }' \
+            --settings '{"ModulesURL": "'${artifactsURI}'dsc/ConfigureDCVM.zip", "configurationFunction": "ConfigureDCVM.ps1\\ConfigureDCVM", "Properties": {"domainFQDN": "'${domainFQDN}'", "PrivateIP": "10.1.1.4"} }' \
             --protected-settings '{"Properties": {"AdminCreds": {"UserName": "'${adminUserName}'", "Password": "'${adminPassword}'" }, "AdfsSvcCreds": {"UserName": "'${adfsSvcUserName}'", "Password": "'${serviceAccountsPassword}'" }}}' 1> /dev/null
         echo -e "${GREEN}Virtual machine DC was created successfully.${NC}"
     ) &
@@ -150,12 +151,12 @@ if ! az vm show --resource-group $resourceGroupName --name SQL 1> /dev/null 2> /
         set -x
         az network public-ip create --allocation-method Dynamic --name PublicIP-SQL --dns-name "${resourceGroupName}-sql" -g $resourceGroupName 1> /dev/null
         az network nic create --name VM-SQL-NIC --public-ip-address PublicIP-SQL --vnet-name Vnet --subnet Subnet-SQL -g $resourceGroupName 1> /dev/null
-        az vm create --resource-group $resourceGroupName --name SQL --image MicrosoftSQLServer:sql2019-ws2022:SQLDEV:latest --admin-username "local-${adminUserName}" --admin-password $adminPassword \
+        az vm create --resource-group $resourceGroupName --name SQL --image "MicrosoftSQLServer:sql2019-ws2022:sqldev-gen2:latest" --admin-username "local-${adminUserName}" --admin-password $adminPassword \
             --nics VM-SQL-NIC --os-disk-size-gb 128 --os-disk-caching ReadWrite --os-disk-name "VM-SQL-OSDisk" --size Standard_B2ms --storage-sku StandardSSD_LRS 1> /dev/null
         az vm update --name SQL -g $resourceGroupName --license-type Windows_Server 1> /dev/null
         # On SQL VM, if DSC extension is started just after "az vm create" finished, DSC configuration always fails. Somehow, running "az vm update" before prevents this issue.
         az vm extension set --name DSC --publisher Microsoft.Powershell --version 2.9 --vm-name SQL -g $resourceGroupName \
-            --settings '{"ModulesURL": "'${artifactsURI}'dsc/ConfigureSQLVM.zip", "configurationFunction": "ConfigureSQLVM.ps1\\ConfigureSQLVM", "Properties": {"domainFQDN": "'${domainFQDN}'", "DNSServer": "10.0.1.4"} }' \
+            --settings '{"ModulesURL": "'${artifactsURI}'dsc/ConfigureSQLVM.zip", "configurationFunction": "ConfigureSQLVM.ps1\\ConfigureSQLVM", "Properties": {"domainFQDN": "'${domainFQDN}'", "DNSServer": "10.1.1.4"} }' \
             --protected-settings '{"Properties": {"DomainAdminCreds": {"UserName": "'${adminUserName}'", "Password": "'${adminPassword}'" }, "SqlSvcCreds": {"UserName": "'${sqlSvcUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPSetupCreds": {"UserName": "'${spSetupUserName}'", "Password": "'${serviceAccountsPassword}'" }}}' 1> /dev/null
         # az vm extension set --name SqlIaaSAgent --publisher "Microsoft.SqlServer.Management" --version 2.0 --vm-name SQL -g $resourceGroupName --no-wait 1> /dev/null
         echo -e "${GREEN}Virtual machine SQL was created successfully.${NC}"
@@ -173,11 +174,11 @@ if ! az vm show --resource-group $resourceGroupName --name SP 1> /dev/null 2> /d
         set -x
         az network public-ip create --allocation-method Dynamic --name PublicIP-SP --dns-name "${resourceGroupName}-sp" -g $resourceGroupName 1> /dev/null
         az network nic create --name VM-SP-NIC --public-ip-address PublicIP-SP --vnet-name Vnet --subnet Subnet-SP -g $resourceGroupName 1> /dev/null
-        az vm create --resource-group $resourceGroupName --name SP --image "MicrosoftSharePoint:MicrosoftSharePointServer:sp${spVersion}:latest" --admin-username "local-${adminUserName}" --admin-password $adminPassword \
+        az vm create --resource-group $resourceGroupName --name SP --image "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest" --admin-username "local-${adminUserName}" --admin-password $adminPassword \
             --nics VM-SP-NIC --os-disk-size-gb 128 --os-disk-caching ReadWrite --os-disk-name "VM-SP-OSDisk" --size Standard_B4ms --storage-sku StandardSSD_LRS 1> /dev/null
         az vm update --name SP -g $resourceGroupName --license-type Windows_Server --no-wait 1> /dev/null
         az vm extension set --name DSC --publisher Microsoft.Powershell --version 2.9 --vm-name SP -g $resourceGroupName \
-            --settings '{"ModulesURL": "'${artifactsURI}'dsc/ConfigureSPVM.zip", "configurationFunction": "ConfigureSPVM.ps1\\ConfigureSPVM", "Properties": {"domainFQDN": "'${domainFQDN}'", "DNSServer": "10.0.1.4", "DCName": "DC", "SQLName": "SQL", "SQLAlias": "SQLAlias", "SharePointVersion": "'${spVersion}'", "EnableAnalysis": true} }' \
+            --settings '{"ModulesURL": "'${artifactsURI}'dsc/ConfigureSPVM.zip", "configurationFunction": "ConfigureSPVM.ps1\\ConfigureSPVM", "Properties": {"domainFQDN": "'${domainFQDN}'", "DNSServer": "10.1.1.4", "DCName": "DC", "SQLName": "SQL", "SQLAlias": "SQLAlias", "SharePointVersion": "'${spVersion}'", "EnableAnalysis": true} }' \
             --protected-settings '{"Properties": {"DomainAdminCreds": {"UserName": "'${adminUserName}'", "Password": "'${adminPassword}'" }, "SPSetupCreds": {"UserName": "'${spSetupUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPFarmCreds": {"UserName": "'${spFarmUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPSvcCreds": {"UserName": "'${spSvcUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPAppPoolCreds": {"UserName": "'${spAppPoolUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPPassphraseCreds": {"UserName": "'${spPassphrase}'", "Password": "'${spPassphrase}'" }, "SPSuperUserCreds": {"UserName": "'${spSuperUserName}'", "Password": "'${serviceAccountsPassword}'" }, "SPSuperReaderCreds": {"UserName": "'${spSuperReaderName}'", "Password": "'${serviceAccountsPassword}'" }}}' 1> /dev/null
         echo -e "${GREEN}Virtual machine SP${spVersion} was created successfully.${NC}"
     ) &

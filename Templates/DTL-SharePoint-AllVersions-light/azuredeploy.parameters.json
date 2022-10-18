@@ -2,19 +2,19 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "provisionSharePoint2013": { "value": false },
-    "provisionSharePoint2016": { "value": false },
+    "provisionSharePointSubscription": { "value": "Subscription-22H2" },
     "provisionSharePoint2019": { "value": false },
-    "provisionSharePointSubscription": { "value": true },
-    "configureADFS": { "value": false },
+    "provisionSharePoint2016": { "value": false },
+    "provisionSharePoint2013": { "value": false },
+    "configureADFS": { "value": true },
     "domainFQDN": { "value": "contoso.local" },
     "adminUserName": { "value": "Yvand" },
+    // "vmSPStorageAccountType": { "value": "Premium_LRS" },
     "addPublicIPAddressToEachVM": { "value": true },
-    "RDPTrafficAllowed": { "value": "12.33.22.22" },
-    "addAzureBastion": { "value": false },
+    "RDPTrafficAllowed": { "value": "10.20.30.40" },
+    "addAzureBastion": { "value": true },
     "enableHybridBenefitServerLicenses": { "value": true },
     "enableAutomaticUpdates": { "value": true },
-    "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-AllVersions-light" },
-    "vmSPStorageAccountType": { "value": "Premium_LRS" }
+    "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-AllVersions-light" }
   }
 }

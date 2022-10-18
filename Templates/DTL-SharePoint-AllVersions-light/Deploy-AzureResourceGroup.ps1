@@ -3,9 +3,8 @@
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
-# $resourceGroupLocation = 'francecentral'
+$resourceGroupLocation = 'francecentral'
 $resourceGroupName = 'ydtlight1'
-$resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
@@ -13,7 +12,6 @@ $scriptRoot = $PSScriptRoot
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 
-Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 ### Set passwords
 # $securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
@@ -29,6 +27,9 @@ $paramFileContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
 $paramFileContent.parameters | Get-Member -MemberType *Property | ForEach-Object { 
     $parameters.($_.name) = $paramFileContent.parameters.($_.name).value; 
 }
+
+$resourceDeploymentName = "$resourceGroupName-deployment"
+Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 
 ### Ensure connection to Azure RM
 $azurecontext = $null
@@ -71,7 +72,7 @@ if ($checkTemplate.Count -eq 0) {
         -TemplateFile $TemplateFile `
         -Verbose -Force `
         -TemplateParameterFile $templateParametersFile `
-        @passwords #`
+        @passwords 
         # -TemplateParameterObject $parameters
 
     $elapsedTime = New-TimeSpan $startTime $(get-date)
@@ -83,8 +84,8 @@ if ($checkTemplate.Count -eq 0) {
             -ResourceGroupName $resourceGroupName `
             -Name $resourceDeploymentName).Outputs
         
-        $outputMessage = "Use the account ""$($outputs.domainAdminAccount.value)"" to sign-in"
-        $outputMessage += $outputs.ContainsKey("publicIPAddressSPSE") ? " using DNS name ""$($outputs.publicIPAddressSPSE.value)""" : "."
+        $outputMessage = "Use the account ""$($outputs.domainAdminAccount.value)"" (""$($outputs.domainAdminAccountFormatForBastion.value)"") to sign in"
+        $outputMessage += $outputs.ContainsKey("publicIPAddressSPSE") ? " to ""$($outputs.publicIPAddressSPSE.value)""" : "."
         Write-Host $outputMessage -ForegroundColor Green
     }
     else {

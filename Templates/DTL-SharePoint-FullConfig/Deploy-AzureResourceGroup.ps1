@@ -4,7 +4,6 @@
 $resourceGroupLocation = 'westeurope'
 $resourceGroupLocation = 'francecentral'
 $resourceGroupName = 'ydtlfull1'
-$resourceDeploymentName = "$resourceGroupName-deployment"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
@@ -12,7 +11,6 @@ $scriptRoot = $PSScriptRoot
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 
-Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 ### Set passwords
 # $securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
@@ -28,6 +26,9 @@ $paramFileContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
 $paramFileContent.parameters | Get-Member -MemberType *Property | ForEach-Object { 
     $parameters.($_.name) = $paramFileContent.parameters.($_.name).value; 
 }
+
+$resourceDeploymentName = "$resourceGroupName-deployment"
+Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 
 ### Ensure connection to Azure RM
 $azurecontext = $null
