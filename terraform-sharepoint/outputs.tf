@@ -1,3 +1,7 @@
+output "resource_group_name" {
+  value = module.sharepoint.resource_group_name
+}
+
 output "resource_group_id" {
   value = module.sharepoint.resource_group_id
 }
@@ -27,7 +31,7 @@ output "domain_admin_account_format_bastion" {
 }
 
 output "local_admin_username" {
-  value = module.sharepoint.domain_admin_account_format_bastion
+  value = module.sharepoint.local_admin_username
 }
 
 output "admin_password" {
