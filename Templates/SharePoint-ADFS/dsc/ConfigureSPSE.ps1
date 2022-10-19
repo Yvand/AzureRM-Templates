@@ -66,6 +66,7 @@ configuration ConfigureSPVM
     )
     $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     $SharePointBuildDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}
+    $sharePointRtmUrl = $SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"} | Select-Object DownloadUrls
 
     $spIsoFolder = [environment]::GetEnvironmentVariable("temp","machine")
 $spIsoPath = Join-Path -Path $spIsoFolder -ChildPath "OfficeServer.iso"
@@ -324,7 +325,7 @@ $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
 
         xRemoteFile DownloadSharePoint {
             DestinationPath = $spIsoPath
-            Uri             = $SPDownloadLink
+            Uri             = $sharePointRtmUrl
             ChecksumType    = "SHA256"
             Checksum        = "480802AD1373687EC80881B8CFA9F9174D60F63982E4854860D8C4085768F372"
           }
