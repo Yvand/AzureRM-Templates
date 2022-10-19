@@ -31,6 +31,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
     Import-DscResource -ModuleName StorageDsc -ModuleVersion 5.0.1
+    Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
