@@ -30,6 +30,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
+    Import-DscResource -ModuleName StorageDsc -ModuleVersion 5.0.1
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
@@ -64,6 +65,13 @@ configuration ConfigureSPVM
     )
     $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     $SharePointBuildDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}
+
+    $spIsoFolder = [environment]::GetEnvironmentVariable("temp","machine")
+$spIsoPath = Join-Path -Path $spIsoFolder -ChildPath "OfficeServer.iso"
+$spIsoDriverLetter = "S"
+$spInstallFolder = "${spIsoDriverLetter}:\"
+$spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
+
 
     Node localhost
     {
@@ -278,53 +286,75 @@ configuration ConfigureSPVM
         #**********************************************************
         # Download and install for SharePoint
         #**********************************************************
-        Script DownloadSharePoint
-        {
-            SetScript = {
-                $SharePointBuildsDetails = $using:SharePointBuildsDetails
-                $sharePointRtmDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}
-                $dstFolder = [environment]::GetEnvironmentVariable("temp","machine")
-                $dstFile = Join-Path -Path $dstFolder -ChildPath "OfficeServer.iso"
-                $spInstallFolder = Join-Path -Path $dstFolder -ChildPath "OfficeServer"
-                $setupFile =  Join-Path -Path $spInstallFolder -ChildPath "setup.exe"
-                $count = 0
-                while (($count -lt 10) -and (-not(Test-Path $setupFile)))
-                {
-                    try {
-                        Start-BitsTransfer -Source $sharePointRtmDetails.DownloadUrls -Destination $dstFile
-                        $mountedIso = Mount-DiskImage -ImagePath $dstFile -PassThru
-                        $driverLetter =  (Get-Volume -DiskImage $mountedIso).DriveLetter
-                        Copy-Item -Path "${driverLetter}:\" -Destination $spInstallFolder -Recurse -Force -ErrorAction SilentlyContinue
-                        Dismount-DiskImage -DevicePath $mountedIso.DevicePath -ErrorAction SilentlyContinue
+        # Script DownloadSharePoint
+        # {
+        #     SetScript = {
+        #         $SharePointBuildsDetails = $using:SharePointBuildsDetails
+        #         $sharePointRtmDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}
+        #         $dstFolder = [environment]::GetEnvironmentVariable("temp","machine")
+        #         $dstFile = Join-Path -Path $dstFolder -ChildPath "OfficeServer.iso"
+        #         $spInstallFolder = Join-Path -Path $dstFolder -ChildPath "OfficeServer"
+        #         $setupFile =  Join-Path -Path $spInstallFolder -ChildPath "setup.exe"
+        #         $count = 0
+        #         while (($count -lt 10) -and (-not(Test-Path $setupFile)))
+        #         {
+        #             try {
+        #                 Start-BitsTransfer -Source $sharePointRtmDetails.DownloadUrls -Destination $dstFile
+        #                 $mountedIso = Mount-DiskImage -ImagePath $dstFile -PassThru
+        #                 $driverLetter =  (Get-Volume -DiskImage $mountedIso).DriveLetter
+        #                 Copy-Item -Path "${driverLetter}:\" -Destination $spInstallFolder -Recurse -Force -ErrorAction SilentlyContinue
+        #                 Dismount-DiskImage -DevicePath $mountedIso.DevicePath -ErrorAction SilentlyContinue
                         
-                        (Get-ChildItem -Path $spInstallFolder -Recurse -File).FullName | Foreach-Object {Unblock-File $_}
-                        $count++
-                    }
-                    catch {
-                        $count++
-                    }
-                }
+        #                 (Get-ChildItem -Path $spInstallFolder -Recurse -File).FullName | Foreach-Object {Unblock-File $_}
+        #                 $count++
+        #             }
+        #             catch {
+        #                 $count++
+        #             }
+        #         }
 
-                if (-not(Test-Path $setupFile)) {
-                    Write-Error -Message "Failed to download SharePoint installation package" 
-                }
-            }
-            TestScript = { Test-Path "${env:windir}\Temp\OfficeServer\setup.exe" }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-        }
+        #         if (-not(Test-Path $setupFile)) {
+        #             Write-Error -Message "Failed to download SharePoint installation package" 
+        #         }
+        #     }
+        #     TestScript = { Test-Path "${env:windir}\Temp\OfficeServer\setup.exe" }
+        #     GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        # }
+
+        xRemoteFile DownloadSharePoint {
+            DestinationPath = $spIsoPath
+            Uri             = $SPDownloadLink
+            ChecksumType    = $SPChecksumType
+            Checksum        = $SPChecksum
+          }
+          
+          MountImage MountSharePointImage
+          {
+            ImagePath   = $spIsoPath
+            DriveLetter = $spIsoDriverLetter
+            DependsOn   = "[xRemoteFile]DownloadSharePoint"
+          }
+          
+          WaitForVolume WaitForSharePointImage
+          {
+            DriveLetter      = $spIsoDriverLetter
+            RetryIntervalSec = 5
+            RetryCount       = 10
+            DependsOn        = "[MountImage]MountSharePointImage"
+          }
 
         SPInstallPrereqs InstallPrerequisites
         {
             IsSingleInstance  = "Yes"
-            InstallerPath     = "${env:windir}\Temp\OfficeServer\Prerequisiteinstaller.exe"
+            InstallerPath     = $spPrereqPath # "${env:windir}\Temp\OfficeServer\Prerequisiteinstaller.exe"
             OnlineMode        = $true
-            DependsOn         = "[Script]DownloadSharePoint"
+            DependsOn         = "[WaitForVolume]WaitForSharePointImage"
         }
 
         SPInstall InstallBinaries
         {
             IsSingleInstance = "Yes"
-            BinaryDir        = "${env:windir}\Temp\OfficeServer"
+            BinaryDir        = $spInstallFolder #"${env:windir}\Temp\OfficeServer"
             ProductKey       = "VW2FM-FN9FT-H22J4-WV9GT-H8VKF"
             DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
         }
