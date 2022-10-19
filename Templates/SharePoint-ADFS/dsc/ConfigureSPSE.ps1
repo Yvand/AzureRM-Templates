@@ -325,8 +325,8 @@ $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
         xRemoteFile DownloadSharePoint {
             DestinationPath = $spIsoPath
             Uri             = $SPDownloadLink
-            ChecksumType    = $SPChecksumType
-            Checksum        = $SPChecksum
+            ChecksumType    = "SHA256"
+            Checksum        = "480802AD1373687EC80881B8CFA9F9174D60F63982E4854860D8C4085768F372"
           }
           
           MountImage MountSharePointImage
