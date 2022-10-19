@@ -327,7 +327,7 @@ $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
             DestinationPath = $spIsoPath
             Uri             = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).DownloadUrls
             ChecksumType    = "SHA256"
-            Checksum        = "480802AD1373687EC80881B8CFA9F9174D60F63982E4854860D8C4085768F372"
+            Checksum        = "C576B847C573234B68FC602A0318F5794D7A61D8149EB6AE537AF04470B7FC05"
           }
           
           MountImage MountSharePointImage
