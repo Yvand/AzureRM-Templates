@@ -380,59 +380,36 @@ configuration ConfigureSPVM
 
         if ($SharePointBuildLabel -ne "RTM") {
             foreach ($package in ($SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}).Packages) {
-                $downloadLink = [uri] $package.DownloadUrl
-                $downloadFilename = $downloadLink.Segments[$downloadLink.Segments.Count - 1]
-                $destFile = Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $downloadFilename
-                xRemoteFile "DownloadSharePointUpdate_$downloadFilename"
+                $packageUrl = [uri] $package.DownloadUrl
+                $packageFilename = $packageUrl.Segments[$packageUrl.Segments.Count - 1]
+                $packageFilePath = Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $packageFilename
+                xRemoteFile "DownloadSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
                 {
-                    DestinationPath = $destFile
-                    Uri             = $downloadLink
+                    DestinationPath = $packageFilePath
+                    Uri             = $packageUrl
                     ChecksumType    = $package.ChecksumType
                     Checksum        = $package.Checksum
                     MatchSource     = $false
                 }
 
-                Script "InstallSharePointUpdate_$downloadFilename"
+                Script "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
                 {
                     SetScript = {
                         $SharePointBuildLabel = $using:SharePointBuildLabel
-                        $SharePointBuildDetails = $using:SharePointBuildDetails
-                        $dstFile = $using:destFile
-                        Write-Verbose -Message "Starting installation of SharePoint build '$SharePointBuildLabel'..."
-                        $exitRebootCodes = @(3010, 17022)
-                        # $downloadLinks = [uri []] $SharePointBuildDetails.DownloadUrls.Split(";", [System.StringSplitOptions]::RemoveEmptyEntries)
-                        # $dstFiles = $downloadLinks | ForEach-Object { Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $_.Segments[$_.Segments.Count - 1] }
+                        # $SharePointBuildDetails = $using:SharePointBuildDetails
+                        $packageFilePath = [System.IO.FileSystemInfo] $using:packageFilePath
+                        $packageFile = Get-ChildItem -Path $packageFilePath
                         
-                        # $count = 0
-                        # $downloadComplete = $false
-                        # while (($count -lt 10) -and $false -eq $downloadComplete) {
-                        #     try {
-                        #         Start-BitsTransfer -Source $downloadLinks -Destination $dstFiles
-                        #         Unblock-File -Path $dstFiles -Confirm:$false
-                        #         $downloadComplete = $true
-                        #     }
-                        #     catch {
-                        #         $count++
-                        #     }
-                        # }
-                        # if ($false -eq $downloadComplete) {
-                        #     Write-Error -Message "Download of SharePoint update files for build '$SharePointBuildLabel' failed, skip installation."
-                        #     return;
-                        # }
-                        # Write-Verbose -Message "Download of SharePoint build '$SharePointBuildLabel' finished successfully."
-
+                        $exitRebootCodes = @(3010, 17022)
                         $needReboot = $false
-                        # foreach ($dstFile in $dstFiles) {
-                            Unblock-File -Path $dstFile -Confirm:$false
-                            $file = Get-ChildItem -LiteralPath $dstFile
-                            Write-Verbose -Message "Starting installation of SharePoint update '$($file.Name)'..."
-                            $process = Start-Process $file.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
-                            if ($exitRebootCodes.Contains($process.ExitCode)) {
-                                $needReboot = $true
-                            }
-                            Write-Verbose -Message "Finished installation of SharePoint update '$($file.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
-                        # }
-                        New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled -Force
+                        Write-Verbose -Message "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
+                        Unblock-File -Path $dstFile -Confirm:$false
+                        $process = Start-Process $packageFile.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
+                        if ($exitRebootCodes.Contains($process.ExitCode)) {
+                            $needReboot = $true
+                        }
+                        Write-Verbose -Message "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
+                        New-Item -Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)" -Force
                         Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
 
                         if ($true -eq $needReboot) {
@@ -441,12 +418,9 @@ configuration ConfigureSPVM
                     }
                     TestScript = {
                         $SharePointBuildLabel = $using:SharePointBuildLabel
-                        if ($true -eq $SharePointBuildLabel.ToUpper().Equals("RTM")) {
-                            return $true
-                        }
-
-                        # Not RTM, test if update was already installed
-                        return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled)
+                        $packageFilePath = [System.IO.FileSystemInfo] $using:packageFilePath
+                        $packageFile = Get-ChildItem -Path $packageFilePath
+                        return (Test-Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)")
                     }
                     GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                     DependsOn        = "[SPInstall]InstallBinaries"
