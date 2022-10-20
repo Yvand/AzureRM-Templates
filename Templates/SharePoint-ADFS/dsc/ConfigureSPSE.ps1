@@ -378,7 +378,7 @@ configuration ConfigureSPVM
         }
 
         if ($SharePointBuildLabel -ne "RTM") {
-            foreach ($package in ($SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}).Packages.Count) {
+            foreach ($package in ($SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}).Packages) {
                 $downloadLink = [uri] $package.DownloadUrl
                 $downloadFilename = $downloadLink.Segments[$downloadLink.Segments.Count - 1]
                 $destFile = Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $downloadFilename
