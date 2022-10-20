@@ -344,6 +344,7 @@ configuration ConfigureSPVM
             Uri             = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).Packages[0].DownloadUrl
             ChecksumType    = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).Packages[0].ChecksumType
             Checksum        = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).Packages[0].Checksum
+            MatchSource     = $false
         }
         
         MountImage MountSharePointImage
@@ -388,6 +389,7 @@ configuration ConfigureSPVM
                     Uri             = $downloadLink
                     ChecksumType    = $package.ChecksumType
                     Checksum        = $package.Checksum
+                    MatchSource     = $false
                 }
 
                 Script "InstallSharePointUpdate_$downloadFilename"
