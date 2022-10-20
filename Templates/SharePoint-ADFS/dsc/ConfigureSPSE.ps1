@@ -74,8 +74,8 @@ configuration ConfigureSPVM
         @{
             Label = "22H2"; 
             Packages = @(
-                @{ DownloadUrl = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "1111" },
-                @{ DownloadUrl = "https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "1111" }
+                @{ DownloadUrl = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "7E496530EB873146650A9E0653DE835CB2CAD9AF8D154CBD7387BB0F2297C9FC" },
+                @{ DownloadUrl = "https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "247011443AC573D4F03B1622065A7350B8B3DAE04D6A5A6DC64C8270A3BE7636" }
             )
         }
     )
@@ -382,7 +382,7 @@ configuration ConfigureSPVM
                 $downloadLink = [uri] $package.DownloadUrl
                 $downloadFilename = $downloadLink.Segments[$downloadLink.Segments.Count - 1]
                 $destFile = Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $downloadFilename
-                xRemoteFile DownloadSharePointUpdate_$downloadFilename
+                xRemoteFile "DownloadSharePointUpdate_$downloadFilename"
                 {
                     DestinationPath = $destFile
                     Uri             = $downloadLink
@@ -390,7 +390,7 @@ configuration ConfigureSPVM
                     Checksum        = $package.Checksum
                 }
 
-                Script InstallSharePointUpdate_$downloadFilename
+                Script "InstallSharePointUpdate_$downloadFilename"
                 {
                     SetScript = {
                         $SharePointBuildLabel = $using:SharePointBuildLabel
