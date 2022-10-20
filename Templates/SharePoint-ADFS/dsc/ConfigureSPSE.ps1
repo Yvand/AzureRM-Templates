@@ -60,19 +60,34 @@ configuration ConfigureSPVM
     [String] $TrustedIdChar = "e"
     [String] $SPTeamSiteTemplate = "STS#3"
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
+    # $SharePointBuildsDetails = @(
+    #     @{ Label = "RTM";  DownloadUrls = "https://go.microsoft.com/fwlink/?linkid=2171943"; }
+    #     @{ Label = "22H2"; DownloadUrls = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe;https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; }
+    # )
     $SharePointBuildsDetails = @(
-        @{ Label = "RTM";  DownloadUrls = "https://go.microsoft.com/fwlink/?linkid=2171943"; }
-        @{ Label = "22H2"; DownloadUrls = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe;https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; }
+        @{
+            Label = "RTM"; 
+            Packages = @(
+                @{ DownloadUrl = "https://go.microsoft.com/fwlink/?linkid=2171943"; ChecksumType = "SHA256"; Checksum = "C576B847C573234B68FC602A0318F5794D7A61D8149EB6AE537AF04470B7FC05" }
+            )
+        },
+        @{
+            Label = "22H2"; 
+            Packages = @(
+                @{ DownloadUrl = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "1111" },
+                @{ DownloadUrl = "https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "1111" }
+            )
+        }
     )
     $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
-    $SharePointBuildDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}
-    $SharePointRtmUrl = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).DownloadUrls
+    #$SharePointBuildDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}
+    #$SharePointRtmUrl = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).DownloadUrls
 
     $spIsoFolder = [environment]::GetEnvironmentVariable("temp","machine")
-$spIsoPath = Join-Path -Path $spIsoFolder -ChildPath "OfficeServer.iso"
-$spIsoDriverLetter = "S"
-$spInstallFolder = "${spIsoDriverLetter}:\"
-$spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
+    $spIsoPath = Join-Path -Path $spIsoFolder -ChildPath "OfficeServer.iso"
+    $spIsoDriverLetter = "S"
+    $spInstallFolder = "${spIsoDriverLetter}:\"
+    $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
 
 
     Node localhost
@@ -323,27 +338,28 @@ $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
         #     GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
         # }
 
-        xRemoteFile DownloadSharePoint {
+        xRemoteFile DownloadSharePoint
+        {
             DestinationPath = $spIsoPath
-            Uri             = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).DownloadUrls
-            ChecksumType    = "SHA256"
-            Checksum        = "C576B847C573234B68FC602A0318F5794D7A61D8149EB6AE537AF04470B7FC05"
-          }
-          
-          MountImage MountSharePointImage
-          {
+            Uri             = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).Packages[0].DownloadUrl
+            ChecksumType    = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).Packages[0].ChecksumType
+            Checksum        = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).Packages[0].Checksum
+        }
+        
+        MountImage MountSharePointImage
+        {
             ImagePath   = $spIsoPath
             DriveLetter = $spIsoDriverLetter
             DependsOn   = "[xRemoteFile]DownloadSharePoint"
-          }
+        }
           
-          WaitForVolume WaitForSharePointImage
-          {
+        WaitForVolume WaitForSharePointImage
+        {
             DriveLetter      = $spIsoDriverLetter
             RetryIntervalSec = 5
             RetryCount       = 10
             DependsOn        = "[MountImage]MountSharePointImage"
-          }
+        }
 
         SPInstallPrereqs InstallPrerequisites
         {
@@ -361,70 +377,145 @@ $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
             DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
         }
 
-        Script InstallSharePointUpdate
-        {
-            SetScript = {
-                $SharePointBuildLabel = $using:SharePointBuildLabel
-                $SharePointBuildDetails = $using:SharePointBuildDetails
-                Write-Verbose -Message "Starting installation of SharePoint build '$SharePointBuildLabel'..."
-                $exitRebootCodes = @(3010, 17022)
-                $downloadLinks = [uri []] $SharePointBuildDetails.DownloadUrls.Split(";", [System.StringSplitOptions]::RemoveEmptyEntries)
-                $dstFiles = $downloadLinks | ForEach-Object { Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $_.Segments[$_.Segments.Count - 1] }                
+        if ($SharePointBuildLabel -ne "RTM") {
+            foreach ($package in ($SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}).Packages.Count) {
+                $downloadLink = [uri] $package.DownloadUrl
+                $downloadFilename = $downloadLink.Segments[$downloadLink.Segments.Count - 1]
+                $destFile = Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $downloadFilename
+                xRemoteFile DownloadSharePointUpdate_$downloadFilename
+                {
+                    DestinationPath = $destFile
+                    Uri             = $downloadLink
+                    ChecksumType    = $package.ChecksumType
+                    Checksum        = $package.Checksum
+                }
+
+                Script InstallSharePointUpdate_$downloadFilename
+                {
+                    SetScript = {
+                        $SharePointBuildLabel = $using:SharePointBuildLabel
+                        $SharePointBuildDetails = $using:SharePointBuildDetails
+                        $dstFile = $using:destFile
+                        Write-Verbose -Message "Starting installation of SharePoint build '$SharePointBuildLabel'..."
+                        $exitRebootCodes = @(3010, 17022)
+                        # $downloadLinks = [uri []] $SharePointBuildDetails.DownloadUrls.Split(";", [System.StringSplitOptions]::RemoveEmptyEntries)
+                        # $dstFiles = $downloadLinks | ForEach-Object { Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $_.Segments[$_.Segments.Count - 1] }
+                        
+                        # $count = 0
+                        # $downloadComplete = $false
+                        # while (($count -lt 10) -and $false -eq $downloadComplete) {
+                        #     try {
+                        #         Start-BitsTransfer -Source $downloadLinks -Destination $dstFiles
+                        #         Unblock-File -Path $dstFiles -Confirm:$false
+                        #         $downloadComplete = $true
+                        #     }
+                        #     catch {
+                        #         $count++
+                        #     }
+                        # }
+                        # if ($false -eq $downloadComplete) {
+                        #     Write-Error -Message "Download of SharePoint update files for build '$SharePointBuildLabel' failed, skip installation."
+                        #     return;
+                        # }
+                        # Write-Verbose -Message "Download of SharePoint build '$SharePointBuildLabel' finished successfully."
+
+                        $needReboot = $false
+                        # foreach ($dstFile in $dstFiles) {
+                            Unblock-File -Path $dstFile -Confirm:$false
+                            $file = Get-ChildItem -LiteralPath $dstFile
+                            Write-Verbose -Message "Starting installation of SharePoint update '$($file.Name)'..."
+                            $process = Start-Process $file.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
+                            if ($exitRebootCodes.Contains($process.ExitCode)) {
+                                $needReboot = $true
+                            }
+                            Write-Verbose -Message "Finished installation of SharePoint update '$($file.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
+                        # }
+                        New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled -Force
+                        Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
+
+                        if ($true -eq $needReboot) {
+                            $global:DSCMachineStatus = 1
+                        }
+                    }
+                    TestScript = {
+                        $SharePointBuildLabel = $using:SharePointBuildLabel
+                        if ($true -eq $SharePointBuildLabel.ToUpper().Equals("RTM")) {
+                            return $true
+                        }
+
+                        # Not RTM, test if update was already installed
+                        return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled)
+                    }
+                    GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                    DependsOn        = "[SPInstall]InstallBinaries"
+                }
+            }
+        }
+
+        # Script InstallSharePointUpdate
+        # {
+        #     SetScript = {
+        #         $SharePointBuildLabel = $using:SharePointBuildLabel
+        #         $SharePointBuildDetails = $using:SharePointBuildDetails
+        #         Write-Verbose -Message "Starting installation of SharePoint build '$SharePointBuildLabel'..."
+        #         $exitRebootCodes = @(3010, 17022)
+        #         $downloadLinks = [uri []] $SharePointBuildDetails.DownloadUrls.Split(";", [System.StringSplitOptions]::RemoveEmptyEntries)
+        #         $dstFiles = $downloadLinks | ForEach-Object { Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $_.Segments[$_.Segments.Count - 1] }
                 
-                $count = 0
-                $downloadComplete = $false
-                while (($count -lt 10) -and $false -eq $downloadComplete) {
-                    try {
-                        Start-BitsTransfer -Source $downloadLinks -Destination $dstFiles
-                        Unblock-File -Path $dstFiles -Confirm:$false
-                        $downloadComplete = $true
-                    }
-                    catch {
-                        $count++
-                    }
-                }
-                if ($false -eq $downloadComplete) {
-                    Write-Error -Message "Download of SharePoint update files for build '$SharePointBuildLabel' failed, skip installation."
-                    return;
-                }
-                Write-Verbose -Message "Download of SharePoint build '$SharePointBuildLabel' finished successfully."
+        #         $count = 0
+        #         $downloadComplete = $false
+        #         while (($count -lt 10) -and $false -eq $downloadComplete) {
+        #             try {
+        #                 Start-BitsTransfer -Source $downloadLinks -Destination $dstFiles
+        #                 Unblock-File -Path $dstFiles -Confirm:$false
+        #                 $downloadComplete = $true
+        #             }
+        #             catch {
+        #                 $count++
+        #             }
+        #         }
+        #         if ($false -eq $downloadComplete) {
+        #             Write-Error -Message "Download of SharePoint update files for build '$SharePointBuildLabel' failed, skip installation."
+        #             return;
+        #         }
+        #         Write-Verbose -Message "Download of SharePoint build '$SharePointBuildLabel' finished successfully."
 
-                $needReboot = $false
-                foreach ($dstFile in $dstFiles) {
-                    $file = Get-ChildItem -LiteralPath $dstFile
-                    Write-Verbose -Message "Starting installation of SharePoint update '$($file.Name)'..."
-                    $process = Start-Process $file.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
-                    if ($exitRebootCodes.Contains($process.ExitCode)) {
-                        $needReboot = $true
-                    }
-                    Write-Verbose -Message "Finished installation of SharePoint update '$($file.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
-                }
-                New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled -Force
-                Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
+        #         $needReboot = $false
+        #         foreach ($dstFile in $dstFiles) {
+        #             $file = Get-ChildItem -LiteralPath $dstFile
+        #             Write-Verbose -Message "Starting installation of SharePoint update '$($file.Name)'..."
+        #             $process = Start-Process $file.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
+        #             if ($exitRebootCodes.Contains($process.ExitCode)) {
+        #                 $needReboot = $true
+        #             }
+        #             Write-Verbose -Message "Finished installation of SharePoint update '$($file.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
+        #         }
+        #         New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled -Force
+        #         Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
 
-                if ($true -eq $needReboot) {
-                    $global:DSCMachineStatus = 1
-                }
-            }
-            TestScript = {
-                $SharePointBuildLabel = $using:SharePointBuildLabel
-                if ($true -eq $SharePointBuildLabel.ToUpper().Equals("RTM")) {
-                    return $true
-                }
+        #         if ($true -eq $needReboot) {
+        #             $global:DSCMachineStatus = 1
+        #         }
+        #     }
+        #     TestScript = {
+        #         $SharePointBuildLabel = $using:SharePointBuildLabel
+        #         if ($true -eq $SharePointBuildLabel.ToUpper().Equals("RTM")) {
+        #             return $true
+        #         }
 
-                # Not RTM, test if update was already installed
-                return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled)
-            }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            DependsOn        = "[SPInstall]InstallBinaries"
-        }
+        #         # Not RTM, test if update was already installed
+        #         return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_SharePointUpdateInstalled)
+        #     }
+        #     GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     DependsOn        = "[SPInstall]InstallBinaries"
+        # }
 
-        PendingReboot RebootOnSignalFromInstallSharePointUpdate
-        {
-            Name             = "RebootOnSignalFromInstallSharePointUpdate"
-            SkipCcmClientSDK = $true
-            DependsOn        = "[Script]InstallSharePointUpdate"
-        }
+        # PendingReboot RebootOnSignalFromInstallSharePointUpdate
+        # {
+        #     Name             = "RebootOnSignalFromInstallSharePointUpdate"
+        #     SkipCcmClientSDK = $true
+        #     DependsOn        = "[Script]InstallSharePointUpdate"
+        # }
 
         # IIS cleanup cannot be executed earlier in SharePoint SE: It uses a base image of Windows Server without IIS (installed by SPInstallPrereqs)
         WebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
