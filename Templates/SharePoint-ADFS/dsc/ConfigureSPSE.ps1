@@ -256,7 +256,7 @@ configuration ConfigureSPVM
 
         xRemoteFile DownloadLDAPCP
         {
-            DestinationPath = $SetupPath
+            DestinationPath = "$SetupPath\LDAPCP.wsp"
             Uri             = $LdapcpLink
             MatchSource     = $false
         }
