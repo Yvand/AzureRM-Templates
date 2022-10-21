@@ -404,7 +404,7 @@ configuration ConfigureSPVM
                     SetScript = {
                         $SharePointBuildLabel = $using:SharePointBuildLabel
                         # $SharePointBuildDetails = $using:SharePointBuildDetails
-                        $packageFilePath = [System.IO.FileSystemInfo] $using:packageFilePath
+                        $packageFilePath = $using:packageFilePath
                         $packageFile = Get-ChildItem -Path $packageFilePath
                         
                         $exitRebootCodes = @(3010, 17022)
