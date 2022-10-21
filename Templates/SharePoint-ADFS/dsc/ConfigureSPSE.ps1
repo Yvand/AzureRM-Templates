@@ -410,7 +410,7 @@ configuration ConfigureSPVM
                         $exitRebootCodes = @(3010, 17022)
                         $needReboot = $false
                         Write-Verbose -Message "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
-                        Unblock-File -Path $dstFile -Confirm:$false
+                        Unblock-File -Path $packageFile -Confirm:$false
                         $process = Start-Process $packageFile.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
                         if ($exitRebootCodes.Contains($process.ExitCode)) {
                             $needReboot = $true
