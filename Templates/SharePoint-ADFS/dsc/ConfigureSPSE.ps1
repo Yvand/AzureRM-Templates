@@ -368,7 +368,7 @@ configuration ConfigureSPVM
                     DependsOn        = "[SPInstall]InstallBinaries"
                 }
 
-                PendingReboot RebootOnSignalFromInstallSharePointUpdate
+                PendingReboot "RebootOnSignalFromInstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
                 {
                     Name             = "RebootOnSignalFromInstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
                     SkipCcmClientSDK = $true
