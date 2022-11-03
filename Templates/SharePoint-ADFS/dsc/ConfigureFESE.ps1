@@ -49,6 +49,12 @@ configuration ConfigureFEVM
     $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     # $SharePointBuildDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}
 
+    $spIsoFolder = [environment]::GetEnvironmentVariable("temp","machine")
+    $spIsoPath = Join-Path -Path $spIsoFolder -ChildPath "OfficeServer.iso"
+    $spIsoDriverLetter = "S"
+    $spInstallFolder = "${spIsoDriverLetter}:\"
+    $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
+
     Node localhost
     {
         LocalConfigurationManager
@@ -288,7 +294,7 @@ configuration ConfigureFEVM
         SPInstall InstallBinaries
         {
             IsSingleInstance = "Yes"
-            BinaryDir        = "${env:windir}\Temp\OfficeServer"
+            BinaryDir        = $spInstallFolder
             ProductKey       = "VW2FM-FN9FT-H22J4-WV9GT-H8VKF"
             DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
         }
