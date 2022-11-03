@@ -1197,7 +1197,8 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[parameters('sharePointVersion')]",
-            "EnableAnalysis": "[variables('generalSettings').enableAnalysis]"
+            "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
+            "SharePointBuildsDetails": "[variables('generalSettings').sharePointSEPackages]"
           },
           "privacy": {
             "dataCollection": "enable"
