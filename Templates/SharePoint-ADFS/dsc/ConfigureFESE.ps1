@@ -277,7 +277,7 @@ configuration ConfigureFEVM
         SPInstallPrereqs InstallPrerequisites
         {
             IsSingleInstance  = "Yes"
-            InstallerPath     = "${env:windir}\Temp\OfficeServer\Prerequisiteinstaller.exe"
+            InstallerPath     = $spPrereqPath
             OnlineMode        = $true
             DependsOn         = "[WaitForVolume]WaitForSharePointImage"
         }
