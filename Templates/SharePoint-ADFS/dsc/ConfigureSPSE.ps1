@@ -61,34 +61,12 @@ configuration ConfigureSPVM
     [String] $TrustedIdChar = "e"
     [String] $SPTeamSiteTemplate = "STS#3"
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
-    # $SharePointBuildsDetails = @(
-    #     @{ Label = "RTM";  DownloadUrls = "https://go.microsoft.com/fwlink/?linkid=2171943"; }
-    #     @{ Label = "22H2"; DownloadUrls = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe;https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; }
-    # )
-    # $SharePointBuildsDetails = @(
-    #     @{
-    #         Label = "RTM"; 
-    #         Packages = @(
-    #             @{ DownloadUrl = "https://go.microsoft.com/fwlink/?linkid=2171943"; ChecksumType = "SHA256"; Checksum = "C576B847C573234B68FC602A0318F5794D7A61D8149EB6AE537AF04470B7FC05" }
-    #         )
-    #     },
-    #     @{
-    #         Label = "22H2"; 
-    #         Packages = @(
-    #             @{ DownloadUrl = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "7E496530EB873146650A9E0653DE835CB2CAD9AF8D154CBD7387BB0F2297C9FC" },
-    #             @{ DownloadUrl = "https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "247011443AC573D4F03B1622065A7350B8B3DAE04D6A5A6DC64C8270A3BE7636" }
-    #         )
-    #     }
-    # )
-    $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
-    #$SharePointBuildDetails = $SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}
-    #$SharePointRtmUrl = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).DownloadUrls
-
-    $spIsoFolder = [environment]::GetEnvironmentVariable("temp","machine")
-    $spIsoPath = Join-Path -Path $spIsoFolder -ChildPath "OfficeServer.iso"
-    $spIsoDriverLetter = "S"
-    $spInstallFolder = "${spIsoDriverLetter}:\"
-    $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
+    [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
+    [String] $spIsoFolder = [environment]::GetEnvironmentVariable("temp","machine")
+    [String] $spIsoPath = Join-Path -Path $spIsoFolder -ChildPath "OfficeServer.iso"
+    [String] $spIsoDriverLetter = "S"
+    [String] $spInstallFolder = "${spIsoDriverLetter}:\"
+    [String] $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
 
 
     Node localhost
@@ -1606,13 +1584,6 @@ function Get-AppDomain
         $appDomain += $domainParts[1]
     }
     return $appDomain
-}
-
-function Get-SPDSCInstalledProductVersion
-{
-    $pathToSearch = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\*\ISAPI\Microsoft.SharePoint.dll"
-    $fullPath = Get-Item $pathToSearch | Sort-Object { $_.Directory } -Descending | Select-Object -First 1
-    return (Get-Command $fullPath).FileVersionInfo
 }
 
 <#
