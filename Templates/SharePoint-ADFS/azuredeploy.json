@@ -608,11 +608,11 @@
       "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Standard",
+        "name": "Basic",
         "tier": "Regional"
       },
       "properties": {
-        "publicIPAllocationMethod": "Static",
+        "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
           "domainNameLabel": "[variables('vmDC').vmPublicIPDnsName]"
         }
@@ -749,11 +749,11 @@
       "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Standard",
+        "name": "Basic",
         "tier": "Regional"
       },
       "properties": {
-        "publicIPAllocationMethod": "Static",
+        "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
           "domainNameLabel": "[variables('vmSQL').vmPublicIPDnsName]"
         }
@@ -845,11 +845,11 @@
       "apiVersion": "2022-01-01",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Standard",
+        "name": "Basic",
         "tier": "Regional"
       },
       "properties": {
-        "publicIPAllocationMethod": "Static",
+        "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
           "domainNameLabel": "[variables('vmSP').vmPublicIPDnsName]"
         }
@@ -1070,11 +1070,11 @@
           "count": "[parameters('numberOfAdditionalFrontEnd')]"
       },
       "sku": {
-        "name": "Standard",
+        "name": "Basic",
         "tier": "Regional"
       },
       "properties": {
-        "publicIPAllocationMethod": "Static",
+        "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
           "domainNameLabel": "[concat(variables('vmFE').vmPublicIPDnsName, '-', copyIndex())]"
         }
