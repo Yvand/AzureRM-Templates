@@ -313,44 +313,53 @@ configuration ConfigureSPVM
                     MatchSource     = $false
                 }
 
-                Script "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
-                {
-                    SetScript = {
-                        $SharePointBuildLabel = $using:SharePointBuildLabel
-                        $packageFilePath = $using:packageFilePath
-                        $packageFile = Get-ChildItem -Path $packageFilePath
+                # Script "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
+                # {
+                #     SetScript = {
+                #         $SharePointBuildLabel = $using:SharePointBuildLabel
+                #         $packageFilePath = $using:packageFilePath
+                #         $packageFile = Get-ChildItem -Path $packageFilePath
                         
-                        $exitRebootCodes = @(3010, 17022)
-                        $needReboot = $false
-                        Write-Verbose -Message "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
-                        Unblock-File -Path $packageFile -Confirm:$false
-                        $process = Start-Process $packageFile.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
-                        if ($exitRebootCodes.Contains($process.ExitCode)) {
-                            $needReboot = $true
-                        }
-                        Write-Verbose -Message "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
-                        New-Item -Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)" -Force
-                        Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
+                #         $exitRebootCodes = @(3010, 17022)
+                #         $needReboot = $false
+                #         Write-Verbose -Message "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
+                #         Unblock-File -Path $packageFile -Confirm:$false
+                #         $process = Start-Process $packageFile.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
+                #         if ($exitRebootCodes.Contains($process.ExitCode)) {
+                #             $needReboot = $true
+                #         }
+                #         Write-Verbose -Message "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
+                #         New-Item -Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)" -Force
+                #         Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
 
-                        if ($true -eq $needReboot) {
-                            $global:DSCMachineStatus = 1
-                        }
-                    }
-                    TestScript = {
-                        $SharePointBuildLabel = $using:SharePointBuildLabel
-                        $packageFilePath = $using:packageFilePath
-                        $packageFile = Get-ChildItem -Path $packageFilePath
-                        return (Test-Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)")
-                    }
-                    GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                    DependsOn        = "[SPInstall]InstallBinaries"
+                #         if ($true -eq $needReboot) {
+                #             $global:DSCMachineStatus = 1
+                #         }
+                #     }
+                #     TestScript = {
+                #         $SharePointBuildLabel = $using:SharePointBuildLabel
+                #         $packageFilePath = $using:packageFilePath
+                #         $packageFile = Get-ChildItem -Path $packageFilePath
+                #         return (Test-Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)")
+                #     }
+                #     GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                #     DependsOn        = "[SPInstall]InstallBinaries"
+                # }
+
+                SPProductUpdate "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
+                {
+                    SetupFile            = $packageFilePath
+                    Ensure               = "Present"
+                    DependsOn            = "[SPInstall]InstallBinaries"
+                    # PsDscRunAsCredential = $SetupAccount
                 }
 
                 PendingReboot "RebootOnSignalFromInstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
                 {
                     Name             = "RebootOnSignalFromInstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
                     SkipCcmClientSDK = $true
-                    DependsOn        = "[Script]InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
+                    # DependsOn        = "[Script]InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
+                    DependsOn        = "[SPProductUpdate]InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
                 }
             }
         }
