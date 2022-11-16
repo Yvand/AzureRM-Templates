@@ -1,5 +1,10 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+* Revert the change on the SKU of Public IP addresses, to use again Basic SKU when possible.
+* Update DSC modules used to latest version available.
+
 ## Enhancements & bug-fixes - Published in September 29, 2022
 
 * Add an option to create a SharePoint Subscription farm running with feature update 22H2.
