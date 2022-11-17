@@ -29,7 +29,7 @@ function Generate-DSCArchive($vmName) {
         $dscSourceFilePaths = Get-ChildItem $dscSourceFolder -File -Filter "Configure$vmName*.ps1"
         foreach ($dscSourceFilePath in $dscSourceFilePaths) {
             $dscArchiveFilePath = "$($dscSourceFilePath.DirectoryName)\$($dscSourceFilePath.BaseName).zip"
-            Publish-AzVMDscConfiguration $dscSourceFilePath -OutputArchivePath $dscArchiveFilePath -Force -Verbose
+            Publish-AzVMDscConfiguration -ConfigurationPath ".\dsc\$($dscSourceFilePath.Name)" -ConfigurationArchivePath $dscArchiveFilePath -Force -Verbose
         }
     }
 }
