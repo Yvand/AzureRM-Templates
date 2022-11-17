@@ -12,7 +12,7 @@
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryCSDsc -ModuleVersion 5.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
-    Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
     Import-DscResource -ModuleName AdfsDsc -ModuleVersion 1.1.0 # With custom changes in AdfsFarm to set certificates based on their names
 
@@ -77,14 +77,14 @@
         #**********************************************************
         # Configuration needed by SharePoint farm
         #**********************************************************
-        xDnsServerPrimaryZone CreateAppsDnsZone
+        DnsServerPrimaryZone CreateAppsDnsZone
         {
             Name      = $AppDomainFQDN
             Ensure    = "Present"
             DependsOn = "[WaitForADDomain]WaitForDCReady"
         }
 
-        xDnsServerPrimaryZone CreateAppsIntranetDnsZone
+        DnsServerPrimaryZone CreateAppsIntranetDnsZone
         {
             Name      = $AppDomainIntranetFQDN
             Ensure    = "Present"

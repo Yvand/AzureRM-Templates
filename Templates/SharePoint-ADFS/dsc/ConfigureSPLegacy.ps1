@@ -26,7 +26,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.0.0
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.3.0
-    Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
@@ -364,72 +364,66 @@ configuration ConfigureSPVM
         # Do SharePoint pre-reqs that require membership in AD domain
         #**********************************************************
         # Create DNS entries used by SharePoint
-        xDnsRecord AddTrustedSiteDNS
+        DnsRecordCname AddTrustedSiteDNS
         {
             Name                 = $SPTrustedSitesName
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
-        xDnsRecord AddMySiteHostDNS
+        DnsRecordCname AddMySiteHostDNS
         {
             Name                 = $MySiteHostAlias
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
-        xDnsRecord AddHNSC1DNS
+        DnsRecordCname AddHNSC1DNS
         {
             Name                 = $HNSC1Alias
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
-        xDnsRecord AddAddinDNSWildcard
+        DnsRecordCname AddAddinDNSWildcard
         {
             Name                 = "*"
-            Zone                 = $AppDomainFQDN
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            ZoneName             = $AppDomainFQDN
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             DnsServer            = "$DCName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
-        xDnsRecord AddAddinDNSWildcardInIntranetZone
+        DnsRecordCname AddAddinDNSWildcardInIntranetZone
         {
             Name                 = "*"
-            Zone                 = $AppDomainIntranetFQDN
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            ZoneName             = $AppDomainIntranetFQDN
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             DnsServer            = "$DCName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
-        xDnsRecord ProviderHostedAddinsAlias
+        DnsRecordCname ProviderHostedAddinsAlias
         {
             Name                 = $AddinsSiteDNSAlias
-            Zone                 = $DomainFQDN
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            ZoneName             = $DomainFQDN
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             DnsServer            = "$DCName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified

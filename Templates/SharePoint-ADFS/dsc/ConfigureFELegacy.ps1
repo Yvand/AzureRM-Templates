@@ -20,7 +20,7 @@ configuration ConfigureFEVM
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.0.0
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.3.0
-    Import-DscResource -ModuleName xDnsServer -ModuleVersion 2.0.0
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
@@ -464,37 +464,34 @@ configuration ConfigureFEVM
             }
         }
 
-        xDnsRecord UpdateDNSAliasSPSites
+        DnsRecordCname UpdateDNSAliasSPSites
         {
             Name                 = $SPTrustedSitesName
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        xDnsRecord UpdateDNSAliasOhMy
+        DnsRecordCname UpdateDNSAliasOhMy
         {
             Name                 = $MySiteHostAlias
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        xDnsRecord UpdateDNSAliasHNSC1
+        DnsRecordCname UpdateDNSAliasHNSC1
         {
             Name                 = $HNSC1Alias
-            Zone                 = $DomainFQDN
+            ZoneName             = $DomainFQDN
             DnsServer            = $DCName
-            Target               = "$ComputerName.$DomainFQDN"
-            Type                 = "CName"
+            HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPFarm]JoinSPFarm"
