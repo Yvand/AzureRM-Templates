@@ -241,73 +241,74 @@ configuration ConfigureSQLVM
 
         # Since SharePointDsc 4.4.0, SPFarm "Switched from creating a Lock database to a Lock table in the TempDB. This to allow the use of precreated databases."
         # But for this to work, the SPSetup account needs specific permissions on both the tempdb and the dbo schema
-        # SqlDatabaseUser AddSPSetupUserToTempdb
-        # {
-        #     ServerName           = $ComputerName
-        #     InstanceName         = "MSSQLSERVER"
-        #     DatabaseName         = "tempdb"
-        #     UserType             = 'Login'
-        #     Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-        #     LoginName            = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-        #     DependsOn            = "[SqlLogin]AddSPSetupLogin"
-        # }
-
-        # SqlDatabasePermission GrantPermissionssToTempdb
-        # {
-        #     Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-        #     ServerName           =  $ComputerName
-        #     InstanceName         = "MSSQLSERVER"
-        #     DatabaseName         = "tempdb"
-        #     Permission   = @(
-        #         DatabasePermission
-        #         {
-        #             State      = 'Grant'
-        #             Permission = @('Select', 'CreateTable', 'Execute')
-        #         }
-        #         DatabasePermission
-        #         {
-        #             State      = 'GrantWithGrant'
-        #             Permission = @()
-        #         }
-        #         DatabasePermission
-        #         {
-        #             State      = 'Deny'
-        #             Permission = @()
-        #         }
-        #     )
-        #     DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
-        # }
-
-        # SqlDatabaseObjectPermission GrantPermissionssToDboSchema
-        # {
-        #     Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-        #     ServerName           = $ComputerName
-        #     InstanceName         = "MSSQLSERVER"
-        #     DatabaseName         = "tempdb"
-        #     SchemaName           = "dbo"
-        #     ObjectName           = ""
-        #     ObjectType           = "Schema"
-        #     Permission           = @(
-        #         DSC_DatabaseObjectPermission
-        #         {
-        #             State      = "Grant"
-        #             Permission = @("Select", "Update", "Insert", "Execute", "Control", "References")
-        #         }
-        #     )
-        #     DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
-        # }
-
-        SqlDatabaseRole 'GrantPermissionsToTempdb'
+        SqlDatabaseUser AddSPSetupUserToTempdb
         {
             ServerName           = $ComputerName
             InstanceName         = "MSSQLSERVER"
             DatabaseName         = "tempdb"
-            Name                 = "db_owner"
-            Ensure               = "Present"
-            MembersToInclude     = @("${DomainNetbiosName}\$($SPSetupCreds.UserName)")
-            PsDscRunAsCredential = $SqlAdministratorCredential
+            UserType             = 'Login'
+            Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            LoginName            = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
             DependsOn            = "[SqlLogin]AddSPSetupLogin"
         }
+
+        # Reference: https://learn.microsoft.com/en-us/sql/t-sql/statements/grant-schema-permissions-transact-sql?view=sql-server-ver16
+        SqlDatabasePermission GrantPermissionssToTempdb
+        {
+            Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            ServerName           =  $ComputerName
+            InstanceName         = "MSSQLSERVER"
+            DatabaseName         = "tempdb"
+            Permission   = @(
+                DatabasePermission
+                {
+                    State      = 'Grant'
+                    Permission = @('Select', 'CreateTable', 'Execute', 'DELETE', 'INSERT', 'UPDATE')
+                }
+                DatabasePermission
+                {
+                    State      = 'GrantWithGrant'
+                    Permission = @()
+                }
+                DatabasePermission
+                {
+                    State      = 'Deny'
+                    Permission = @()
+                }
+            )
+            DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
+        }
+
+        SqlDatabaseObjectPermission GrantPermissionssToDboSchema
+        {
+            Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            ServerName           = $ComputerName
+            InstanceName         = "MSSQLSERVER"
+            DatabaseName         = "tempdb"
+            SchemaName           = "dbo"
+            ObjectName           = ""
+            ObjectType           = "Schema"
+            Permission           = @(
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = @("Select", "Update", "Insert", "Execute", "Control", "References")
+                }
+            )
+            DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
+        }
+
+        # SqlDatabaseRole 'GrantPermissionsToTempdb'
+        # {
+        #     ServerName           = $ComputerName
+        #     InstanceName         = "MSSQLSERVER"
+        #     DatabaseName         = "tempdb"
+        #     Name                 = "db_owner"
+        #     Ensure               = "Present"
+        #     MembersToInclude     = @("${DomainNetbiosName}\$($SPSetupCreds.UserName)")
+        #     PsDscRunAsCredential = $SqlAdministratorCredential
+        #     DependsOn            = "[SqlLogin]AddSPSetupLogin"
+        # }
 
         # Open port on the firewall only when everything is ready, as SharePoint DSC is testing it to start creating the farm
         Firewall AddDatabaseEngineFirewallRule
