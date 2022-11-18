@@ -212,7 +212,7 @@ configuration ConfigureSQLVM
         SqlRole GrantSQLRoleSysadmin
         {
             ServerRoleName   = "sysadmin"
-            MembersToInclude = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
+            MembersToInclude = @("${DomainNetbiosName}\$($DomainAdminCreds.UserName)")
             ServerName       = $ComputerName
             InstanceName     = "MSSQLSERVER"
             Ensure           = "Present"
@@ -222,7 +222,7 @@ configuration ConfigureSQLVM
         SqlRole GrantSQLRoleSecurityAdmin
         {
             ServerRoleName   = "securityadmin"
-            MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            MembersToInclude = @("${DomainNetbiosName}\$($SPSetupCreds.UserName)")
             ServerName       = $ComputerName
             InstanceName     = "MSSQLSERVER"
             Ensure           = "Present"
@@ -232,7 +232,7 @@ configuration ConfigureSQLVM
         SqlRole GrantSQLRoleDBCreator
         {
             ServerRoleName   = "dbcreator"
-            MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            MembersToInclude = @("${DomainNetbiosName}\$($SPSetupCreds.UserName)")
             ServerName       = $ComputerName
             InstanceName     = "MSSQLSERVER"
             Ensure           = "Present"
