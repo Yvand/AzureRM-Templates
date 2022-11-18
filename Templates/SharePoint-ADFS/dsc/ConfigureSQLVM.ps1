@@ -292,7 +292,32 @@ configuration ConfigureSQLVM
                 DSC_DatabaseObjectPermission
                 {
                     State      = "Grant"
-                    Permission = @("Select", "Update", "Insert", "Execute", "Control", "References")
+                    Permission = "Select"
+                }
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = "Update"
+                }
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = "Insert"
+                }
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = "Execute"
+                }
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = "Control"
+                }
+                DSC_DatabaseObjectPermission
+                {
+                    State      = "Grant"
+                    Permission = "References"
                 }
             )
             DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
@@ -370,18 +395,14 @@ function WaitForSqlSetup
 
 
 <#
-# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
-# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
-Install-Module -Name SqlServerDsc
-
-help ConfigureSQLVM
-$DomainAdminCreds = Get-Credential -Credential "yvand"
-$SqlSvcCreds = Get-Credential -Credential "sqlsvc"
-$SPSetupCreds = Get-Credential -Credential "spsetup"
+$password = ConvertTo-SecureString -String "mytopsecurepassword" -AsPlainText -Force
+$DomainAdminCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "yvand", $password
+$SqlSvcCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "sqlsvc", $password
+$SPSetupCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spsetup", $password
 $DNSServer = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.1.0\DSCWork\ConfigureSQLVM.0"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
 ConfigureSQLVM -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
