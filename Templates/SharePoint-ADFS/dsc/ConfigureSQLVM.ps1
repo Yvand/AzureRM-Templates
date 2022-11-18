@@ -12,7 +12,7 @@ configuration ConfigureSQLVM
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 15.2.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
@@ -222,7 +222,7 @@ configuration ConfigureSQLVM
         SqlRole GrantSQLRoleSecurityAdmin
         {
             ServerRoleName   = "securityadmin"
-            MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            MembersToInclude = @("${DomainNetbiosName}\$($SPSetupCreds.UserName)")
             ServerName       = $ComputerName
             InstanceName     = "MSSQLSERVER"
             Ensure           = "Present"
@@ -232,7 +232,7 @@ configuration ConfigureSQLVM
         SqlRole GrantSQLRoleDBCreator
         {
             ServerRoleName   = "dbcreator"
-            MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            MembersToInclude = @("${DomainNetbiosName}\$($SPSetupCreds.UserName)")
             ServerName       = $ComputerName
             InstanceName     = "MSSQLSERVER"
             Ensure           = "Present"
@@ -241,46 +241,72 @@ configuration ConfigureSQLVM
 
         # Since SharePointDsc 4.4.0, SPFarm "Switched from creating a Lock database to a Lock table in the TempDB. This to allow the use of precreated databases."
         # But for this to work, the SPSetup account needs specific permissions on both the tempdb and the dbo schema
-        SqlDatabaseUser AddSPSetupUserToTempdb
+        # SqlDatabaseUser AddSPSetupUserToTempdb
+        # {
+        #     ServerName           = $ComputerName
+        #     InstanceName         = "MSSQLSERVER"
+        #     DatabaseName         = "tempdb"
+        #     UserType             = 'Login'
+        #     Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+        #     LoginName            = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+        #     DependsOn            = "[SqlLogin]AddSPSetupLogin"
+        # }
+
+        # SqlDatabasePermission GrantPermissionssToTempdb
+        # {
+        #     Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+        #     ServerName           =  $ComputerName
+        #     InstanceName         = "MSSQLSERVER"
+        #     DatabaseName         = "tempdb"
+        #     Permission   = @(
+        #         DatabasePermission
+        #         {
+        #             State      = 'Grant'
+        #             Permission = @('Select', 'CreateTable', 'Execute')
+        #         }
+        #         DatabasePermission
+        #         {
+        #             State      = 'GrantWithGrant'
+        #             Permission = @()
+        #         }
+        #         DatabasePermission
+        #         {
+        #             State      = 'Deny'
+        #             Permission = @()
+        #         }
+        #     )
+        #     DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
+        # }
+
+        # SqlDatabaseObjectPermission GrantPermissionssToDboSchema
+        # {
+        #     Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+        #     ServerName           = $ComputerName
+        #     InstanceName         = "MSSQLSERVER"
+        #     DatabaseName         = "tempdb"
+        #     SchemaName           = "dbo"
+        #     ObjectName           = ""
+        #     ObjectType           = "Schema"
+        #     Permission           = @(
+        #         DSC_DatabaseObjectPermission
+        #         {
+        #             State      = "Grant"
+        #             Permission = @("Select", "Update", "Insert", "Execute", "Control", "References")
+        #         }
+        #     )
+        #     DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
+        # }
+
+        SqlDatabaseRole 'GrantPermissionsToTempdb'
         {
             ServerName           = $ComputerName
             InstanceName         = "MSSQLSERVER"
             DatabaseName         = "tempdb"
-            UserType             = 'Login'
-            Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-            LoginName            = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-            DependsOn            = "[SqlLogin]AddSPSetupLogin"
-        }
-
-        SqlDatabasePermission GrantPermissionssToTempdb
-        {
-            Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-            ServerName           =  $ComputerName
-            InstanceName         = "MSSQLSERVER"
-            DatabaseName         = "tempdb"
-            Permissions          = @('Select', 'CreateTable', 'Execute')
-            PermissionState      = "Grant"
+            Name                 = "db_owner"
             Ensure               = "Present"
-            DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
-        }
-
-        SqlDatabaseObjectPermission GrantPermissionssToDboSchema
-        {
-            Name                 = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-            ServerName           = $ComputerName
-            InstanceName         = "MSSQLSERVER"
-            DatabaseName         = "tempdb"
-            SchemaName           = "dbo"
-            ObjectName           = ""
-            ObjectType           = "Schema"
-            Permission           = @(
-                DSC_DatabaseObjectPermission
-                {
-                    State      = "Grant"
-                    Permission = @("Select", "Update", "Insert", "Execute", "Control", "References")
-                }
-            )
-            DependsOn            = "[SqlDatabaseUser]AddSPSetupUserToTempdb"
+            MembersToInclude     = @("${DomainNetbiosName}\$($SPSetupCreds.UserName)")
+            PsDscRunAsCredential = $SqlAdministratorCredential
+            DependsOn            = "[SqlLogin]AddSPSetupLogin"
         }
 
         # Open port on the firewall only when everything is ready, as SharePoint DSC is testing it to start creating the farm
