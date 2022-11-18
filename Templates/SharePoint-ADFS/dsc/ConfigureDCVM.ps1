@@ -236,21 +236,19 @@
         }
 
 
-        xDnsRecord AddADFSHostDNS {
-            Name = $ADFSSiteName
-            Zone = $DomainFQDN
-            Target = $PrivateIP
-            Type = "ARecord"
-            Ensure = "Present"
-            DependsOn = "[WaitForADDomain]WaitForDCReady"
+        DnsRecordA AddADFSHostDNS {
+            Name        = $ADFSSiteName
+            ZoneName    = $DomainFQDN
+            IPv4Address = $PrivateIP
+            Ensure      = "Present"
+            DependsOn   = "[WaitForADDomain]WaitForDCReady"
         }
 
         # https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/deployment/configure-corporate-dns-for-the-federation-service-and-drs
-        xDnsRecord AddADFSDevideRegistrationAlias {
+        DnsRecordCname AddADFSDevideRegistrationAlias {
             Name = "enterpriseregistration"
-            Zone = $DomainFQDN
-            Target = "$ComputerName.$DomainFQDN"
-            Type = "CName"
+            ZoneName = $DomainFQDN
+            HostNameAlias = "$ComputerName.$DomainFQDN"
             Ensure = "Present"
             DependsOn = "[WaitForADDomain]WaitForDCReady"
         }
