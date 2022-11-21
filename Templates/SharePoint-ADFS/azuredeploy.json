@@ -379,7 +379,7 @@
       "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
       "enableAnalysis": false,
       "isSharePointSubscription": "[if(startsWith(parameters('sharePointVersion'), 'subscription'), true(), false())]",
-      "sharePointSubscriptionPackages" : [
+      "sharePointSubscriptionBits" : [
         {
           "Label": "RTM",
           "Packages": [
@@ -505,7 +505,7 @@
       "script": "[if(variables('generalSettings').isSharePointSubscription, 'ConfigureSPSE.ps1', 'ConfigureSPLegacy.ps1')]",
       "function": "ConfigureSPVM",
       "forceUpdateTag": "1.0",
-      "currentSharePointVersionPackage": "[if(variables('generalSettings').isSharePointSubscription, variables('generalSettings').sharePointSubscriptionPackages, 'fake')]"
+      "sharePointBitsSelected": "[if(variables('generalSettings').isSharePointSubscription, variables('generalSettings').sharePointSubscriptionBits, 'fake')]"
     },
     "dscConfigureFEVM": {
       "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat(if(variables('generalSettings').isSharePointSubscription, 'dsc/ConfigureFESE.zip', 'dsc/ConfigureFELegacy.zip'), parameters('_artifactsLocationSasToken')))]",
@@ -1012,7 +1012,7 @@
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[parameters('sharePointVersion')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
-            "SharePointBuildsDetails": "[variables('dscConfigureSPVM').currentSharePointVersionPackage]"
+            "SharePointBits": "[variables('dscConfigureSPVM').sharePointBitsSelected]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1204,7 +1204,7 @@
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[parameters('sharePointVersion')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
-            "SharePointBuildsDetails": "[variables('dscConfigureSPVM').currentSharePointVersionPackage]"
+            "SharePointBits": "[variables('dscConfigureSPVM').sharePointBitsSelected]"
           },
           "privacy": {
             "dataCollection": "enable"

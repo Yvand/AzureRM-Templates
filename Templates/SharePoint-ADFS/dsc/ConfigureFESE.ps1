@@ -9,7 +9,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
-        [Parameter(Mandatory)] $SharePointBuildsDetails,
+        [Parameter(Mandatory)] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -211,9 +211,9 @@ configuration ConfigureFEVM
         xRemoteFile DownloadSharePoint
         {
             DestinationPath = $spIsoPath
-            Uri             = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).Packages[0].DownloadUrl
-            ChecksumType    = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).Packages[0].ChecksumType
-            Checksum        = ($SharePointBuildsDetails | Where-Object {$_.Label -eq "RTM"}).Packages[0].Checksum
+            Uri             = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].DownloadUrl
+            ChecksumType    = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].ChecksumType
+            Checksum        = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].Checksum
             MatchSource     = $false
         }
         
@@ -249,7 +249,7 @@ configuration ConfigureFEVM
         }
 
         if ($SharePointBuildLabel -ne "RTM") {
-            foreach ($package in ($SharePointBuildsDetails | Where-Object {$_.Label -eq $SharePointBuildLabel}).Packages) {
+            foreach ($package in ($SharePointBits | Where-Object {$_.Label -eq $SharePointBuildLabel}).Packages) {
                 $packageUrl = [uri] $package.DownloadUrl
                 $packageFilename = $packageUrl.Segments[$packageUrl.Segments.Count - 1]
                 $packageFilePath = Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $packageFilename
