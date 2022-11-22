@@ -530,6 +530,36 @@ configuration ConfigureFEVM
             DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
         }
 
+        Script WarmupSites
+        {
+            SetScript =
+            {
+                $warmupJobBlock = {
+                    $uri = $args[0]
+                    try {
+                        Write-Verbose "Connecting to $uri..."
+                        # -UseDefaultCredentials: Does NTLM authN
+                        # -UseBasicParsing: Avoid exception because IE was not first launched yet
+                        # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
+                        $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
+                        Write-Verbose "Connected successfully to $uri"
+                    }
+                    catch {
+                    }
+                }
+                $spsite = "http://$($using:SPTrustedSitesName)/"
+                Write-Verbose "Warming up '$spsite'..."
+                $job = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
+                
+                # Must wait for the jobs to complete, otherwise they do not actually run
+                Receive-Job -Job $job -AutoRemoveJob -Wait
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[DnsRecordCname]UpdateDNSAliasSPSites"
+        }
+
         # if ($EnableAnalysis) {
         #     # This resource is for analysis of dsc logs only and totally optionnal
         #     Script parseDscLogs
@@ -621,10 +651,10 @@ $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "SE"
+$SharePointVersion = "2019"
 $EnableAnalysis = $false
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureFELegacy.0\ConfigureFEVM"
 ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force

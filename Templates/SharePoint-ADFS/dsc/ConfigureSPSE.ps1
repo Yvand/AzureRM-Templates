@@ -1487,27 +1487,29 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                $uri = "http://$($ComputerName):5000/"
-                try {
-                    Write-Verbose "Connecting to $uri..."
-                    # -UseDefaultCredentials: Does NTLM authN
-                    # -UseBasicParsing: Avoid exception because IE was not first launched yet
-                    # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
-                    $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 20 -ErrorAction SilentlyContinue -UseBasicParsing
+                $warmupJobBlock = {
+                    $uri = $args[0]
+                    try {
+                        Write-Verbose "Connecting to $uri..."
+                        # -UseDefaultCredentials: Does NTLM authN
+                        # -UseBasicParsing: Avoid exception because IE was not first launched yet
+                        # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
+                        $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
+                        Write-Verbose "Connected successfully to $uri"
+                    }
+                    catch {
+                    }
                 }
-                catch {
-                }
-
-                $uri = "http://$($using:SPTrustedSitesName)/"
-                try {
-                    Write-Verbose "Connecting to $uri..."
-                    # -UseDefaultCredentials: Does NTLM authN
-                    # -UseBasicParsing: Avoid exception because IE was not first launched yet
-                    # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
-                    $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 20 -ErrorAction SilentlyContinue -UseBasicParsing
-                }
-                catch {
-                }
+                $spsite = "http://$($using:ComputerName):5000/"
+                Write-Verbose "Warming up '$spsite'..."
+                $job1 = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
+                $spsite = "http://$($using:SPTrustedSitesName)/"
+                Write-Verbose "Warming up '$spsite'..."
+                $job2 = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
+                
+                # Must wait for the jobs to complete, otherwise they do not actually run
+                Receive-Job -Job $job1 -AutoRemoveJob -Wait
+                Receive-Job -Job $job2 -AutoRemoveJob -Wait
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
