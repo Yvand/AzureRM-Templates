@@ -1483,6 +1483,38 @@ configuration ConfigureSPVM
             PsDscRunAsCredential           = $SPSetupCredsQualified
         }
 
+        Script WarmupSites
+        {
+            SetScript =
+            {
+                $uri = "http://$($ComputerName):5000/"
+                try {
+                    Write-Verbose "Connecting to $uri..."
+                    # -UseDefaultCredentials: Does NTLM authN
+                    # -UseBasicParsing: Avoid exception because IE was not first launched yet
+                    # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
+                    $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 20 -ErrorAction SilentlyContinue -UseBasicParsing
+                }
+                catch {
+                }
+
+                $uri = "http://$($using:SPTrustedSitesName)/"
+                try {
+                    Write-Verbose "Connecting to $uri..."
+                    # -UseDefaultCredentials: Does NTLM authN
+                    # -UseBasicParsing: Avoid exception because IE was not first launched yet
+                    # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
+                    $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 20 -ErrorAction SilentlyContinue -UseBasicParsing
+                }
+                catch {
+                }
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPSite]CreateRootSite"
+        }
+
         # DSC resource File throws an access denied when accessing a remote location, so use Script instead
         Script CreateDSCCompletionFile
         {
@@ -1608,9 +1640,24 @@ $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
 $SharePointVersion = "Subscription-22H2"
 $EnableAnalysis = $true
+$SharePointBits = @(
+    @{
+        Label = "RTM"; 
+        Packages = @(
+            @{ DownloadUrl = "https://go.microsoft.com/fwlink/?linkid=2171943"; ChecksumType = "SHA256"; Checksum = "C576B847C573234B68FC602A0318F5794D7A61D8149EB6AE537AF04470B7FC05" }
+        )
+    },
+    @{
+        Label = "22H2"; 
+        Packages = @(
+            @{ DownloadUrl = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "7E496530EB873146650A9E0653DE835CB2CAD9AF8D154CBD7387BB0F2297C9FC" },
+            @{ DownloadUrl = "https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "247011443AC573D4F03B1622065A7350B8B3DAE04D6A5A6DC64C8270A3BE7636" }
+        )
+    }
+)
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPSE.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
