@@ -4,6 +4,7 @@
 
 * Warm up SharePoint sites at the end of the configuration.
 * Revert the previous change on the SKU of Public IP addresses, to use again SKU basic when possible.
+* Update NSG rules for Bastion
 * Update apiVersion of ARM resources to latest version available.
 * Update DSC modules used to latest version available.
 * Replace DSC module xDnsServer 2.0.0 with DnsServerDsc 3.0.0.
