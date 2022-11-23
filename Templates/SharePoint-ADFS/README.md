@@ -20,7 +20,9 @@ languages:
 
 ## Features
 
-Regardless of the SharePoint version selected, an extensive configuration is performed, with some differences depending on the version:
+This templates creates a SharePoint Subscription / 2019 / 2016 / 2013 farm with an extensive configuration that would take ages to perform manually, including a federated authentication with ADFS, an OAuth trust, the User Profile service and a web application with 2 zones that contains multiple path based and host-named site collections.  
+On the SharePoint virtual machines, [Chocolatey](https://chocolatey.org/) is used to install the latest version of Notepad++, Visual Studio Code, Fiddler, ULS Viewer and 7-Zip.  
+There are some differences on the configuration, depending on the SharePoint version:
 
 ### Common to all SharePoint versions
 
