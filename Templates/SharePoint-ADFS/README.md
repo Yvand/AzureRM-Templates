@@ -76,7 +76,7 @@ Use the following parameters to configure how to connect to the virtual machines
   - If CIDR notation (e.g. `"192.168.99.0/24"` or `"2001:1234::/64"`) or IP address (e.g. `"192.168.99.0"` or `"2001:1234::"`): Firewall accepts incoming RDP traffic from the IP addresses specified.
 - parameter `addAzureBastion`:
   - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) to allow a secure remote access to virtual machines.
-  - if `false` (default): Service Azure Bastion is not created.
+  - if `false` (default): Service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is not created.
 
 ## Cost of the resources deployed
 
@@ -95,6 +95,6 @@ Additional notes:
 
 - Using the default options, the complete deployment takes about 1h (but it is worth it).
 - Once it is completed, the template will return valuable information in the 'Outputs' of the deployment.
-- For various (very good) reasons, in SQL and SharePoint VMs, the name of the local (not domain) administrator is in format `"local-[admin_username]"`. It is recorded in the 'Outputs' of the deployment once it is completed.
+- For various (very good) reasons, in SQL and SharePoint VMs, the name of the local (not domain) administrator is set with a string that is unique to your subscription (e.g. `"local-[q1w2e3r4t5]"`). It is recorded in the 'Outputs' of the deployment once it is completed.
 
 `Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, DSC, Microsoft.Compute/virtualMachines/extensions, Microsoft.DevTestLab/schedules, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/bastionHosts`
