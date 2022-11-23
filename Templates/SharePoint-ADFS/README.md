@@ -22,25 +22,28 @@ languages:
 
 This templates creates a SharePoint Subscription / 2019 / 2016 / 2013 farm with an extensive configuration that would take ages to perform manually, including a federated authentication with ADFS, an OAuth trust, the User Profile service and a web application with 2 zones that contains multiple path based and host-named site collections.  
 On the SharePoint virtual machines, [Chocolatey](https://chocolatey.org/) is used to install the latest version of Notepad++, Visual Studio Code, Fiddler, ULS Viewer and 7-Zip.  
-There are some differences on the configuration, depending on the SharePoint version:
+There are some differences in the configuration, depending on the SharePoint version:
 
 ### Common to all SharePoint versions
 
-- Active Directory forest created, AD CS and AD FS are installed and configured. LDAPS (LDAP over SSL) is also conigured.
-- SharePoint service applications configured: User Profile, add-ins, session state.
-- SharePoint has 1 web application with path based and host-named site collections. There are 2 zones:
-  - Default zone: HTTP with Windows authentication.
-  - Intranet zone: HTTPS with federated (ADFS) authentication. Custom claims provider [LDAPCP](https://www.ldapcp.com/) is installed and configured.
-- An OAuth trust is created, and a dedicated IIS site is created with 2 bindings (HTTP + HTTPS) to host custom high-trust add-ins.
+- An Active Directory forest with AD CS and AD FS configured. LDAPS (LDAP over SSL) is also configured.
+- SharePoint service applications configured: User Profiles, add-ins, session state.
+- SharePoint User Profiles service is configured with a directory synchronization connection, and the MySite host is a host-named site collection.
+- SharePoint has 1 web application with path based and host-named site collections, and contains 2 zones:
+  - Default zone: HTTP using Windows authentication.
+  - Intranet zone: HTTPS using federated (ADFS) authentication. Custom claims provider [LDAPCP](https://www.ldapcp.com/) is installed and configured.
+- An OAuth trust is created, as well as a custom IIS site to host your high-trust add-ins.
 
 ### Specific to SharePoint Subscription
 
-- HTTPS site certificate is managed by SharePoint: It has the private key and sets the binding itself in the IIS site
-- Federated authentication with ADFS is configured using OpenID Connect
+- SharePoint virtual machines are created using the latest disk image of [Windows Server 2022 Azure Edition](https://learn.microsoft.com/windows-server/get-started/editions-comparison-windows-server-2022) available, and SharePoint binaries (install + cumulative updates) are downloaded and installed from scratch.
+- The HTTPS site certificate is managed by SharePoint, which has the private key and sets the binding itself in the IIS site.
+- Federated authentication with ADFS is configured using OpenID Connect.
 
 ### Specific to SharePoint 2019 / 2016 / 2013
 
-- Federated authentication with ADFS is configured using SAML 1.1
+- SharePoint virtual machines are created using a disk image built and maintained by SharePoint Engineering.
+- Federated authentication with ADFS is configured using SAML 1.1.
 
 ## Key parameters
 
