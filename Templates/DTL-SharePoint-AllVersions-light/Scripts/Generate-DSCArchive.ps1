@@ -1,37 +1,15 @@
-#Requires -Version 3.0
+#Requires -PSEdition Desktop
 #Requires -Module Az.Compute
 
 param(
-    [string]$vmName = "*"
+    [string] $vmName = "*",
+    [string] $dscFolderRelativePath = ".\dsc"
 )
 
-<#
--vmName "FE"
-#>
-
-### Ensure connection to Azure RM
-$azurecontext = $null
-$azurecontext = Get-AzContext -ErrorAction SilentlyContinue
-if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontext.Subscription -eq $null) {
-    Write-Host "Launching Azure authentication prompt..." -ForegroundColor Green
-    Connect-AzAccount
-    $azurecontext = Get-AzContext -ErrorAction SilentlyContinue
-}
-if ($azurecontext -eq $null -or $azurecontext.Account -eq $null -or $azurecontext.Subscription -eq $null){ 
-    Write-Host "Unable to get a valid context." -ForegroundColor Red
-    return
-}
-
-function Generate-DSCArchive($vmName) {
-    $dscSourceFolder = Join-Path -Path $PSScriptRoot -ChildPath "..\dsc" -Resolve
-
-    if (Test-Path $dscSourceFolder) {
-        $dscSourceFilePaths = Get-ChildItem $dscSourceFolder -File -Filter "Configure$vmName*.ps1"
-        foreach ($dscSourceFilePath in $dscSourceFilePaths) {
-            $dscArchiveFilePath = "$($dscSourceFilePath.DirectoryName)\$($dscSourceFilePath.BaseName).zip"
-            Publish-AzVMDscConfiguration $dscSourceFilePath -OutputArchivePath $dscArchiveFilePath -Force -Verbose
-        }
+if (Test-Path $dscFolderRelativePath) {
+    $dscSourceFilePaths = Get-ChildItem $dscFolderRelativePath -File -Filter "Configure$vmName*.ps1"
+    foreach ($dscSourceFilePath in $dscSourceFilePaths) {
+        $dscArchiveFilePath = "$($dscSourceFilePath.DirectoryName)\$($dscSourceFilePath.BaseName).zip"
+        Publish-AzVMDscConfiguration -ConfigurationPath "$dscFolderRelativePath\$($dscSourceFilePath.Name)" -OutputArchivePath $dscArchiveFilePath -Force -Verbose
     }
 }
-
-Generate-DSCArchive $vmName
