@@ -1,4 +1,4 @@
-#Requires -Version 3.0
+#Requires -PSEdition Core
 #Requires -Module Az.Resources
 
 ### Define variables
