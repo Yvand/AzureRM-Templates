@@ -1034,7 +1034,7 @@
             "SharePointVersion": "2013",
             "ConfigureADFS": "[parameters('configureADFS')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
-            "SharePointBits": ""
+            "SharePointBits": "[json('null')]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1195,7 +1195,7 @@
             "SharePointVersion": "2016",
             "ConfigureADFS": "[parameters('configureADFS')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
-            "SharePointBits": ""
+            "SharePointBits": "[json('null')]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1356,7 +1356,7 @@
             "SharePointVersion": "2019",
             "ConfigureADFS": "[parameters('configureADFS')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
-            "SharePointBits": ""
+            "SharePointBits": "[json('null')]"
           },
           "privacy": {
             "dataCollection": "enable"
