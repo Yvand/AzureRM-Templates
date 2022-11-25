@@ -532,15 +532,13 @@
       "scriptFileUri": "[uri(variables('_artifactsLocationWithTrailingSlash'), concat('dsc/ConfigureSPLegacy.zip', parameters('_artifactsLocationSasToken')))]",
       "script": "ConfigureSPLegacy.ps1",
       "function": "ConfigureSPVM",
-      "forceUpdateTag": "1.0",
-      "sharePointBitsSelected": []
+      "forceUpdateTag": "1.0"
     },
     "dscConfigureSPSubscriptionVM": {
       "scriptFileUri": "[uri(variables('_artifactsLocationWithTrailingSlash'), concat('dsc/ConfigureSPSE.zip', parameters('_artifactsLocationSasToken')))]",
       "script": "ConfigureSPSE.ps1",
       "function": "ConfigureSPVM",
-      "forceUpdateTag": "1.0",
-      "sharePointBitsSelected": "[variables('generalSettings').sharePointSubscriptionBits]"
+      "forceUpdateTag": "1.0"
     },
     "azureBastion": {
       "subnetPrefix": "10.1.4.0/24",
@@ -1036,7 +1034,7 @@
             "SharePointVersion": "2013",
             "ConfigureADFS": "[parameters('configureADFS')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
-            "SharePointBits": "[variables('dscConfigureSPLegacyVM').sharePointBitsSelected]"
+            "SharePointBits": ""
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1197,7 +1195,7 @@
             "SharePointVersion": "2016",
             "ConfigureADFS": "[parameters('configureADFS')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
-            "SharePointBits": "[variables('dscConfigureSPLegacyVM').sharePointBitsSelected]"
+            "SharePointBits": ""
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1358,7 +1356,7 @@
             "SharePointVersion": "2019",
             "ConfigureADFS": "[parameters('configureADFS')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
-            "SharePointBits": "[variables('dscConfigureSPLegacyVM').sharePointBitsSelected]"
+            "SharePointBits": ""
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1519,7 +1517,7 @@
             "SharePointVersion": "[parameters('provisionSharePointSubscription')]",
             "ConfigureADFS": "[parameters('configureADFS')]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
-            "SharePointBits": "[variables('dscConfigureSPSubscriptionVM').sharePointBitsSelected]"
+            "SharePointBits": "[variables('generalSettings').sharePointSubscriptionBits]"
           },
           "privacy": {
             "dataCollection": "enable"
