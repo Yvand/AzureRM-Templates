@@ -1,6 +1,6 @@
 # Change log for Azure DevTest Labs template SharePoint-AllVersions
 
-## Enhancements & bug-fixes - Published in November 24, 2022
+## Enhancements & bug-fixes - Published in November 28, 2022
 
 * Always install and configure AD CS.
 * Renamed parameter `addPublicIPAddressToEachVM` to `addPublicIPAddress` and changed its type to `string` to provide more granularity. Its default value is now `"SharePointVMsOnly"`, to assign a public IP address only to SharePoint VMs
