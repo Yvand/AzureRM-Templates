@@ -24,7 +24,7 @@ variable "sharepoint_version" {
 
 variable "admin_username" {
   default     = "yvand"
-  description = "Name of the AD and SharePoint administrator. 'administrator' is not allowed"
+  description = "Name of the AD and SharePoint administrator. 'admin' and 'administrator' are not allowed."
   validation {
     condition = !contains([
       "admin",
@@ -36,12 +36,12 @@ variable "admin_username" {
 
 variable "admin_password" {
   default     = ""
-  description = "Leave empty to use an auto-generated password that will be recorded in state file. Input must meet password complexity requirements as documented in https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-"
+  description = "Leave empty to use an auto-generated password that will be recorded in the state file. Input must meet password complexity requirements as documented in https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-"
 }
 
 variable "service_accounts_password" {
   default     = ""
-  description = "Leave empty to use an auto-generated password that will be recorded in state file. Input must meet password complexity requirements as documented in https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-"
+  description = "Leave empty to use an auto-generated password that will be recorded in the state file. Input must meet password complexity requirements as documented in https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-"
 }
 
 variable "domain_fqdn" {
@@ -203,8 +203,8 @@ variable "auto_shutdown_time" {
   type        = string
   description = "The time at which VMs will be automatically shutdown (24h HHmm format). Set value to '9999' to NOT configure the auto shutdown."
   validation {
-    condition     = length(var.auto_shutdown_time) == 4
-    error_message = "The auto_shutdown_time value must contain 4 characters."
+    condition     = can(regex("^\\d{4}$", var.auto_shutdown_time))
+    error_message = "The auto_shutdown_time value must contain 4 digits."
   }
 }
 
@@ -219,12 +219,20 @@ variable "number_additional_frontend" {
 
 variable "rdp_traffic_allowed" {
   default     = "No"
-  description = "Specify if RDP traffic is allowed to connect to the VMs:<br>- If 'No' (default): Firewall denies all incoming RDP traffic from Internet.<br>- If '*' or 'Internet': Firewall accepts all incoming RDP traffic from Internet.<br>- If 'ServiceTagName': Firewall accepts all incoming RDP traffic from the specified 'ServiceTagName'.<br>- If 'xx.xx.xx.xx': Firewall accepts incoming RDP traffic only from the IP 'xx.xx.xx.xx'."
+  description = "Specify if RDP traffic is allowed:<br>- If 'No' (default): Firewall denies all incoming RDP traffic.<br>- If '*' or 'Internet': Firewall accepts all incoming RDP traffic from Internet.<br>- If CIDR notation (e.g. 192.168.99.0/24 or 2001:1234::/64) or IP address (e.g. 192.168.99.0 or 2001:1234::): Firewall accepts incoming RDP traffic from the IP addresses specified."
 }
 
-variable "add_public_ip_to_each_vm" {
-  default     = true
-  description = "Specify if a static public IP address should be assigned to each VM."
+variable "add_public_ip_address" {
+  default     = "SharePointVMsOnly"
+  description = "Specify if a public IP address should be added."
+  validation {
+    condition = contains([
+      "Yes",
+      "No",
+      "SharePointVMsOnly"
+    ], var.add_public_ip_address)
+    error_message = "Invalid value specified for add_public_ip_address."
+  }
 }
 
 variable "enable_azure_bastion" {
@@ -303,9 +311,5 @@ variable "vm_sp_storage_account_type" {
 }
 
 variable "_artifactsLocation" {
-  default = "https://github.com/Azure/azure-quickstart-templates/raw/master/application-workloads/sharepoint/sharepoint-adfs/"
-}
-
-variable "_artifactsLocationSasToken" {
-  default = ""
+  default = "https://raw.githubusercontent.com/Yvand/terraform-azurerm-sharepoint/3.0.0/dsc/"
 }
