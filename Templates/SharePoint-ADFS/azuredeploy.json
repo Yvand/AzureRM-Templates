@@ -478,7 +478,18 @@
       "vmNicName": "[concat('NIC-', variables('generalSettings').vmSPName, '-0')]",
       "vmPublicIPName": "[concat('PublicIP-', variables('generalSettings').vmSPName)]",
       "vmPublicIPDnsName": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('generalSettings').vmSPName), '_', '-'))]",
-      "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSPName)]"
+      "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmSPName)]",
+      "imageId": "[if(variables('generalSettings').isSharePointSubscription, variables('vmSPImagesList').Subscription,
+        if(equals(parameters('sharePointVersion'), '2019'), variables('vmSPImagesList').sp2019,
+          if(equals(parameters('sharePointVersion'), '2016'), variables('vmSPImagesList').sp2016, variables('vmSPImagesList').sp2013)
+        )
+      )]"
+    },
+    "vmSPImagesList" : {
+      "Subscription": "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest",
+      "sp2019": "MicrosoftSharePoint:MicrosoftSharePointServer:sp2019gen2smalldisk:latest",
+      "sp2016": "MicrosoftSharePoint:MicrosoftSharePointServer:sp2016:latest",
+      "sp2013": "MicrosoftSharePoint:MicrosoftSharePointServer:sp2013:latest"
     },
     "vmFE": {
       "vmOSDiskName": "Disk-FE-OS",
@@ -908,10 +919,10 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('vmSP').vmImagePublisher]",
-            "offer": "[variables('vmSP').vmImageOffer]",
-            "sku": "[variables('vmSP').vmImageSKU]",
-            "version": "latest"
+            "publisher":  "[split(variables('vmSP').imageId, ':')[0]]",
+            "offer": "[split(variables('vmSP').imageId, ':')[1]]",
+            "sku":  "[split(variables('vmSP').imageId, ':')[2]]",
+            "version":  "[split(variables('vmSP').imageId, ':')[3]]"
           },
           "osDisk": {
             "name": "[variables('vmSP').vmOSDiskName]",
