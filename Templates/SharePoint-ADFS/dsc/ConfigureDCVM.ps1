@@ -407,7 +407,7 @@
                 $domain = Get-ADDomain -Current LocalComputer
                 $key = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
                 if ($null -eq (Get-GPO -Name "Edge_HideFirstRunExperience" -ErrorAction SilentlyContinue)) {
-                    New-GPO -name "Edge_HideFirstRunExperience" -comment "GPO For Edge_HideFirstRunExperience" | Set-GPRegistryValue -key $key -ValueName "HideFirstRunExperience" -Type DWORD -value 1 |New-GPLink -Target $domain.DomainControllersContainer -order 1
+                    New-GPO -name "Edge_HideFirstRunExperience" -comment "GPO For Edge_HideFirstRunExperience" | Set-GPRegistryValue -key $key -ValueName "HideFirstRunExperience" -Type DWORD -value 1 |New-GPLink -Target $domain.DistinguishedName -order 1
                 }
             }
             GetScript  = { return @{ "Result" = "false" } }
