@@ -509,12 +509,12 @@
       {
         "policyValueName": "ManagedFavorites",
         "policyValueType": "String",
-        "policyValueValue": "[[{ \"toplevel_name\": \"SharePoint\" }, { \"name\": \"Central administration\", \"url\": \"http://sp:5000/\" }, { \"name\": \"Root site - Default zone\", \"url\": \"http://spsites/\" }, { \"name\": \"Root site - Intranet zone\", \"url\": \"https://spsites.contoso.local/\" }]]"
+        "policyValueValue": "[[{ \"toplevel_name\": \"SharePoint\" }, { \"name\": \"Central administration\", \"url\": \"http://sp:5000/\" }, { \"name\": \"Root site - Default zone\", \"url\": \"http://spsites/\" }, { \"name\": \"Root site - Intranet zone\", \"url\": \"https://spsites.contoso.local/\" }]"
       },
       {
         "policyValueName": "NewTabPageManagedQuickLinks",
         "policyValueType": "String",
-        "policyValueValue": "[[{\"pinned\": true, \"title\": \"Central administration\", \"url\": \"http://sp:5000/\" }, { \"pinned\": true, \"title\": \"Root site - Default zone\", \"url\": \"http://spsites/\" }, { \"pinned\": true, \"title\": \"Root site - Intranet zone\", \"url\": \"https://spsites.contoso.local/\" }]]"
+        "policyValueValue": "[[{\"pinned\": true, \"title\": \"Central administration\", \"url\": \"http://sp:5000/\" }, { \"pinned\": true, \"title\": \"Root site - Default zone\", \"url\": \"http://spsites/\" }, { \"pinned\": true, \"title\": \"Root site - Intranet zone\", \"url\": \"https://spsites.contoso.local/\" }]"
       }
     ],
     "networkSettings": {
