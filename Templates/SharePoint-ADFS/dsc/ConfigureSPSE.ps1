@@ -8,6 +8,8 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [String]$SQLName,
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
+        [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
+        [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
         [Parameter(Mandatory)] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
@@ -45,7 +47,7 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [System.Management.Automation.PSCredential] $SPADDirSyncCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPADDirSyncCreds.UserName)", $SPADDirSyncCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
-    [String] $SPTrustedSitesName = "spsites"
+    [String] $SPTrustedSitesName = $SharePointSitesAuthority
     [String] $ComputerName = Get-Content env:computername
     [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
@@ -696,7 +698,7 @@ configuration ConfigureSPVM
             FarmAccount               = $SPFarmCredsQualified
             PsDscRunAsCredential      = $SPSetupCredsQualified
             AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
-            CentralAdministrationPort = 5000
+            CentralAdministrationPort = $SharePointCentralAdminPort
             # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
             RunCentralAdmin           = $true
             IsSingleInstance          = "Yes"
@@ -1500,7 +1502,7 @@ configuration ConfigureSPVM
                     catch {
                     }
                 }
-                $spsite = "http://$($using:ComputerName):5000/"
+                $spsite = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
                 Write-Verbose "Warming up '$spsite'..."
                 $job1 = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
                 $spsite = "http://$($using:SPTrustedSitesName)/"

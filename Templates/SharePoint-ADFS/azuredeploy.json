@@ -381,7 +381,7 @@
     },
     "sharePointSettings": {
       "sharePointSitesAuthority": "spsites",
-      "sharepoint_central_administration_port": 5000,
+      "sharePointCentralAdminPort": 5000,
       "isSharePointSubscription": "[if(startsWith(parameters('sharePointVersion'), 'subscription'), true(), false())]",
       "sharePointImagesList" : {
         "Subscription": "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest",
@@ -511,12 +511,12 @@
       {
         "policyValueName": "ManagedFavorites",
         "policyValueType": "String",
-        "policyValueValue": "[concat('[{ \"toplevel_name\": \"SharePoint\" }, { \"name\": \"Central administration\", \"url\": \"http://', variables('generalSettings').vmSPName, ':', variables('sharePointSettings').sharepoint_central_administration_port, '/\" }, { \"name\": \"Root site - Default zone\", \"url\": \"http://', variables('sharePointSettings').sharePointSitesAuthority, '/\" }, { \"name\": \"Root site - Intranet zone\", \"url\": \"https://', variables('sharePointSettings').sharePointSitesAuthority, '.', parameters('domainFQDN'), '/\" }]', '', '')]"
+        "policyValueValue": "[concat('[{ \"toplevel_name\": \"SharePoint\" }, { \"name\": \"Central administration\", \"url\": \"http://', variables('generalSettings').vmSPName, ':', variables('sharePointSettings').sharePointCentralAdminPort, '/\" }, { \"name\": \"Root site - Default zone\", \"url\": \"http://', variables('sharePointSettings').sharePointSitesAuthority, '/\" }, { \"name\": \"Root site - Intranet zone\", \"url\": \"https://', variables('sharePointSettings').sharePointSitesAuthority, '.', parameters('domainFQDN'), '/\" }]', '', '')]"
       },
       {
         "policyValueName": "NewTabPageManagedQuickLinks",
         "policyValueType": "String",
-        "policyValueValue": "[concat('[{\"pinned\": true, \"title\": \"Central administration\", \"url\": \"http://', variables('generalSettings').vmSPName, ':', variables('sharePointSettings').sharepoint_central_administration_port, '/\" }, { \"pinned\": true, \"title\": \"Root site - Default zone\", \"url\": \"http://', variables('sharePointSettings').sharePointSitesAuthority, '/\" }, { \"pinned\": true, \"title\": \"Root site - Intranet zone\", \"url\": \"https://', variables('sharePointSettings').sharePointSitesAuthority, '.', parameters('domainFQDN'), '/\" }]')]"
+        "policyValueValue": "[concat('[{\"pinned\": true, \"title\": \"Central administration\", \"url\": \"http://', variables('generalSettings').vmSPName, ':', variables('sharePointSettings').sharePointCentralAdminPort, '/\" }, { \"pinned\": true, \"title\": \"Root site - Default zone\", \"url\": \"http://', variables('sharePointSettings').sharePointSitesAuthority, '/\" }, { \"pinned\": true, \"title\": \"Root site - Intranet zone\", \"url\": \"https://', variables('sharePointSettings').sharePointSitesAuthority, '.', parameters('domainFQDN'), '/\" }]')]"
       }
     ],
     "networkSettings": {
@@ -1126,6 +1126,8 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[parameters('sharePointVersion')]",
+            "SharePointSitesAuthority": "[variables('sharePointSettings').sharePointSitesAuthority]",
+            "SharePointCentralAdminPort": "[variables('sharePointSettings').sharePointCentralAdminPort]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
             "SharePointBits": "[variables('dscConfigureSPVM').sharePointBitsSelected]"
           },
