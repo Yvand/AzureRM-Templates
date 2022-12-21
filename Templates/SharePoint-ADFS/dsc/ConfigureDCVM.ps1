@@ -402,12 +402,117 @@
             TestScript = { return $false }
         }
 
-        Script Edge_HideFirstRunExperience {
+        Script ConfigureEdgePolicies {
             SetScript  = {
                 $domain = Get-ADDomain -Current LocalComputer
                 $key = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
-                if ($null -eq (Get-GPO -Name "Edge_HideFirstRunExperience" -ErrorAction SilentlyContinue)) {
-                    New-GPO -name "Edge_HideFirstRunExperience" -comment "GPO For Edge_HideFirstRunExperience" | Set-GPRegistryValue -key $key -ValueName "HideFirstRunExperience" -Type DWORD -value 1 |New-GPLink -Target $domain.DistinguishedName -order 1
+                $edgePolicies = @(
+                    @{
+                        policyValueName = "HideFirstRunExperience";
+                        policyValueType = "DWORD";
+                        policyValueValue = 1;
+                    },
+                    @{
+                        policyValueName = "TrackingPrevention";
+                        policyValueType = "DWORD";
+                        policyValueValue = 3;
+                    },
+                    @{
+                        policyValueName = "AdsTransparencyEnabled";
+                        policyValueType = "DWORD";
+                        policyValueValue = 0;
+                    },
+                    @{
+                        policyValueName = "BingAdsSuppression";
+                        policyValueType = "DWORD";
+                        policyValueValue = 1;
+                    },
+                    @{
+                        policyValueName = "AdsSettingForIntrusiveAdsSites";
+                        policyValueType = "DWORD";
+                        policyValueValue = 2;
+                    },
+                    @{
+                        policyValueName = "AskBeforeCloseEnabled";
+                        policyValueType = "DWORD";
+                        policyValueValue = 0;
+                    },
+                    @{
+                        policyValueName = "BlockThirdPartyCookies";
+                        policyValueType = "DWORD";
+                        policyValueValue = 1;
+                    },
+                    @{
+                        policyValueName = "ConfigureDoNotTrack";
+                        policyValueType = "DWORD";
+                        policyValueValue = 1;
+                    },
+                    @{
+                        policyValueName = "DiagnosticData";
+                        policyValueType = "DWORD";
+                        policyValueValue = 0;
+                    },
+                    @{
+                        policyValueName = "HubsSidebarEnabled";
+                        policyValueType = "DWORD";
+                        policyValueValue = 0;
+                    },
+                    @{
+                        policyValueName = "HomepageIsNewTabPage";
+                        policyValueType = "DWORD";
+                        policyValueValue = 1;
+                    },
+                    @{
+                        policyValueName = "HomepageLocation";
+                        policyValueType = "String";
+                        policyValueValue = "edge://newtab";
+                    },
+                    @{
+                        policyValueName = "ShowHomeButton";
+                        policyValueType = "DWORD";
+                        policyValueValue = 1;
+                    },
+                    @{
+                        policyValueName = "NewTabPageLocation";
+                        policyValueType = "String";
+                        policyValueValue = "about://blank";
+                    },
+                    @{
+                        policyValueName = "NewTabPageQuickLinksEnabled";
+                        policyValueType = "DWORD";
+                        policyValueValue = 1;
+                    },
+                    @{
+                        policyValueName = "NewTabPageContentEnabled";
+                        policyValueType = "DWORD";
+                        policyValueValue = 0;
+                    },
+                    @{
+                        policyValueName = "NewTabPageAllowedBackgroundTypes";
+                        policyValueType = "DWORD";
+                        policyValueValue = 3;
+                    },
+                    @{
+                        policyValueName = "NewTabPageAppLauncherEnabled";
+                        policyValueType = "DWORD";
+                        policyValueValue = 0;
+                    },
+                    @{
+                        policyValueName = "ManagedFavorites";
+                        policyValueType = "String";
+                        policyValueValue = '[{ "toplevel_name": "SharePoint" }, { "name": "Central administration", "url": "http://sp:5000/" }, { "name": "Root site - Default zone", "url": "http://spsites/" }, { "name": "Root site - Intranet zone", "url": "https://spsites.contoso.local/" }]';
+                    },
+                    @{
+                        policyValueName = "NewTabPageManagedQuickLinks";
+                        policyValueType = "String";
+                        policyValueValue = '[{"pinned": true, "title": "Central administration", "url": "http://sp:5000/" }, { "pinned": true, "title": "Root site - Default zone", "url": "http://spsites/" }, { "pinned": true, "title": "Root site - Intranet zone", "url": "https://spsites.contoso.local/" }]';
+                    }
+                )
+
+                foreach ($policy in $edgePolicies) {
+                    if ($null -eq (Get-GPO -Name "Edge_$($policy.policyValueName)" -ErrorAction SilentlyContinue)) {
+                        New-GPO -name "Edge_$($policy.policyValueName)" -comment "GPO For Edge_$($policy.policyValueName)" | Set-GPRegistryValue -key $key -ValueName $policy.policyValueName -Type $policy.policyValueType -value $policy.policyValueValue | New-GPLink -Target $domain.DistinguishedName -order 1
+                    }
                 }
             }
             GetScript  = { return @{ "Result" = "false" } }
