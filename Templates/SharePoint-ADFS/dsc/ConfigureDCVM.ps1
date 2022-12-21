@@ -5,7 +5,8 @@
         [Parameter(Mandatory)] [String]$DomainFQDN,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$Admincreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds,
-        [Parameter(Mandatory)] [String]$PrivateIP
+        [Parameter(Mandatory)] [String]$PrivateIP,
+        [Parameter(Mandatory)] $EdgePolicies
     )
 
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
@@ -406,108 +407,109 @@
             SetScript  = {
                 $domain = Get-ADDomain -Current LocalComputer
                 $key = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
-                $edgePolicies = @(
-                    @{
-                        policyValueName = "HideFirstRunExperience";
-                        policyValueType = "DWORD";
-                        policyValueValue = 1;
-                    },
-                    @{
-                        policyValueName = "TrackingPrevention";
-                        policyValueType = "DWORD";
-                        policyValueValue = 3;
-                    },
-                    @{
-                        policyValueName = "AdsTransparencyEnabled";
-                        policyValueType = "DWORD";
-                        policyValueValue = 0;
-                    },
-                    @{
-                        policyValueName = "BingAdsSuppression";
-                        policyValueType = "DWORD";
-                        policyValueValue = 1;
-                    },
-                    @{
-                        policyValueName = "AdsSettingForIntrusiveAdsSites";
-                        policyValueType = "DWORD";
-                        policyValueValue = 2;
-                    },
-                    @{
-                        policyValueName = "AskBeforeCloseEnabled";
-                        policyValueType = "DWORD";
-                        policyValueValue = 0;
-                    },
-                    @{
-                        policyValueName = "BlockThirdPartyCookies";
-                        policyValueType = "DWORD";
-                        policyValueValue = 1;
-                    },
-                    @{
-                        policyValueName = "ConfigureDoNotTrack";
-                        policyValueType = "DWORD";
-                        policyValueValue = 1;
-                    },
-                    @{
-                        policyValueName = "DiagnosticData";
-                        policyValueType = "DWORD";
-                        policyValueValue = 0;
-                    },
-                    @{
-                        policyValueName = "HubsSidebarEnabled";
-                        policyValueType = "DWORD";
-                        policyValueValue = 0;
-                    },
-                    @{
-                        policyValueName = "HomepageIsNewTabPage";
-                        policyValueType = "DWORD";
-                        policyValueValue = 1;
-                    },
-                    @{
-                        policyValueName = "HomepageLocation";
-                        policyValueType = "String";
-                        policyValueValue = "edge://newtab";
-                    },
-                    @{
-                        policyValueName = "ShowHomeButton";
-                        policyValueType = "DWORD";
-                        policyValueValue = 1;
-                    },
-                    @{
-                        policyValueName = "NewTabPageLocation";
-                        policyValueType = "String";
-                        policyValueValue = "about://blank";
-                    },
-                    @{
-                        policyValueName = "NewTabPageQuickLinksEnabled";
-                        policyValueType = "DWORD";
-                        policyValueValue = 1;
-                    },
-                    @{
-                        policyValueName = "NewTabPageContentEnabled";
-                        policyValueType = "DWORD";
-                        policyValueValue = 0;
-                    },
-                    @{
-                        policyValueName = "NewTabPageAllowedBackgroundTypes";
-                        policyValueType = "DWORD";
-                        policyValueValue = 3;
-                    },
-                    @{
-                        policyValueName = "NewTabPageAppLauncherEnabled";
-                        policyValueType = "DWORD";
-                        policyValueValue = 0;
-                    },
-                    @{
-                        policyValueName = "ManagedFavorites";
-                        policyValueType = "String";
-                        policyValueValue = '[{ "toplevel_name": "SharePoint" }, { "name": "Central administration", "url": "http://sp:5000/" }, { "name": "Root site - Default zone", "url": "http://spsites/" }, { "name": "Root site - Intranet zone", "url": "https://spsites.contoso.local/" }]';
-                    },
-                    @{
-                        policyValueName = "NewTabPageManagedQuickLinks";
-                        policyValueType = "String";
-                        policyValueValue = '[{"pinned": true, "title": "Central administration", "url": "http://sp:5000/" }, { "pinned": true, "title": "Root site - Default zone", "url": "http://spsites/" }, { "pinned": true, "title": "Root site - Intranet zone", "url": "https://spsites.contoso.local/" }]';
-                    }
-                )
+                $edgePolicies = $using:EdgePolicies
+                # $edgePolicies = @(
+                #     @{
+                #         policyValueName = "HideFirstRunExperience";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 1;
+                #     },
+                #     @{
+                #         policyValueName = "TrackingPrevention";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 3;
+                #     },
+                #     @{
+                #         policyValueName = "AdsTransparencyEnabled";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 0;
+                #     },
+                #     @{
+                #         policyValueName = "BingAdsSuppression";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 1;
+                #     },
+                #     @{
+                #         policyValueName = "AdsSettingForIntrusiveAdsSites";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 2;
+                #     },
+                #     @{
+                #         policyValueName = "AskBeforeCloseEnabled";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 0;
+                #     },
+                #     @{
+                #         policyValueName = "BlockThirdPartyCookies";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 1;
+                #     },
+                #     @{
+                #         policyValueName = "ConfigureDoNotTrack";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 1;
+                #     },
+                #     @{
+                #         policyValueName = "DiagnosticData";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 0;
+                #     },
+                #     @{
+                #         policyValueName = "HubsSidebarEnabled";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 0;
+                #     },
+                #     @{
+                #         policyValueName = "HomepageIsNewTabPage";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 1;
+                #     },
+                #     @{
+                #         policyValueName = "HomepageLocation";
+                #         policyValueType = "String";
+                #         policyValueValue = "edge://newtab";
+                #     },
+                #     @{
+                #         policyValueName = "ShowHomeButton";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 1;
+                #     },
+                #     @{
+                #         policyValueName = "NewTabPageLocation";
+                #         policyValueType = "String";
+                #         policyValueValue = "about://blank";
+                #     },
+                #     @{
+                #         policyValueName = "NewTabPageQuickLinksEnabled";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 1;
+                #     },
+                #     @{
+                #         policyValueName = "NewTabPageContentEnabled";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 0;
+                #     },
+                #     @{
+                #         policyValueName = "NewTabPageAllowedBackgroundTypes";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 3;
+                #     },
+                #     @{
+                #         policyValueName = "NewTabPageAppLauncherEnabled";
+                #         policyValueType = "DWORD";
+                #         policyValueValue = 0;
+                #     },
+                #     @{
+                #         policyValueName = "ManagedFavorites";
+                #         policyValueType = "String";
+                #         policyValueValue = '[{ "toplevel_name": "SharePoint" }, { "name": "Central administration", "url": "http://sp:5000/" }, { "name": "Root site - Default zone", "url": "http://spsites/" }, { "name": "Root site - Intranet zone", "url": "https://spsites.contoso.local/" }]';
+                #     },
+                #     @{
+                #         policyValueName = "NewTabPageManagedQuickLinks";
+                #         policyValueType = "String";
+                #         policyValueValue = '[{"pinned": true, "title": "Central administration", "url": "http://sp:5000/" }, { "pinned": true, "title": "Root site - Default zone", "url": "http://spsites/" }, { "pinned": true, "title": "Root site - Intranet zone", "url": "https://spsites.contoso.local/" }]';
+                #     }
+                # )
 
                 foreach ($policy in $edgePolicies) {
                     if ($null -eq (Get-GPO -Name "Edge_$($policy.policyValueName)" -ErrorAction SilentlyContinue)) {
