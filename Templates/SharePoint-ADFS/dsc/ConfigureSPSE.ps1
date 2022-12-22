@@ -53,7 +53,7 @@ configuration ConfigureSPVM
     [String] $UpaServiceName = "User Profile Service Application"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
-    [String] $SetupPath = "C:\Setup"
+    [String] $SetupPath = "C:\Data"
     [String] $DCSetupPath = "\\$DCName\C$\Setup"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
@@ -63,12 +63,9 @@ configuration ConfigureSPVM
     [String] $SPTeamSiteTemplate = "STS#3"
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
-    [String] $spIsoFolder = [environment]::GetEnvironmentVariable("temp","machine")
-    [String] $spIsoPath = Join-Path -Path $spIsoFolder -ChildPath "OfficeServer.iso"
-    [String] $spIsoDriverLetter = "S"
-    [String] $spInstallFolder = "${spIsoDriverLetter}:\"
-    [String] $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
-
+    [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
+    [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"
+    [String] $SharePointIsoDriveLetter = "S"
 
     Node localhost
     {
@@ -261,7 +258,7 @@ configuration ConfigureSPVM
         #**********************************************************
         xRemoteFile DownloadSharePoint
         {
-            DestinationPath = $spIsoPath
+            DestinationPath = $SharePointIsoFullPath
             Uri             = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].DownloadUrl
             ChecksumType    = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].ChecksumType
             Checksum        = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].Checksum
@@ -270,14 +267,14 @@ configuration ConfigureSPVM
         
         MountImage MountSharePointImage
         {
-            ImagePath   = $spIsoPath
-            DriveLetter = $spIsoDriverLetter
+            ImagePath   = $SharePointIsoFullPath
+            DriveLetter = $SharePointIsoDriveLetter
             DependsOn   = "[xRemoteFile]DownloadSharePoint"
         }
           
         WaitForVolume WaitForSharePointImage
         {
-            DriveLetter      = $spIsoDriverLetter
+            DriveLetter      = $SharePointIsoDriveLetter
             RetryIntervalSec = 5
             RetryCount       = 10
             DependsOn        = "[MountImage]MountSharePointImage"
@@ -286,7 +283,7 @@ configuration ConfigureSPVM
         SPInstallPrereqs InstallPrerequisites
         {
             IsSingleInstance  = "Yes"
-            InstallerPath     = $spPrereqPath
+            InstallerPath     = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
             OnlineMode        = $true
             DependsOn         = "[WaitForVolume]WaitForSharePointImage"
         }
@@ -294,7 +291,7 @@ configuration ConfigureSPVM
         SPInstall InstallBinaries
         {
             IsSingleInstance = "Yes"
-            BinaryDir        = $spInstallFolder
+            BinaryDir        = "${spIsoDriverLetter}:\"
             ProductKey       = "VW2FM-FN9FT-H22J4-WV9GT-H8VKF"
             DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
         }
@@ -303,7 +300,7 @@ configuration ConfigureSPVM
             foreach ($package in ($SharePointBits | Where-Object {$_.Label -eq $SharePointBuildLabel}).Packages) {
                 $packageUrl = [uri] $package.DownloadUrl
                 $packageFilename = $packageUrl.Segments[$packageUrl.Segments.Count - 1]
-                $packageFilePath = Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $packageFilename
+                $packageFilePath = Join-Path -Path $SharePointBitsPath -ChildPath $packageFilename
                 
                 xRemoteFile "DownloadSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
                 {
