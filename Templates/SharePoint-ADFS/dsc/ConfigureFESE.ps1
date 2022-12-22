@@ -10,7 +10,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
-        [Parameter()] [System.Management.Automation.PSCustomObject] $SharePointBits,
+        [Parameter()] [System.Object[]] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
