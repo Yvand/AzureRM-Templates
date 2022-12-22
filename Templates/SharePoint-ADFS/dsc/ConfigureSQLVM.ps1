@@ -38,8 +38,6 @@ configuration ConfigureSQLVM
         WindowsFeature AddADPowerShell { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         
         DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
-        
-        SqlMaxDop ConfigureMaxDOP { ServerName = $ComputerName; InstanceName = "MSSQLSERVER"; MaxDop = 1; }
 
         Script EnableFileSharing
         {
@@ -166,6 +164,8 @@ configuration ConfigureSQLVM
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
+
+        SqlMaxDop ConfigureMaxDOP { ServerName = $ComputerName; InstanceName = "MSSQLSERVER"; MaxDop = 1; DependsOn = "[Script]EnsureSQLServiceStarted" }
 
         SqlServiceAccount SetSqlInstanceServiceAccount
         {
