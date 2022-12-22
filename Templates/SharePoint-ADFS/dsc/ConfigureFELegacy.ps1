@@ -8,8 +8,9 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [String]$SQLName,
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
+        [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
-        [Parameter()] $SharePointBits,
+        [Parameter()] [System.Management.Automation.PSCustomObject] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -33,7 +34,6 @@ configuration ConfigureFEVM
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
-    [String] $SPTrustedSitesName = "spsites"
     [String] $ComputerName = Get-Content env:computername
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
     [String] $SetupPath = "C:\Setup"
@@ -316,7 +316,7 @@ configuration ConfigureFEVM
         {
             SetScript =
             {
-                $uri = "http://$($using:SPTrustedSitesName)/sites/team"
+                $uri = "http://$($using:SharePointSitesAuthority)/sites/team"
                 $sleepTime = 30
                 $currentStatusCode = 0
                 $expectedStatusCode = 200
@@ -436,7 +436,6 @@ configuration ConfigureFEVM
                 FarmAccount               = $SPFarmCredsQualified
                 PsDscRunAsCredential      = $SPSetupCredsQualified
                 AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
-                CentralAdministrationPort = 5000
                 # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
                 RunCentralAdmin           = $false
                 IsSingleInstance          = "Yes"
@@ -454,7 +453,6 @@ configuration ConfigureFEVM
                 FarmAccount               = $SPFarmCredsQualified
                 PsDscRunAsCredential      = $SPSetupCredsQualified
                 AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
-                CentralAdministrationPort = 5000
                 # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
                 RunCentralAdmin           = $false
                 IsSingleInstance          = "Yes"
@@ -467,7 +465,7 @@ configuration ConfigureFEVM
 
         DnsRecordCname UpdateDNSAliasSPSites
         {
-            Name                 = $SPTrustedSitesName
+            Name                 = $SharePointSitesAuthority
             ZoneName             = $DomainFQDN
             DnsServer            = $DCName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
@@ -502,7 +500,7 @@ configuration ConfigureFEVM
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
             CAServerFQDN           = "$DCName.$DomainFQDN"
-            Subject                = "$SPTrustedSitesName.$DomainFQDN"
+            Subject                = "$SharePointSitesAuthority.$DomainFQDN"
             SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
             KeyLength              = '2048'
             Exportable             = $true
@@ -523,7 +521,7 @@ configuration ConfigureFEVM
                 Protocol             = "HTTPS"
                 Port                 = 443
                 CertificateStoreName = "My"
-                CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
+                CertificateSubject   = "$SharePointSitesAuthority.$DomainFQDN"
             }
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -547,7 +545,7 @@ configuration ConfigureFEVM
                     catch {
                     }
                 }
-                $spsite = "http://$($using:SPTrustedSitesName)/"
+                $spsite = "http://$($using:SharePointSitesAuthority)/"
                 Write-Verbose "Warming up '$spsite'..."
                 $job = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
                 

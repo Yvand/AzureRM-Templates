@@ -8,8 +8,10 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [String]$SQLName,
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
+        [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
+        [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
-        [Parameter()] $SharePointBits,
+        [Parameter()] [System.Management.Automation.PSCustomObject] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -43,7 +45,6 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [System.Management.Automation.PSCredential] $SPADDirSyncCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPADDirSyncCreds.UserName)", $SPADDirSyncCreds.Password)
     [String] $SPDBPrefix = "SPDSC_"
-    [String] $SPTrustedSitesName = "spsites"
     [String] $ComputerName = Get-Content env:computername
     [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
@@ -367,7 +368,7 @@ configuration ConfigureSPVM
         # Create DNS entries used by SharePoint
         DnsRecordCname AddTrustedSiteDNS
         {
-            Name                 = $SPTrustedSitesName
+            Name                 = $SharePointSitesAuthority
             ZoneName             = $DomainFQDN
             DnsServer            = $DCName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
@@ -488,7 +489,7 @@ configuration ConfigureSPVM
             Password                      = $SPAppPoolCreds
             PasswordNeverExpires          = $true
             Ensure                        = "Present"
-            ServicePrincipalNames         = @("HTTP/$SPTrustedSitesName.$($DomainFQDN)", "HTTP/$MySiteHostAlias.$($DomainFQDN)", "HTTP/$HNSC1Alias.$($DomainFQDN)", "HTTP/$SPTrustedSitesName", "HTTP/$MySiteHostAlias", "HTTP/$HNSC1Alias")
+            ServicePrincipalNames         = @("HTTP/$SharePointSitesAuthority.$($DomainFQDN)", "HTTP/$MySiteHostAlias.$($DomainFQDN)", "HTTP/$HNSC1Alias.$($DomainFQDN)", "HTTP/$SharePointSitesAuthority", "HTTP/$MySiteHostAlias", "HTTP/$HNSC1Alias")
             PsDscRunAsCredential          = $DomainAdminCredsQualified
             DependsOn                     = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
@@ -611,7 +612,7 @@ configuration ConfigureSPVM
             FarmAccount               = $SPFarmCredsQualified
             PsDscRunAsCredential      = $SPSetupCredsQualified
             AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
-            CentralAdministrationPort = 5000
+            CentralAdministrationPort = $SharePointCentralAdminPort
             # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
             RunCentralAdmin           = $true
             IsSingleInstance          = "Yes"
@@ -746,7 +747,7 @@ configuration ConfigureSPVM
             ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
             AllowAnonymous         = $false
             DatabaseName           = $SPDBPrefix + "Content_80"
-            WebAppUrl              = "http://$SPTrustedSitesName/"
+            WebAppUrl              = "http://$SharePointSitesAuthority/"
             Port                   = 80
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
@@ -809,7 +810,7 @@ configuration ConfigureSPVM
         {
             Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
-            Realm                        = "urn:sharepoint:$($SPTrustedSitesName)"
+            Realm                        = "urn:sharepoint:$($SharePointSitesAuthority)"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
             IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
             ClaimsMappings               = @(
@@ -835,10 +836,10 @@ configuration ConfigureSPVM
         # So I added resources between it and CreateMainWebApp to avoid it
         SPWebApplicationExtension ExtendMainWebApp
         {
-            WebAppUrl              = "http://$SPTrustedSitesName/"
+            WebAppUrl              = "http://$SharePointSitesAuthority/"
             Name                   = "SharePoint - 443"
             AllowAnonymous         = $false
-            Url                    = "https://$SPTrustedSitesName.$DomainFQDN"
+            Url                    = "https://$SharePointSitesAuthority.$DomainFQDN"
             Zone                   = "Intranet"
             Port                   = 443
             Ensure                 = "Present"
@@ -893,7 +894,7 @@ configuration ConfigureSPVM
 
         SPWebAppAuthentication ConfigureMainWebAppAuthentication
         {
-            WebAppUrl = "http://$SPTrustedSitesName/"
+            WebAppUrl = "http://$SharePointSitesAuthority/"
             Default = @(
                 MSFT_SPWebAppAuthenticationMode {
                     AuthenticationMethod = "WindowsAuthentication"
@@ -920,7 +921,7 @@ configuration ConfigureSPVM
                     $dcSetupPath = $using:DCSetupPath
                     $domainFQDN = $using:DomainFQDN
                     $domainNetbiosName = $using:DomainNetbiosName
-                    $spTrustedSitesName = $using:SPTrustedSitesName
+                    $spTrustedSitesName = $using:SharePointSitesAuthority
                     $appDomainIntranetFQDN = $using:AppDomainIntranetFQDN
 
                     # Generate CSR
@@ -951,7 +952,7 @@ configuration ConfigureSPVM
                 {
                     $domainFQDN = $using:DomainFQDN
                     $domainNetbiosName = $using:DomainNetbiosName
-                    $spTrustedSitesName = $using:SPTrustedSitesName
+                    $spTrustedSitesName = $using:SharePointSitesAuthority
                     
                     # $cert = Get-ChildItem -Path cert:\localMachine\my | Where-Object{ $_.Subject -eq "CN=$spTrustedSitesName.$domainFQDN, O=$domainNetbiosName" }
                     $cert = Get-SPCertificate -Identity "$spTrustedSitesName Certificate" -ErrorAction SilentlyContinue
@@ -969,7 +970,7 @@ configuration ConfigureSPVM
             {
                 CARootName             = "$DomainNetbiosName-$DCName-CA"
                 CAServerFQDN           = "$DCName.$DomainFQDN"
-                Subject                = "$SPTrustedSitesName.$DomainFQDN"
+                Subject                = "$SharePointSitesAuthority.$DomainFQDN"
                 SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
                 KeyLength              = '2048'
                 Exportable             = $true
@@ -991,7 +992,7 @@ configuration ConfigureSPVM
                         Protocol             = "HTTPS"
                         Port                 = 443
                         CertificateStoreName = "My"
-                        CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
+                        CertificateSubject   = "$SharePointSitesAuthority.$DomainFQDN"
                     }
                 )
                 Ensure               = "Present"
@@ -1002,7 +1003,7 @@ configuration ConfigureSPVM
 
         SPCacheAccounts SetCacheAccounts
         {
-            WebAppUrl            = "http://$SPTrustedSitesName/"
+            WebAppUrl            = "http://$SharePointSitesAuthority/"
             SuperUserAlias       = "$DomainNetbiosName\$($SPSuperUserCreds.UserName)"
             SuperReaderAlias     = "$DomainNetbiosName\$($SPSuperReaderCreds.UserName)"
             PsDscRunAsCredential = $SPSetupCredsQualified
@@ -1011,7 +1012,7 @@ configuration ConfigureSPVM
 
         SPSite CreateRootSite
         {
-            Url                  = "http://$SPTrustedSitesName/"
+            Url                  = "http://$SharePointSitesAuthority/"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
@@ -1024,7 +1025,7 @@ configuration ConfigureSPVM
         # Create this site early, otherwise [SPAppCatalog]SetAppCatalogUrl may throw error "Cannot find an SPSite object with Id or Url: http://SPSites/sites/AppCatalog"
         SPSite CreateAppCatalog
         {
-            Url                  = "http://$SPTrustedSitesName/sites/AppCatalog"
+            Url                  = "http://$SharePointSitesAuthority/sites/AppCatalog"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "AppCatalog"
@@ -1039,7 +1040,7 @@ configuration ConfigureSPVM
         SPSite CreateMySiteHost
         {
             Url                      = "http://$MySiteHostAlias/"
-            HostHeaderWebApplication = "http://$SPTrustedSitesName/"
+            HostHeaderWebApplication = "http://$SharePointSitesAuthority/"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
@@ -1058,7 +1059,7 @@ configuration ConfigureSPVM
 
         SPManagedPath CreateMySiteManagedPath
         {
-            WebAppUrl            = "http://$SPTrustedSitesName/"
+            WebAppUrl            = "http://$SharePointSitesAuthority/"
             RelativeUrl          = "personal"
             Explicit             = $false
             HostHeader           = $true
@@ -1082,7 +1083,7 @@ configuration ConfigureSPVM
         # Creating this site takes about 1 min but it is not so useful, skip it
         # SPSite CreateDevSite
         # {
-        #     Url                  = "http://$SPTrustedSitesName/sites/dev"
+        #     Url                  = "http://$SharePointSitesAuthority/sites/dev"
         #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
         #     SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
         #     Name                 = "Developer site"
@@ -1094,7 +1095,7 @@ configuration ConfigureSPVM
         SPSite CreateHNSC1
         {
             Url                      = "http://$HNSC1Alias/"
-            HostHeaderWebApplication = "http://$SPTrustedSitesName/"
+            HostHeaderWebApplication = "http://$SharePointSitesAuthority/"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "$HNSC1Alias site"
@@ -1187,7 +1188,7 @@ configuration ConfigureSPVM
 
         SPWebApplicationAppDomain ConfigureAppDomainDefaultZone
         {
-            WebAppUrl            = "http://$SPTrustedSitesName"
+            WebAppUrl            = "http://$SharePointSitesAuthority"
             AppDomain            = $AppDomainFQDN
             Zone                 = "Default"
             Port                 = 80
@@ -1198,7 +1199,7 @@ configuration ConfigureSPVM
 
         SPWebApplicationAppDomain ConfigureAppDomainIntranetZone
         {
-            WebAppUrl            = "http://$SPTrustedSitesName"
+            WebAppUrl            = "http://$SharePointSitesAuthority"
             AppDomain            = $AppDomainIntranetFQDN
             Zone                 = "Intranet"
             Port                 = 443
@@ -1209,7 +1210,7 @@ configuration ConfigureSPVM
 
         SPAppCatalog SetAppCatalogUrl
         {
-            SiteUrl              = "http://$SPTrustedSitesName/sites/AppCatalog"
+            SiteUrl              = "http://$SharePointSitesAuthority/sites/AppCatalog"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSite]CreateAppCatalog","[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }
@@ -1218,7 +1219,7 @@ configuration ConfigureSPVM
         # If VM FE joins the farm while a SharePoint service is creating here, it may block its creation forever.
         SPSite CreateTeamSite
         {
-            Url                  = "http://$SPTrustedSitesName/sites/team"
+            Url                  = "http://$SharePointSitesAuthority/sites/team"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
@@ -1397,10 +1398,10 @@ configuration ConfigureSPVM
                     catch {
                     }
                 }
-                $spsite = "http://$($using:ComputerName):5000/"
+                $spsite = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
                 Write-Verbose "Warming up '$spsite'..."
                 $job1 = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
-                $spsite = "http://$($using:SPTrustedSitesName)/"
+                $spsite = "http://$($using:SharePointSitesAuthority)/"
                 Write-Verbose "Warming up '$spsite'..."
                 $job2 = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
                 
