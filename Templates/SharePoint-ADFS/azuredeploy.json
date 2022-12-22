@@ -1320,6 +1320,7 @@
             "SQLName": "[variables('generalSettings').vmSQLName]",
             "SQLAlias": "[variables('generalSettings').sqlAlias]",
             "SharePointVersion": "[parameters('sharePointVersion')]",
+            "SharePointSitesAuthority": "[variables('sharePointSettings').sharePointSitesAuthority]",
             "EnableAnalysis": "[variables('generalSettings').enableAnalysis]",
             "SharePointBits": "[variables('dscConfigureSPVM').sharePointBitsSelected]"
           },
