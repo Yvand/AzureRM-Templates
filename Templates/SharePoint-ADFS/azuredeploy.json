@@ -384,7 +384,7 @@
       "sharePointCentralAdminPort": 5000,
       "isSharePointSubscription": "[if(startsWith(parameters('sharePointVersion'), 'subscription'), true(), false())]",
       "sharePointImagesList" : {
-        "Subscription": "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest",
+        "Subscription": "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest",
         "sp2019": "MicrosoftSharePoint:MicrosoftSharePointServer:sp2019gen2smalldisk:latest",
         "sp2016": "MicrosoftSharePoint:MicrosoftSharePointServer:sp2016:latest",
         "sp2013": "MicrosoftSharePoint:MicrosoftSharePointServer:sp2013:latest"
