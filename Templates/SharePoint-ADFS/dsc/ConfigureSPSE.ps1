@@ -283,7 +283,7 @@ configuration ConfigureSPVM
         SPInstallPrereqs InstallPrerequisites
         {
             IsSingleInstance  = "Yes"
-            InstallerPath     = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
+            InstallerPath     = "$($SharePointIsoDriveLetter):\Prerequisiteinstaller.exe"
             OnlineMode        = $true
             DependsOn         = "[WaitForVolume]WaitForSharePointImage"
         }
@@ -291,7 +291,7 @@ configuration ConfigureSPVM
         SPInstall InstallBinaries
         {
             IsSingleInstance = "Yes"
-            BinaryDir        = "${spIsoDriverLetter}:\"
+            BinaryDir        = "$($SharePointIsoDriveLetter):\"
             ProductKey       = "VW2FM-FN9FT-H22J4-WV9GT-H8VKF"
             DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
         }
