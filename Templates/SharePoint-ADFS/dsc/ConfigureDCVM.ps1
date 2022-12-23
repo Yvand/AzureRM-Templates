@@ -75,11 +75,11 @@
             DependsOn               = "[PendingReboot]RebootOnSignalFromCreateADForest"
         }
 
-        # Set Edge policies asap as it runs very quickly (<5 secs), and servers will get them right after joining the domain
+        # Set Edge policies asap as it runs very quickly (<5 secs), and servers will get them right after joining the domain - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies
         Script ConfigureEdgePolicies {
             SetScript  = {
                 $domain = Get-ADDomain -Current LocalComputer
-                $key = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
+                $key = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge\Recommended"
                 $edgePolicies = $using:EdgePolicies
                 # $edgePolicies = @(
                 #     @{
