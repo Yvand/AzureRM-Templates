@@ -40,7 +40,7 @@ configuration ConfigureFEVM
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     
     # Setup settings
-    [String] $SetupPath = "C:\Setup"
+    [String] $SetupPath = "C:\Data"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
     [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"

@@ -33,26 +33,33 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
+    Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
 
+    # Init
+    [String] $InterfaceAlias = (Get-NetAdapter | Where-Object Name -Like "Ethernet*" | Select-Object -First 1).Name
+    [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
-    $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
-    $InterfaceAlias = $($Interface.Name)
-    [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
-    [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
-    [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
-    [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
-    [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
-    [System.Management.Automation.PSCredential] $SPADDirSyncCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPADDirSyncCreds.UserName)", $SPADDirSyncCreds.Password)
+
+    # Format credentials to be qualified by domain name: "domain\username"
+    [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
+    [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
+    [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
+    [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
+    [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
+    [System.Management.Automation.PSCredential] $SPADDirSyncCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPADDirSyncCreds.UserName)", $SPADDirSyncCreds.Password)
+
+    # Setup settings
+    [String] $SetupPath = "C:\Data"
+    [String] $DCSetupPath = "\\$DCName\C$\Setup"
+    [String] $LDAPCPFileFullPath = Join-Path -Path $SetupPath -ChildPath "Binaries\LDAPCP.wsp"
+
+    # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
-    [String] $ComputerName = Get-Content env:computername
-    [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
     [String] $UpaServiceName = "User Profile Service Application"
-    [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
-    [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
-    [String] $SetupPath = "C:\Setup"
-    [String] $DCSetupPath = "\\$DCName\C$\Setup"
+    [String] $AppDomainFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps", $DomainFQDN.Split('.')[1]
+    [String] $AppDomainIntranetFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps-Intranet", $DomainFQDN.Split('.')[1]
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
     [String] $AddinsSiteDNSAlias = "addins"
@@ -202,35 +209,11 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
-        Script DownloadLDAPCP
+        xRemoteFile DownloadLDAPCP
         {
-            SetScript = {
-                $ldapcpLink = $using:LdapcpLink
-                $setupPath = $using:SetupPath
-                $setupFile = Join-Path -Path $setupPath -ChildPath "LDAPCP.wsp"
-                New-Item -Path $setupPath -ItemType directory -ErrorAction SilentlyContinue
-                $count = 0
-                $maxCount = 10                
-                while (($count -lt $maxCount) -and (-not(Test-Path $setupFile)))
-                {
-                    try {
-                        Start-BitsTransfer -Source $ldapcpLink -Destination $setupFile
-                    }
-                    catch {
-                        $count++
-                    }
-                }
-
-                if (-not(Test-Path $setupFile)) {
-                    Write-Error -Message "Failed to download '$ldapcpLink' after $count attempts"
-                }
-            }
-            TestScript = {
-                $setupPath = $using:SetupPath
-                $setupFile = Join-Path -Path $setupPath -ChildPath "LDAPCP.wsp"
-                return Test-Path $setupFile
-            }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            DestinationPath = $LDAPCPFileFullPath
+            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp"
+            MatchSource     = $false
         }
 
         #**********************************************************
@@ -660,7 +643,7 @@ configuration ConfigureSPVM
 
         SPFarmSolution InstallLdapcp
         {
-            LiteralPath          = "$SetupPath\LDAPCP.wsp"
+            LiteralPath          = $LDAPCPFileFullPath
             Name                 = "LDAPCP.wsp"
             Deployed             = $true
             Ensure               = "Present"
@@ -1500,24 +1483,6 @@ function Get-NetBIOSName
             return $DomainFQDN
         }
     }
-}
-
-function Get-AppDomain
-{
-    [OutputType([string])]
-    param(
-        [string]$DomainFQDN,
-        [string]$Suffix
-    )
-
-    $appDomain = [String]::Empty
-    if ($DomainFQDN.Contains('.')) {
-        $domainParts = $DomainFQDN.Split('.')
-        $appDomain = $domainParts[0]
-        $appDomain += "$Suffix."
-        $appDomain += $domainParts[1]
-    }
-    return $appDomain
 }
 
 function Get-SPDSCInstalledProductVersion

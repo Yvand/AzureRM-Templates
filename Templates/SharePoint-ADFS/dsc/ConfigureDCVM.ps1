@@ -79,7 +79,7 @@
         Script ConfigureEdgePolicies {
             SetScript  = {
                 $domain = Get-ADDomain -Current LocalComputer
-                $key = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
+                $key = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge\Recommended"
                 $edgePolicies = $using:EdgePolicies
                 # $edgePolicies = @(
                 #     @{

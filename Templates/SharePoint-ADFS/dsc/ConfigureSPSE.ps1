@@ -63,8 +63,8 @@ configuration ConfigureSPVM
     [String] $SPDBPrefix = "SPDSC_"
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
     [String] $UpaServiceName = "User Profile Service Application"
-    [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
-    [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
+    [String] $AppDomainFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps", $DomainFQDN.Split('.')[1]
+    [String] $AppDomainIntranetFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps-Intranet", $DomainFQDN.Split('.')[1]
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
     [String] $AddinsSiteDNSAlias = "addins"
@@ -1602,24 +1602,6 @@ function Get-NetBIOSName
             return $DomainFQDN
         }
     }
-}
-
-function Get-AppDomain
-{
-    [OutputType([string])]
-    param(
-        [string]$DomainFQDN,
-        [string]$Suffix
-    )
-
-    $appDomain = [String]::Empty
-    if ($DomainFQDN.Contains('.')) {
-        $domainParts = $DomainFQDN.Split('.')
-        $appDomain = $domainParts[0]
-        $appDomain += "$Suffix."
-        $appDomain += $domainParts[1]
-    }
-    return $appDomain
 }
 
 <#
