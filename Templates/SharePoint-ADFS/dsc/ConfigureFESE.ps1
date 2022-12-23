@@ -29,24 +29,27 @@ configuration ConfigureFEVM
     Import-DscResource -ModuleName StorageDsc -ModuleVersion 5.0.1
     Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
 
-    [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
-    $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
-    $InterfaceAlias = $($Interface.Name)
-    [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
-    [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
-    [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
-    [String] $SPDBPrefix = "SPDSC_"
+    # Init
+    [String] $InterfaceAlias = (Get-NetAdapter | Where-Object Name -Like "Ethernet*" | Select-Object -First 1).Name
     [String] $ComputerName = Get-Content env:computername
+    [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
+
+    # Format credentials to be qualified by domain name: "domain\username"
+    [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
+    [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
+    [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
+    
+    # Setup settings
     [String] $SetupPath = "C:\Setup"
-    [String] $DCSetupPath = "\\$DCName\C$\Setup"
+    [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
+    [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
+    [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"
+    [String] $SharePointIsoDriveLetter = "S"
+
+    # SharePoint settings
+    [String] $SPDBPrefix = "SPDSC_"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
-    [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
-    [String] $spIsoFolder = [environment]::GetEnvironmentVariable("temp","machine")
-    [String] $spIsoPath = Join-Path -Path $spIsoFolder -ChildPath "OfficeServer.iso"
-    [String] $spIsoDriverLetter = "S"
-    [String] $spInstallFolder = "${spIsoDriverLetter}:\"
-    [String] $spPrereqPath = "${spIsoDriverLetter}:\Prerequisiteinstaller.exe"
 
     Node localhost
     {
@@ -66,7 +69,7 @@ configuration ConfigureFEVM
         WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
         DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
-        # # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
+        # # xCredSSP is required for SharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
         # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
         # xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
@@ -210,7 +213,7 @@ configuration ConfigureFEVM
         #**********************************************************
         xRemoteFile DownloadSharePoint
         {
-            DestinationPath = $spIsoPath
+            DestinationPath = $SharePointIsoFullPath
             Uri             = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].DownloadUrl
             ChecksumType    = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].ChecksumType
             Checksum        = ($SharePointBits | Where-Object {$_.Label -eq "RTM"}).Packages[0].Checksum
@@ -219,14 +222,14 @@ configuration ConfigureFEVM
         
         MountImage MountSharePointImage
         {
-            ImagePath   = $spIsoPath
-            DriveLetter = $spIsoDriverLetter
+            ImagePath   = $SharePointIsoFullPath
+            DriveLetter = $SharePointIsoDriveLetter
             DependsOn   = "[xRemoteFile]DownloadSharePoint"
         }
           
         WaitForVolume WaitForSharePointImage
         {
-            DriveLetter      = $spIsoDriverLetter
+            DriveLetter      = $SharePointIsoDriveLetter
             RetryIntervalSec = 5
             RetryCount       = 10
             DependsOn        = "[MountImage]MountSharePointImage"
@@ -235,7 +238,7 @@ configuration ConfigureFEVM
         SPInstallPrereqs InstallPrerequisites
         {
             IsSingleInstance  = "Yes"
-            InstallerPath     = $spPrereqPath
+            InstallerPath     = "$($SharePointIsoDriveLetter):\Prerequisiteinstaller.exe"
             OnlineMode        = $true
             DependsOn         = "[WaitForVolume]WaitForSharePointImage"
         }
@@ -243,7 +246,7 @@ configuration ConfigureFEVM
         SPInstall InstallBinaries
         {
             IsSingleInstance = "Yes"
-            BinaryDir        = $spInstallFolder
+            BinaryDir        = "$($SharePointIsoDriveLetter):\"
             ProductKey       = "VW2FM-FN9FT-H22J4-WV9GT-H8VKF"
             DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
         }
