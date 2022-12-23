@@ -41,6 +41,7 @@ configuration ConfigureFEVM
     
     # Setup settings
     [String] $SetupPath = "C:\Data"
+    [String] $RemoteSetupPath = "\\$DCName\C$\Setup"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
     [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"
@@ -616,12 +617,12 @@ configuration ConfigureFEVM
             {
                 # Import OIDC-specific cookie certificate and set required permissions
                 $spTrustedSitesName = $using:SharePointSitesAuthority
-                $dcSetupPath = $using:DCSetupPath
+                $remoteSetupPath = Join-Path -Path $using:RemoteSetupPath -ChildPath "Certificates"
                 
                 # Import OIDC-specific cookie certificate created in 1st SharePoint Server of the farm
-                $cookieCertificateName = "SharePoint Cookie Cert"
-                $cookieCertificateFilePath = Join-Path -Path $dcSetupPath -ChildPath "$cookieCertificateName"
-                $cert = Import-PfxCertificate -FilePath "$cookieCertificateFilePath.pfx" -CertStoreLocation Cert:\localMachine\My -Exportable
+                $cookieCertificateFileName = "SharePoint Cookie Cert.pfx"
+                $cookieCertificateFilePath = Join-Path -Path $remoteSetupPath -ChildPath $cookieCertificateFileName
+                $cert = Import-PfxCertificate -FilePath $cookieCertificateFilePath -CertStoreLocation Cert:\localMachine\My -Exportable
 
                 # Grant the application pool access to the private key of the cookie certificate
                 $wa = Get-SPWebApplication "http://$spTrustedSitesName"

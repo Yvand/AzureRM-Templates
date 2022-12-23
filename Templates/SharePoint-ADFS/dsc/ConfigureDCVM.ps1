@@ -79,7 +79,7 @@
         Script ConfigureEdgePolicies {
             SetScript  = {
                 $domain = Get-ADDomain -Current LocalComputer
-                $key = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge\Recommended"
+                $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
                 $edgePolicies = $using:EdgePolicies
                 # $edgePolicies = @(
                 #     @{
@@ -186,7 +186,10 @@
 
                 foreach ($policy in $edgePolicies) {
                     if ($null -eq (Get-GPO -Name "Edge_$($policy.policyValueName)" -ErrorAction SilentlyContinue)) {
-                        New-GPO -name "Edge_$($policy.policyValueName)" -comment "GPO For Edge_$($policy.policyValueName)" | Set-GPRegistryValue -key $key -ValueName $policy.policyValueName -Type $policy.policyValueType -value $policy.policyValueValue | New-GPLink -Target $domain.DistinguishedName -order 1
+                        $key = $registryKey
+                        if ($true -eq $policy.CanBeRecommended) {$key += "\Recommended"}
+                        $valueType = if ($policy.policyValueValue -is [int]) {"DWORD"} else {"STRING"}
+                        New-GPO -name "Edge_$($policy.policyValueName)" -comment "GPO For Edge_$($policy.policyValueName)" | Set-GPRegistryValue -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue | New-GPLink -Target $domain.DistinguishedName -order 1
                     }
                 }
             }

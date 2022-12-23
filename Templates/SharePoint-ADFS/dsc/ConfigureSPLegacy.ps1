@@ -51,7 +51,7 @@ configuration ConfigureSPVM
 
     # Setup settings
     [String] $SetupPath = "C:\Data"
-    [String] $DCSetupPath = "\\$DCName\C$\Setup"
+    [String] $RemoteSetupPath = "\\$DCName\C$\Setup"
     [String] $LDAPCPFileFullPath = Join-Path -Path $SetupPath -ChildPath "Binaries\LDAPCP.wsp"
 
     # SharePoint settings
@@ -626,7 +626,7 @@ configuration ConfigureSPVM
             Ensure          = "Present"
             Type            = "Directory"
             Recurse         = $true
-            SourcePath      = "$DCSetupPath"
+            SourcePath      = "$RemoteSetupPath"
             DestinationPath = "$SetupPath\Certificates"
             Credential      = $DomainAdminCredsQualified
             DependsOn       = "[Script]RestartSPTimerAfterCreateSPFarm"
@@ -901,7 +901,7 @@ configuration ConfigureSPVM
                 SetScript =
                 {
                     $dcName = $using:DCName
-                    $dcSetupPath = $using:DCSetupPath
+                    $dcSetupPath = $using:RemoteSetupPath
                     $domainFQDN = $using:DomainFQDN
                     $domainNetbiosName = $using:DomainNetbiosName
                     $spTrustedSitesName = $using:SharePointSitesAuthority
