@@ -35,26 +35,36 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
     Import-DscResource -ModuleName StorageDsc -ModuleVersion 5.0.1
     Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
-
-    [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
-    [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
-    $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
-    $InterfaceAlias = $($Interface.Name)
+    
+    # Format credentials to be qualified by domain name: "domain\username"
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [System.Management.Automation.PSCredential] $SPADDirSyncCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPADDirSyncCreds.UserName)", $SPADDirSyncCreds.Password)
-    [String] $SPDBPrefix = "SPDSC_"
+
+    # Computer settings
+    [String] $InterfaceAlias = Get-NetAdapter | Where-Object Name -Like "Ethernet*"| Select-Object -First 1 | Select Name
     [String] $ComputerName = Get-Content env:computername
-    [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
+    [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
+    [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
+    
+    # Setup settings
+    [String] $SetupPath = "C:\Data"
+    [String] $DCSetupPath = "\\$DCName\C$\Setup"
+    [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
+    [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
+    [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"
+    [String] $SharePointIsoDriveLetter = "S"
+    # [String] $LdapcpLink = (Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp")
+
+    # SharePoint settings
+    [String] $SPDBPrefix = "SPDSC_"
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
     [String] $UpaServiceName = "User Profile Service Application"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
-    [String] $SetupPath = "C:\Data"
-    [String] $DCSetupPath = "\\$DCName\C$\Setup"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
     [String] $AddinsSiteDNSAlias = "addins"
@@ -62,11 +72,7 @@ configuration ConfigureSPVM
     [String] $TrustedIdChar = "e"
     [String] $SPTeamSiteTemplate = "STS#3"
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
-    [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
-    [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
-    [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"
-    [String] $SharePointIsoDriveLetter = "S"
-
+    
     Node localhost
     {
         LocalConfigurationManager
@@ -202,8 +208,8 @@ configuration ConfigureSPVM
 
         xRemoteFile DownloadLDAPCP
         {
-            DestinationPath = "$SetupPath\LDAPCP.wsp"
-            Uri             = $LdapcpLink
+            DestinationPath = Join-Path -Path $SetupPath -ChildPath "Binaries\LDAPCP.wsp"
+            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp"
             MatchSource     = $false
         }
 
@@ -212,7 +218,7 @@ configuration ConfigureSPVM
         #**********************************************************
         cChocoInstaller InstallChoco
         {
-            InstallDir = "C:\Choco"
+            InstallDir = "C:\Chocolatey"
         }
 
         cChocoPackageInstaller InstallEdge
@@ -894,12 +900,15 @@ configuration ConfigureSPVM
             {
                 $apppoolUserName = $using:apppoolUserName
                 $domainAdminUserName = $using:domainAdminUserName
-                $dcSetupPath = $using:DCSetupPath
+                $setupPath = Join-Path -Path $using:SetupPath -ChildPath "Certificates"
+                if (!(Test-Path $setupPath -PathType Container)) {
+                    New-Item -ItemType Directory -Force -Path $setupPath
+                }
                 
                 # Setup farm properties to work with OIDC
                 # Create a self-signed certificate in 1st SharePoint Server of the farm
                 $cookieCertificateName = "SharePoint Cookie Cert"
-                $cookieCertificateFilePath = Join-Path -Path $dcSetupPath -ChildPath "$cookieCertificateName"
+                $cookieCertificateFilePath = Join-Path -Path $setupPath -ChildPath "$cookieCertificateName"
                 $cert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=$cookieCertificateName"
                 Export-Certificate -Cert $cert -FilePath "$cookieCertificateFilePath.cer"
                 Export-PfxCertificate -Cert $cert -FilePath "$cookieCertificateFilePath.pfx" -ProtectTo "$domainAdminUserName"
@@ -1056,31 +1065,34 @@ configuration ConfigureSPVM
             SetScript =
             {
                 $dcName = $using:DCName
-                $dcSetupPath = $using:DCSetupPath
                 $domainFQDN = $using:DomainFQDN
                 $domainNetbiosName = $using:DomainNetbiosName
                 $sharePointSitesAuthority = $using:SharePointSitesAuthority
                 $appDomainIntranetFQDN = $using:AppDomainIntranetFQDN
+                $setupPath = Join-Path -Path $using:SetupPath -ChildPath "Certificates"                
+                if (!(Test-Path $setupPath -PathType Container)) {
+                    New-Item -ItemType Directory -Force -Path $setupPath
+                }
 
                 # Generate CSR
-                New-SPCertificate -FriendlyName "$sharePointSitesAuthority Certificate" -KeySize 2048 -CommonName "$sharePointSitesAuthority.$domainFQDN" -AlternativeNames @("*.$domainFQDN", "*.$appDomainIntranetFQDN") -Organization "$domainNetbiosName" -Exportable -HashAlgorithm SHA256 -Path "$dcSetupPath\$sharePointSitesAuthority.csr"
+                New-SPCertificate -FriendlyName "$sharePointSitesAuthority Certificate" -KeySize 2048 -CommonName "$sharePointSitesAuthority.$domainFQDN" -AlternativeNames @("*.$domainFQDN", "*.$appDomainIntranetFQDN") -Organization "$domainNetbiosName" -Exportable -HashAlgorithm SHA256 -Path "$setupPath\$sharePointSitesAuthority.csr"
 
                 # Submit CSR to CA
-                & certreq.exe -submit -config "$dcName.$domainFQDN\$domainNetbiosName-$dcName-CA" -attrib "CertificateTemplate:Webserver" "$dcSetupPath\$sharePointSitesAuthority.csr" "$dcSetupPath\$sharePointSitesAuthority.cer" "$dcSetupPath\$sharePointSitesAuthority.p7b" "$dcSetupPath\$sharePointSitesAuthority.ful"
+                & certreq.exe -submit -config "$dcName.$domainFQDN\$domainNetbiosName-$dcName-CA" -attrib "CertificateTemplate:Webserver" "$setupPath\$sharePointSitesAuthority.csr" "$setupPath\$sharePointSitesAuthority.cer" "$setupPath\$sharePointSitesAuthority.p7b" "$setupPath\$sharePointSitesAuthority.ful"
 
                 # Install certificate with its private key to certificate store
-                # certreq -accept –machine "$dcSetupPath\$sharePointSitesAuthority.cer"
+                # certreq -accept –machine "$setupPath\$sharePointSitesAuthority.cer"
 
                 # Find the certificate
                 # Get-ChildItem -Path cert:\localMachine\my | Where-Object{ $_.Subject -eq "CN=$sharePointSitesAuthority.$domainFQDN, O=$domainNetbiosName" } | Select-Object Thumbprint
 
                 # # Export private key of the certificate
-                # certutil -f -p "superpasse" -exportpfx A74D118AABD5B42F23BCD9083D3F6A3EF3BFD904 "$dcSetupPath\$sharePointSitesAuthority.pfx"
+                # certutil -f -p "superpasse" -exportpfx A74D118AABD5B42F23BCD9083D3F6A3EF3BFD904 "$setupPath\$sharePointSitesAuthority.pfx"
 
                 # # Import private key of the certificate into SharePoint
                 # $password = ConvertTo-SecureString -AsPlainText -Force "<superpasse>"
-                # Import-SPCertificate -Path "$dcSetupPath\$sharePointSitesAuthority.pfx" -Password $password -Exportable
-                $spCert = Import-SPCertificate -Path "$dcSetupPath\$sharePointSitesAuthority.cer" -Exportable -Store EndEntity
+                # Import-SPCertificate -Path "$setupPath\$sharePointSitesAuthority.pfx" -Password $password -Exportable
+                $spCert = Import-SPCertificate -Path "$setupPath\$sharePointSitesAuthority.cer" -Exportable -Store EndEntity
 
                 Set-SPWebApplication -Identity "http://$sharePointSitesAuthority" -Zone Intranet -Port 443 -Certificate $spCert `
                     -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url "https://$sharePointSitesAuthority.$domainFQDN"
@@ -1446,7 +1458,7 @@ configuration ConfigureSPVM
         {
             SetScript = 
             {
-                $destinationPath = "$($using:SetupPath)\Certificates"
+                $destinationPath = Join-Path -Path $using:SetupPath -ChildPath "Certificates"
                 $certSubject = "HighTrustAddins"
                 $certName = "HighTrustAddins.cer"
                 $certFullPath = [System.IO.Path]::Combine($destinationPath, $certName)
