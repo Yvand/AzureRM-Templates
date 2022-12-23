@@ -895,6 +895,9 @@ configuration ConfigureSPVM
                     New-Item -ItemType Directory -Force -Path $setupPath
                 }
                 $remoteSetupPath = Join-Path -Path $using:RemoteSetupPath -ChildPath "Certificates"
+                if (!(Test-Path $remoteSetupPath -PathType Container)) {
+                    New-Item -ItemType Directory -Force -Path $remoteSetupPath
+                }
                 
                 # Setup farm properties to work with OIDC
                 # Create a self-signed certificate in 1st SharePoint Server of the farm

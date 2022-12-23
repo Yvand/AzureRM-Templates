@@ -419,103 +419,103 @@
     },
     "edgePolicies": [
       {
-        "policyValueName": "HideFirstRunExperience",
-        "policyValueType": "DWORD",
-        "policyValueValue": 1
+        "policyValueName" : "HideFirstRunExperience",
+        "CanBeRecommended" : false,
+        "policyValueValue" : 1
       },
       {
-        "policyValueName": "TrackingPrevention",
-        "policyValueType": "DWORD",
-        "policyValueValue": 3
+        "policyValueName" : "TrackingPrevention",
+        "CanBeRecommended" : false,
+        "policyValueValue" : 3
       },
       {
-        "policyValueName": "AdsTransparencyEnabled",
-        "policyValueType": "DWORD",
-        "policyValueValue": 0
+        "policyValueName" : "AdsTransparencyEnabled",
+        "CanBeRecommended" : false,
+        "policyValueValue" : 0
       },
       {
-        "policyValueName": "BingAdsSuppression",
-        "policyValueType": "DWORD",
-        "policyValueValue": 1
+        "policyValueName" : "BingAdsSuppression",
+        "CanBeRecommended" : false,
+        "policyValueValue" : 1
       },
       {
-        "policyValueName": "AdsSettingForIntrusiveAdsSites",
-        "policyValueType": "DWORD",
-        "policyValueValue": 2
+        "policyValueName" : "AdsSettingForIntrusiveAdsSites",
+        "CanBeRecommended" : false,
+        "policyValueValue" : 2
       },
       {
-        "policyValueName": "AskBeforeCloseEnabled",
-        "policyValueType": "DWORD",
-        "policyValueValue": 0
+        "policyValueName" : "AskBeforeCloseEnabled",
+        "CanBeRecommended" : true,
+        "policyValueValue" : 0
       },
       {
-        "policyValueName": "BlockThirdPartyCookies",
-        "policyValueType": "DWORD",
-        "policyValueValue": 1
+        "policyValueName" : "BlockThirdPartyCookies",
+        "CanBeRecommended" : true,
+        "policyValueValue" : 1
       },
       {
-        "policyValueName": "ConfigureDoNotTrack",
-        "policyValueType": "DWORD",
-        "policyValueValue": 1
+        "policyValueName" : "ConfigureDoNotTrack",
+        "CanBeRecommended" : false,
+        "policyValueValue" : 1
       },
       {
-        "policyValueName": "DiagnosticData",
-        "policyValueType": "DWORD",
-        "policyValueValue": 0
+        "policyValueName" : "DiagnosticData",
+        "CanBeRecommended" : false,
+        "policyValueValue" : 0
       },
       {
-        "policyValueName": "HubsSidebarEnabled",
-        "policyValueType": "DWORD",
-        "policyValueValue": 0
+        "policyValueName" : "HubsSidebarEnabled",
+        "CanBeRecommended" : true,
+        "policyValueValue" : 0
       },
       {
-        "policyValueName": "HomepageIsNewTabPage",
-        "policyValueType": "DWORD",
-        "policyValueValue": 1
+        "policyValueName" : "HomepageIsNewTabPage",
+        "CanBeRecommended" : true,
+        "policyValueValue" : 1
       },
       {
-        "policyValueName": "HomepageLocation",
-        "policyValueType": "String",
-        "policyValueValue": "edge://newtab"
+        "policyValueName" : "HomepageLocation",
+        "CanBeRecommended" : true,
+        "policyValueValue" : "edge://newtab"
       },
       {
-        "policyValueName": "ShowHomeButton",
-        "policyValueType": "DWORD",
-        "policyValueValue": 1
+        "policyValueName" : "ShowHomeButton",
+        "CanBeRecommended" : true,
+        "policyValueValue" : 1
       },
       {
-        "policyValueName": "NewTabPageLocation",
-        "policyValueType": "String",
-        "policyValueValue": "about://blank"
+        "policyValueName" : "NewTabPageLocation",
+        "CanBeRecommended" : true,
+        "policyValueValue" : "about://blank"
       },
       {
-        "policyValueName": "NewTabPageQuickLinksEnabled",
-        "policyValueType": "DWORD",
-        "policyValueValue": 1
+        "policyValueName" : "NewTabPageQuickLinksEnabled",
+        "CanBeRecommended" : false,
+        "policyValueValue" : 1
       },
       {
-        "policyValueName": "NewTabPageContentEnabled",
-        "policyValueType": "DWORD",
-        "policyValueValue": 0
+        "policyValueName" : "NewTabPageContentEnabled",
+        "CanBeRecommended" : false,
+        "policyValueValue" : 0
       },
       {
-        "policyValueName": "NewTabPageAllowedBackgroundTypes",
-        "policyValueType": "DWORD",
-        "policyValueValue": 3
+        "policyValueName" : "NewTabPageAllowedBackgroundTypes",
+        "CanBeRecommended" : false,
+        "policyValueValue" : 3
       },
       {
-        "policyValueName": "NewTabPageAppLauncherEnabled",
-        "policyValueType": "DWORD",
-        "policyValueValue": 0
+        "policyValueName" : "NewTabPageAppLauncherEnabled",
+        "CanBeRecommended" : false,
+        "policyValueValue" : 0
       },
       {
         "policyValueName": "ManagedFavorites",
-        "policyValueType": "String",
+        "CanBeRecommended" : false,
         "policyValueValue": "[concat('[{ \"toplevel_name\": \"SharePoint\" }, { \"name\": \"Central administration\", \"url\": \"http://', variables('generalSettings').vmSPName, ':', variables('sharePointSettings').sharePointCentralAdminPort, '/\" }, { \"name\": \"Root site - Default zone\", \"url\": \"http://', variables('sharePointSettings').sharePointSitesAuthority, '/\" }, { \"name\": \"Root site - Intranet zone\", \"url\": \"https://', variables('sharePointSettings').sharePointSitesAuthority, '.', parameters('domainFQDN'), '/\" }]', '', '')]"
       },
       {
         "policyValueName": "NewTabPageManagedQuickLinks",
-        "policyValueType": "String",
+        "CanBeRecommended" : true,
         "policyValueValue": "[concat('[{\"pinned\": true, \"title\": \"Central administration\", \"url\": \"http://', variables('generalSettings').vmSPName, ':', variables('sharePointSettings').sharePointCentralAdminPort, '/\" }, { \"pinned\": true, \"title\": \"Root site - Default zone\", \"url\": \"http://', variables('sharePointSettings').sharePointSitesAuthority, '/\" }, { \"pinned\": true, \"title\": \"Root site - Intranet zone\", \"url\": \"https://', variables('sharePointSettings').sharePointSitesAuthority, '.', parameters('domainFQDN'), '/\" }]')]"
       }
     ],
