@@ -295,7 +295,7 @@
                     return $true
                 }
             }
-        }        
+        }
         
         #**********************************************************
         # Configuration needed by SharePoint farm
@@ -614,15 +614,20 @@
             SetScript  = {
                 $domain = Get-ADDomain -Current LocalComputer
                 $key = "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\NTDS\Parameters"
-                if ($null -eq (Get-GPO -Name "LDAP_LdapEnforceChannelBinding" -ErrorAction SilentlyContinue)) {
-                    New-GPO -name "LDAP_LdapEnforceChannelBinding" -comment "GPO For LdapEnforceChannelBinding" | Set-GPRegistryValue -key $key -ValueName "LdapEnforceChannelBinding" -Type DWORD -value 2 |New-GPLink -Target $domain.DomainControllersContainer -order 1
-                }
-                if ($null -eq (Get-GPO -Name "LDAP_LDAPServerIntegrity" -ErrorAction SilentlyContinue)) {
-                    New-GPO -name "LDAP_LDAPServerIntegrity" -comment "GPO For LDAPServerIntegrity" | Set-GPRegistryValue -key $key -ValueName "ldapserverintegrity" -Type DWORD -value 2 | New-GPLink -Target $domain.DomainControllersContainer -order 1
-                }
+                $gpo = New-GPO -name "EnforceLdapAuthOverTls"
+                New-GPLink -Guid $gpo.Id -Target $domain.DomainControllersContainer -order 1
+                Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName "LdapEnforceChannelBinding" -Type DWORD -value 2
+                Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName "ldapserverintegrity" -Type DWORD -value 2
             }
             GetScript  = { return @{ "Result" = "false" } }
-            TestScript = { return $false }
+            TestScript = {
+                $policy = Get-GPO -name "EnforceLdapAuthOverTls" -ErrorAction SilentlyContinue
+                if ($null -eq $policy) {
+                    return $false
+                } else {
+                    return $true
+                }
+            }
         }
     }
 }
