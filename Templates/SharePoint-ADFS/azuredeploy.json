@@ -417,108 +417,6 @@
         }
       ]
     },
-    "edgePolicies": [
-      {
-        "policyValueName" : "HideFirstRunExperience",
-        "CanBeRecommended" : false,
-        "policyValueValue" : 1
-      },
-      {
-        "policyValueName" : "TrackingPrevention",
-        "CanBeRecommended" : false,
-        "policyValueValue" : 3
-      },
-      {
-        "policyValueName" : "AdsTransparencyEnabled",
-        "CanBeRecommended" : false,
-        "policyValueValue" : 0
-      },
-      {
-        "policyValueName" : "BingAdsSuppression",
-        "CanBeRecommended" : false,
-        "policyValueValue" : 1
-      },
-      {
-        "policyValueName" : "AdsSettingForIntrusiveAdsSites",
-        "CanBeRecommended" : false,
-        "policyValueValue" : 2
-      },
-      {
-        "policyValueName" : "AskBeforeCloseEnabled",
-        "CanBeRecommended" : true,
-        "policyValueValue" : 0
-      },
-      {
-        "policyValueName" : "BlockThirdPartyCookies",
-        "CanBeRecommended" : true,
-        "policyValueValue" : 1
-      },
-      {
-        "policyValueName" : "ConfigureDoNotTrack",
-        "CanBeRecommended" : false,
-        "policyValueValue" : 1
-      },
-      {
-        "policyValueName" : "DiagnosticData",
-        "CanBeRecommended" : false,
-        "policyValueValue" : 0
-      },
-      {
-        "policyValueName" : "HubsSidebarEnabled",
-        "CanBeRecommended" : true,
-        "policyValueValue" : 0
-      },
-      {
-        "policyValueName" : "HomepageIsNewTabPage",
-        "CanBeRecommended" : true,
-        "policyValueValue" : 1
-      },
-      {
-        "policyValueName" : "HomepageLocation",
-        "CanBeRecommended" : true,
-        "policyValueValue" : "edge://newtab"
-      },
-      {
-        "policyValueName" : "ShowHomeButton",
-        "CanBeRecommended" : true,
-        "policyValueValue" : 1
-      },
-      {
-        "policyValueName" : "NewTabPageLocation",
-        "CanBeRecommended" : true,
-        "policyValueValue" : "about://blank"
-      },
-      {
-        "policyValueName" : "NewTabPageQuickLinksEnabled",
-        "CanBeRecommended" : false,
-        "policyValueValue" : 1
-      },
-      {
-        "policyValueName" : "NewTabPageContentEnabled",
-        "CanBeRecommended" : false,
-        "policyValueValue" : 0
-      },
-      {
-        "policyValueName" : "NewTabPageAllowedBackgroundTypes",
-        "CanBeRecommended" : false,
-        "policyValueValue" : 3
-      },
-      {
-        "policyValueName" : "NewTabPageAppLauncherEnabled",
-        "CanBeRecommended" : false,
-        "policyValueValue" : 0
-      },
-      {
-        "policyValueName": "ManagedFavorites",
-        "CanBeRecommended" : false,
-        "policyValueValue": "[concat('[{ \"toplevel_name\": \"SharePoint\" }, { \"name\": \"Central administration\", \"url\": \"http://', variables('generalSettings').vmSPName, ':', variables('sharePointSettings').sharePointCentralAdminPort, '/\" }, { \"name\": \"Root site - Default zone\", \"url\": \"http://', variables('sharePointSettings').sharePointSitesAuthority, '/\" }, { \"name\": \"Root site - Intranet zone\", \"url\": \"https://', variables('sharePointSettings').sharePointSitesAuthority, '.', parameters('domainFQDN'), '/\" }]', '', '')]"
-      },
-      {
-        "policyValueName": "NewTabPageManagedQuickLinks",
-        "CanBeRecommended" : true,
-        "policyValueValue": "[concat('[{\"pinned\": true, \"title\": \"Central administration\", \"url\": \"http://', variables('generalSettings').vmSPName, ':', variables('sharePointSettings').sharePointCentralAdminPort, '/\" }, { \"pinned\": true, \"title\": \"Root site - Default zone\", \"url\": \"http://', variables('sharePointSettings').sharePointSitesAuthority, '/\" }, { \"pinned\": true, \"title\": \"Root site - Intranet zone\", \"url\": \"https://', variables('sharePointSettings').sharePointSitesAuthority, '.', parameters('domainFQDN'), '/\" }]')]"
-      }
-    ],
     "networkSettings": {
       "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
       "vNetPrivatePrefix": "10.1.0.0/16",
@@ -836,7 +734,8 @@
               "configurationArguments": {
                 "domainFQDN": "[parameters('domainFQDN')]",
                 "PrivateIP": "[variables('networkSettings').dcPrivateIPAddress]",
-                "EdgePolicies": "[variables('edgePolicies')]"
+                "SharePointVersion": "[parameters('sharePointVersion')]",
+                "SharePointSitesAuthority": "[variables('sharePointSettings').sharePointSitesAuthority]"
               },
               "privacy": {
                 "dataCollection": "enable"
