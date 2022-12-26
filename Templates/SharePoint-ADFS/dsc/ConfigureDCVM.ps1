@@ -486,7 +486,7 @@
             WSFedEndpoint              = "https://$SharePointSitesAuthority.$DomainFQDN/_trust/"
             ProtocolProfile            = "WsFed-SAML"
             AdditionalWSFedEndpoint    = @("https://*.$DomainFQDN/")
-            IssuanceAuthorizationRules = ' => issue(Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");`r`n`r`n'
+            IssuanceAuthorizationRules = ' => issue(Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
             IssuanceTransformRules     = @(
                 MSFT_AdfsIssuanceTransformRule
                 {
