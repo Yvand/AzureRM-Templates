@@ -249,20 +249,25 @@
                 $domain = Get-ADDomain -Current LocalComputer
                 $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
                 $policies = $using:EdgePolicies
-                $policyNameTemplate = "Edge_{0}"
+                $gpo = New-GPO -name "Edge_browser"
+                New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
 
                 foreach ($policy in $policies) {
-                    $policyName = $policyNameTemplate -f $policy.policyValueName
-                    if ($null -eq (Get-GPO -Name $policyName -ErrorAction SilentlyContinue)) {
-                        $key = $registryKey
-                        if ($true -eq $policy.policyCanBeRecommended) {$key += "\Recommended"}
-                        $valueType = if ($policy.policyValueValue -is [int]) {"DWORD"} else {"STRING"}
-                        New-GPO -name $policyName -comment "GPO For $policyName" | Set-GPRegistryValue -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue | New-GPLink -Target $domain.DistinguishedName -order 1
-                    }
+                    $key = $registryKey
+                    if ($true -eq $policy.policyCanBeRecommended) {$key += "\Recommended"}
+                    $valueType = if ($policy.policyValueValue -is [int]) {"DWORD"} else {"STRING"}
+                    Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue
                 }
             }
             GetScript  = { return @{ "Result" = "false" } }
-            TestScript = { return $false }
+            TestScript = {
+                $policy = Get-GPO -name "Edge_browser" -ErrorAction SilentlyContinue
+                if ($null -eq $policy) {
+                    return $false
+                } else {
+                    return $true
+                }
+            }
         }
 
         # Chrome - https://chromeenterprise.google/intl/en_us/policies/
@@ -271,21 +276,26 @@
                 $domain = Get-ADDomain -Current LocalComputer
                 $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome"
                 $policies = $using:ChromePolicies
-                $policyNameTemplate = "Chrome_{0}"
+                $gpo = New-GPO -name "Chrome_browser"
+                New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
 
                 foreach ($policy in $policies) {
-                    $policyName = $policyNameTemplate -f $policy.policyValueName
-                    if ($null -eq (Get-GPO -Name $policyName -ErrorAction SilentlyContinue)) {
-                        $key = $registryKey
-                        if ($true -eq $policy.policyCanBeRecommended) {$key += "\Recommended"}
-                        $valueType = if ($policy.policyValueValue -is [int]) {"DWORD"} else {"STRING"}
-                        New-GPO -name $policyName -comment "GPO For $policyName" | Set-GPRegistryValue -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue | New-GPLink -Target $domain.DistinguishedName -order 1
-                    }
+                    $key = $registryKey
+                    if ($true -eq $policy.policyCanBeRecommended) {$key += "\Recommended"}
+                    $valueType = if ($policy.policyValueValue -is [int]) {"DWORD"} else {"STRING"}
+                    Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue
                 }
             }
             GetScript  = { return @{ "Result" = "false" } }
-            TestScript = { return $false }
-        }
+            TestScript = {
+                $policy = Get-GPO -name "Chrome_browser" -ErrorAction SilentlyContinue
+                if ($null -eq $policy) {
+                    return $false
+                } else {
+                    return $true
+                }
+            }
+        }        
         
         #**********************************************************
         # Configuration needed by SharePoint farm
