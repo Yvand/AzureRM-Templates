@@ -248,6 +248,7 @@
             SetScript  = {
                 $domain = Get-ADDomain -Current LocalComputer
                 $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
+                $policies = $using:EdgePolicies
                 $policyNameTemplate = "Edge_{0}"
 
                 foreach ($policy in $policies) {
@@ -485,7 +486,7 @@
             WSFedEndpoint              = "https://$SharePointSitesAuthority.$DomainFQDN/_trust/"
             ProtocolProfile            = "WsFed-SAML"
             AdditionalWSFedEndpoint    = @("https://*.$DomainFQDN/")
-            IssuanceAuthorizationRules = '=> issue(Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
+            IssuanceAuthorizationRules = ' => issue(Type = "http://schemas.microsoft.com/authorization/claims/permit", value = "true");'
             IssuanceTransformRules     = @(
                 MSFT_AdfsIssuanceTransformRule
                 {
