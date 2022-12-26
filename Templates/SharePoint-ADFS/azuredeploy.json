@@ -734,8 +734,8 @@
               "configurationArguments": {
                 "domainFQDN": "[parameters('domainFQDN')]",
                 "PrivateIP": "[variables('networkSettings').dcPrivateIPAddress]",
-                "SharePointVersion": "[parameters('sharePointVersion')]",
-                "SharePointSitesAuthority": "[variables('sharePointSettings').sharePointSitesAuthority]"
+                "SharePointSitesAuthority": "[variables('sharePointSettings').sharePointSitesAuthority]",
+                "SharePointCentralAdminPort": "[variables('sharePointSettings').sharePointCentralAdminPort]"
               },
               "privacy": {
                 "dataCollection": "enable"
