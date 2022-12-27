@@ -236,8 +236,15 @@ configuration ConfigureFEVM
         }
 
         cChocoPackageInstaller InstallVscode
-        {
-            Name                 = "vscode.portable"
+        {   # Install takes about 30 secs
+            Name                 = "vscode"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller InstallAzureDataStudio
+        {   # Install takes about 40 secs
+            Name                 = "azure-data-studio"
             Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
