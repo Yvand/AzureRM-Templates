@@ -40,7 +40,7 @@ configuration ConfigureFEVM
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
     
     # Setup settings
-    [String] $SetupPath = "C:\Data"
+    [String] $SetupPath = "C:\DSC Data"
     [String] $RemoteSetupPath = "\\$DCName\C$\Setup"
     [String] $DscStatusFilePath = "$SetupPath\DSC status.log"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]

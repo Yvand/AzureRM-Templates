@@ -38,7 +38,7 @@ configuration ConfigureFEVM
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
 
     # Setup settings
-    [String] $SetupPath = "C:\Data"
+    [String] $SetupPath = "C:\DSC Data"
     [String] $DscStatusFilePath = "$SetupPath\DSC status.log"
 
     # SharePoint settings
@@ -196,7 +196,7 @@ configuration ConfigureFEVM
             GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
-        
+
         cChocoInstaller InstallChoco
         {
             InstallDir = "C:\Chocolatey"

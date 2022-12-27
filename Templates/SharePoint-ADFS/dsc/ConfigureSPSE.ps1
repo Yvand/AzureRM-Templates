@@ -51,7 +51,7 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPADDirSyncCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPADDirSyncCreds.UserName)", $SPADDirSyncCreds.Password)
     
     # Setup settings
-    [String] $SetupPath = "C:\Data"
+    [String] $SetupPath = "C:\DSC Data"
     [String] $RemoteSetupPath = "\\$DCName\C$\Setup"
     [String] $DscStatusFilePath = "$SetupPath\DSC status.log"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
