@@ -53,6 +53,7 @@ configuration ConfigureSPVM
     # Setup settings
     [String] $SetupPath = "C:\Data"
     [String] $RemoteSetupPath = "\\$DCName\C$\Setup"
+    [String] $DscStatusFilePath = "$SetupPath\DSC status.log"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
     [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"
@@ -79,6 +80,21 @@ configuration ConfigureSPVM
         {
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
+        }
+
+        Script DscStatus_Start
+        {
+            SetScript =
+            {
+                $destinationFolder = $using:SetupPath
+                if (!(Test-Path $destinationFolder -PathType Container)) {
+                    New-Item -ItemType Directory -Force -Path $destinationFolder
+                }
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tDSC Configuration starting..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            DependsOn            = "[SPTrustedSecurityTokenIssuer]CreateHighTrustAddinsTrustedIssuer"
         }
 
         #**********************************************************
@@ -144,6 +160,24 @@ configuration ConfigureSPVM
                 Set-ItemProperty -Path $ieNewTabKey -Name "NewTabPageShow" -Value 0
             }
             GetScript = { }
+        }
+
+        Script EnableLongPath
+        {
+            GetScript = { }
+            TestScript = {
+                return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            }
+            SetScript = 
+            {
+                $longPathEnabled = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled
+                if (-not $longPathEnabled) {
+                    New-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled -Value 1 -PropertyType DWord
+                }
+                else {
+                    Set-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled -Value 1
+                }
+            }
         }
 
         Script EnableFileSharing
@@ -216,6 +250,16 @@ configuration ConfigureSPVM
         #**********************************************************
         # Install applications using Chocolatey
         #**********************************************************
+        Script DscStatus_InstallApps
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tInstall applications..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
+
         cChocoInstaller InstallChoco
         {
             InstallDir = "C:\Chocolatey"
@@ -262,6 +306,16 @@ configuration ConfigureSPVM
         #**********************************************************
         # Download and install for SharePoint
         #**********************************************************
+        Script DscStatus_DownloadSharePoint
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tDownload SharePoint bits and install it..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
+
         xRemoteFile DownloadSharePoint
         {
             DestinationPath = $SharePointIsoFullPath
@@ -379,7 +433,17 @@ configuration ConfigureSPVM
         #**********************************************************
         # Join AD forest
         #**********************************************************
-        # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
+        Script DscStatus_WaitForDCReady
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tWait for AD DC to be ready..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
+
+        # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signal a restart to DSC engine "RestartCount" times
         WaitForADDomain WaitForDCReady
         {
             DomainName              = $DomainFQDN
@@ -651,6 +715,16 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
+        Script DscStatus_WaitForSQL
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tWait for SQL Server to be ready..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
+
         Script WaitForSQL
         {
             SetScript =
@@ -682,6 +756,16 @@ configuration ConfigureSPVM
         #**********************************************************
         # Create SharePoint farm
         #**********************************************************
+        Script DscStatus_CreateSPFarm
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tCreate SharePoint farm..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
+
         SPFarm CreateSPFarm
         {
             DatabaseServer            = $SQLAlias
@@ -1521,43 +1605,25 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateRootSite"
         }
-
-        # DSC resource File throws an access denied when accessing a remote location, so use Script instead
-        Script CreateDSCCompletionFile
-        {
-            SetScript =
-            {
-                $SetupPath = $using:SetupPath
-                $ComputerName = $using:ComputerName
-                $DestinationPath = "$SetupPath\SPDSCFinished.txt"
-                $Contents = "DSC Configuration on $ComputerName finished successfully."
-                # Do not overwrite and do not throw an exception if file already exists
-                New-Item $DestinationPath -Type file -Value $Contents -ErrorAction SilentlyContinue
-            }
-            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPTrustedSecurityTokenIssuer]CreateHighTrustAddinsTrustedIssuer"
-        }
-
+        
         # if ($EnableAnalysis) {
-        #     # This resource is for analysis of dsc logs only and totally optionnal
-        #     Script parseDscLogs
-        #     {
-        #         TestScript = { return $false }
-        #         SetScript = {
-        #             $setupPath = $using:SetupPath
-        #             $localScriptPath = "$setupPath\parse-dsc-logs.py"
-        #             New-Item -ItemType Directory -Force -Path $setupPath
-
-        #             $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
-        #             $downloader = New-Object -TypeName System.Net.WebClient
-        #             $downloader.DownloadFile($url, $localScriptPath)
-
-        #             $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
-        #             $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
-        #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
+            #     # This resource is for analysis of dsc logs only and totally optionnal
+            #     Script parseDscLogs
+            #     {
+                #         TestScript = { return $false }
+                #         SetScript = {
+                    #             $setupPath = $using:SetupPath
+                    #             $localScriptPath = "$setupPath\parse-dsc-logs.py"
+                    #             New-Item -ItemType Directory -Force -Path $setupPath
                     
+                    #             $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
+                    #             $downloader = New-Object -TypeName System.Net.WebClient
+                    #             $downloader.DownloadFile($url, $localScriptPath)
+                    
+                    #             $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
+                    #             $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
+        #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
+        
         #             python $localScriptPath "$fullPathToDscLogs"
         #         }
         #         GetScript = { }
@@ -1565,6 +1631,16 @@ configuration ConfigureSPVM
         #         PsDscRunAsCredential = $DomainAdminCredsQualified
         #     }
         # }
+
+        Script DscStatus_Finished
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tDSC Configuration on finished." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
     }
 }
 

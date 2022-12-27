@@ -42,6 +42,7 @@ configuration ConfigureFEVM
     # Setup settings
     [String] $SetupPath = "C:\Data"
     [String] $RemoteSetupPath = "\\$DCName\C$\Setup"
+    [String] $DscStatusFilePath = "$SetupPath\DSC status.log"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
     [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"
@@ -58,6 +59,21 @@ configuration ConfigureFEVM
         {
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
+        }
+
+        Script DscStatus_Start
+        {
+            SetScript =
+            {
+                $destinationFolder = $using:SetupPath
+                if (!(Test-Path $destinationFolder -PathType Container)) {
+                    New-Item -ItemType Directory -Force -Path $destinationFolder
+                }
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tDSC Configuration starting..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            DependsOn            = "[SPTrustedSecurityTokenIssuer]CreateHighTrustAddinsTrustedIssuer"
         }
 
         #**********************************************************
@@ -125,6 +141,24 @@ configuration ConfigureFEVM
             GetScript = { }
         }
 
+        Script EnableLongPath
+        {
+            GetScript = { }
+            TestScript = {
+                return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            }
+            SetScript = 
+            {
+                $longPathEnabled = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled
+                if (-not $longPathEnabled) {
+                    New-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled -Value 1 -PropertyType DWord
+                }
+                else {
+                    Set-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled -Value 1
+                }
+            }
+        }
+
         Script EnableFileSharing
         {
             TestScript = {
@@ -145,9 +179,19 @@ configuration ConfigureFEVM
         #**********************************************************
         # Install applications using Chocolatey
         #**********************************************************
+        Script DscStatus_InstallApps
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tInstall applications..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
+
         cChocoInstaller InstallChoco
         {
-            InstallDir = "C:\Choco"
+            InstallDir = "C:\Chocolatey"
         }
 
         cChocoPackageInstaller InstallEdge
@@ -212,6 +256,16 @@ configuration ConfigureFEVM
         #**********************************************************
         # Download and install for SharePoint
         #**********************************************************
+        Script DscStatus_DownloadSharePoint
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tDownload SharePoint bits and install it..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
+        
         xRemoteFile DownloadSharePoint
         {
             DestinationPath = $SharePointIsoFullPath
@@ -321,6 +375,16 @@ configuration ConfigureFEVM
         #**********************************************************
         # Join AD forest
         #**********************************************************
+        Script DscStatus_WaitForDCReady
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tWait for AD DC to be ready..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
+
         # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
         WaitForADDomain WaitForDCReady
         {
@@ -414,6 +478,15 @@ configuration ConfigureFEVM
         #********************************************************************
         # Wait for SharePoint app server to be ready
         #********************************************************************
+        Script DscStatus_WaitForSPFarmReadyToJoin
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tWait for the SharePoint farm to be ready to be joined..." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
         # The best test is to check the latest HTTP team site to be created, after all SharePoint services are provisioned.
         # If this server joins the farm while a SharePoint service is being created on the 1st server, it may block its creation forever.
         # Not testing HTTPS avoid potential issues with the root CA cert maybe not present in the machine store yet
@@ -683,6 +756,16 @@ configuration ConfigureFEVM
         #         DependsOn = "[cChocoPackageInstaller]InstallPython"
         #     }
         # }
+
+        Script DscStatus_Finished
+        {
+            SetScript =
+            {
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tDSC Configuration on finished." | Out-File -FilePath $using:DscStatusFilePath -Append
+            }
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
     }
 }
 

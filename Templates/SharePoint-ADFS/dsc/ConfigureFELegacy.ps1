@@ -131,6 +131,24 @@ configuration ConfigureFEVM
             GetScript = { }
         }
 
+        Script EnableLongPath
+        {
+            GetScript = { }
+            TestScript = {
+                return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            }
+            SetScript = 
+            {
+                $longPathEnabled = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled
+                if (-not $longPathEnabled) {
+                    New-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled -Value 1 -PropertyType DWord
+                }
+                else {
+                    Set-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled -Value 1
+                }
+            }
+        }
+
         Script EnableFileSharing
         {
             TestScript = {
