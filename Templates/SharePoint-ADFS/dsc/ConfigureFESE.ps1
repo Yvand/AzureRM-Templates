@@ -249,15 +249,15 @@ configuration ConfigureFEVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        # if ($EnableAnalysis) {
-        #     # This resource is for  of dsc logs only and totally optionnal
-        #     cChocoPackageInstaller InstallPython
-        #     {
-        #         Name                 = "python"
-        #         Ensure               = "Present"
-        #         DependsOn            = "[cChocoInstaller]InstallChoco"
-        #     }
-        # }
+        if ($EnableAnalysis) {
+            # This resource is for  of dsc logs only and totally optionnal
+            cChocoPackageInstaller InstallPython
+            {
+                Name                 = "python"
+                Ensure               = "Present"
+                DependsOn            = "[cChocoInstaller]InstallChoco"
+            }
+        }
 
         #**********************************************************
         # Download and install for SharePoint
@@ -736,32 +736,32 @@ configuration ConfigureFEVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
-        # if ($EnableAnalysis) {
-        #     # This resource is for analysis of dsc logs only and totally optionnal
-        #     Script parseDscLogs
-        #     {
-        #         TestScript = { return $false }
-        #         SetScript = {
-        #             $setupPath = $using:SetupPath
-        #             $localScriptPath = "$setupPath\parse-dsc-logs.py"
-        #             New-Item -ItemType Directory -Force -Path $setupPath
+        if ($EnableAnalysis) {
+            # This resource is for analysis of dsc logs only and totally optionnal
+            Script parseDscLogs
+            {
+                TestScript = { return $false }
+                SetScript = {
+                    $setupPath = $using:SetupPath
+                    $localScriptPath = "$setupPath\parse-dsc-logs.py"
+                    New-Item -ItemType Directory -Force -Path $setupPath
 
-        #             $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
-        #             $downloader = New-Object -TypeName System.Net.WebClient
-        #             $downloader.DownloadFile($url, $localScriptPath)
+                    $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
+                    $downloader = New-Object -TypeName System.Net.WebClient
+                    $downloader.DownloadFile($url, $localScriptPath)
 
-        #             $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
-        #             $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
-        #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
+                    $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
+                    $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
+                    $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
-        #             # Start python in a new process to ensure python.exe is in the path
-        #             Write-Verbose -Message "Run python $localScriptPath `"$fullPathToDscLogs`" in a new PowerShell process..."
-        #             Start-Process -FilePath "powershell" -ArgumentList "python $localScriptPath `"$fullPathToDscLogs`""
-        #         }
-        #         GetScript = { }
-        #         DependsOn = "[cChocoPackageInstaller]InstallPython"
-        #     }
-        # }
+                    # Start python in a new process to ensure python.exe is in the path
+                    Write-Verbose -Message "Run python $localScriptPath `"$fullPathToDscLogs`" in a new PowerShell process..."
+                    Start-Process -FilePath "powershell" -ArgumentList "python $localScriptPath `"$fullPathToDscLogs`""
+                }
+                GetScript = { }
+                DependsOn = "[cChocoPackageInstaller]InstallPython"
+            }
+        }
 
         Script DscStatus_Finished
         {
