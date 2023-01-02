@@ -42,7 +42,7 @@ configuration ConfigureFEVM
     # Setup settings
     [String] $SetupPath = "C:\DSC Data"
     [String] $RemoteSetupPath = "\\$DCName\C$\Setup"
-    [String] $DscStatusFilePath = "$SetupPath\DSC status.log"
+    [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
     [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"

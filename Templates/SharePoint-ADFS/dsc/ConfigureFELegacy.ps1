@@ -39,7 +39,7 @@ configuration ConfigureFEVM
 
     # Setup settings
     [String] $SetupPath = "C:\DSC Data"
-    [String] $DscStatusFilePath = "$SetupPath\DSC status.log"
+    [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
 
     # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
