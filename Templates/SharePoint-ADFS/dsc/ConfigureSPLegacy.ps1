@@ -302,15 +302,15 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        # if ($EnableAnalysis) {
-        #     # This resource is for  of dsc logs only and totally optionnal
-        #     cChocoPackageInstaller InstallPython
-        #     {
-        #         Name                 = "python"
-        #         Ensure               = "Present"
-        #         DependsOn            = "[cChocoInstaller]InstallChoco"
-        #     }
-        # }
+        if ($EnableAnalysis) {
+            # This resource is for  of dsc logs only and totally optionnal
+            cChocoPackageInstaller InstallPython
+            {
+                Name                 = "python"
+                Ensure               = "Present"
+                DependsOn            = "[cChocoInstaller]InstallChoco"
+            }
+        }
 
         # IIS cleanup cannot be executed earlier in SharePoint SE: It uses a base image of Windows Server without IIS (installed by SPInstallPrereqs)
         WebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
@@ -1379,31 +1379,35 @@ configuration ConfigureSPVM
             DependsOn            = "[SPSite]CreateRootSite"
         }
 
-        # if ($EnableAnalysis) {
-        #     # This resource is for analysis of dsc logs only and totally optionnal
-        #     Script parseDscLogs
-        #     {
-        #         TestScript = { return $false }
-        #         SetScript = {
-        #             $setupPath = $using:SetupPath
-        #             $localScriptPath = "$setupPath\parse-dsc-logs.py"
-        #             New-Item -ItemType Directory -Force -Path $setupPath
-
-        #             $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
-        #             $downloader = New-Object -TypeName System.Net.WebClient
-        #             $downloader.DownloadFile($url, $localScriptPath)
-
-        #             $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
-        #             $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
-        #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
+        if ($EnableAnalysis) {
+            # This resource is for analysis of dsc logs only and totally optionnal
+            Script parseDscLogs
+            {
+                TestScript = { return $false }
+                SetScript = {
+                    $setupPath = $using:SetupPath
+                    $localScriptPath = "$setupPath\parse-dsc-logs.py"
+                    New-Item -ItemType Directory -Force -Path $setupPath
+        
+                    $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
+                    $downloader = New-Object -TypeName System.Net.WebClient
+                    $downloader.DownloadFile($url, $localScriptPath)
+        
+                    $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
+                    $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
+                    $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
-        #             python $localScriptPath "$fullPathToDscLogs"
-        #         }
-        #         GetScript = { }
-        #         DependsOn            = "[cChocoPackageInstaller]InstallPython"
-        #         PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     }
-        # }
+                    # Start python script
+                    Write-Verbose -Message "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
+                    #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
+                    #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
+                    python "$localScriptPath" "$fullPathToDscLogs"
+                }
+                GetScript = { }
+                DependsOn            = "[cChocoPackageInstaller]InstallPython"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+            }
+        }
 
         Script DscStatus_Finished
         {
