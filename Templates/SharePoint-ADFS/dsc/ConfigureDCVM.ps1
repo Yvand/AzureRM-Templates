@@ -6,6 +6,7 @@
         [Parameter(Mandatory)] [String]$PrivateIP,
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
+        [Parameter] [Boolean]$ApplyBrowserPolicies = $true,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$Admincreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds
     )
@@ -242,57 +243,59 @@
             DependsOn               = "[PendingReboot]RebootOnSignalFromCreateADForest"
         }
 
-        # Set browser policies asap, so that computers that join domain get them immediately, and  it runs very quickly (<5 secs)
-        # Edge - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies
-        Script ConfigureEdgePolicies {
-            SetScript  = {
-                $domain = Get-ADDomain -Current LocalComputer
-                $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
-                $policies = $using:EdgePolicies
-                $gpo = New-GPO -name "Edge_browser"
-                New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
+        if ($true -eq $ApplyBrowserPolicies) {
+            # Set browser policies asap, so that computers that join domain get them immediately, and  it runs very quickly (<5 secs)
+            # Edge - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies
+            Script ConfigureEdgePolicies {
+                SetScript  = {
+                    $domain = Get-ADDomain -Current LocalComputer
+                    $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
+                    $policies = $using:EdgePolicies
+                    $gpo = New-GPO -name "Edge_browser"
+                    New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
 
-                foreach ($policy in $policies) {
-                    $key = $registryKey
-                    if ($true -eq $policy.policyCanBeRecommended) {$key += "\Recommended"}
-                    $valueType = if ($policy.policyValueValue -is [int]) {"DWORD"} else {"STRING"}
-                    Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue
+                    foreach ($policy in $policies) {
+                        $key = $registryKey
+                        if ($true -eq $policy.policyCanBeRecommended) {$key += "\Recommended"}
+                        $valueType = if ($policy.policyValueValue -is [int]) {"DWORD"} else {"STRING"}
+                        Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue
+                    }
+                }
+                GetScript  = { return @{ "Result" = "false" } }
+                TestScript = {
+                    $policy = Get-GPO -name "Edge_browser" -ErrorAction SilentlyContinue
+                    if ($null -eq $policy) {
+                        return $false
+                    } else {
+                        return $true
+                    }
                 }
             }
-            GetScript  = { return @{ "Result" = "false" } }
-            TestScript = {
-                $policy = Get-GPO -name "Edge_browser" -ErrorAction SilentlyContinue
-                if ($null -eq $policy) {
-                    return $false
-                } else {
-                    return $true
-                }
-            }
-        }
 
-        # Chrome - https://chromeenterprise.google/intl/en_us/policies/
-        Script ConfigureChromePolicies {
-            SetScript  = {
-                $domain = Get-ADDomain -Current LocalComputer
-                $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome"
-                $policies = $using:ChromePolicies
-                $gpo = New-GPO -name "Chrome_browser"
-                New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
+            # Chrome - https://chromeenterprise.google/intl/en_us/policies/
+            Script ConfigureChromePolicies {
+                SetScript  = {
+                    $domain = Get-ADDomain -Current LocalComputer
+                    $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome"
+                    $policies = $using:ChromePolicies
+                    $gpo = New-GPO -name "Chrome_browser"
+                    New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
 
-                foreach ($policy in $policies) {
-                    $key = $registryKey
-                    if ($true -eq $policy.policyCanBeRecommended) {$key += "\Recommended"}
-                    $valueType = if ($policy.policyValueValue -is [int]) {"DWORD"} else {"STRING"}
-                    Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue
+                    foreach ($policy in $policies) {
+                        $key = $registryKey
+                        if ($true -eq $policy.policyCanBeRecommended) {$key += "\Recommended"}
+                        $valueType = if ($policy.policyValueValue -is [int]) {"DWORD"} else {"STRING"}
+                        Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue
+                    }
                 }
-            }
-            GetScript  = { return @{ "Result" = "false" } }
-            TestScript = {
-                $policy = Get-GPO -name "Chrome_browser" -ErrorAction SilentlyContinue
-                if ($null -eq $policy) {
-                    return $false
-                } else {
-                    return $true
+                GetScript  = { return @{ "Result" = "false" } }
+                TestScript = {
+                    $policy = Get-GPO -name "Chrome_browser" -ErrorAction SilentlyContinue
+                    if ($null -eq $policy) {
+                        return $false
+                    } else {
+                        return $true
+                    }
                 }
             }
         }
