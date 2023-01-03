@@ -264,13 +264,6 @@ configuration ConfigureSPVM
             InstallDir = "C:\Chocolatey"
         }
 
-        cChocoPackageInstaller InstallEdge
-        {
-            Name                 = "microsoft-edge"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
         cChocoPackageInstaller InstallNotepadpp
         {
             Name                 = "notepadplusplus.install"
