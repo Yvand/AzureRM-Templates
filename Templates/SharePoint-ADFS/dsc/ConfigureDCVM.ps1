@@ -6,7 +6,7 @@
         [Parameter(Mandatory)] [String]$PrivateIP,
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
-        [Parameter] [Boolean]$ApplyBrowserPolicies = $true,
+        [Parameter ()] [Boolean]$ApplyBrowserPolicies = $true,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$Admincreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds
     )
