@@ -161,39 +161,20 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
-        Script EnableLongPath
+        # From https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell :
+        # Starting in Windows 10, version 1607, MAX_PATH limitations have been removed from common Win32 file and directory functions. However, you must opt-in to the new behavior.
+        Script SetLongPathsEnabled
         {
             GetScript = { }
-            TestScript = {
-                return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            }
-            SetScript = 
-            {
-                $longPathEnabled = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled
-                if (-not $longPathEnabled) {
-                    New-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled -Value 1 -PropertyType DWord
-                }
-                else {
-                    Set-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem\ -Name LongPathsEnabled -Value 1
-                }
-            }
+            TestScript = { return $false }
+            SetScript = { New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force }
         }
 
         Script EnableFileSharing
         {
-            TestScript = {
-                # Test if firewall rules for file sharing already exist
-                $rulesSet = Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}
-                if ($null -eq $rulesSet) {
-                    return $false   # Run SetScript
-                } else {
-                    return $true    # Rules already set
-                }
-            }
-            SetScript = {
-                Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false
-            }
             GetScript = { }
+            TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}) }
+            SetScript = { Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false }
         }
 
         # Create the rules in the firewall required for the distributed cache
