@@ -1,5 +1,15 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+* Use a small disk (32 GB) on SharePoint 2019 and SharePoint Subscription VMs.
+* Updated SQL image to use SQL Server 2022 on Windows Server 2022.
+* Reorganize the local template variables to be more consistent.
+* Apply browser policies for Edge and Chrome to get rid of noisy wizards / homepages / new tab content.
+* No longer explicitly install Edge browser on Windows Server 2022 VMs as it is present by default.
+* In SharePoint VMs: Install Visual Studio Code as system install instead of as a portable zip package.
+* In SharePoint VMs: Install Azure Data Studio.
+
 ## Enhancements & bug-fixes - Published in November 28, 2022
 
 * Renamed parameter `addPublicIPAddressToEachVM` to `addPublicIPAddress` and changed its type to `string` to provide more granularity. Its default value is now `"SharePointVMsOnly"`, to assign a public IP address only to SharePoint VMs
