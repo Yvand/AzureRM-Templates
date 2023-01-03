@@ -90,24 +90,14 @@ configuration ConfigureSQLVM
         # They need to be removed before they can be set on the SQL service account
         Script RemoveSQLSpnOnSQLMachine
         {
+            GetScript = { }
+            TestScript = { return $false }
             SetScript = 
             {
                 $hostname = $using:ComputerName
                 $domainFQDN = $using:DomainFQDN
-                $spn1 = "MSSQLSvc/$hostname.$($domainFQDN)"
-                $spn2 = "MSSQLSvc/$hostname.$($domainFQDN):1433"
-                setspn -D "$spn1" "$hostname"
-                setspn -D "$spn2" "$hostname"
-            }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-				return $false
+                setspn -D "MSSQLSvc/$hostname.$($domainFQDN)" "$hostname"
+                setspn -D "MSSQLSvc/$hostname.$($domainFQDN):1433" "$hostname"
             }
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -129,7 +119,7 @@ configuration ConfigureSQLVM
         Script EnsureSQLServiceStarted
         {
             GetScript = { }
-            TestScript = { (Get-Service -Name "MSSQLSERVER").Status -like 'Running' }
+            TestScript = { return (Get-Service -Name "MSSQLSERVER").Status -like 'Running' }
             SetScript = { Start-Service -Name "MSSQLSERVER" }
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
             PsDscRunAsCredential = $DomainAdminCredsQualified
