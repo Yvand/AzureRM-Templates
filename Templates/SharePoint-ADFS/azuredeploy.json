@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "3.0.0.0",
+  "contentVersion": "4.0.0.0",
   "metadata": {
-    "description": "Deploy SharePoint Subscription / 2019 / 2016 / 2013 with a web application set with Windows and ADFS authentication, and some path based and host-named site collections. It also provisions User Profiles and Apps service applications and installs claims provider LDAPCP.",
+    "description": "Create a SharePoint Subscription / 2019 / 2016 / 2013 farm with an extensive configuration that would take ages to perform manually, and install useful softwares like Fiddler, vscode, np++, 7zip, ULS Viewer to get ready to use",
     "author": "Yvand"
   },
   "parameters": {
@@ -411,13 +411,13 @@
       "nsgSubnetSQLName": "NSG-Subnet-SQL",
       "nsgSubnetSPName": "NSG-Subnet-SP",
       "vmDCPublicIPNicAssociation": {
-        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmResourcesNames').vmDCPublicIPName)]"
+        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmDCPublicIPName)]"
       },
       "vmSQLPublicIPNicAssociation": {
-        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmResourcesNames').vmSQLPublicIPName)]"
+        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmSQLPublicIPName)]"
       },
       "vmSPPublicIPNicAssociation": {
-        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmResourcesNames').vmSPPublicIPName)]"
+        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmSPPublicIPName)]"
       },
       "nsgRuleAllowIncomingRdp": [
         {
@@ -436,34 +436,34 @@
         }
       ]
     },
-    "config_machines": {
+    "vmsSettings": {
       "vmDCName": "DC",
-      "vmDCImagePublisher": "MicrosoftWindowsServer",
-      "vmDCImageOffer": "WindowsServer",
-      "vmDCImageSKU": "2022-datacenter-azure-edition-smalldisk",
       "vmSQLName": "SQL",
-      "vmSQLImagePublisher": "MicrosoftSQLServer",
-      "vmSQLImageOffer": "sql2022-ws2022",
-      "vmSQLImageSKU": "sqldev-gen2",
       "vmSPName": "SP",
       "vmFEName": "FE",
-      "sharepoint_imageId": "[if(variables('sharePointSettings').isSharePointSubscription, variables('sharePointSettings').sharePointImagesList.Subscription,
-        if(equals(parameters('sharePointVersion'), '2019'), variables('sharePointSettings').sharePointImagesList.sp2019,
-          if(equals(parameters('sharePointVersion'), '2016'), variables('sharePointSettings').sharePointImagesList.sp2016, variables('sharePointSettings').sharePointImagesList.sp2013)
+      "vmDCImage": "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest",
+      "vmSQLImage": "MicrosoftSQLServer:sql2022-ws2022:sqldev-gen2:latest",
+      "vmSharePointImage": "[
+        if(variables('sharePointSettings').isSharePointSubscription, variables('sharePointSettings').sharePointImagesList.Subscription,
+          if(equals(parameters('sharePointVersion'), '2019'), variables('sharePointSettings').sharePointImagesList.sp2019,
+            if(equals(parameters('sharePointVersion'), '2016'), variables('sharePointSettings').sharePointImagesList.sp2016, 
+              variables('sharePointSettings').sharePointImagesList.sp2013
+            )
+          )
         )
-      )]"
+      ]"
     },
-    "vmResourcesNames": {
-      "vmDCNicName": "[concat('NIC-', variables('config_machines').vmDCName, '-0')]",
-      "vmDCPublicIPName": "[concat('PublicIP-', variables('config_machines').vmDCName)]",
-      "vmSQLNicName": "[concat('NIC-', variables('config_machines').vmSQLName, '-0')]",
-      "vmSQLPublicIPName": "[concat('PublicIP-', variables('config_machines').vmSQLName)]",
-      "vmSPNicName": "[concat('NIC-', variables('config_machines').vmSPName, '-0')]",
-      "vmSPPublicIPName": "[concat('PublicIP-', variables('config_machines').vmSPName)]",
-      "vmFENicName": "[concat('NIC-', variables('config_machines').vmFEName, '-0')]",
-      "vmFEPublicIPName": "[concat('PublicIP-', variables('config_machines').vmFEName)]"
+    "vmsResourcesNames": {
+      "vmDCNicName": "[concat('NIC-', variables('vmsSettings').vmDCName, '-0')]",
+      "vmDCPublicIPName": "[concat('PublicIP-', variables('vmsSettings').vmDCName)]",
+      "vmSQLNicName": "[concat('NIC-', variables('vmsSettings').vmSQLName, '-0')]",
+      "vmSQLPublicIPName": "[concat('PublicIP-', variables('vmsSettings').vmSQLName)]",
+      "vmSPNicName": "[concat('NIC-', variables('vmsSettings').vmSPName, '-0')]",
+      "vmSPPublicIPName": "[concat('PublicIP-', variables('vmsSettings').vmSPName)]",
+      "vmFENicName": "[concat('NIC-', variables('vmsSettings').vmFEName, '-0')]",
+      "vmFEPublicIPName": "[concat('PublicIP-', variables('vmsSettings').vmFEName)]"
     },
-    "config_dsc": {
+    "dscSettings": {
       "forceUpdateTag": "1.0",
       "vmDCScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('dsc/ConfigureDCVM.zip', parameters('_artifactsLocationSasToken')))]",
       "vmDCScript": "ConfigureDCVM.ps1",
@@ -582,7 +582,7 @@
     },
     {
       "condition": "[equals(parameters('addPublicIPAddress'), 'Yes')]",
-      "name": "[variables('vmResourcesNames').vmDCPublicIPName]",
+      "name": "[variables('vmsResourcesNames').vmDCPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2022-05-01",
       "location": "[parameters('location')]",
@@ -593,18 +593,18 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('config_machines').vmDCName), '_', '-'))]"
+          "domainNameLabel": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('vmsSettings').vmDCName), '_', '-'))]"
         }
       }
     },
     {
-      "name": "[variables('vmResourcesNames').vmDCNicName]",
+      "name": "[variables('vmsResourcesNames').vmDCNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2022-05-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmResourcesNames').vmDCPublicIPName)]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmDCPublicIPName)]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -623,19 +623,19 @@
       }
     },
     {
-      "name": "[variables('config_machines').vmDCName]",
+      "name": "[variables('vmsSettings').vmDCName]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2022-08-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmResourcesNames').vmDCNicName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmsResourcesNames').vmDCNicName)]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmDCSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('config_machines').vmDCName]",
+          "computerName": "[variables('vmsSettings').vmDCName]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -650,10 +650,10 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('config_machines').vmDCImagePublisher]",
-            "offer": "[variables('config_machines').vmDCImageOffer]",
-            "sku": "[variables('config_machines').vmDCImageSKU]",
-            "version": "latest"
+            "publisher":  "[split(variables('vmsSettings').vmDCImage, ':')[0]]",
+            "offer": "[split(variables('vmsSettings').vmDCImage, ':')[1]]",
+            "sku":  "[split(variables('vmsSettings').vmDCImage, ':')[2]]",
+            "version":  "[split(variables('vmsSettings').vmDCImage, ':')[3]]"
           },
           "osDisk": {
             "name": "Disk-DC-OS",
@@ -669,7 +669,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmResourcesNames').vmDCNicName)]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmsResourcesNames').vmDCNicName)]"
             }
           ]
         },
@@ -682,20 +682,20 @@
           "location": "[parameters('location')]",
           "apiVersion": "2022-08-01",
           "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', variables('config_machines').vmDCName)]"
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmsSettings').vmDCName)]"
           ],
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
             "typeHandlerVersion": "2.9",
             "autoUpgradeMinorVersion": true,
-            "forceUpdateTag": "[variables('config_dsc').forceUpdateTag]",
+            "forceUpdateTag": "[variables('dscSettings').forceUpdateTag]",
             "settings": {
               "wmfVersion": "latest",
               "configuration": {
-                "url": "[variables('config_dsc').vmDCScriptFileUri]",
-                "script": "[variables('config_dsc').vmDCScript]",
-                "function": "[variables('config_dsc').vmDCFunction]"
+                "url": "[variables('dscSettings').vmDCScriptFileUri]",
+                "script": "[variables('dscSettings').vmDCScript]",
+                "function": "[variables('dscSettings').vmDCFunction]"
               },
               "configurationArguments": {
                 "domainFQDN": "[parameters('domainFQDN')]",
@@ -725,7 +725,7 @@
     },
     {
       "condition": "[equals(parameters('addPublicIPAddress'), 'Yes')]",
-      "name": "[variables('vmResourcesNames').vmSQLPublicIPName]",
+      "name": "[variables('vmsResourcesNames').vmSQLPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2022-05-01",
       "location": "[parameters('location')]",
@@ -736,18 +736,18 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('config_machines').vmSQLName), '_', '-'))]"
+          "domainNameLabel": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('vmsSettings').vmSQLName), '_', '-'))]"
         }
       }
     },
     {
-      "name": "[variables('vmResourcesNames').vmSQLNicName]",
+      "name": "[variables('vmsResourcesNames').vmSQLNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2022-05-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmResourcesNames').vmSQLPublicIPName)]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmSQLPublicIPName)]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -765,19 +765,19 @@
       }
     },
     {
-      "name": "[variables('config_machines').vmSQLName]",
+      "name": "[variables('vmsSettings').vmSQLName]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2022-08-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmResourcesNames').vmSQLNicName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmsResourcesNames').vmSQLNicName)]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSQLSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('config_machines').vmSQLName]",
+          "computerName": "[variables('vmsSettings').vmSQLName]",
           "adminUsername": "[variables('deploymentSettings').localAdminUserName]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -792,10 +792,10 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('config_machines').vmSQLImagePublisher]",
-            "offer": "[variables('config_machines').vmSQLImageOffer]",
-            "sku": "[variables('config_machines').vmSQLImageSKU]",
-            "version": "latest"
+            "publisher":  "[split(variables('vmsSettings').vmSQLImage, ':')[0]]",
+            "offer": "[split(variables('vmsSettings').vmSQLImage, ':')[1]]",
+            "sku":  "[split(variables('vmsSettings').vmSQLImage, ':')[2]]",
+            "version":  "[split(variables('vmsSettings').vmSQLImage, ':')[3]]"
           },
           "osDisk": {
             "name": "Disk-SQL-OS",
@@ -811,7 +811,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmResourcesNames').vmSQLNicName)]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmsResourcesNames').vmSQLNicName)]"
             }
           ]
         },
@@ -821,7 +821,7 @@
     },
     {
       "condition": "[or(equals(parameters('addPublicIPAddress'), 'Yes'), equals(parameters('addPublicIPAddress'), 'SharePointVMsOnly'))]",
-      "name": "[variables('vmResourcesNames').vmSPPublicIPName]",
+      "name": "[variables('vmsResourcesNames').vmSPPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2022-05-01",
       "location": "[parameters('location')]",
@@ -832,18 +832,18 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('config_machines').vmSPName), '_', '-'))]"
+          "domainNameLabel": "[toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('vmsSettings').vmSPName), '_', '-'))]"
         }
       }
     },
     {
-      "name": "[variables('vmResourcesNames').vmSPNicName]",
+      "name": "[variables('vmsResourcesNames').vmSPNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2022-05-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmResourcesNames').vmSPPublicIPName)]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmSPPublicIPName)]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -861,19 +861,19 @@
       }
     },
     {
-      "name": "[variables('config_machines').vmSPName]",
+      "name": "[variables('vmsSettings').vmSPName]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2022-08-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmResourcesNames').vmSPNicName)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmsResourcesNames').vmSPNicName)]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSPSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('config_machines').vmSPName]",
+          "computerName": "[variables('vmsSettings').vmSPName]",
           "adminUsername": "[variables('deploymentSettings').localAdminUserName]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -888,10 +888,10 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher":  "[split(variables('config_machines').sharepoint_imageId, ':')[0]]",
-            "offer": "[split(variables('config_machines').sharepoint_imageId, ':')[1]]",
-            "sku":  "[split(variables('config_machines').sharepoint_imageId, ':')[2]]",
-            "version":  "[split(variables('config_machines').sharepoint_imageId, ':')[3]]"
+            "publisher":  "[split(variables('vmsSettings').vmSharePointImage, ':')[0]]",
+            "offer": "[split(variables('vmsSettings').vmSharePointImage, ':')[1]]",
+            "sku":  "[split(variables('vmsSettings').vmSharePointImage, ':')[2]]",
+            "version":  "[split(variables('vmsSettings').vmSharePointImage, ':')[3]]"
           },
           "osDisk": {
             "name": "Disk-SP-OS",
@@ -908,7 +908,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmResourcesNames').vmSPNicName)]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmsResourcesNames').vmSPNicName)]"
             }
           ]
         },
@@ -917,25 +917,25 @@
       "resources": []
     },
     {
-      "name": "[concat(variables('config_machines').vmSQLName,'/ConfigureSQLVM')]",
+      "name": "[concat(variables('vmsSettings').vmSQLName,'/ConfigureSQLVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
       "apiVersion": "2022-08-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('config_machines').vmSQLName)]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmsSettings').vmSQLName)]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
         "typeHandlerVersion": "2.9",
         "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[variables('config_dsc').forceUpdateTag]",
+        "forceUpdateTag": "[variables('dscSettings').forceUpdateTag]",
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[variables('config_dsc').vmSQLScriptFileUri]",
-            "script": "[variables('config_dsc').vmSQLScript]",
-            "function": "[variables('config_dsc').vmSQLFunction]"
+            "url": "[variables('dscSettings').vmSQLScriptFileUri]",
+            "script": "[variables('dscSettings').vmSQLScript]",
+            "function": "[variables('dscSettings').vmSQLFunction]"
           },
           "configurationArguments": {
             "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
@@ -964,31 +964,31 @@
       }
     },
     {
-      "name": "[concat(variables('config_machines').vmSPName,'/ConfigureSPVM')]",
+      "name": "[concat(variables('vmsSettings').vmSPName,'/ConfigureSPVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
       "apiVersion": "2022-08-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('config_machines').vmSPName)]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmsSettings').vmSPName)]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
         "typeHandlerVersion": "2.9",
         "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[variables('config_dsc').forceUpdateTag]",
+        "forceUpdateTag": "[variables('dscSettings').forceUpdateTag]",
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[variables('config_dsc').vmSPScriptFileUri]",
-            "script": "[variables('config_dsc').vmSPScript]",
-            "function": "[variables('config_dsc').vmSPFunction]"
+            "url": "[variables('dscSettings').vmSPScriptFileUri]",
+            "script": "[variables('dscSettings').vmSPScript]",
+            "function": "[variables('dscSettings').vmSPFunction]"
           },
           "configurationArguments": {
             "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
-            "DCName": "[variables('config_machines').vmDCName]",
-            "SQLName": "[variables('config_machines').vmSQLName]",
+            "DCName": "[variables('vmsSettings').vmDCName]",
+            "SQLName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "[parameters('sharePointVersion')]",
             "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
@@ -1044,7 +1044,7 @@
     },
     {
       "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), or(equals(parameters('addPublicIPAddress'), 'Yes'), equals(parameters('addPublicIPAddress'), 'SharePointVMsOnly')))]",
-      "name": "[concat(variables('vmResourcesNames').vmFEPublicIPName, '-', copyIndex())]",
+      "name": "[concat(variables('vmsResourcesNames').vmFEPublicIPName, '-', copyIndex())]",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2022-05-01",
       "location": "[parameters('location')]",
@@ -1059,13 +1059,13 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[concat(toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('config_machines').vmFEName), '_', '-')), '-', copyIndex())]"
+          "domainNameLabel": "[concat(toLower(replace(concat(parameters('dnsLabelPrefix'), '-', variables('vmsSettings').vmFEName), '_', '-')), '-', copyIndex())]"
         }
       }
     },
     {
       "condition": "[greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1)]",
-      "name": "[concat(variables('vmResourcesNames').vmFENicName, '-', copyIndex())]",
+      "name": "[concat(variables('vmsResourcesNames').vmFENicName, '-', copyIndex())]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2022-05-01",
       "location": "[parameters('location')]",
@@ -1086,7 +1086,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
               },
-              "publicIPAddress": "[if(or(equals(parameters('addPublicIPAddress'), 'Yes'), equals(parameters('addPublicIPAddress'), 'SharePointVMsOnly')), json(concat('{\"id\": \"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmResourcesNames').vmFEPublicIPName, '-', copyIndex())), '\" }')), json('null'))]"
+              "publicIPAddress": "[if(or(equals(parameters('addPublicIPAddress'), 'Yes'), equals(parameters('addPublicIPAddress'), 'SharePointVMsOnly')), json(concat('{\"id\": \"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmsResourcesNames').vmFEPublicIPName, '-', copyIndex())), '\" }')), json('null'))]"
             }
           }
         ]
@@ -1094,7 +1094,7 @@
     },
     {
       "condition": "[greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1)]",
-      "name": "[concat(variables('config_machines').vmFEName, '-', copyIndex())]",
+      "name": "[concat(variables('vmsSettings').vmFEName, '-', copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2022-08-01",
       "location": "[parameters('location')]",
@@ -1110,7 +1110,7 @@
           "vmSize": "[parameters('vmSPSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('config_machines').vmFEName, '-', copyIndex())]",
+          "computerName": "[concat(variables('vmsSettings').vmFEName, '-', copyIndex())]",
           "adminUsername": "[variables('deploymentSettings').localAdminUserName]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -1125,10 +1125,10 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher":  "[split(variables('config_machines').sharepoint_imageId, ':')[0]]",
-            "offer": "[split(variables('config_machines').sharepoint_imageId, ':')[1]]",
-            "sku":  "[split(variables('config_machines').sharepoint_imageId, ':')[2]]",
-            "version":  "[split(variables('config_machines').sharepoint_imageId, ':')[3]]"
+            "publisher":  "[split(variables('vmsSettings').vmSharePointImage, ':')[0]]",
+            "offer": "[split(variables('vmsSettings').vmSharePointImage, ':')[1]]",
+            "sku":  "[split(variables('vmsSettings').vmSharePointImage, ':')[2]]",
+            "version":  "[split(variables('vmsSettings').vmSharePointImage, ':')[3]]"
           },
           "osDisk": {
             "name": "[concat('Disk-FE-OS', '-', copyIndex())]",
@@ -1144,7 +1144,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmResourcesNames').vmFENicName, '-', copyIndex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmsResourcesNames').vmFENicName, '-', copyIndex()))]"
             }
           ]
         },
@@ -1154,7 +1154,7 @@
     },
     {
       "condition": "[greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1)]",
-      "name": "[concat(variables('config_machines').vmFEName, '-', copyIndex(),'/ConfigureFEVM')]",
+      "name": "[concat(variables('vmsSettings').vmFEName, '-', copyIndex(),'/ConfigureFEVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
       "apiVersion": "2022-08-01",
@@ -1170,19 +1170,19 @@
         "type": "DSC",
         "typeHandlerVersion": "2.9",
         "autoUpgradeMinorVersion": true,
-        "forceUpdateTag": "[variables('config_dsc').forceUpdateTag]",
+        "forceUpdateTag": "[variables('dscSettings').forceUpdateTag]",
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[variables('config_dsc').vmFEScriptFileUri]",
-            "script": "[variables('config_dsc').vmFEScript]",
-            "function": "[variables('config_dsc').vmFEFunction]"
+            "url": "[variables('dscSettings').vmFEScriptFileUri]",
+            "script": "[variables('dscSettings').vmFEScript]",
+            "function": "[variables('dscSettings').vmFEFunction]"
           },
           "configurationArguments": {
             "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
-            "DCName": "[variables('config_machines').vmDCName]",
-            "SQLName": "[variables('config_machines').vmSQLName]",
+            "DCName": "[variables('vmsSettings').vmDCName]",
+            "SQLName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "[parameters('sharePointVersion')]",
             "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
@@ -1218,11 +1218,11 @@
     {
       "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '9999'))]",
       "type": "Microsoft.DevTestLab/schedules",
-      "name": "[concat('shutdown-computevm-', variables('config_machines').vmDCName)]",
+      "name": "[concat('shutdown-computevm-', variables('vmsSettings').vmDCName)]",
       "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('config_machines').vmDCName)]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmsSettings').vmDCName)]"
       ],
       "properties": {
         "status": "Enabled",
@@ -1235,17 +1235,17 @@
           "status": "Disabled",
           "timeInMinutes": 30
         },
-        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('config_machines').vmDCName)]"
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('vmsSettings').vmDCName)]"
       }
     },
     {
       "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '9999'))]",
       "type": "Microsoft.DevTestLab/schedules",
-      "name": "[concat('shutdown-computevm-', variables('config_machines').vmSQLName)]",
+      "name": "[concat('shutdown-computevm-', variables('vmsSettings').vmSQLName)]",
       "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('config_machines').vmSQLName)]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmsSettings').vmSQLName)]"
       ],
       "properties": {
         "status": "Enabled",
@@ -1258,17 +1258,17 @@
           "status": "Disabled",
           "timeInMinutes": 30
         },
-        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('config_machines').vmSQLName)]"
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('vmsSettings').vmSQLName)]"
       }
     },
     {
       "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '9999'))]",
       "type": "Microsoft.DevTestLab/schedules",
-      "name": "[concat('shutdown-computevm-', variables('config_machines').vmSPName)]",
+      "name": "[concat('shutdown-computevm-', variables('vmsSettings').vmSPName)]",
       "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('config_machines').vmSPName)]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmsSettings').vmSPName)]"
       ],
       "properties": {
         "status": "Enabled",
@@ -1281,13 +1281,13 @@
           "status": "Disabled",
           "timeInMinutes": 30
         },
-        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('config_machines').vmSPName)]"
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('vmsSettings').vmSPName)]"
       }
     },
     {
       "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), not(equals(parameters('vmsAutoShutdownTime'), '9999')))]",
       "type": "Microsoft.DevTestLab/schedules",
-      "name": "[concat(concat('shutdown-computevm-', variables('config_machines').vmFEName), '-', copyIndex())]",
+      "name": "[concat(concat('shutdown-computevm-', variables('vmsSettings').vmFEName), '-', copyIndex())]",
       "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -1308,7 +1308,7 @@
           "status": "Disabled",
           "timeInMinutes": 30
         },
-        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('config_machines').vmFEName, '-', copyIndex()))]"
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmsSettings').vmFEName, '-', copyIndex()))]"
       }
     },
     {
@@ -1530,25 +1530,25 @@
     "publicIPAddressSP": {
       "condition": "[or(equals(parameters('addPublicIPAddress'), 'Yes'), equals(parameters('addPublicIPAddress'), 'SharePointVMsOnly'))]",
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmResourcesNames').vmSPPublicIPName)).dnsSettings.fqdn]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmSPPublicIPName)).dnsSettings.fqdn]"
     },
     "publicIPAddressFEs": {
       "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), or(equals(parameters('addPublicIPAddress'), 'Yes'), equals(parameters('addPublicIPAddress'), 'SharePointVMsOnly')))]",
       "type": "array",
       "copy": {
         "count": "[parameters('numberOfAdditionalFrontEnd')]",
-        "input": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmResourcesNames').vmFEPublicIPName, '-', copyIndex()))).dnsSettings.fqdn]"
+        "input": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmsResourcesNames').vmFEPublicIPName, '-', copyIndex()))).dnsSettings.fqdn]"
       }
     },
     "publicIPAddressSQL": {
       "condition": "[equals(parameters('addPublicIPAddress'), 'Yes')]",
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmResourcesNames').vmSQLPublicIPName)).dnsSettings.fqdn]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmSQLPublicIPName)).dnsSettings.fqdn]"
     },
     "publicIPAddressDC": {
       "condition": "[equals(parameters('addPublicIPAddress'), 'Yes')]",
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmResourcesNames').vmDCPublicIPName)).dnsSettings.fqdn]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmDCPublicIPName)).dnsSettings.fqdn]"
     },
     "domainAdminAccount": {
       "type": "string",
