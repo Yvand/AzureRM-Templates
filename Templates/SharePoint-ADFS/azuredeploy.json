@@ -479,6 +479,12 @@
       "vmFEFunction": "ConfigureFEVM"
     },
     "deploymentSettings": {
+      "sharePointSitesAuthority": "spsites",
+      "sharePointCentralAdminPort": 5000,
+      "sharePointBitsSelected": "[if(variables('sharePointSettings').isSharePointSubscription, variables('sharePointSettings').sharePointSubscriptionBits, 'fake')]",
+      "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
+      "enableAnalysis": true,
+      "applyBrowserPolicies": true,
       "sqlAlias": "SQLAlias",
       "spSuperUserName": "spSuperUser",
       "spSuperReaderName": "spSuperReader",
@@ -488,12 +494,7 @@
       "spFarmUserName": "spfarm",
       "spSvcUserName": "spsvc",
       "spAppPoolUserName": "spapppool",
-      "spADDirSyncUserName": "spdirsync",
-      "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
-      "enableAnalysis": true,
-      "sharePointSitesAuthority": "spsites",
-      "sharePointCentralAdminPort": 5000,
-      "sharePointBitsSelected": "[if(variables('sharePointSettings').isSharePointSubscription, variables('sharePointSettings').sharePointSubscriptionBits, 'fake')]"
+      "spADDirSyncUserName": "spdirsync"
     },
     "vmSPDataDisk": [
       {
@@ -701,7 +702,8 @@
                 "domainFQDN": "[parameters('domainFQDN')]",
                 "PrivateIP": "[variables('networkSettings').dcPrivateIPAddress]",
                 "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
-                "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]"
+                "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
+                "ApplyBrowserPolicies": "[variables('deploymentSettings').applyBrowserPolicies]"
               },
               "privacy": {
                 "dataCollection": "enable"
