@@ -135,12 +135,12 @@
         @{
             policyValueName = "ManagedFavorites";
             policyCanBeRecommended = $false;
-            policyValueValue = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site SPSE - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site SPSE - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration SPSE"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site SPSE - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site SPSE - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
         },
         @{
             policyValueName = "NewTabPageManagedQuickLinks";
             policyCanBeRecommended = $true;
-            policyValueValue = "[{""pinned"": true, ""title"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""pinned"": true, ""title"": ""Root site SPSE - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""pinned"": true, ""title"": ""Root site SPSE - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue = "[{""pinned"": true, ""title"": ""Central administration SPSE"", ""url"": ""$centralAdminUrl"" }, { ""pinned"": true, ""title"": ""Root site SPSE - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""pinned"": true, ""title"": ""Root site SPSE - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
         }
     )
 
@@ -193,7 +193,7 @@
         @{
             policyValueName = "ManagedBookmarks";
             policyCanBeRecommended = $false;
-            policyValueValue = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration SPSE"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site SPSE - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site SPSE - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
         }
     )
 
