@@ -695,7 +695,8 @@
                 "PrivateIP": "[variables('networkSettings').dcPrivateIPAddress]",
                 "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
                 "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
-                "ApplyBrowserPolicies": "[variables('deploymentSettings').applyBrowserPolicies]"
+                "ApplyBrowserPolicies": "[variables('deploymentSettings').applyBrowserPolicies]",
+                "ConfigureADFS": "[parameters('configureADFS')]"
               },
               "privacy": {
                 "dataCollection": "enable"
@@ -1470,9 +1471,11 @@
             "SQLName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "[parameters('provisionSharePointSubscription')]",
-            "ConfigureADFS": "[parameters('configureADFS')]",
+            "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
+            "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
             "EnableAnalysis": "[variables('deploymentSettings').enableAnalysis]",
-            "SharePointBits": "[variables('sharePointSettings').sharePointSubscriptionBits]"
+            "SharePointBits": "[variables('sharePointSettings').sharePointSubscriptionBits]",
+            "ConfigureADFS": "[parameters('configureADFS')]"
           },
           "privacy": {
             "dataCollection": "enable"
