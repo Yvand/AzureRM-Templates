@@ -649,7 +649,7 @@
             "version":  "[split(variables('vmsSettings').vmDCImage, ':')[3]]"
           },
           "osDisk": {
-            "name": "Disk-DC-OS",
+            "name": "[concat('Disk-', variables('vmsSettings').vmDCName, '-OS')]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
@@ -792,7 +792,7 @@
             "version":  "[split(variables('vmsSettings').vmSQLImage, ':')[3]]"
           },
           "osDisk": {
-            "name": "Disk-SQL-OS",
+            "name": "[concat('Disk-', variables('vmsSettings').vmSQLName, '-OS')]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
@@ -937,7 +937,7 @@
             "version":  "[split(variables('vmsSettings').vmSP2013Image, ':')[3]]"
           },
           "osDisk": {
-            "name": "Disk-SP2013-OS",
+            "name": "[concat('Disk-', variables('vmsSettings').vmSP2013Name, '-OS')]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
@@ -1098,7 +1098,7 @@
             "version":  "[split(variables('vmsSettings').vmSP2016Image, ':')[3]]"
           },
           "osDisk": {
-            "name": "Disk-SP2016-OS",
+            "name": "[concat('Disk-', variables('vmsSettings').vmSP2016Name, '-OS')]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
@@ -1259,7 +1259,7 @@
             "version":  "[split(variables('vmsSettings').vmSP2019Image, ':')[3]]"
           },
           "osDisk": {
-            "name": "Disk-SP2019-OS",
+            "name": "[concat('Disk-', variables('vmsSettings').vmSP2019Name, '-OS')]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
@@ -1420,7 +1420,7 @@
             "version":  "[split(variables('vmsSettings').vmSPSubscriptionImage, ':')[3]]"
           },
           "osDisk": {
-            "name": "Disk-SPSE-OS",
+            "name": "[concat('Disk-', variables('vmsSettings').vmSPSubscriptionName, '-OS')]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",

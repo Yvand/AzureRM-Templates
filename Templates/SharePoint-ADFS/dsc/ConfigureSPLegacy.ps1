@@ -294,7 +294,6 @@ configuration ConfigureSPVM
             }
         }
 
-        # IIS cleanup cannot be executed earlier in SharePoint SE: It uses a base image of Windows Server without IIS (installed by SPInstallPrereqs)
         WebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; }
         WebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; }
         WebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; }
@@ -563,7 +562,7 @@ configuration ConfigureSPVM
         cChocoPackageInstaller InstallFiddler
         {
             Name                 = "fiddler"
-            Version              =  5.0.20204.45441
+            #Version              =  5.0.20204.45441
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
@@ -764,7 +763,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                gpupdate.exe /force
+                gpupdate.exe
             }
             GetScript            = { }
             TestScript           = 

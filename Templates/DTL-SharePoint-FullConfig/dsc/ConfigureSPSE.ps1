@@ -11,7 +11,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
-        [Parameter()] [System.Object[]] $SharePointBits,
+        [Parameter(Mandatory)] [System.Object[]] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -680,7 +680,7 @@ configuration ConfigureSPVM
         cChocoPackageInstaller InstallFiddler
         {
             Name                 = "fiddler"
-            Version              =  5.0.20204.45441
+            #Version              =  5.0.20204.45441
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
@@ -901,7 +901,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                gpupdate.exe /force
+                gpupdate.exe
             }
             GetScript            = { }
             TestScript           = 

@@ -626,7 +626,7 @@
             "version":  "[split(variables('vmsSettings').vmDCImage, ':')[3]]"
           },
           "osDisk": {
-            "name": "Disk-DC-OS",
+            "name": "[concat('Disk-', variables('vmsSettings').vmDCName, '-OS')]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
@@ -769,7 +769,7 @@
             "version":  "[split(variables('vmsSettings').vmSQLImage, ':')[3]]"
           },
           "osDisk": {
-            "name": "Disk-SQL-OS",
+            "name": "[concat('Disk-', variables('vmsSettings').vmSQLName, '-OS')]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
@@ -865,7 +865,7 @@
             "version":  "[split(variables('vmsSettings').vmSharePointImage, ':')[3]]"
           },
           "osDisk": {
-            "name": "Disk-SP-OS",
+            "name": "[concat('Disk-', variables('vmsSettings').vmSPName, '-OS')]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
@@ -1101,7 +1101,7 @@
             "version":  "[split(variables('vmsSettings').vmSharePointImage, ':')[3]]"
           },
           "osDisk": {
-            "name": "[concat('Disk-FE-OS', '-', copyIndex())]",
+            "name": "[concat('Disk-', variables('vmsSettings').vmFEName, '-', copyIndex(), '-OS')]",
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
