@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "3.0.0.0",
+  "contentVersion": "4.0.0.0",
   "metadata": {
     "description": "Deploy SharePoint Subscription / 2019 / 2016 / 2013 with a lightweight configuration. Each version is independent and may or may not be deployed.",
     "author": "Yvand"
@@ -693,7 +693,7 @@
               "configurationArguments": {
                 "domainFQDN": "[parameters('domainFQDN')]",
                 "PrivateIP": "[variables('networkSettings').dcPrivateIPAddress]",
-                "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
+                "SharePointSitesAuthority": "[concat(variables('deploymentSettings').sharePointSitesAuthority, 'SE')]",
                 "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
                 "ApplyBrowserPolicies": "[variables('deploymentSettings').applyBrowserPolicies]",
                 "ConfigureADFS": "[parameters('configureADFS')]"
@@ -988,7 +988,7 @@
             "SQLName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "2013",
-            "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
+            "SharePointSitesAuthority": "[concat(variables('deploymentSettings').sharePointSitesAuthority, '2013')]",
             "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
             "EnableAnalysis": "[variables('deploymentSettings').enableAnalysis]",
             "SharePointBits": "[json('null')]",
@@ -1151,7 +1151,7 @@
             "SQLName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "2016",
-            "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
+            "SharePointSitesAuthority": "[concat(variables('deploymentSettings').sharePointSitesAuthority, '2016')]",
             "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
             "EnableAnalysis": "[variables('deploymentSettings').enableAnalysis]",
             "SharePointBits": "[json('null')]",
@@ -1314,7 +1314,7 @@
             "SQLName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "2019",
-            "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
+            "SharePointSitesAuthority": "[concat(variables('deploymentSettings').sharePointSitesAuthority, '2019')]",
             "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
             "EnableAnalysis": "[variables('deploymentSettings').enableAnalysis]",
             "SharePointBits": "[json('null')]",
@@ -1477,7 +1477,7 @@
             "SQLName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "[parameters('provisionSharePointSubscription')]",
-            "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
+            "SharePointSitesAuthority": "[concat(variables('deploymentSettings').sharePointSitesAuthority, 'SE')]",
             "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
             "EnableAnalysis": "[variables('deploymentSettings').enableAnalysis]",
             "SharePointBits": "[variables('sharePointSettings').sharePointSubscriptionBits]",

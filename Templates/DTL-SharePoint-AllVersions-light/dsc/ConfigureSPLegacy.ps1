@@ -11,7 +11,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
-        [Parameter()] $SharePointBits,
+        [Parameter()] [System.Object[]] $SharePointBits,
         [Parameter(Mandatory)] [Boolean]$ConfigureADFS,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
