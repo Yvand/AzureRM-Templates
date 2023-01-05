@@ -54,7 +54,7 @@ configuration ConfigureSPVM
     [String] $SharePointIsoDriveLetter = "S"
 
     # SharePoint settings
-    [String] $SPDBPrefix = "SPDSC_"
+    [String] $SPDBPrefix = "SPSE_"
     [String] $TrustedIdChar = "e"
     [String] $SPTeamSiteTemplate = "STS#3"
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
@@ -748,7 +748,7 @@ configuration ConfigureSPVM
             {
                 SetScript =
                 {
-                    gpupdate.exe
+                    gpupdate.exe /force
                 }
                 GetScript            = { }
                 TestScript           = 
@@ -1032,5 +1032,5 @@ ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -S
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
-C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.2.0
+C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.5
 #>

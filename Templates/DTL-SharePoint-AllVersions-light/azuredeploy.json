@@ -988,9 +988,11 @@
             "SQLName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "2013",
-            "ConfigureADFS": "[parameters('configureADFS')]",
+            "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
+            "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
             "EnableAnalysis": "[variables('deploymentSettings').enableAnalysis]",
-            "SharePointBits": "[json('null')]"
+            "SharePointBits": "[json('null')]",
+            "ConfigureADFS": "[parameters('configureADFS')]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1149,9 +1151,11 @@
             "SQLName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "2016",
-            "ConfigureADFS": "[parameters('configureADFS')]",
+            "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
+            "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
             "EnableAnalysis": "[variables('deploymentSettings').enableAnalysis]",
-            "SharePointBits": "[json('null')]"
+            "SharePointBits": "[json('null')]",
+            "ConfigureADFS": "[parameters('configureADFS')]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -1310,9 +1314,11 @@
             "SQLName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "2019",
-            "ConfigureADFS": "[parameters('configureADFS')]",
+            "SharePointSitesAuthority": "[variables('deploymentSettings').sharePointSitesAuthority]",
+            "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
             "EnableAnalysis": "[variables('deploymentSettings').enableAnalysis]",
-            "SharePointBits": "[json('null')]"
+            "SharePointBits": "[json('null')]",
+            "ConfigureADFS": "[parameters('configureADFS')]"
           },
           "privacy": {
             "dataCollection": "enable"

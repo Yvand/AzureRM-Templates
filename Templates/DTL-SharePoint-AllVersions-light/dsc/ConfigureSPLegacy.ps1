@@ -48,7 +48,7 @@ configuration ConfigureSPVM
     [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
 
     # SharePoint settings
-    [String] $SPDBPrefix = "SPDSC_"
+    [String] $SPDBPrefix = "SP$($SharePointVersion)_"
     [String] $TrustedIdChar = "e"
     [String] $SPTeamSiteTemplate = "STS#3"
     if ([String]::Equals($SharePointVersion, "2013") -or [String]::Equals($SharePointVersion, "2016")) {
@@ -582,7 +582,7 @@ configuration ConfigureSPVM
             {
                 SetScript =
                 {
-                    gpupdate.exe
+                    gpupdate.exe /force
                 }
                 GetScript            = { }
                 TestScript           = 

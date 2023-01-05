@@ -533,7 +533,7 @@ configuration ConfigureFEVM
         {
             SetScript =
             {
-                gpupdate.exe
+                gpupdate.exe /force
             }
             GetScript            = { }
             TestScript           = 
