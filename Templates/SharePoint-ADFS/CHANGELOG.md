@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-* Use a small disk (32 GB) on SharePoint 2019 and SharePoint Subscription VMs.
+* Use a small disk (32 GB) on SharePoint Subscription and SharePoint 2019 VMs.
 * Updated SQL image to use SQL Server 2022 on Windows Server 2022.
+* Remove variable dnsLabelPrefix and use the resource group's name (formatted) instead in the DNS name of public IP resources.
+* Resource group's name is used in both the virtual network and the public IP resources, but they have more restrictions on the characters accepted. Now the resource group's name is formatted to always work with those 2 resources.
 * Reorganize the local template variables to be more consistent.
 * Apply browser policies for Edge and Chrome to get rid of noisy wizards / homepages / new tab content.
 * No longer explicitly install Edge browser on Windows Server 2022 VMs as it is present by default.
