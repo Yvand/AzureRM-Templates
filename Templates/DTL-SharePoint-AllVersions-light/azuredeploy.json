@@ -838,7 +838,7 @@
             "function": "[variables('dscSettings').vmSQLFunction]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
+            "DNSServerIP": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]"
           },
           "privacy": {
@@ -984,10 +984,10 @@
             "function": "[variables('dscSettings').vmSPFunction]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
+            "DNSServerIP": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
-            "DCName": "[variables('vmsSettings').vmDCName]",
-            "SQLName": "[variables('vmsSettings').vmSQLName]",
+            "DCServerName": "[variables('vmsSettings').vmDCName]",
+            "SQLServerName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "2013",
             "SharePointSitesAuthority": "[concat(variables('deploymentSettings').sharePointSitesAuthority, '2013')]",
@@ -1147,10 +1147,10 @@
             "function": "[variables('dscSettings').vmSPFunction]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
+            "DNSServerIP": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
-            "DCName": "[variables('vmsSettings').vmDCName]",
-            "SQLName": "[variables('vmsSettings').vmSQLName]",
+            "DCServerName": "[variables('vmsSettings').vmDCName]",
+            "SQLServerName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "2016",
             "SharePointSitesAuthority": "[concat(variables('deploymentSettings').sharePointSitesAuthority, '2016')]",
@@ -1310,10 +1310,10 @@
             "function": "[variables('dscSettings').vmSPFunction]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
+            "DNSServerIP": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
-            "DCName": "[variables('vmsSettings').vmDCName]",
-            "SQLName": "[variables('vmsSettings').vmSQLName]",
+            "DCServerName": "[variables('vmsSettings').vmDCName]",
+            "SQLServerName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "2019",
             "SharePointSitesAuthority": "[concat(variables('deploymentSettings').sharePointSitesAuthority, '2019')]",
@@ -1473,10 +1473,10 @@
             "function": "[variables('dscSettings').vmSPFunction]"
           },
           "configurationArguments": {
-            "DNSServer": "[variables('networkSettings').dcPrivateIPAddress]",
+            "DNSServerIP": "[variables('networkSettings').dcPrivateIPAddress]",
             "DomainFQDN": "[parameters('domainFQDN')]",
-            "DCName": "[variables('vmsSettings').vmDCName]",
-            "SQLName": "[variables('vmsSettings').vmSQLName]",
+            "DCServerName": "[variables('vmsSettings').vmDCName]",
+            "SQLServerName": "[variables('vmsSettings').vmSQLName]",
             "SQLAlias": "[variables('deploymentSettings').sqlAlias]",
             "SharePointVersion": "[parameters('provisionSharePointSubscription')]",
             "SharePointSitesAuthority": "[concat(variables('deploymentSettings').sharePointSitesAuthority, 'SE')]",
