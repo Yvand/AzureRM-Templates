@@ -354,6 +354,7 @@
     }
   },
   "variables": {
+    "resourceGroupNameFormatted": "[replace(replace(replace(replace(resourceGroup().name, '.', '-'), '(', '-'), ')', '-'), '_', '-')]",
     "_artifactsLocationWithTrailingSlash": "[concat(parameters('_artifactsLocation'), '/')]",
     "sharePointSettings": {
       "sharePointImagesList" : {
@@ -396,7 +397,7 @@
       "dcPrivateIPAddress": "10.1.1.4",
       "subnetSQLPrefix": "10.1.2.0/24",
       "subnetSPPrefix": "10.1.3.0/24",
-      "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
+      "vNetPrivateName": "[concat(variables('resourceGroupNameFormatted'), '-vnet')]",
       "subnetDCName": "Subnet-DC",
       "subnetSQLName": "Subnet-SQL",
       "subnetSPName": "Subnet-SP",
@@ -586,7 +587,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[toLower(replace(concat(resourceGroup().name, '-', variables('vmsSettings').vmDCName), '_', '-'))]"
+          "domainNameLabel": "[toLower(concat(variables('resourceGroupNameFormatted'), '-', variables('vmsSettings').vmDCName))]"
         }
       }
     },
@@ -693,6 +694,7 @@
               "configurationArguments": {
                 "domainFQDN": "[parameters('domainFQDN')]",
                 "PrivateIP": "[variables('networkSettings').dcPrivateIPAddress]",
+                "SPServerName": "[if(not(equals(parameters('provisionSharePointSubscription'), 'No')), variables('vmsSettings').vmSPSubscriptionName, if(parameters('provisionSharePoint2019'), variables('vmsSettings').vmSP2019Image, if(parameters('provisionSharePoint2016'), variables('vmsSettings').vmSP2016Image, variables('vmsSettings').vmSP2013Image)))]",
                 "SharePointSitesAuthority": "[concat(variables('deploymentSettings').sharePointSitesAuthority, 'SE')]",
                 "SharePointCentralAdminPort": "[variables('deploymentSettings').sharePointCentralAdminPort]",
                 "ApplyBrowserPolicies": "[variables('deploymentSettings').applyBrowserPolicies]",
@@ -731,7 +733,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[toLower(replace(concat(resourceGroup().name, '-', variables('vmsSettings').vmSQLName), '_', '-'))]"
+          "domainNameLabel": "[toLower(concat(variables('resourceGroupNameFormatted'), '-', variables('vmsSettings').vmSQLName))]"
         }
       }
     },
@@ -874,7 +876,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[toLower(replace(concat(resourceGroup().name, '-', variables('vmsSettings').vmSP2013Name), '_', '-'))]"
+          "domainNameLabel": "[toLower(concat(variables('resourceGroupNameFormatted'), '-', variables('vmsSettings').vmSP2013Name))]"
         }
       }
     },
@@ -1037,7 +1039,7 @@
       "properties": {
         "publicIPAllocationMethod": "Static",
         "dnsSettings": {
-          "domainNameLabel": "[toLower(replace(concat(resourceGroup().name, '-', variables('vmsSettings').vmSP2016Name), '_', '-'))]"
+          "domainNameLabel": "[toLower(concat(variables('resourceGroupNameFormatted'), '-', variables('vmsSettings').vmSP2016Name))]"
         }
       }
     },
@@ -1200,7 +1202,7 @@
       "properties": {
         "publicIPAllocationMethod": "Static",
         "dnsSettings": {
-          "domainNameLabel": "[toLower(replace(concat(resourceGroup().name, '-', variables('vmsSettings').vmSP2019Name), '_', '-'))]"
+          "domainNameLabel": "[toLower(concat(variables('resourceGroupNameFormatted'), '-', variables('vmsSettings').vmSP2019Name))]"
         }
       }
     },
@@ -1363,7 +1365,7 @@
       "properties": {
         "publicIPAllocationMethod": "Static",
         "dnsSettings": {
-          "domainNameLabel": "[toLower(replace(concat(resourceGroup().name, '-', variables('vmsSettings').vmSPSubscriptionName), '_', '-'))]"
+          "domainNameLabel": "[toLower(concat(variables('resourceGroupNameFormatted'), '-', variables('vmsSettings').vmSPSubscriptionName))]"
         }
       }
     },
@@ -1696,7 +1698,7 @@
       "properties": {
         "publicIPAllocationMethod": "Static",
         "dnsSettings": {
-          "domainNameLabel": "[toLower(replace(concat(resourceGroup().name, '-', 'Bastion'), '_', '-'))]"
+          "domainNameLabel": "[toLower(replace(concat(variables('resourceGroupNameFormatted'), '-', 'Bastion'), '_', '-'))]"
         }
       }
     },

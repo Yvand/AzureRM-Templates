@@ -2,10 +2,10 @@ configuration ConfigureSPVM
 {
     param
     (
-        [Parameter(Mandatory)] [String]$DNSServer,
+        [Parameter(Mandatory)] [String]$DNSServerIP,
         [Parameter(Mandatory)] [String]$DomainFQDN,
-        [Parameter(Mandatory)] [String]$DCName,
-        [Parameter(Mandatory)] [String]$SQLName,
+        [Parameter(Mandatory)] [String]$DCServerName,
+        [Parameter(Mandatory)] [String]$SQLServerName,
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
@@ -51,7 +51,7 @@ configuration ConfigureSPVM
 
     # Setup settings
     [String] $SetupPath = "C:\DSC Data"
-    [String] $RemoteSetupPath = "\\$DCName\C$\Setup"
+    [String] $RemoteSetupPath = "\\$DCServerName\C$\Setup"
     [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
     [String] $LDAPCPFileFullPath = Join-Path -Path $SetupPath -ChildPath "Binaries\LDAPCP.wsp"
 
@@ -101,7 +101,7 @@ configuration ConfigureSPVM
         WindowsFeature AddDnsTools            { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
         WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
         WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
-        DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
@@ -129,7 +129,7 @@ configuration ConfigureSPVM
         #     Registry FixDocumentConversionKeyMissing2 { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LoadBalancerSettings"; ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
         # }
 
-        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
+        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort= 1433 }
 
         Script DisableIESecurity
         {
@@ -384,7 +384,7 @@ configuration ConfigureSPVM
         {
             Name                 = $SharePointSitesAuthority
             ZoneName             = $DomainFQDN
-            DnsServer            = $DCName
+            DnsServer            = $DCServerName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -395,7 +395,7 @@ configuration ConfigureSPVM
         {
             Name                 = $MySiteHostAlias
             ZoneName             = $DomainFQDN
-            DnsServer            = $DCName
+            DnsServer            = $DCServerName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -406,7 +406,7 @@ configuration ConfigureSPVM
         {
             Name                 = $HNSC1Alias
             ZoneName             = $DomainFQDN
-            DnsServer            = $DCName
+            DnsServer            = $DCServerName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -418,7 +418,7 @@ configuration ConfigureSPVM
             Name                 = "*"
             ZoneName             = $AppDomainFQDN
             HostNameAlias        = "$ComputerName.$DomainFQDN"
-            DnsServer            = "$DCName.$DomainFQDN"
+            DnsServer            = "$DCServerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
@@ -429,7 +429,7 @@ configuration ConfigureSPVM
             Name                 = "*"
             ZoneName             = $AppDomainIntranetFQDN
             HostNameAlias        = "$ComputerName.$DomainFQDN"
-            DnsServer            = "$DCName.$DomainFQDN"
+            DnsServer            = "$DCServerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
@@ -440,7 +440,7 @@ configuration ConfigureSPVM
             Name                 = $AddinsSiteDNSAlias
             ZoneName             = $DomainFQDN
             HostNameAlias        = "$ComputerName.$DomainFQDN"
-            DnsServer            = "$DCName.$DomainFQDN"
+            DnsServer            = "$DCServerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
@@ -769,7 +769,7 @@ configuration ConfigureSPVM
             TestScript           = 
             {
                 $domainNetbiosName = $using:DomainNetbiosName
-                $dcName = $using:DCName
+                $dcName = $using:DCServerName
                 $rootCAName = "$domainNetbiosName-$dcName-CA"
                 $cert = Get-ChildItem -Path "cert:\LocalMachine\Root\" -DnsName "$rootCAName"
                 
@@ -917,8 +917,8 @@ configuration ConfigureSPVM
         
         CertReq GenerateMainWebAppCertificate
         {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
+            CARootName             = "$DomainNetbiosName-$DCServerName-CA"
+            CAServerFQDN           = "$DCServerName.$DomainFQDN"
             Subject                = "$SharePointSitesAuthority.$DomainFQDN"
             SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
             KeyLength              = '2048'
@@ -1179,8 +1179,8 @@ configuration ConfigureSPVM
 
         CertReq GenerateAddinsSiteCertificate
         {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
+            CARootName             = "$DomainNetbiosName-$DCServerName-CA"
+            CAServerFQDN           = "$DCServerName.$DomainFQDN"
             Subject                = "$AddinsSiteDNSAlias.$($DomainFQDN)"
             FriendlyName           = "Provider-hosted addins site certificate"
             SubjectAltName         = "dns=$AddinsSiteDNSAlias.$($DomainFQDN)"
@@ -1272,8 +1272,8 @@ configuration ConfigureSPVM
 
         CertReq GenerateHighTrustAddinsCert
         {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
+            CARootName             = "$DomainNetbiosName-$DCServerName-CA"
+            CAServerFQDN           = "$DCServerName.$DomainFQDN"
             Subject                = "HighTrustAddins"
             FriendlyName           = "Sign OAuth tokens of high-trust add-ins"
             KeyLength              = '2048'
@@ -1463,10 +1463,10 @@ $SPADDirSyncCreds = New-Object -TypeName System.Management.Automation.PSCredenti
 $SPPassphraseCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "Passphrase", $password
 $SPSuperUserCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperUser", $password
 $SPSuperReaderCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperReader", $password
-$DNSServer = "10.1.1.4"
+$DNSServerIP = "10.1.1.4"
 $DomainFQDN = "contoso.local"
-$DCName = "DC"
-$SQLName = "SQL"
+$DCServerName = "DC"
+$SQLServerName = "SQL"
 $SQLAlias = "SQLAlias"
 $SharePointVersion = "2019"
 $SharePointSitesAuthority = "spsites"
@@ -1474,7 +1474,7 @@ $SharePointCentralAdminPort = 5000
 $EnableAnalysis = $true
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPLegacy.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -SharePointSitesAuthority $SharePointSitesAuthority -SharePointCentralAdminPort $SharePointCentralAdminPort -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -SharePointSitesAuthority $SharePointSitesAuthority -SharePointCentralAdminPort $SharePointCentralAdminPort -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 

@@ -2,7 +2,7 @@ configuration ConfigureSQLVM
 {
     param
     (
-        [Parameter(Mandatory)] [String]$DNSServer,
+        [Parameter(Mandatory)] [String]$DNSServerIP,
         [Parameter(Mandatory)] [String]$DomainFQDN,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SqlSvcCreds,
@@ -37,7 +37,7 @@ configuration ConfigureSQLVM
         WindowsFeature AddADTools      { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature AddADPowerShell { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         
-        DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         Script EnableFileSharing
         {
@@ -359,11 +359,11 @@ $password = ConvertTo-SecureString -String "mytopsecurepassword" -AsPlainText -F
 $DomainAdminCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "yvand", $password
 $SqlSvcCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "sqlsvc", $password
 $SPSetupCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spsetup", $password
-$DNSServer = "10.1.1.4"
+$DNSServerIP = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
-ConfigureSQLVM -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigureSQLVM -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
 #>

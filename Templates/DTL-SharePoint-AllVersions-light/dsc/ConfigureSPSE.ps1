@@ -2,10 +2,10 @@ configuration ConfigureSPVM
 {
     param
     (
-        [Parameter(Mandatory)] [String]$DNSServer,
+        [Parameter(Mandatory)] [String]$DNSServerIP,
         [Parameter(Mandatory)] [String]$DomainFQDN,
-        [Parameter(Mandatory)] [String]$DCName,
-        [Parameter(Mandatory)] [String]$SQLName,
+        [Parameter(Mandatory)] [String]$DCServerName,
+        [Parameter(Mandatory)] [String]$SQLServerName,
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
@@ -46,7 +46,7 @@ configuration ConfigureSPVM
     
     # Setup settings
     [String] $SetupPath = "C:\DSC Data"
-    [String] $RemoteSetupPath = "\\$DCName\C$\Setup"
+    [String] $RemoteSetupPath = "\\$DCServerName\C$\Setup"
     [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
@@ -87,7 +87,7 @@ configuration ConfigureSPVM
         WindowsFeature AddADTools             { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
         WindowsFeature AddADPowerShell        { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         WindowsFeature AddDnsTools            { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
-        DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
@@ -109,7 +109,7 @@ configuration ConfigureSPVM
         Registry SystemDefaultTlsVersions   { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
         Registry SystemDefaultTlsVersions32 { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
 
-        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
+        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort= 1433 }
 
         Script DisableIESecurity
         {
@@ -471,7 +471,7 @@ configuration ConfigureSPVM
         {
             Name                 = $SharePointSitesAuthority
             ZoneName             = $DomainFQDN
-            DnsServer            = $DCName
+            DnsServer            = $DCServerName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -754,7 +754,7 @@ configuration ConfigureSPVM
                 TestScript           = 
                 {
                     $domainNetbiosName = $using:DomainNetbiosName
-                    $dcName = $using:DCName
+                    $dcName = $using:DCServerName
                     $rootCAName = "$domainNetbiosName-$dcName-CA"
                     $cert = Get-ChildItem -Path "cert:\LocalMachine\Root\" -DnsName "$rootCAName"
                     
@@ -805,7 +805,7 @@ configuration ConfigureSPVM
             {
                 SetScript =
                 {
-                    $dcName = $using:DCName
+                    $dcName = $using:DCServerName
                     $RemoteSetupPath = $using:RemoteSetupPath
                     $domainFQDN = $using:DomainFQDN
                     $domainNetbiosName = $using:DomainNetbiosName
@@ -1004,10 +1004,10 @@ $SPADDirSyncCreds = New-Object -TypeName System.Management.Automation.PSCredenti
 $SPPassphraseCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "Passphrase", $password
 $SPSuperUserCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperUser", $password
 $SPSuperReaderCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperReader", $password
-$DNSServer = "10.1.1.4"
+$DNSServerIP = "10.1.1.4"
 $DomainFQDN = "contoso.local"
-$DCName = "DC"
-$SQLName = "SQL"
+$DCServerName = "DC"
+$SQLServerName = "SQL"
 $SQLAlias = "SQLAlias"
 $SharePointVersion = "Subscription-22H2"
 $EnableAnalysis = $true
@@ -1028,7 +1028,7 @@ $SharePointBits = @(
 )
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPSE.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 

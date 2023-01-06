@@ -4,6 +4,7 @@
     (
         [Parameter(Mandatory)] [String]$DomainFQDN,
         [Parameter(Mandatory)] [String]$PrivateIP,
+        [Parameter(Mandatory)] [String]$SPServerName,
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
         [Parameter ()] [Boolean]$ApplyBrowserPolicies = $true,
@@ -35,7 +36,7 @@
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
     
     # SharePoint settings
-    [String] $centralAdminUrl = "http://{0}:{1}/" -f "spse", $SharePointCentralAdminPort
+    [String] $centralAdminUrl = "http://{0}:{1}/" -f $SPServerName, $SharePointCentralAdminPort
     [String] $rootSiteDefaultZone = "http://{0}/" -f $SharePointSitesAuthority
     [String] $rootSiteIntranetZone = "https://{0}.{1}/" -f $SharePointSitesAuthority, $DomainFQDN
 
@@ -135,12 +136,12 @@
         @{
             policyValueName = "ManagedFavorites";
             policyCanBeRecommended = $false;
-            policyValueValue = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration SPSE"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site SPSE - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site SPSE - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration $SPServerName"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site $SPServerName - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site $SPServerName - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
         },
         @{
             policyValueName = "NewTabPageManagedQuickLinks";
             policyCanBeRecommended = $true;
-            policyValueValue = "[{""pinned"": true, ""title"": ""Central administration SPSE"", ""url"": ""$centralAdminUrl"" }, { ""pinned"": true, ""title"": ""Root site SPSE - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""pinned"": true, ""title"": ""Root site SPSE - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue = "[{""pinned"": true, ""title"": ""Central administration $SPServerName"", ""url"": ""$centralAdminUrl"" }, { ""pinned"": true, ""title"": ""Root site $SPServerName - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""pinned"": true, ""title"": ""Root site $SPServerName - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
         }
     )
 
@@ -193,7 +194,7 @@
         @{
             policyValueName = "ManagedBookmarks";
             policyCanBeRecommended = $false;
-            policyValueValue = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration SPSE"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site SPSE - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site SPSE - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration $SPServerName"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site $SPServerName - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site $SPServerName - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
         }
     )
 

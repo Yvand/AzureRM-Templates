@@ -4,6 +4,7 @@
     (
         [Parameter(Mandatory)] [String]$DomainFQDN,
         [Parameter(Mandatory)] [String]$PrivateIP,
+        [Parameter(Mandatory)] [String]$SPServerName,
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
         [Parameter ()] [Boolean]$ApplyBrowserPolicies = $true,
@@ -34,7 +35,7 @@
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
     
     # SharePoint settings
-    [String] $centralAdminUrl = "http://{0}:{1}/" -f "sp", $SharePointCentralAdminPort
+    [String] $centralAdminUrl = "http://{0}:{1}/" -f $SPServerName, $SharePointCentralAdminPort
     [String] $rootSiteDefaultZone = "http://{0}/" -f $SharePointSitesAuthority
     [String] $rootSiteIntranetZone = "https://{0}.{1}/" -f $SharePointSitesAuthority, $DomainFQDN
     [String] $AppDomainFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps", $DomainFQDN.Split('.')[1]
