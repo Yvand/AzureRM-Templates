@@ -2,10 +2,10 @@ configuration ConfigureFEVM
 {
     param
     (
-        [Parameter(Mandatory)] [String]$DNSServer,
+        [Parameter(Mandatory)] [String]$DNSServerIP,
         [Parameter(Mandatory)] [String]$DomainFQDN,
-        [Parameter(Mandatory)] [String]$DCName,
-        [Parameter(Mandatory)] [String]$SQLName,
+        [Parameter(Mandatory)] [String]$DCServerName,
+        [Parameter(Mandatory)] [String]$SQLServerName,
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
@@ -77,7 +77,7 @@ configuration ConfigureFEVM
         WindowsFeature AddDnsTools            { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
         WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
         WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
-        DnsServerAddress SetDNS { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
 
         # # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
         # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
@@ -114,7 +114,7 @@ configuration ConfigureFEVM
         WebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; }
         WebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; }
 
-        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLName; Protocol = "TCP"; TcpPort= 1433 }
+        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort= 1433 }
 
         Script DisableIESecurity
         {
@@ -418,7 +418,7 @@ configuration ConfigureFEVM
             TestScript           = 
             {
                 $domainNetbiosName = $using:DomainNetbiosName
-                $dcName = $using:DCName
+                $dcName = $using:DCServerName
                 $rootCAName = "$domainNetbiosName-$dcName-CA"
                 $cert = Get-ChildItem -Path "cert:\LocalMachine\Root\" -DnsName "$rootCAName"
                 
@@ -504,7 +504,7 @@ configuration ConfigureFEVM
         {
             Name                 = $SharePointSitesAuthority
             ZoneName             = $DomainFQDN
-            DnsServer            = $DCName
+            DnsServer            = $DCServerName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -515,7 +515,7 @@ configuration ConfigureFEVM
         {
             Name                 = $MySiteHostAlias
             ZoneName             = $DomainFQDN
-            DnsServer            = $DCName
+            DnsServer            = $DCServerName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -526,7 +526,7 @@ configuration ConfigureFEVM
         {
             Name                 = $HNSC1Alias
             ZoneName             = $DomainFQDN
-            DnsServer            = $DCName
+            DnsServer            = $DCServerName
             HostNameAlias        = "$ComputerName.$DomainFQDN"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -535,8 +535,8 @@ configuration ConfigureFEVM
 
         CertReq SPSSiteCert
         {
-            CARootName             = "$DomainNetbiosName-$DCName-CA"
-            CAServerFQDN           = "$DCName.$DomainFQDN"
+            CARootName             = "$DomainNetbiosName-$DCServerName-CA"
+            CAServerFQDN           = "$DCServerName.$DomainFQDN"
             Subject                = "$SharePointSitesAuthority.$DomainFQDN"
             SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
             KeyLength              = '2048'
@@ -676,17 +676,17 @@ $DomainAdminCreds = New-Object -TypeName System.Management.Automation.PSCredenti
 $SPSetupCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spsetup", $password
 $SPFarmCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spfarm", $password
 $SPPassphraseCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "Passphrase", $password
-$DNSServer = "10.1.1.4"
+$DNSServerIP = "10.1.1.4"
 $DomainFQDN = "contoso.local"
-$DCName = "DC"
-$SQLName = "SQL"
+$DCServerName = "DC"
+$SQLServerName = "SQL"
 $SQLAlias = "SQLAlias"
 $SharePointVersion = "2019"
 $EnableAnalysis = $false
 $SharePointBits = @()
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureFELegacy.0\ConfigureFEVM"
-ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
