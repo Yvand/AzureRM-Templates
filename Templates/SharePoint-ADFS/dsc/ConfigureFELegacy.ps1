@@ -20,7 +20,7 @@ configuration ConfigureFEVM
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
-    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.0.0
+    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.1.0
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.3.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0

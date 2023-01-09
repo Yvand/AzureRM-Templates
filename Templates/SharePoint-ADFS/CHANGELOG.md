@@ -11,6 +11,8 @@
 * No longer explicitly install Edge browser on Windows Server 2022 VMs as it is present by default.
 * In SharePoint VMs: Install Visual Studio Code as system install instead of as a portable zip package.
 * In SharePoint VMs: Install Azure Data Studio.
+* Update apiVersion of ARM resources to latest version available.
+* Update DSC modules used to latest version available.
 
 ## Enhancements & bug-fixes - Published in November 28, 2022
 
