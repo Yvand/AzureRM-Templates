@@ -5,7 +5,7 @@
 $resourceGroupLocation = 'westeurope'
 # $resourceGroupLocation = 'francecentral'
 $resourceGroupName = "xydsp1"
-$resourceGroupName = "gf(d)df_-sf.s"
+# $resourceGroupName = "gf(d)df_-sf.sm"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
