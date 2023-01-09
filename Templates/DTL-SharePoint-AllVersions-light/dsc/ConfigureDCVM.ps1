@@ -34,6 +34,7 @@
     [String] $ADFSSiteName = "adfs"
     [String] $AdfsOidcAGName = "SPS-Subscription-OIDC"
     [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
+    [String] $SAMLTrustRealm = "urn:sharepoint:spsites"
     
     # SharePoint settings
     [String] $centralAdminUrl = "http://{0}:{1}/" -f $SPServerName, $SharePointCentralAdminPort
@@ -484,7 +485,7 @@
             ADFSRelyingPartyTrust CreateADFSRelyingParty
             {
                 Name                       = $SharePointSitesAuthority
-                Identifier                 = "urn:sharepoint:$($SharePointSitesAuthority)"
+                Identifier                 = $SAMLTrustRealm
                 ClaimsProviderName         = @("Active Directory")
                 WSFedEndpoint              = "https://$SharePointSitesAuthority.$DomainFQDN/_trust/"
                 ProtocolProfile            = "WsFed-SAML"

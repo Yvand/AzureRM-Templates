@@ -46,6 +46,7 @@ configuration ConfigureSPVM
     [String] $SetupPath = "C:\DSC Data"
     [String] $RemoteSetupPath = "\\$DCServerName\C$\Setup"
     [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
+    [String] $SAMLTrustRealm = "urn:sharepoint:spsites"
 
     # SharePoint settings
     [String] $SPDBPrefix = "SP$($SharePointVersion)_"
@@ -555,7 +556,7 @@ configuration ConfigureSPVM
             {
                 Name                         = $DomainFQDN
                 Description                  = "Federation with $DomainFQDN"
-                Realm                        = "urn:sharepoint:$($SharePointSitesAuthority)"
+                Realm                        = $SAMLTrustRealm
                 SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
                 IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
                 ClaimsMappings               = @(
