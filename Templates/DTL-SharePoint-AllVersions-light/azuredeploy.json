@@ -485,7 +485,7 @@
       "sharePointSitesAuthority": "spsites",
       "sharePointCentralAdminPort": 5000,
       "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
-      "enableAnalysis": true,
+      "enableAnalysis": false,
       "applyBrowserPolicies": true,
       "sqlAlias": "SQLAlias",
       "spSuperUserName": "spSuperUser",

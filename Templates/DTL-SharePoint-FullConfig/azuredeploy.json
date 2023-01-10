@@ -462,7 +462,7 @@
       "sharePointCentralAdminPort": 5000,
       "sharePointBitsSelected": "[if(variables('sharePointSettings').isSharePointSubscription, variables('sharePointSettings').sharePointSubscriptionBits, 'fake')]",
       "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
-      "enableAnalysis": true,
+      "enableAnalysis": false,
       "applyBrowserPolicies": true,
       "sqlAlias": "SQLAlias",
       "spSuperUserName": "spSuperUser",

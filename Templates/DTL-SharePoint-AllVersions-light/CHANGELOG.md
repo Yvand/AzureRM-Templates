@@ -1,6 +1,6 @@
 # Change log for Azure DevTest Labs template SharePoint-AllVersions
 
-## Unreleased
+## Enhancements & bug-fixes - Published in January 10, 2023
 
 * Use a small disk (32 GB) on SharePoint Subscription and SharePoint 2019 VMs.
 * Updated SQL image to use SQL Server 2022 on Windows Server 2022.

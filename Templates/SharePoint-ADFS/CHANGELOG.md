@@ -1,6 +1,6 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Unreleased
+## Enhancements & bug-fixes - Published in January 10, 2023
 
 * Remove variable dnsLabelPrefix and use the resource group's name (formatted) instead in the DNS name of public IP resources.
 * Use a small disk (32 GB) on SharePoint Subscription and SharePoint 2019 VMs.
