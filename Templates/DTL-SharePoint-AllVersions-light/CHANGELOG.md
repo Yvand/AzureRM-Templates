@@ -8,8 +8,6 @@
 * Apply browser policies for Edge and Chrome to get rid of noisy wizards / homepages / new tab content.
 * No longer explicitly install Edge browser on Windows Server 2022 VMs as it is present by default.
 * Reorganize the local template variables to be more consistent.
-* In SharePoint VMs: Install Visual Studio Code as system install instead of as a portable zip package.
-* In SharePoint VMs: Install Azure Data Studio.
 * In SharePoint VMs: Install the latest version of Fiddler.
 * Update apiVersion of ARM resources to latest version available.
 * Update DSC modules to latest version available.
