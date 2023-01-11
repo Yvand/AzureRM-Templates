@@ -1,9 +1,10 @@
+#Requires -PSEdition Core
 #Requires -Module Az.Resources
 
 ### Define variables
 $resourceGroupLocation = 'westeurope'
 $resourceGroupLocation = 'francecentral'
-$resourceGroupName = 'ydtlfull1'
+$resourceGroupName = "ydtlfull4"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
