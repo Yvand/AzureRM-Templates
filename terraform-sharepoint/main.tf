@@ -1,6 +1,6 @@
 module "sharepoint" {
   source                                = "Yvand/sharepoint/azurerm"
-  version                               = ">=3.0.0"
+  version                               = ">=3.1.0"
   location                              = "France Central"
   resource_group_name                   = var.resource_group_name
   sharepoint_version                    = "Subscription-RTM" #"2019" #"Subscription-22H2"
