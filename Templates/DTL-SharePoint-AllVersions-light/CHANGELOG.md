@@ -9,6 +9,7 @@
 * No longer explicitly install Edge browser on Windows Server 2022 VMs as it is present by default.
 * Reorganize the local template variables to be more consistent.
 * In SharePoint VMs: Install the latest version of Fiddler.
+* In DC VM: Set a dependency on service WindowsAzureGuestAgent, to prevent it to start before DNS is up, to avoid random error "WinRM cannot process the request. The following error with errorcode 0x80090350" on DSC init.
 * Update apiVersion of ARM resources to latest version available.
 * Update DSC modules to latest version available.
 
