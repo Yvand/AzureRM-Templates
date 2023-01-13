@@ -346,8 +346,8 @@ configuration ConfigureSPVM
                 {
                     DestinationPath = $packageFilePath
                     Uri             = $packageUrl
-                    ChecksumType    = $package.ChecksumType
-                    Checksum        = $package.Checksum
+                    ChecksumType    = if ($null -ne $package.ChecksumType) { $package.ChecksumType } else { "None" }
+                    Checksum        = if ($null -ne $package.Checksum) { $package.Checksum } else { $null }
                     MatchSource     = $false
                 }
 
@@ -1313,7 +1313,12 @@ configuration ConfigureSPVM
                 MSFT_SPServiceAppSecurityEntry {
                     Username     = $SPSvcCredsQualified.UserName
                     AccessLevels = @("Full Control")
-            })
+                };
+                MSFT_SPServiceAppSecurityEntry {
+                    Username     = $DomainAdminCredsQualified.UserName
+                    AccessLevels = @("Full Control")
+                }
+            )
             PsDscRunAsCredential = $SPSetupCredsQualified
             #DependsOn           = "[Script]RefreshLocalConfigCache"
             DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
@@ -1706,10 +1711,10 @@ $SharePointBits = @(
     }
 )
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSPSE.0\ConfigureSPVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureSPSE.0\ConfigureSPVM"
 ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -SharePointSitesAuthority $SharePointSitesAuthority -SharePointCentralAdminPort $SharePointCentralAdminPort -EnableAnalysis $EnableAnalysis -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
-C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.2.0
+C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.5
 #>
