@@ -170,6 +170,17 @@ configuration ConfigureSPVM
             SetScript = { New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force }
         }
 
+        Script SetOneDriveUrlPolicy
+        {
+            GetScript = { }
+            TestScript = { return $null -ne (Get-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -ErrorAction SilentlyContinue) }
+            SetScript = {
+                $authority = $using:OhMy
+                $url = "http://{0}" -f $authority
+                New-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -Value $url -PropertyType String -Force
+            }
+        }
+
         Script EnableFileSharing
         {
             GetScript = { }
