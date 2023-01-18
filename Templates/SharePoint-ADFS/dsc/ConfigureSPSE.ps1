@@ -166,18 +166,26 @@ configuration ConfigureSPVM
         Script SetLongPathsEnabled
         {
             GetScript = { }
-            TestScript = { return $false }
-            SetScript = { New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force }
+            TestScript = { return $null -ne (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -ErrorAction SilentlyContinue) }
+            SetScript = { New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -ErrorAction SilentlyContinue }
         }
 
         Script SetOneDriveUrlPolicy
         {
             GetScript = { }
-            TestScript = { return $null -ne (Get-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -ErrorAction SilentlyContinue) }
+            TestScript = { 
+                return (
+                    $null -ne (Get-Item -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -ErrorAction SilentlyContinue) -or
+                    $null -ne (Get-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -ErrorAction SilentlyContinue) 
+                )
+            }
             SetScript = {
                 $authority = $using:OhMy
                 $url = "http://{0}" -f $authority
-                New-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -Value $url -PropertyType String -Force
+                # Don't use -Force to not remove the content if key already exists
+                New-Item -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -ErrorAction SilentlyContinue
+                # Don't use -Force to not overwrite the property if it already exists (it should not happen)
+                New-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -Value $url -PropertyType String -ErrorAction SilentlyContinue
             }
         }
 
@@ -284,15 +292,15 @@ configuration ConfigureSPVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        # if ($EnableAnalysis) {
-        #     # This resource is for  of dsc logs only and totally optionnal
-        #     cChocoPackageInstaller InstallPython
-        #     {
-        #         Name                 = "python"
-        #         Ensure               = "Present"
-        #         DependsOn            = "[cChocoInstaller]InstallChoco"
-        #     }
-        # }
+        if ($EnableAnalysis) {
+            # This resource is for  of dsc logs only and totally optionnal
+            cChocoPackageInstaller InstallPython
+            {
+                Name                 = "python"
+                Ensure               = "Present"
+                DependsOn            = "[cChocoInstaller]InstallChoco"
+            }
+        }
 
         #**********************************************************
         # Download and install for SharePoint
@@ -1571,7 +1579,7 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                $warmupJobBlock = {
+                $jobBlock = {
                     $uri = $args[0]
                     try {
                         Write-Verbose "Connecting to $uri..."
@@ -1582,14 +1590,54 @@ configuration ConfigureSPVM
                         Write-Verbose "Connected successfully to $uri"
                     }
                     catch {
+                        Write-Error -Exception $_ -Message "Unexpected error while connecting to '$uri'"
                     }
                 }
                 $spsite = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
                 Write-Verbose "Warming up '$spsite'..."
-                $job1 = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
+                $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
                 $spsite = "http://$($using:SharePointSitesAuthority)/"
                 Write-Verbose "Warming up '$spsite'..."
-                $job2 = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
+                $job2 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
+                
+                # Must wait for the jobs to complete, otherwise they do not actually run
+                Receive-Job -Job $job1 -AutoRemoveJob -Wait
+                Receive-Job -Job $job2 -AutoRemoveJob -Wait
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPSite]CreateRootSite"
+        }
+
+        Script CreatePersonalSites
+        {
+            SetScript =
+            {
+                $jobBlock = {
+                    $uri = $args[0]
+					$accountName = $args[1]
+                    try {
+                        Write-Verbose "Connecting to $uri..."
+                        $site = Get-SPSite -Identity $uri
+						$ctx = Get-SPServiceContext $site
+						$upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($ctx)
+						$profile = $upm.GetUserProfile($accountName)
+						$profile.CreatePersonalSiteEnque($false)
+						# $profile.CreatePersonalSite()
+                        Write-Verbose "Successfully create personal site for '$accountName'"
+                    }
+                    catch {
+                        Write-Error -Exception $_ -Message "Unexpected error while creating personal site for '$accountName'"
+                    }
+                }
+				$uri = "http://$using:SharePointSitesAuthority/"
+				$accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"
+                Write-Verbose "Creating personal site for '$accountName'..."
+                $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
+                $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
+                Write-Verbose "Creating personal site for '$accountName'..."
+                $job2 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
                 
                 # Must wait for the jobs to complete, otherwise they do not actually run
                 Receive-Job -Job $job1 -AutoRemoveJob -Wait
@@ -1601,35 +1649,35 @@ configuration ConfigureSPVM
             DependsOn            = "[SPSite]CreateRootSite"
         }
         
-        # if ($EnableAnalysis) {
-        #     # This resource is for analysis of dsc logs only and totally optionnal
-        #     Script parseDscLogs
-        #     {
-        #         TestScript = { return $false }
-        #         SetScript = {
-        #             $setupPath = $using:SetupPath
-        #             $localScriptPath = "$setupPath\parse-dsc-logs.py"
-        #             New-Item -ItemType Directory -Force -Path $setupPath
+        if ($EnableAnalysis) {
+            # This resource is for analysis of dsc logs only and totally optionnal
+            Script parseDscLogs
+            {
+                TestScript = { return $false }
+                SetScript = {
+                    $setupPath = $using:SetupPath
+                    $localScriptPath = "$setupPath\parse-dsc-logs.py"
+                    New-Item -ItemType Directory -Force -Path $setupPath
         
-        #             $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
-        #             $downloader = New-Object -TypeName System.Net.WebClient
-        #             $downloader.DownloadFile($url, $localScriptPath)
+                    $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
+                    $downloader = New-Object -TypeName System.Net.WebClient
+                    $downloader.DownloadFile($url, $localScriptPath)
         
-        #             $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
-        #             $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
-        #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
+                    $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
+                    $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
+                    $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
-        #             # Start python script
-        #             Write-Verbose -Message "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
-        #             #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
-        #             #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
-        #             python "$localScriptPath" "$fullPathToDscLogs"
-        #         }
-        #         GetScript = { }
-        #         DependsOn            = "[cChocoPackageInstaller]InstallPython"
-        #         PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     }
-        # }
+                    # Start python script
+                    Write-Verbose -Message "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
+                    #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
+                    #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
+                    python "$localScriptPath" "$fullPathToDscLogs"
+                }
+                GetScript = { }
+                DependsOn            = "[cChocoPackageInstaller]InstallPython"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+            }
+        }
 
         Script DscStatus_Finished
         {
@@ -1702,7 +1750,7 @@ $DomainFQDN = "contoso.local"
 $DCServerName = "DC"
 $SQLServerName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "Subscription-22H2"
+$SharePointVersion = "Subscription-Latest"
 $SharePointSitesAuthority = "spsites"
 $SharePointCentralAdminPort = 5000
 $EnableAnalysis = $true
@@ -1718,6 +1766,13 @@ $SharePointBits = @(
         Packages = @(
             @{ DownloadUrl = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "7E496530EB873146650A9E0653DE835CB2CAD9AF8D154CBD7387BB0F2297C9FC" },
             @{ DownloadUrl = "https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "247011443AC573D4F03B1622065A7350B8B3DAE04D6A5A6DC64C8270A3BE7636" }
+        )
+    },
+    @{
+        Label = "Latest"; 
+        Packages = @(
+            @{ DownloadUrl = "https://download.microsoft.com/download/d/6/d/d6dcc9e7-744e-43e1-b4be-206a6acd4f88/sts-subscription-kb5002331-fullfile-x64-glb.exe" },
+            @{ DownloadUrl = "https://download.microsoft.com/download/d/3/5/d354b6e2-fa16-48e0-b3f8-423f7ca279a0/wssloc-subscription-kb5002326-fullfile-x64-glb.exe" }
         )
     }
 )
