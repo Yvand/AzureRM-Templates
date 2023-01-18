@@ -166,22 +166,27 @@ configuration ConfigureSPVM
         Script SetLongPathsEnabled
         {
             GetScript = { }
-            TestScript = { return $null -ne (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -ErrorAction SilentlyContinue) }
-            SetScript = { New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -ErrorAction SilentlyContinue }
+            TestScript = {
+                $prop = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -ErrorAction SilentlyContinue
+                if ($null -eq $prop) {
+                    return $false
+                } else {
+                    if ($prop.LongPathsEnabled -eq 1) {
+                        return $true
+                    } else {
+                        return $false
+                    }
+                }
+            }
+            SetScript = { New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force }
         }
 
         Script SetOneDriveUrlPolicy
         {
             GetScript = { }
-            TestScript = { 
-                return (
-                    $null -ne (Get-Item -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -ErrorAction SilentlyContinue) -or
-                    $null -ne (Get-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -ErrorAction SilentlyContinue) 
-                )
-            }
+            TestScript = { return $null -ne (Get-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -ErrorAction SilentlyContinue) }
             SetScript = {
-                $authority = $using:OhMy
-                $url = "http://{0}" -f $authority
+                $url = "http://{0}" -f $using:MySiteHostAlias
                 # Don't use -Force to not remove the content if key already exists
                 New-Item -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -ErrorAction SilentlyContinue
                 # Don't use -Force to not overwrite the property if it already exists (it should not happen)
@@ -1616,27 +1621,47 @@ configuration ConfigureSPVM
             {
                 $jobBlock = {
                     $uri = $args[0]
-					$accountName = $args[1]
+                    $accountName = $args[1]
+                    
+                    Write-Verbose "Checking personal site for '$accountName'..."
                     try {
-                        Write-Verbose "Connecting to $uri..."
-                        $site = Get-SPSite -Identity $uri
-						$ctx = Get-SPServiceContext $site
-						$upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($ctx)
-						$profile = $upm.GetUserProfile($accountName)
-						$profile.CreatePersonalSiteEnque($false)
-						# $profile.CreatePersonalSite()
-                        Write-Verbose "Successfully create personal site for '$accountName'"
+                        $site = Get-SPSite -Identity $uri -ErrorAction SilentlyContinue
+                        $ctx = Get-SPServiceContext $site -ErrorAction SilentlyContinue
+                        $upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($ctx)
                     }
                     catch {
-                        Write-Error -Exception $_ -Message "Unexpected error while creating personal site for '$accountName'"
+                        Write-Verbose "Unable to get UserProfileManager for '$accountName': $_"
+                        # If Write-Error is called, then the Script resource is going to failed state
+                        # Write-Error -Exception $_ -Message "Unable to get UserProfileManager for '$accountName'"
+                        return
+                    }
+                    
+                    try {
+                        $profile = $upm.GetUserProfile($accountName)
+                        Write-Verbose "Got existing user profile for '$accountName'"
+                    }
+                    catch {
+                        $profile = $upm.CreateUserProfile($accountName);
+                        Write-Verbose "Successfully created user profile for '$accountName'"
+                    }
+                
+                    if ($null -eq $profile) {
+                        Write-Error -Message "Unable to get/create the profile for '$accountName'"
+                        return
+                    }
+                    
+                    if ($null -eq $profile.PersonalSite) {
+                        $profile.CreatePersonalSiteEnque($false)
+                        Write-Verbose "Successfully enqueued the creation of personal site for '$accountName'"
+                    } else 
+                    {
+                        Write-Verbose "Personal site for '$accountName' already exists, nothing to do"
                     }
                 }
 				$uri = "http://$using:SharePointSitesAuthority/"
-				$accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"
-                Write-Verbose "Creating personal site for '$accountName'..."
+				$accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"                
                 $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
                 $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
-                Write-Verbose "Creating personal site for '$accountName'..."
                 $job2 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
                 
                 # Must wait for the jobs to complete, otherwise they do not actually run
@@ -1646,7 +1671,6 @@ configuration ConfigureSPVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPSite]CreateRootSite"
         }
         
         if ($EnableAnalysis) {
