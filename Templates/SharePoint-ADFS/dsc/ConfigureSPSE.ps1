@@ -1549,11 +1549,11 @@ configuration ConfigureSPVM
                 $certSubject = "HighTrustAddins"
                 $certName = "HighTrustAddins.cer"
                 $certFullPath = [System.IO.Path]::Combine($destinationPath, $certName)
-                Write-Host -Message "Exporting public key of certificate with subject $certSubject to $certFullPath..."
+                Write-Host "Exporting public key of certificate with subject $certSubject to $certFullPath..."
                 New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
                 $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$certSubject"
                 $signingCert | Export-Certificate -FilePath $certFullPath
-                Write-Host -Message "Public key of certificate with subject $certSubject successfully exported to $certFullPath."
+                Write-Host "Public key of certificate with subject $certSubject successfully exported to $certFullPath."
             }
             GetScript =  
             {
@@ -1660,9 +1660,9 @@ configuration ConfigureSPVM
                 }
 				$uri = "http://$($using:SharePointSitesAuthority)/"
 				$accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"                
-                $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
+                $job1 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
                 $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
-                $job2 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
+                $job2 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
                 
                 # Must wait for the jobs to complete, otherwise they do not actually run
                 Receive-Job -Job $job1 -AutoRemoveJob -Wait
