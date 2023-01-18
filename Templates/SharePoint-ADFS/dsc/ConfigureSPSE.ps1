@@ -384,15 +384,15 @@ configuration ConfigureSPVM
                         
                         $exitRebootCodes = @(3010, 17022)
                         $needReboot = $false
-                        Write-Host -Message "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
+                        Write-Host "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
                         Unblock-File -Path $packageFile -Confirm:$false
                         $process = Start-Process $packageFile.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
                         if ($exitRebootCodes.Contains($process.ExitCode)) {
                             $needReboot = $true
                         }
-                        Write-Host -Message "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
+                        Write-Host "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
                         New-Item -Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)" -Force
-                        Write-Host -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
+                        Write-Host "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
 
                         if ($true -eq $needReboot) {
                             $global:DSCMachineStatus = 1
@@ -496,7 +496,7 @@ configuration ConfigureSPVM
                 # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
                 $domainFQDN = $using:DomainFQDN
                 $computerName = $using:ComputerName
-                Write-Host -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
+                Write-Host "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
                 setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
@@ -1659,13 +1659,13 @@ configuration ConfigureSPVM
                     }
                 }
 				$uri = "http://$($using:SharePointSitesAuthority)/"
-				$accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"                
-                $job1 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
+				# $accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"                
+                # $job1 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
                 $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
                 $job2 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
                 
                 # Must wait for the jobs to complete, otherwise they do not actually run
-                Receive-Job -Job $job1 -AutoRemoveJob -Wait
+                # Receive-Job -Job $job1 -AutoRemoveJob -Wait
                 Receive-Job -Job $job2 -AutoRemoveJob -Wait
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
@@ -1692,7 +1692,7 @@ configuration ConfigureSPVM
                     $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
                     # Start python script
-                    Write-Host -Message "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
+                    Write-Host "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
                     #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
                     #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
                     python "$localScriptPath" "$fullPathToDscLogs"
