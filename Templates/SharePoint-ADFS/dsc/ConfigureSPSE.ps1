@@ -1620,8 +1620,10 @@ configuration ConfigureSPVM
             SetScript =
             {
                 $jobBlock = {
-                    $uri = $args[0]
-                    $accountName = $args[1]
+                    # $uri = $args[0]
+                    # $accountName = $args[1]
+                    $uri = "http://spsites/"
+                    $accountName = "i:0#.w|contoso\yvand"
                     
                     Write-Host "Checking personal site for '$accountName'..."
                     try {
@@ -1658,15 +1660,18 @@ configuration ConfigureSPVM
                         Write-Host "Personal site for '$accountName' already exists, nothing to do"
                     }
                 }
-				$uri = "http://$($using:SharePointSitesAuthority)/"
-				# $accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"                
+				# $uri = "http://$($using:SharePointSitesAuthority)/"
+				$uri = "http://spsites/"
+				# $accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"
+                $accountName = "i:0#.w|contoso\yvand"
                 # $job1 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
-                $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
-                $job2 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
+                $job1 = Start-Job -ScriptBlock $jobBlock #-ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
+                # $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
+                # $job2 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
                 
                 # Must wait for the jobs to complete, otherwise they do not actually run
-                # Receive-Job -Job $job1 -AutoRemoveJob -Wait
-                Receive-Job -Job $job2 -AutoRemoveJob -Wait
+                Receive-Job -Job $job1 -AutoRemoveJob -Wait
+                # Receive-Job -Job $job2 -AutoRemoveJob -Wait
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
