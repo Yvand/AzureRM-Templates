@@ -384,15 +384,15 @@ configuration ConfigureSPVM
                         
                         $exitRebootCodes = @(3010, 17022)
                         $needReboot = $false
-                        Write-Verbose -Message "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
+                        Write-Host -Message "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
                         Unblock-File -Path $packageFile -Confirm:$false
                         $process = Start-Process $packageFile.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
                         if ($exitRebootCodes.Contains($process.ExitCode)) {
                             $needReboot = $true
                         }
-                        Write-Verbose -Message "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
+                        Write-Host -Message "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
                         New-Item -Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)" -Force
-                        Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
+                        Write-Host -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
 
                         if ($true -eq $needReboot) {
                             $global:DSCMachineStatus = 1
@@ -496,7 +496,7 @@ configuration ConfigureSPVM
                 # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
                 $domainFQDN = $using:DomainFQDN
                 $computerName = $using:ComputerName
-                Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
+                Write-Host -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
                 setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
@@ -740,12 +740,12 @@ configuration ConfigureSPVM
                     $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
                     try {
                         $sqlConnection.Open()
-                        Write-Verbose "Connection to SQL Server $server succeeded"
+                        Write-Host "Connection to SQL Server $server succeeded"
                         $sqlConnection.Close()
                         $retry = $false
                     }
                     catch {
-                        Write-Verbose "SQL connection to $server failed, retry in $retrySleep secs..."
+                        Write-Host "SQL connection to $server failed, retry in $retrySleep secs..."
                         Start-Sleep -s $retrySleep
                     }
                 }
@@ -1549,11 +1549,11 @@ configuration ConfigureSPVM
                 $certSubject = "HighTrustAddins"
                 $certName = "HighTrustAddins.cer"
                 $certFullPath = [System.IO.Path]::Combine($destinationPath, $certName)
-                Write-Verbose -Message "Exporting public key of certificate with subject $certSubject to $certFullPath..."
+                Write-Host -Message "Exporting public key of certificate with subject $certSubject to $certFullPath..."
                 New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
                 $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$certSubject"
                 $signingCert | Export-Certificate -FilePath $certFullPath
-                Write-Verbose -Message "Public key of certificate with subject $certSubject successfully exported to $certFullPath."
+                Write-Host -Message "Public key of certificate with subject $certSubject successfully exported to $certFullPath."
             }
             GetScript =  
             {
@@ -1587,22 +1587,22 @@ configuration ConfigureSPVM
                 $jobBlock = {
                     $uri = $args[0]
                     try {
-                        Write-Verbose "Connecting to $uri..."
+                        Write-Host "Connecting to $uri..."
                         # -UseDefaultCredentials: Does NTLM authN
                         # -UseBasicParsing: Avoid exception because IE was not first launched yet
                         # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
                         $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
-                        Write-Verbose "Connected successfully to $uri"
+                        Write-Host "Connected successfully to $uri"
                     }
                     catch {
                         Write-Error -Exception $_ -Message "Unexpected error while connecting to '$uri'"
                     }
                 }
                 $spsite = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
-                Write-Verbose "Warming up '$spsite'..."
+                Write-Host "Warming up '$spsite'..."
                 $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
                 $spsite = "http://$($using:SharePointSitesAuthority)/"
-                Write-Verbose "Warming up '$spsite'..."
+                Write-Host "Warming up '$spsite'..."
                 $job2 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
                 
                 # Must wait for the jobs to complete, otherwise they do not actually run
@@ -1623,14 +1623,14 @@ configuration ConfigureSPVM
                     $uri = $args[0]
                     $accountName = $args[1]
                     
-                    Write-Verbose "Checking personal site for '$accountName'..."
+                    Write-Host "Checking personal site for '$accountName'..."
                     try {
                         $site = Get-SPSite -Identity $uri -ErrorAction SilentlyContinue
                         $ctx = Get-SPServiceContext $site -ErrorAction SilentlyContinue
                         $upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($ctx)
                     }
                     catch {
-                        Write-Verbose "Unable to get UserProfileManager for '$accountName': $_"
+                        Write-Host "Unable to get UserProfileManager for '$accountName': $_"
                         # If Write-Error is called, then the Script resource is going to failed state
                         # Write-Error -Exception $_ -Message "Unable to get UserProfileManager for '$accountName'"
                         return
@@ -1638,11 +1638,11 @@ configuration ConfigureSPVM
                     
                     try {
                         $profile = $upm.GetUserProfile($accountName)
-                        Write-Verbose "Got existing user profile for '$accountName'"
+                        Write-Host "Got existing user profile for '$accountName'"
                     }
                     catch {
                         $profile = $upm.CreateUserProfile($accountName);
-                        Write-Verbose "Successfully created user profile for '$accountName'"
+                        Write-Host "Successfully created user profile for '$accountName'"
                     }
                 
                     if ($null -eq $profile) {
@@ -1652,13 +1652,13 @@ configuration ConfigureSPVM
                     
                     if ($null -eq $profile.PersonalSite) {
                         $profile.CreatePersonalSiteEnque($false)
-                        Write-Verbose "Successfully enqueued the creation of personal site for '$accountName'"
+                        Write-Host "Successfully enqueued the creation of personal site for '$accountName'"
                     } else 
                     {
-                        Write-Verbose "Personal site for '$accountName' already exists, nothing to do"
+                        Write-Host "Personal site for '$accountName' already exists, nothing to do"
                     }
                 }
-				$uri = "http://$using:SharePointSitesAuthority/"
+				$uri = "http://$($using:SharePointSitesAuthority)/"
 				$accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"                
                 $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
                 $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
@@ -1692,7 +1692,7 @@ configuration ConfigureSPVM
                     $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
                     # Start python script
-                    Write-Verbose -Message "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
+                    Write-Host -Message "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
                     #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
                     #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
                     python "$localScriptPath" "$fullPathToDscLogs"
