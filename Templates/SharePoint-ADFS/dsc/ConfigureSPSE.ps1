@@ -1615,6 +1615,69 @@ configuration ConfigureSPVM
             DependsOn            = "[SPSite]CreateRootSite"
         }
 
+        # Script CreatePersonalSites
+        # {
+        #     SetScript =
+        #     {
+        #         $jobBlock = {
+        #             # $uri = $args[0]
+        #             # $accountName = $args[1]
+        #             $uri = "http://spsites/"
+        #             $accountName = "i:0#.w|contoso\yvand"
+                    
+        #             Write-Host "Checking personal site for '$accountName'..."
+        #             try {
+        #                 $site = Get-SPSite -Identity $uri -ErrorAction SilentlyContinue
+        #                 $ctx = Get-SPServiceContext $site -ErrorAction SilentlyContinue
+        #                 $upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($ctx)
+        #             }
+        #             catch {
+        #                 Write-Host "Unable to get UserProfileManager for '$accountName': $_"
+        #                 # If Write-Error is called, then the Script resource is going to failed state
+        #                 # Write-Error -Exception $_ -Message "Unable to get UserProfileManager for '$accountName'"
+        #                 return
+        #             }
+                    
+        #             try {
+        #                 $profile = $upm.GetUserProfile($accountName)
+        #                 Write-Host "Got existing user profile for '$accountName'"
+        #             }
+        #             catch {
+        #                 $profile = $upm.CreateUserProfile($accountName);
+        #                 Write-Host "Successfully created user profile for '$accountName'"
+        #             }
+                
+        #             if ($null -eq $profile) {
+        #                 Write-Error -Message "Unable to get/create the profile for '$accountName'"
+        #                 return
+        #             }
+                    
+        #             if ($null -eq $profile.PersonalSite) {
+        #                 $profile.CreatePersonalSiteEnque($false)
+        #                 Write-Host "Successfully enqueued the creation of personal site for '$accountName'"
+        #             } else 
+        #             {
+        #                 Write-Host "Personal site for '$accountName' already exists, nothing to do"
+        #             }
+        #         }
+		# 		# $uri = "http://$($using:SharePointSitesAuthority)/"
+		# 		$uri = "http://spsites/"
+		# 		# $accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"
+        #         $accountName = "i:0#.w|contoso\yvand"
+        #         # $job1 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
+        #         $job1 = Start-Job -ScriptBlock $jobBlock #-ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
+        #         # $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
+        #         # $job2 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
+                
+        #         # Must wait for the jobs to complete, otherwise they do not actually run
+        #         Receive-Job -Job $job1 -AutoRemoveJob -Wait
+        #         # Receive-Job -Job $job2 -AutoRemoveJob -Wait
+        #     }
+        #     GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+        #     TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        # }
+
         Script CreatePersonalSites
         {
             SetScript =
@@ -1622,8 +1685,9 @@ configuration ConfigureSPVM
                 $jobBlock = {
                     # $uri = $args[0]
                     # $accountName = $args[1]
+                    $accountName = $args[0]
                     $uri = "http://spsites/"
-                    $accountName = "i:0#.w|contoso\yvand"
+                    # $accountName = "i:0#.w|contoso\yvand"
                     
                     Write-Host "Checking personal site for '$accountName'..."
                     try {
@@ -1661,11 +1725,11 @@ configuration ConfigureSPVM
                     }
                 }
 				# $uri = "http://$($using:SharePointSitesAuthority)/"
-				$uri = "http://spsites/"
+				# $uri = "http://spsites/"
 				# $accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"
                 $accountName = "i:0#.w|contoso\yvand"
                 # $job1 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
-                $job1 = Start-Job -ScriptBlock $jobBlock #-ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
+                $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($accountName) # @($uri, $accountName) #-Credential $using:DomainAdminCredsQualified
                 # $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
                 # $job2 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
                 
