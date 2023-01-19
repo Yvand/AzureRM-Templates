@@ -1622,8 +1622,9 @@ configuration ConfigureSPVM
         #         $jobBlock = {
         #             # $uri = $args[0]
         #             # $accountName = $args[1]
+        #             $accountName = $args[0]
         #             $uri = "http://spsites/"
-        #             $accountName = "i:0#.w|contoso\yvand"
+        #             # $accountName = "i:0#.w|contoso\yvand"
                     
         #             Write-Host "Checking personal site for '$accountName'..."
         #             try {
@@ -1661,11 +1662,11 @@ configuration ConfigureSPVM
         #             }
         #         }
 		# 		# $uri = "http://$($using:SharePointSitesAuthority)/"
-		# 		$uri = "http://spsites/"
+		# 		# $uri = "http://spsites/"
 		# 		# $accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"
         #         $accountName = "i:0#.w|contoso\yvand"
         #         # $job1 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
-        #         $job1 = Start-Job -ScriptBlock $jobBlock #-ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
+        #         $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($accountName) # @($uri, $accountName) #-Credential $using:DomainAdminCredsQualified
         #         # $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
         #         # $job2 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
                 
@@ -1727,7 +1728,8 @@ configuration ConfigureSPVM
 				# $uri = "http://$($using:SharePointSitesAuthority)/"
 				# $uri = "http://spsites/"
 				# $accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"
-                $accountName = "i:0#.w|contoso\yvand"
+                # $accountName = "i:0#.w|contoso\yvand"
+                $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
                 # $job1 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
                 $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($accountName) # @($uri, $accountName) #-Credential $using:DomainAdminCredsQualified
                 # $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
