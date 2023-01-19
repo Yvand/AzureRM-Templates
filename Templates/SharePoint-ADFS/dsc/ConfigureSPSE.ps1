@@ -1802,7 +1802,8 @@ configuration ConfigureSPVM
 				# $uri = "http://spsites/"
 				# $accountName = "i:0#.w|$($using:DomainNetbiosName)\$($using:DomainAdminCreds.UserName)"
                 # $accountName = "i:0#.w|contoso\yvand"
-                $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
+                # $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
+                $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|yvand@$($using:DomainFQDN)"
                 # $accountName = "i:0e.t|contoso.local|yvand@contoso.local"
                 Write-Host "[YVAND] accountName: '$accountName'"
                 # $job1 = Start-Job -InitializationScript {Import-Module "C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1"} -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) -Credential $using:DomainAdminCredsQualified
