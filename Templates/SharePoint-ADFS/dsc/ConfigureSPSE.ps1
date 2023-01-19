@@ -1595,11 +1595,11 @@ configuration ConfigureSPVM
                         Write-Host "Connected successfully to $uri"
                     }
                     catch [System.Exception] {
-                        Write-Error -Exception $_ -Message "Unexpected error while connecting to '$uri'"
+                        Write-Host "Unexpected error while connecting to '$uri': $_"
                     }
                     catch {
                         # It may typically be a System.Management.Automation.ErrorRecord, which does not inherit System.Exception
-                        Write-Error -Message "Unexpected error while connecting to '$uri': $_"
+                        Write-Host "Unexpected error while connecting to '$uri'"
                     }
                 }
                 $spsite = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
