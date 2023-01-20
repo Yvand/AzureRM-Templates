@@ -492,9 +492,9 @@
         {
             FederationServiceName        = "$ADFSSiteName.$DomainFQDN"
             FederationServiceDisplayName = "$ADFSSiteName.$DomainFQDN"
-            CertificateName              = "$ADFSSiteName.$DomainFQDN"
-            SigningCertificateName       = "$ADFSSiteName.Signing"
-            DecryptionCertificateName    = "$ADFSSiteName.Decryption"
+            CertificateDnsName           = "$ADFSSiteName.$DomainFQDN"
+            SigningCertificateDnsName    = "$ADFSSiteName.Signing"
+            DecryptionCertificateDnsName = "$ADFSSiteName.Decryption"
             ServiceAccountCredential     = $AdfsSvcCredsQualified
             Credential                   = $DomainCredsNetbios
             DependsOn                    = "[WindowsFeature]AddADFS"
