@@ -1739,9 +1739,10 @@ configuration ConfigureSPVM
 				# $uri = "http://spsites/"
 				# $accountName = "i:0#.w|$($using:DomainNetbiosName)\yvand"
                 Write-Host "[YVAND] STEP 0"
-                $userCreds = $using:DomainAdminCreds
-                Write-Host "[YVAND] userCreds.UserName: $($userCreds.UserName)"
-				$accountName = "i:0#.w|$($using:DomainNetbiosName)\$($userCreds.UserName)"
+                # Accessing $using:DomainAdminCredsQualified here somehow causes a deserialization error, so don't use it                
+                $username = $env:UserName
+                Write-Host "[YVAND] UserName: $($username)"
+				$accountName = "i:0#.w|$($using:DomainNetbiosName)\$($username)"
                 # $accountName = "i:0#.w|contoso\yvand"
                 # $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
                 # $accountName = "i:0e.t|contoso.local|yvand@contoso.local"
@@ -1749,7 +1750,7 @@ configuration ConfigureSPVM
                 $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
                 # $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($accountName) # @($uri, $accountName) #-Credential $using:DomainAdminCredsQualified
                 # $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$($using:DomainAdminCreds.UserName)@$($using:DomainFQDN)"
-                $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|yvand@$($using:DomainFQDN)"
+                $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$username@$($using:DomainFQDN)"
                 Write-Host "[YVAND] accountName: '$accountName'"
                 $job2 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
                 
