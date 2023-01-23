@@ -746,7 +746,7 @@
         }
 
         foreach ($ExtraUser in $ExtraUsers) {
-            ADUser SetEmailOfDomainAdmin
+            ADUser "ExtraUser_$($ExtraUser.UserName)"
             {
                 DomainName           = $DomainFQDN
                 UserName             = $ExtraUser.UserName
@@ -754,6 +754,7 @@
                 UserPrincipalName    = "$($ExtraUser.UserName)@$DomainFQDN"
                 DisplayName          = $ExtraUser.DisplayName
                 PasswordNeverExpires = $true
+                Password              = $AdfsSvcCreds
                 Ensure               = "Present"
                 DependsOn            = "[WaitForADDomain]WaitForDCReady"
             }
