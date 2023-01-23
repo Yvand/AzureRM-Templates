@@ -199,6 +199,109 @@
         }
     )
 
+    [System.Object[]] $ExtraUsers = @(
+        @{
+            DisplayName = "Adele Vance";
+            UserName = "AdeleV"
+        },
+        @{
+            DisplayName = "Alex Wilber";
+            UserName = "AlexW"
+        },
+        @{
+            DisplayName = "Allan Deyoung";
+            UserName = "AllanD"
+        },
+        @{
+            DisplayName = "Bianca Pisani";
+            UserName = "BiancaP"
+        },
+        @{
+            DisplayName = "Cameron White";
+            UserName = "CameronW"
+        },
+        @{
+            DisplayName = "Christie Cline";
+            UserName = "ChristieC"
+        },
+        @{
+            DisplayName = "Debra Berger";
+            UserName = "DebraB"
+        },
+        @{
+            DisplayName = "Delia Dennis";
+            UserName = "DeliaD"
+        },
+        @{
+            DisplayName = "Diego Siciliani";
+            UserName = "DiegoS"
+        },
+        @{
+            DisplayName = "Gerhart Moller";
+            UserName = "GerhartM"
+        },
+        @{
+            DisplayName = "Grady Archie";
+            UserName = "GradyA"
+        },
+        @{
+            DisplayName = "Irvin Sayers";
+            UserName = "IrvinS"
+        },
+        @{
+            DisplayName = "Isaiah Langer";
+            UserName = "IsaiahL"
+        },
+        @{
+            DisplayName = "Johanna Lorenz";
+            UserName = "JohannaL"
+        },
+        @{
+            DisplayName = "Joni Sherman";
+            UserName = "JoniS"
+        },
+        @{
+            DisplayName = "Lee Gu";
+            UserName = "LeeG"
+        },
+        @{
+            DisplayName = "Lidia Holloway";
+            UserName = "LidiaH"
+        },
+        @{
+            DisplayName = "Lynne Robbins";
+            UserName = "LynneR"
+        },
+        @{
+            DisplayName = "Mallory Cortez";
+            UserName = "MalloryC"
+        },
+        @{
+            DisplayName = "Megan Bowen";
+            UserName = "MeganB"
+        },
+        @{
+            DisplayName = "Miriam Graham";
+            UserName = "MiriamG"
+        },
+        @{
+            DisplayName = "Nestor Wilke";
+            UserName = "NestorW"
+        },
+        @{
+            DisplayName = "Patti Fernandez";
+            UserName = "PattiF"
+        },
+        @{
+            DisplayName = "Raul Razo";
+            UserName = "RaulR"
+        },
+        @{
+            DisplayName = "Pradeep Gupta";
+            UserName = "PradeepG"
+        }
+    )
+
     Node localhost
     {
         LocalConfigurationManager
@@ -639,6 +742,20 @@
                 } else {
                     return $true
                 }
+            }
+        }
+
+        foreach ($ExtraUser in $ExtraUsers) {
+            ADUser SetEmailOfDomainAdmin
+            {
+                DomainName           = $DomainFQDN
+                UserName             = $ExtraUser.UserName
+                EmailAddress         = "$($ExtraUser.UserName)@$DomainFQDN"
+                UserPrincipalName    = "$($ExtraUser.UserName)@$DomainFQDN"
+                DisplayName          = $ExtraUser.DisplayName
+                PasswordNeverExpires = $true
+                Ensure               = "Present"
+                DependsOn            = "[WaitForADDomain]WaitForDCReady"
             }
         }
     }
