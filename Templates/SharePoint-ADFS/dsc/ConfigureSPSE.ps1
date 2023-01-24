@@ -1603,16 +1603,16 @@ configuration ConfigureSPVM
                         Write-Host "Unexpected error while connecting to '$uri'"
                     }
                 }
+                [System.Management.Automation.Job[]] $jobs = @()
                 $spsite = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
                 Write-Host "Warming up '$spsite'..."
-                $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
+                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
                 $spsite = "http://$($using:SharePointSitesAuthority)/"
                 Write-Host "Warming up '$spsite'..."
-                $job2 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
+                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
 
                 # Must wait for the jobs to complete, otherwise they do not actually run
-                Receive-Job -Job $job1 -AutoRemoveJob -Wait
-                Receive-Job -Job $job2 -AutoRemoveJob -Wait
+                Receive-Job -Job $jobs -AutoRemoveJob -Wait
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
@@ -1624,72 +1624,73 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
+                # Need to wrap the creation of personal sites in a job to avoid the error below when calling CreatePersonalSiteEnque($false):
+                # Could not enqueue creation of personal site for 'i:0#.w|contoso\yvand': Exception calling "CreatePersonalSiteEnque" with "1" argument(s): "Attempted to perform an unauthorized operation."
                 $jobBlock = {
                     $uri = $args[0]
-                    $accountName = $args[1]
-                    
-                    Write-Host "Checking personal site for '$accountName'..."
+                    $accountPattern_WinClaims = $args[1]
+                    $accountPattern_Trusted = $args[2]
+                    $FictiveUsersPath = $args[3]
+
                     try {
                         $site = Get-SPSite -Identity $uri -ErrorAction SilentlyContinue
                         $ctx = Get-SPServiceContext $site -ErrorAction SilentlyContinue
                         $upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($ctx)
+                        Write-Host "Got UserProfileManager"
                     }
                     catch {
-                        Write-Host "Unable to get UserProfileManager for '$accountName': $_"
+                        Write-Host "Unable to get UserProfileManager: $_"
                         # If Write-Error is called, then the Script resource is going to failed state
                         # Write-Error -Exception $_ -Message "Unable to get UserProfileManager for '$accountName'"
                         return
                     }
+
+                    # Accessing $using:DomainAdminCredsQualified here somehow causes a deserialization error, so use $env:UserName instead
+                    [string[]] $accounts = @()
+                    $accounts += $accountPattern_WinClaims -f $env:UserName
+                    $accounts += $accountPattern_Trusted -f $env:UserName
+                    $fictiveUsers = Get-ADUser -Filter "objectClass -like 'user'" -SearchBase $using:FictiveUsersPath #-ResultSetSize 5
+                    foreach ($fictiveUser in $fictiveUsers) {
+                        $accounts += $accountPattern_WinClaims -f $fictiveUser.SamAccountName
+                        $accounts += $accountPattern_Trusted -f $fictiveUser.SamAccountName
+                    }
+
+                    foreach ($accountName in $accounts) {
+                        $profile = $null
+                        try {
+                            $profile = $upm.GetUserProfile($accountName)
+                            Write-Host "Got existing user profile for '$accountName'"
+                        }
+                        catch {
+                            $profile = $upm.CreateUserProfile($accountName);
+                            Write-Host "Successfully created user profile for '$accountName'"
+                        }
                     
-                    try {
-                        $profile = $upm.GetUserProfile($accountName)
-                        Write-Host "Got existing user profile for '$accountName'"
-                    }
-                    catch {
-                        $profile = $upm.CreateUserProfile($accountName);
-                        Write-Host "Successfully created user profile for '$accountName'"
-                    }
-                
-                    if ($null -eq $profile) {
-                        Write-Host "Unable to get/create the profile for '$accountName', give up"
-                        return
-                    }
-                    
-                    if ($null -eq $profile.PersonalSite) {
-                        $profile.CreatePersonalSiteEnque($false)
-                        Write-Host "Successfully enqueued the creation of personal site for '$accountName'"
-                    } else 
-                    {
-                        Write-Host "Personal site for '$accountName' already exists, nothing to do"
+                        if ($null -eq $profile) {
+                            Write-Host "Unable to get/create the profile for '$accountName', give up"
+                            continue
+                        }
+                        
+                        if ($null -eq $profile.PersonalSite) {
+                            Write-Host "Adding creation of personal site for '$accountName' to the queue..."
+                            try {
+                                $profile.CreatePersonalSiteEnque($false)
+                                Write-Host "Successfully enqueued the creation of personal site for '$accountName'"
+                            }
+                            catch {
+                                Write-Host "Could not enqueue creation of personal site for '$accountName': $_"
+                            }
+                        } else 
+                        {
+                            Write-Host "Personal site for '$accountName' already exists, nothing to do"
+                        }
                     }
                 }
-
-				$uri = "http://$($using:SharePointSitesAuthority)/"
-                # Accessing $using:DomainAdminCredsQualified here somehow causes a deserialization error, so use $env:UserName instead
-                $username = $env:UserName
-				$accountName = "i:0#.w|$($using:DomainNetbiosName)\$username"
-                $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) #-Credential $using:DomainAdminCredsQualified
-                $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$username@$($using:DomainFQDN)"
-                $job2 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
-
-                $jobs = [List[PSObject]]::new()
-                $fictiveUsers = Get-ADUser -Filter "objectClass -like 'user'" -SearchBase $using:FictiveUsersPath
-                foreach ($fictiveUser in $fictiveUsers) {
-                    $username = $fictiveUser.SamAccountName
-                    $accountName = "i:0#.w|$($using:DomainNetbiosName)\$username"
-                    $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
-                    Write-Host "[YVAND] jobtypoe '$($job.GetType().ToString())'"
-                    $jobs.Add($job)
-
-                    $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$username@$($using:DomainFQDN)"
-                    $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
-                    $jobs.Add($job)
-                }
-                
-                # Must wait for the jobs to complete, otherwise they do not actually run
-                Receive-Job -Job $job1 -AutoRemoveJob -Wait
-                Receive-Job -Job $job2 -AutoRemoveJob -Wait
-                Receive-Job -Job $jobs -AutoRemoveJob -Wait
+                $uri = "http://$($using:SharePointSitesAuthority)/"
+                $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"
+                $accountPattern_Trusted = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|{0}@$($using:DomainFQDN)"
+                $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountPattern_WinClaims, $accountPattern_Trusted, $using:FictiveUsersPath)
+                Receive-Job -Job $job -AutoRemoveJob -Wait
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
@@ -1797,7 +1798,7 @@ $DomainFQDN = "contoso.local"
 $DCServerName = "DC"
 $SQLServerName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "Subscription-Latest"
+$SharePointVersion = "Subscription-RTM"
 $SharePointSitesAuthority = "spsites"
 $SharePointCentralAdminPort = 5000
 $EnableAnalysis = $true
