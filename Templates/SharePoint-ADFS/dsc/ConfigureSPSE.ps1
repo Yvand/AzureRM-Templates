@@ -41,7 +41,7 @@ configuration ConfigureSPVM
     [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
-    [String] $FictiveUsersPath = "OU=FictiveUsers,CN=Users,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
+    [String] $FictiveUsersPath = "OU=FictiveUsers,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
 
     # Format credentials to be qualified by domain name: "domain\username"
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
@@ -1678,7 +1678,7 @@ configuration ConfigureSPVM
                     $username = $fictiveUser.SamAccountName
                     $accountName = "i:0#.w|$($using:DomainNetbiosName)\$username"
                     $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
-                    Write-Host "[YVAND] jobtypoe '$($job2.GetType().ToString())'"
+                    Write-Host "[YVAND] jobtypoe '$($job.GetType().ToString())'"
                     $jobs.Add($job)
 
                     $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$username@$($using:DomainFQDN)"
