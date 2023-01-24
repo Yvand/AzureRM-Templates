@@ -41,7 +41,7 @@ configuration ConfigureSPVM
     [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
-    [String] $FictiveUsersPath = "OU=FictiveUsers,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
+    [String] $AdditionalUsersPath = "OU=AdditionalUsers,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
 
     # Format credentials to be qualified by domain name: "domain\username"
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
@@ -1630,7 +1630,7 @@ configuration ConfigureSPVM
                     $uri = $args[0]
                     $accountPattern_WinClaims = $args[1]
                     $accountPattern_Trusted = $args[2]
-                    $FictiveUsersPath = $args[3]
+                    $AdditionalUsersPath = $args[3]
 
                     try {
                         $site = Get-SPSite -Identity $uri -ErrorAction SilentlyContinue
@@ -1649,10 +1649,10 @@ configuration ConfigureSPVM
                     [string[]] $accounts = @()
                     $accounts += $accountPattern_WinClaims -f $env:UserName
                     $accounts += $accountPattern_Trusted -f $env:UserName
-                    $fictiveUsers = Get-ADUser -Filter "objectClass -like 'user'" -SearchBase $using:FictiveUsersPath #-ResultSetSize 5
-                    foreach ($fictiveUser in $fictiveUsers) {
-                        $accounts += $accountPattern_WinClaims -f $fictiveUser.SamAccountName
-                        $accounts += $accountPattern_Trusted -f $fictiveUser.SamAccountName
+                    $AdditionalUsers = Get-ADUser -Filter "objectClass -like 'user'" -SearchBase $using:AdditionalUsersPath #-ResultSetSize 5
+                    foreach ($AdditionalUser in $AdditionalUsers) {
+                        $accounts += $accountPattern_WinClaims -f $AdditionalUser.SamAccountName
+                        $accounts += $accountPattern_Trusted -f $AdditionalUser.SamAccountName
                     }
 
                     foreach ($accountName in $accounts) {
@@ -1689,7 +1689,7 @@ configuration ConfigureSPVM
                 $uri = "http://$($using:SharePointSitesAuthority)/"
                 $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"
                 $accountPattern_Trusted = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|{0}@$($using:DomainFQDN)"
-                $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountPattern_WinClaims, $accountPattern_Trusted, $using:FictiveUsersPath)
+                $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountPattern_WinClaims, $accountPattern_Trusted, $using:AdditionalUsersPath)
                 Receive-Job -Job $job -AutoRemoveJob -Wait
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.

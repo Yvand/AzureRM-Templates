@@ -24,7 +24,7 @@
     [String] $InterfaceAlias = (Get-NetAdapter | Where-Object Name -Like "Ethernet*" | Select-Object -First 1).Name
     [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
-    [String] $FictiveUsersPath = "OU=FictiveUsers,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
+    [String] $AdditionalUsersPath = "OU=AdditionalUsers,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
 
     # Format credentials to be qualified by domain name: "domain\username"
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
@@ -200,106 +200,26 @@
         }
     )
 
-    [System.Object[]] $FictiveUsers = @(
+    [System.Object[]] $AdditionalUsers = @(
         @{
             DisplayName = "Adele Vance";
             UserName = "AdeleV"
-        },
-        @{
-            DisplayName = "Alex Wilber";
-            UserName = "AlexW"
-        },
-        @{
-            DisplayName = "Allan Deyoung";
-            UserName = "AllanD"
         },
         @{
             DisplayName = "Bianca Pisani";
             UserName = "BiancaP"
         },
         @{
-            DisplayName = "Cameron White";
-            UserName = "CameronW"
-        },
-        @{
-            DisplayName = "Christie Cline";
-            UserName = "ChristieC"
-        },
-        @{
-            DisplayName = "Debra Berger";
-            UserName = "DebraB"
-        },
-        @{
-            DisplayName = "Delia Dennis";
-            UserName = "DeliaD"
-        },
-        @{
-            DisplayName = "Diego Siciliani";
-            UserName = "DiegoS"
-        },
-        @{
-            DisplayName = "Gerhart Moller";
-            UserName = "GerhartM"
-        },
-        @{
-            DisplayName = "Grady Archie";
-            UserName = "GradyA"
-        },
-        @{
-            DisplayName = "Irvin Sayers";
-            UserName = "IrvinS"
-        },
-        @{
-            DisplayName = "Isaiah Langer";
-            UserName = "IsaiahL"
-        },
-        @{
             DisplayName = "Johanna Lorenz";
             UserName = "JohannaL"
-        },
-        @{
-            DisplayName = "Joni Sherman";
-            UserName = "JoniS"
-        },
-        @{
-            DisplayName = "Lee Gu";
-            UserName = "LeeG"
         },
         @{
             DisplayName = "Lidia Holloway";
             UserName = "LidiaH"
         },
         @{
-            DisplayName = "Lynne Robbins";
-            UserName = "LynneR"
-        },
-        @{
-            DisplayName = "Mallory Cortez";
-            UserName = "MalloryC"
-        },
-        @{
             DisplayName = "Megan Bowen";
             UserName = "MeganB"
-        },
-        @{
-            DisplayName = "Miriam Graham";
-            UserName = "MiriamG"
-        },
-        @{
-            DisplayName = "Nestor Wilke";
-            UserName = "NestorW"
-        },
-        @{
-            DisplayName = "Patti Fernandez";
-            UserName = "PattiF"
-        },
-        @{
-            DisplayName = "Raul Razo";
-            UserName = "RaulR"
-        },
-        @{
-            DisplayName = "Pradeep Gupta";
-            UserName = "PradeepG"
         }
     )
 
@@ -746,30 +666,30 @@
             }
         }
 
-        ADOrganizationalUnit FictiveUsersOU
+        ADOrganizationalUnit AdditionalUsersOU
         {
-            Name                            = $FictiveUsersPath.Split(',')[0].Substring(3)
-            Path                            = $FictiveUsersPath.Substring($FictiveUsersPath.IndexOf(',') + 1)
+            Name                            = $AdditionalUsersPath.Split(',')[0].Substring(3)
+            Path                            = $AdditionalUsersPath.Substring($AdditionalUsersPath.IndexOf(',') + 1)
             ProtectedFromAccidentalDeletion = $false
             Ensure                          = 'Present'
             DependsOn                       = "[WaitForADDomain]WaitForDCReady"
         }
 
-        foreach ($FictiveUser in $FictiveUsers) {
-            ADUser "ExtraUser_$($FictiveUser.UserName)"
+        foreach ($AdditionalUser in $AdditionalUsers) {
+            ADUser "ExtraUser_$($AdditionalUser.UserName)"
             {
                 DomainName           = $DomainFQDN
-                Path                 = $FictiveUsersPath
-                UserName             = $FictiveUser.UserName
-                EmailAddress         = "$($FictiveUser.UserName)@$DomainFQDN"
-                UserPrincipalName    = "$($FictiveUser.UserName)@$DomainFQDN"
-                DisplayName          = $FictiveUser.DisplayName
-                GivenName            = $FictiveUser.DisplayName.Split(' ')[0]
-                Surname              = $FictiveUser.DisplayName.Split(' ')[1]
+                Path                 = $AdditionalUsersPath
+                UserName             = $AdditionalUser.UserName
+                EmailAddress         = "$($AdditionalUser.UserName)@$DomainFQDN"
+                UserPrincipalName    = "$($AdditionalUser.UserName)@$DomainFQDN"
+                DisplayName          = $AdditionalUser.DisplayName
+                GivenName            = $AdditionalUser.DisplayName.Split(' ')[0]
+                Surname              = $AdditionalUser.DisplayName.Split(' ')[1]
                 PasswordNeverExpires = $true
                 Password              = $AdfsSvcCreds
                 Ensure               = "Present"
-                DependsOn            = "[ADOrganizationalUnit]FictiveUsersOU"
+                DependsOn            = "[ADOrganizationalUnit]AdditionalUsersOU"
             }
         }
     }
