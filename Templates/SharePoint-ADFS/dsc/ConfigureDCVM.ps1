@@ -202,24 +202,24 @@
 
     [System.Object[]] $AdditionalUsers = @(
         @{
-            DisplayName = "Adele Vance";
-            UserName = "AdeleV"
+            DisplayName = "Marie Berthelette";
+            UserName = "MarieB"
         },
         @{
-            DisplayName = "Bianca Pisani";
-            UserName = "BiancaP"
+            DisplayName = "Camille Cartier";
+            UserName = "CamilleC"
         },
         @{
-            DisplayName = "Johanna Lorenz";
-            UserName = "JohannaL"
+            DisplayName = "Elisabeth Arcouet";
+            UserName = "ElisabethA"
         },
         @{
-            DisplayName = "Lidia Holloway";
-            UserName = "LidiaH"
+            DisplayName = "Ana Bowman";
+            UserName = "AnaB"
         },
         @{
-            DisplayName = "Megan Bowen";
-            UserName = "MeganB"
+            DisplayName = "Olivia Wilson";
+            UserName = "OliviaW"
         }
     )
 

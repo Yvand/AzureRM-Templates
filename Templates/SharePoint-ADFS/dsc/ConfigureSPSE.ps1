@@ -1358,7 +1358,7 @@ configuration ConfigureSPVM
             Server                = $DomainLDAPPath
             UseSSL                = $true
             Port                  = 636
-            IncludedOUs           = @("CN=Users,$DomainLDAPPath")
+            IncludedOUs           = @("CN=Users,$DomainLDAPPath", $AdditionalUsersPath)
             Force                 = $false
             ConnectionType        = "ActiveDirectory"
             UseDisabledFilter     = $true
