@@ -40,6 +40,7 @@
     [String] $rootSiteIntranetZone = "https://{0}.{1}/" -f $SharePointSitesAuthority, $DomainFQDN
     [String] $AppDomainFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps", $DomainFQDN.Split('.')[1]
     [String] $AppDomainIntranetFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps-Intranet", $DomainFQDN.Split('.')[1]
+    [String] $FictiveUsersPath = "OU=FictiveUsers,CN=Users,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
 
     # Browser policies
     # Edge
@@ -199,7 +200,7 @@
         }
     )
 
-    [System.Object[]] $ExtraUsers = @(
+    [System.Object[]] $FictiveUsers = @(
         @{
             DisplayName = "Adele Vance";
             UserName = "AdeleV"
@@ -745,18 +746,30 @@
             }
         }
 
-        foreach ($ExtraUser in $ExtraUsers) {
-            ADUser "ExtraUser_$($ExtraUser.UserName)"
+        ADOrganizationalUnit FictiveUsersOU
+        {
+            Name                            = $FictiveUsersPath.Split(',')[0].Substring(3)
+            Path                            = $FictiveUsersPath
+            ProtectedFromAccidentalDeletion = $false
+            Ensure                          = 'Present'
+            DependsOn                       = "[WaitForADDomain]WaitForDCReady"
+        }
+
+        foreach ($FictiveUser in $FictiveUsers) {
+            ADUser "ExtraUser_$($FictiveUser.UserName)"
             {
                 DomainName           = $DomainFQDN
-                UserName             = $ExtraUser.UserName
-                EmailAddress         = "$($ExtraUser.UserName)@$DomainFQDN"
-                UserPrincipalName    = "$($ExtraUser.UserName)@$DomainFQDN"
-                DisplayName          = $ExtraUser.DisplayName
+                Path                 = $FictiveUsersPath
+                UserName             = $FictiveUser.UserName
+                EmailAddress         = "$($FictiveUser.UserName)@$DomainFQDN"
+                UserPrincipalName    = "$($FictiveUser.UserName)@$DomainFQDN"
+                DisplayName          = $FictiveUser.DisplayName
+                GivenName            = $FictiveUser.DisplayName.Split(' ')[0]
+                Surname              = $FictiveUser.DisplayName.Split(' ')[1]
                 PasswordNeverExpires = $true
                 Password              = $AdfsSvcCreds
                 Ensure               = "Present"
-                DependsOn            = "[WaitForADDomain]WaitForDCReady"
+                DependsOn            = "[ADOrganizationalUnit]FictiveUsersOU"
             }
         }
     }
