@@ -41,6 +41,7 @@ configuration ConfigureSPVM
     [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
+    [String] $FictiveUsersPath = "OU=FictiveUsers,CN=Users,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
 
     # Format credentials to be qualified by domain name: "domain\username"
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
@@ -1608,7 +1609,7 @@ configuration ConfigureSPVM
                 $spsite = "http://$($using:SharePointSitesAuthority)/"
                 Write-Host "Warming up '$spsite'..."
                 $job2 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
-                
+
                 # Must wait for the jobs to complete, otherwise they do not actually run
                 Receive-Job -Job $job1 -AutoRemoveJob -Wait
                 Receive-Job -Job $job2 -AutoRemoveJob -Wait
@@ -1670,10 +1671,25 @@ configuration ConfigureSPVM
                 $job1 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName) #-Credential $using:DomainAdminCredsQualified
                 $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$username@$($using:DomainFQDN)"
                 $job2 = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
+
+                $jobs = [List[PSObject]]::new()
+                $fictiveUsers = Get-ADUser -Filter "objectClass -like 'user'" -SearchBase $using:FictiveUsersPath
+                foreach ($fictiveUser in $fictiveUsers) {
+                    $username = $fictiveUser.SamAccountName
+                    $accountName = "i:0#.w|$($using:DomainNetbiosName)\$username"
+                    $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
+                    Write-Host "[YVAND] jobtypoe '$($job2.GetType().ToString())'"
+                    $jobs.Add($job)
+
+                    $accountName  = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|$username@$($using:DomainFQDN)"
+                    $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountName)
+                    $jobs.Add($job)
+                }
                 
                 # Must wait for the jobs to complete, otherwise they do not actually run
                 Receive-Job -Job $job1 -AutoRemoveJob -Wait
                 Receive-Job -Job $job2 -AutoRemoveJob -Wait
+                Receive-Job -Job $jobs -AutoRemoveJob -Wait
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.

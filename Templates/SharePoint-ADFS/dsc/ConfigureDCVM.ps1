@@ -24,6 +24,7 @@
     [String] $InterfaceAlias = (Get-NetAdapter | Where-Object Name -Like "Ethernet*" | Select-Object -First 1).Name
     [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
+    [String] $FictiveUsersPath = "OU=FictiveUsers,CN=Users,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
 
     # Format credentials to be qualified by domain name: "domain\username"
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
@@ -40,7 +41,6 @@
     [String] $rootSiteIntranetZone = "https://{0}.{1}/" -f $SharePointSitesAuthority, $DomainFQDN
     [String] $AppDomainFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps", $DomainFQDN.Split('.')[1]
     [String] $AppDomainIntranetFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps-Intranet", $DomainFQDN.Split('.')[1]
-    [String] $FictiveUsersPath = "OU=FictiveUsers,CN=Users,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
 
     # Browser policies
     # Edge
@@ -749,7 +749,7 @@
         ADOrganizationalUnit FictiveUsersOU
         {
             Name                            = $FictiveUsersPath.Split(',')[0].Substring(3)
-            Path                            = $FictiveUsersPath
+            Path                            = $FictiveUsersPath.Substring($FictiveUsersPath.IndexOf(',') + 1)
             ProtectedFromAccidentalDeletion = $false
             Ensure                          = 'Present'
             DependsOn                       = "[WaitForADDomain]WaitForDCReady"
