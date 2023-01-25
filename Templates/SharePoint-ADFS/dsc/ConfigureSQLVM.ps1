@@ -23,7 +23,7 @@ configuration ConfigureSQLVM
     [PSCredential] $SQLCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
     [String] $ComputerName = Get-Content env:computername
     [String] $AdfsDnsEntryName = "adfs"
-    [String] $RemoteSetupPath = "\\dc.$DomainFQDN\C$\Setup"
+    # [String] $RemoteSetupPath = "\\dc.$DomainFQDN\C$\Setup"
 
     Node localhost
     {
@@ -59,7 +59,8 @@ configuration ConfigureSQLVM
             {
                 $dnsRecord = $using:AdfsDnsEntryName
                 $domainFQDN = $using:DomainFQDN
-                $remoteSetupPath = $using:RemoteSetupPath
+                $dnsRecordFQDN = "$dnsRecord.$domainFQDN"
+                # $remoteSetupPath = $using:RemoteSetupPath
                 # $domainAdminCreds = $using:DomainAdminCreds
 
                 $sleepTime = 15
@@ -70,7 +71,7 @@ configuration ConfigureSQLVM
                 do {
                     try {
                         # First, make sure the DNS entry for ADFS exists
-                        [Net.DNS]::GetHostEntry($dnsRecord)
+                        [Net.DNS]::GetHostEntry($dnsRecordFQDN)
                         $caRootCertificateTrusted = $true
 
                         # New-PSDrive -Name Q -PSProvider FileSystem -Root "\\dc.contoso.local\C$\Setup" -Credential $domainAdminCreds #-Persist
