@@ -1157,6 +1157,7 @@ configuration ConfigureSPVM
                     New-Item -ItemType Directory -Force -Path $setupPath
                 }
 
+                Write-Host "Creating certificate request for CN=$sharePointSitesAuthority.$domainFQDN..."
                 # Generate CSR
                 New-SPCertificate -FriendlyName "$sharePointSitesAuthority Certificate" -KeySize 2048 -CommonName "$sharePointSitesAuthority.$domainFQDN" -AlternativeNames @("*.$domainFQDN", "*.$appDomainIntranetFQDN") -Organization "$domainNetbiosName" -Exportable -HashAlgorithm SHA256 -Path "$setupPath\$sharePointSitesAuthority.csr"
 
@@ -1175,10 +1176,14 @@ configuration ConfigureSPVM
                 # # Import private key of the certificate into SharePoint
                 # $password = ConvertTo-SecureString -AsPlainText -Force "<superpasse>"
                 # Import-SPCertificate -Path "$setupPath\$sharePointSitesAuthority.pfx" -Password $password -Exportable
+                Write-Host "Adding certificate 'CN=$sharePointSitesAuthority.$domainFQDN' to SharePoint store EndEntity..."
                 $spCert = Import-SPCertificate -Path "$setupPath\$sharePointSitesAuthority.cer" -Exportable -Store EndEntity
 
+                Write-Host "Extending web application to HTTPS zone using certificate 'CN=$sharePointSitesAuthority.$domainFQDN'..."
                 Set-SPWebApplication -Identity "http://$sharePointSitesAuthority" -Zone Intranet -Port 443 -Certificate $spCert `
                     -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url "https://$sharePointSitesAuthority.$domainFQDN"
+                
+                Write-Host "Finished."
             }
             GetScript            = { }
             TestScript           = 
