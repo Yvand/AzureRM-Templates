@@ -92,7 +92,7 @@ configuration ConfigureSQLVM
                     }
                     Start-Sleep -Seconds $sleepTime
                     # throw "[YVANDEBUG]"
-                } while ($true -eq $caRootCertificateTrusted)
+                } while ($false -eq $caRootCertificateTrusted)
 
                 # # This URL is accessible anonymously
                 # $uri = "https://$dnsRecord.$domainFQDN/adfs/.well-known/openid-configuration"
