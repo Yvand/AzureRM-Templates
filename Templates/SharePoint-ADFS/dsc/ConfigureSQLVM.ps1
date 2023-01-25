@@ -21,7 +21,8 @@ configuration ConfigureSQLVM
     [PSCredential] $DomainAdminCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
     [PSCredential] $SPSetupCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [PSCredential] $SQLCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
-    $ComputerName = Get-Content env:computername
+    [String] $ComputerName = Get-Content env:computername
+    [String] $AdfsDnsEntryName = "adfs"
 
     Node localhost
     {
@@ -49,6 +50,62 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Join AD forest
         #**********************************************************
+        # In some case of unfortunate timing, 
+        Script WaitForADFSFarmReady
+        {
+            SetScript =
+            {
+                $dnsRecord = $using:AdfsDnsEntryName
+                $domainFQDN = $using:DomainFQDN
+
+                # This URL is accessible anonymously
+                $uri = "https://$dnsRecord.$domainFQDN/adfs/.well-known/openid-configuration"
+                $currentStatusCode = 0
+                $expectedStatusCode = 200
+                $sleepTime = 10
+                do {
+                    try
+                    {
+                        # First, make sure the DNS entry for ADFS exists
+                        [Net.DNS]::GetHostEntry($dnsRecord)
+
+                        Write-Host "Trying to connect to $uri..."
+                        # -UseBasicParsing: Avoid exception because IE was not first launched yet
+                        $Response = Invoke-WebRequest -Uri $uri -TimeoutSec 10 -ErrorAction Stop # -UseBasicParsing
+                        # When it will be actually ready, site will respond 401/302/200, and $Response.StatusCode will be 200
+                        $currentStatusCode = $Response.StatusCode
+                    }
+                    catch [System.Net.Sockets.SocketException] {
+                        # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
+                        Write-Host "DNS entry not found yet: $_"
+                    }
+                    catch [System.Net.WebException]
+                    {
+                        # We always expect a WebException until site is actually up. 
+                        # Write-Host "Request failed with a WebException: $($_.Exception)"
+                        if ($null -ne $_.Exception.Response) {
+                            $currentStatusCode = $_.Exception.Response.StatusCode.value__
+                        }
+                    }
+                    catch
+                    {
+                        Write-Host "Request failed with an unexpected exception: $($_.Exception)"
+                    }
+
+                    if ($currentStatusCode -ne $expectedStatusCode){
+                        Write-Host "Connection to $uri... returned status code $currentStatusCode while $expectedStatusCode is expected, retrying in $sleepTime secs..."
+                        Start-Sleep -Seconds $sleepTime
+                    }
+                    else {
+                        Write-Host "Connection to $uri... returned expected status code $currentStatusCode, exiting..."
+                    }
+                } while ($currentStatusCode -ne $expectedStatusCode)
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            DependsOn            = "[DnsServerAddress]SetDNS"
+        }
+
         # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
         WaitForADDomain WaitForDCReady
         {
@@ -57,7 +114,7 @@ configuration ConfigureSQLVM
             RestartCount            = 2
             WaitForValidCredentials = $True
             Credential              = $DomainAdminCredsQualified
-            DependsOn               = "[DnsServerAddress]SetDNS"
+            DependsOn               = "[Script]WaitForADFSFarmReady"
         }
 
         # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
