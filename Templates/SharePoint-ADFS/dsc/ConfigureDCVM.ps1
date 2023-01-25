@@ -494,15 +494,6 @@
             DependsOn              = "[CertReq]GenerateADFSSiteCertificate", "[CertReq]GenerateADFSSigningCertificate", "[CertReq]GenerateADFSDecryptionCertificate"
         }
 
-
-        DnsRecordA AddADFSHostDNS {
-            Name        = $ADFSSiteName
-            ZoneName    = $DomainFQDN
-            IPv4Address = $PrivateIP
-            Ensure      = "Present"
-            DependsOn   = "[WaitForADDomain]WaitForDCReady"
-        }
-
         # https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/deployment/configure-corporate-dns-for-the-federation-service-and-drs
         DnsRecordCname AddADFSDevideRegistrationAlias {
             Name = "enterpriseregistration"
@@ -522,6 +513,14 @@
             ServiceAccountCredential     = $AdfsSvcCredsQualified
             Credential                   = $DomainCredsNetbios
             DependsOn                    = "[WindowsFeature]AddADFS"
+        }
+
+        DnsRecordA AddADFSHostDNS {
+            Name        = $ADFSSiteName
+            ZoneName    = $DomainFQDN
+            IPv4Address = $PrivateIP
+            Ensure      = "Present"
+            DependsOn   = "[AdfsFarm]CreateADFSFarm"
         }
 
         ADFSRelyingPartyTrust CreateADFSRelyingParty

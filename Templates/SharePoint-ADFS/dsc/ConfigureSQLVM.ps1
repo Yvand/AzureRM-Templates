@@ -23,6 +23,7 @@ configuration ConfigureSQLVM
     [PSCredential] $SQLCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
     [String] $ComputerName = Get-Content env:computername
     [String] $AdfsDnsEntryName = "adfs"
+    [String] $RemoteSetupPath = "\\dc.$DomainFQDN\C$\Setup"
 
     Node localhost
     {
@@ -50,56 +51,91 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Join AD forest
         #**********************************************************
-        # In some case of unfortunate timing, 
+        # Randomly, due to some unfortunate timing, resources WaitForADDomain or SqlMaxDop were failing because of an AD-related error
+        # It seems it occurs while ADFS farm is being created, so this Script was added to make sure ADFS farm is up before moving on
         Script WaitForADFSFarmReady
         {
             SetScript =
             {
                 $dnsRecord = $using:AdfsDnsEntryName
                 $domainFQDN = $using:DomainFQDN
+                $remoteSetupPath = $using:RemoteSetupPath
+                $domainAdminCreds = $using:DomainAdminCreds
 
-                # This URL is accessible anonymously
-                $uri = "https://$dnsRecord.$domainFQDN/adfs/.well-known/openid-configuration"
-                $currentStatusCode = 0
-                $expectedStatusCode = 200
-                $sleepTime = 10
+                $sleepTime = 15
+
+                
+                # First step is to check if the CA root certificate is available, and trust it
+                $caRootCertificateTrusted = $false
                 do {
-                    try
-                    {
+                    try {
                         # First, make sure the DNS entry for ADFS exists
                         [Net.DNS]::GetHostEntry($dnsRecord)
+                        $caRootCertificateTrusted = $true
 
-                        Write-Host "Trying to connect to $uri..."
-                        # -UseBasicParsing: Avoid exception because IE was not first launched yet
-                        $Response = Invoke-WebRequest -Uri $uri -TimeoutSec 10 -ErrorAction Stop # -UseBasicParsing
-                        # When it will be actually ready, site will respond 401/302/200, and $Response.StatusCode will be 200
-                        $currentStatusCode = $Response.StatusCode
+                        # New-PSDrive -Name Q -PSProvider FileSystem -Root "\\dc.contoso.local\C$\Setup" -Credential $domainAdminCreds #-Persist
+                        # $caRootCertificate = "Q:\ADFS Signing issuer.cer" #Join-Path -Path $remoteSetupPath -ChildPath "ADFS Signing issuer.cer"
+                        # $caFileFound = Test-Path $caRootCertificate -PathType Leaf
+                        # if ($caFileFound) {                        
+                        #     $file = ( Get-ChildItem -Path $caRootCertificate )
+                        #     $file | Import-Certificate -CertStoreLocation "cert:\LocalMachine\Root" -ErrorAction SilentlyContinue
+                        #     $caRootCertificateTrusted = $true
+                        # }
                     }
                     catch [System.Net.Sockets.SocketException] {
                         # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
                         Write-Host "DNS entry not found yet: $_"
+                    } catch {
+                        # It may fail with following error: System.InvalidOperationException: The set script threw an error. ---> System.UnauthorizedAccessException: Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))
+                        # But the certificate is successfully added anyway
+                        Write-Host "Unexpected error while trusting CA root certificate: $_"
                     }
-                    catch [System.Net.WebException]
-                    {
-                        # We always expect a WebException until site is actually up. 
-                        # Write-Host "Request failed with a WebException: $($_.Exception)"
-                        if ($null -ne $_.Exception.Response) {
-                            $currentStatusCode = $_.Exception.Response.StatusCode.value__
-                        }
-                    }
-                    catch
-                    {
-                        Write-Host "Request failed with an unexpected exception: $($_.Exception)"
-                    }
+                    Start-Sleep -Seconds $sleepTime
+                    # throw "[YVANDEBUG]"
+                } while ($true -eq $caRootCertificateTrusted)
 
-                    if ($currentStatusCode -ne $expectedStatusCode){
-                        Write-Host "Connection to $uri... returned status code $currentStatusCode while $expectedStatusCode is expected, retrying in $sleepTime secs..."
-                        Start-Sleep -Seconds $sleepTime
-                    }
-                    else {
-                        Write-Host "Connection to $uri... returned expected status code $currentStatusCode, exiting..."
-                    }
-                } while ($currentStatusCode -ne $expectedStatusCode)
+                # # This URL is accessible anonymously
+                # $uri = "https://$dnsRecord.$domainFQDN/adfs/.well-known/openid-configuration"
+                # $currentStatusCode = 0
+                # $expectedStatusCode = 200
+                # do {
+                #     try
+                #     {
+                #         # First, make sure the DNS entry for ADFS exists
+                #         [Net.DNS]::GetHostEntry($dnsRecord)
+
+                #         Write-Host "Trying to connect to $uri..."
+                #         # -UseBasicParsing: Avoid exception because IE was not first launched yet
+                #         $Response = Invoke-WebRequest -Uri $uri -TimeoutSec 10 -ErrorAction Stop # -UseBasicParsing
+                #         # When it will be actually ready, site will respond 401/302/200, and $Response.StatusCode will be 200
+                #         $currentStatusCode = $Response.StatusCode
+                #     }
+                #     catch [System.Net.Sockets.SocketException] {
+                #         # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
+                #         Write-Host "DNS entry not found yet: $_"
+                #     }
+                #     catch [System.Net.WebException]
+                #     {
+                #         # We always expect a WebException until site is actually up. 
+                #         # Write-Host "Request failed with a WebException: $($_.Exception)"
+                #         if ($null -ne $_.Exception.Response) {
+                #             $currentStatusCode = $_.Exception.Response.StatusCode.value__
+                #         }
+                #     }
+                #     catch
+                #     {
+                #         Write-Host "Request failed with an unexpected exception: $($_.Exception)"
+                #     }
+
+                #     if ($currentStatusCode -ne $expectedStatusCode){
+                #         Write-Host "Connection to $uri... returned status code $currentStatusCode while $expectedStatusCode is expected, retrying in $sleepTime secs..."
+                #         Start-Sleep -Seconds $sleepTime
+                #     }
+                #     else {
+                #         Write-Host "Connection to $uri... returned expected status code $currentStatusCode, exiting..."
+                #     }
+                #     # throw "[YVANDEBUG]"
+                # } while ($currentStatusCode -ne $expectedStatusCode)
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
@@ -419,7 +455,7 @@ $SPSetupCreds = New-Object -TypeName System.Management.Automation.PSCredential -
 $DNSServerIP = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
 ConfigureSQLVM -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
