@@ -60,7 +60,7 @@ configuration ConfigureSQLVM
                 $dnsRecord = $using:AdfsDnsEntryName
                 $domainFQDN = $using:DomainFQDN
                 $remoteSetupPath = $using:RemoteSetupPath
-                $domainAdminCreds = $using:DomainAdminCreds
+                # $domainAdminCreds = $using:DomainAdminCreds
 
                 $sleepTime = 15
 
