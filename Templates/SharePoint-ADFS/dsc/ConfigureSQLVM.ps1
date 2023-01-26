@@ -159,6 +159,18 @@ configuration ConfigureSQLVM
 
         SqlMaxDop ConfigureMaxDOP { ServerName = $ComputerName; InstanceName = "MSSQLSERVER"; MaxDop = 1; DependsOn = "[Script]EnsureSQLServiceStarted" }
 
+        Script WorkaroundErrorInSqlServiceAccountResource
+        {
+            GetScript = { }
+            TestScript = { return $false }
+            SetScript = { 
+                [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
+                $mc = New-Object -TypeName Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer
+            }
+            DependsOn      = "[Script]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
         SqlServiceAccount SetSqlInstanceServiceAccount
         {
             ServerName     = $ComputerName
@@ -166,7 +178,7 @@ configuration ConfigureSQLVM
             ServiceType    = "DatabaseEngine"
             ServiceAccount = $SQLCredsQualified
             RestartService = $true
-            DependsOn      = "[Script]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
+            DependsOn      = "[Script]WorkaroundErrorInSqlServiceAccountResource"
         }
 
         SqlLogin AddDomainAdminLogin
