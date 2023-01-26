@@ -60,6 +60,7 @@ configuration ConfigureSPVM
     [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"
     [String] $SharePointIsoDriveLetter = "S"
     [String] $LDAPCPFileFullPath = Join-Path -Path $SetupPath -ChildPath "Binaries\LDAPCP.wsp"
+    [String] $AdfsDnsEntryName = "adfs"
 
     # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
@@ -438,6 +439,7 @@ configuration ConfigureSPVM
         #**********************************************************
         # Join AD forest
         #**********************************************************
+        
         Script DscStatus_WaitForDCReady
         {
             SetScript =
@@ -446,6 +448,35 @@ configuration ConfigureSPVM
             }
             GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        }
+        
+        # Dsc resource AdfsFarm restarts the DC when it finished, and if this VM joins at this moment it will fail.
+        # To avoid this, the DNS entry for ADFS is created after AdfsFarm finished and DC restarted, so it can be tested here
+        Script WaitForADFSFarmReady
+        {
+            SetScript =
+            {
+                $dnsRecord = $using:AdfsDnsEntryName
+                $domainFQDN = $using:DomainFQDN
+                $dnsRecordFQDN = "$dnsRecord.$domainFQDN"
+                $sleepTime = 15
+                $dnsRecordFound = $false
+                do {
+                    try {
+                        # First, make sure the DNS entry for ADFS exists
+                        [Net.DNS]::GetHostEntry($dnsRecordFQDN)
+                        $dnsRecordFound = $true
+                    }
+                    catch [System.Net.Sockets.SocketException] {
+                        # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
+                        Write-Host "DNS entry not found yet: $_"
+                        Start-Sleep -Seconds $sleepTime
+                    }
+                } while ($false -eq $dnsRecordFound)
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            DependsOn            = "[DnsServerAddress]SetDNS"
         }
 
         # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signal a restart to DSC engine "RestartCount" times
@@ -456,7 +487,7 @@ configuration ConfigureSPVM
             RestartCount            = 2
             WaitForValidCredentials = $True
             Credential              = $DomainAdminCredsQualified
-            DependsOn               = "[DnsServerAddress]SetDNS"
+            DependsOn               = "[Script]WaitForADFSFarmReady"
         }
 
         # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
