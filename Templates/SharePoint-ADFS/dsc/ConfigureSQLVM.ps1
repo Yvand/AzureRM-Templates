@@ -13,7 +13,8 @@ configuration ConfigureSQLVM
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
-    Import-DscResource -ModuleName SqlServer -ModuleVersion 21.1.18256
+    # Import-DscResource -ModuleName SqlServer -ModuleVersion 21.1.18256 #22.0.49
+    Import-DscResource -ModuleName SqlServer -ModuleVersion 22.0.49
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
@@ -159,17 +160,17 @@ configuration ConfigureSQLVM
 
         SqlMaxDop ConfigureMaxDOP { ServerName = $ComputerName; InstanceName = "MSSQLSERVER"; MaxDop = 1; DependsOn = "[Script]EnsureSQLServiceStarted" }
 
-        Script WorkaroundErrorInSqlServiceAccountResource
-        {
-            GetScript = { }
-            TestScript = { return $false }
-            SetScript = { 
-                [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
-                $mc = New-Object -TypeName Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer
-            }
-            DependsOn      = "[Script]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-        }
+        # Script WorkaroundErrorInSqlServiceAccountResource
+        # {
+        #     GetScript = { }
+        #     TestScript = { return $false }
+        #     SetScript = { 
+        #         [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
+        #         $mc = New-Object -TypeName Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer
+        #     }
+        #     DependsOn      = "[Script]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        # }
 
         SqlServiceAccount SetSqlInstanceServiceAccount
         {
@@ -178,7 +179,8 @@ configuration ConfigureSQLVM
             ServiceType    = "DatabaseEngine"
             ServiceAccount = $SQLCredsQualified
             RestartService = $true
-            DependsOn      = "[Script]WorkaroundErrorInSqlServiceAccountResource"
+            DependsOn      = "[Script]EnsureSQLServiceStarted", "[ADUser]CreateSqlSvcAccount"
+            # DependsOn      = "[Script]WorkaroundErrorInSqlServiceAccountResource"
         }
 
         SqlLogin AddDomainAdminLogin
