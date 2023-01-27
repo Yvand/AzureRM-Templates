@@ -13,19 +13,16 @@ configuration ConfigureSQLVM
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
-    Import-DscResource -ModuleName SqlServer -ModuleVersion 21.1.18256 #22.0.49
-    # Import-DscResource -ModuleName SqlServer -ModuleVersion 22.0.49
+    Import-DscResource -ModuleName SqlServer -ModuleVersion 21.1.18256
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     [PSCredential] $DomainAdminCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
-    [PSCredential] $SPSetupCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [PSCredential] $SQLCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
     [String] $ComputerName = Get-Content env:computername
     [String] $AdfsDnsEntryName = "adfs"
-    # [String] $RemoteSetupPath = "\\dc.$DomainFQDN\C$\Setup"
 
     Node localhost
     {
@@ -120,19 +117,6 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Create accounts and configure SQL Server
         #**********************************************************
-        # SPSetupAccount is needed in SharePoint machines so it should be created ASAP
-        ADUser CreateSPSetupAccount
-        {
-            DomainName           = $DomainFQDN
-            UserName             = $SPSetupCreds.UserName
-            UserPrincipalName    = "$($SPSetupCreds.UserName)@$DomainFQDN"
-            Password             = $SPSetupCredsQualified
-            PasswordNeverExpires = $true
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
-        }
-
         # By default, SPNs MSSQLSvc/SQL.contoso.local:1433 and MSSQLSvc/SQL.contoso.local are set on the machine account
         # They need to be removed before they can be set on the SQL service account
         Script RemoveSQLSpnOnSQLMachine
@@ -205,6 +189,18 @@ configuration ConfigureSQLVM
             InstanceName = "MSSQLSERVER"
             LoginType    = "WindowsUser"
             DependsOn    = "[PendingReboot]RebootOnSignalFromJoinDomain"
+        }
+
+        ADUser CreateSPSetupAccount
+        {   # Both SQL and SharePoint DSCs run this SPSetupAccount AD account creation
+            DomainName           = $DomainFQDN
+            UserName             = $SPSetupCreds.UserName
+            UserPrincipalName    = "$($SPSetupCreds.UserName)@$DomainFQDN"
+            Password             = $SPSetupCreds
+            PasswordNeverExpires = $true
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         SqlLogin AddSPSetupLogin
