@@ -50,26 +50,24 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Join AD forest
         #**********************************************************
-        # Randomly, due to some unfortunate timing, resources WaitForADDomain or SqlMaxDop were failing because of an AD-related error
-        # It seems it occurs while ADFS farm is being created, so this Script was added to make sure ADFS farm is up before moving on
+        # DNS record for ADFS is created only after the ADFS farm was created and DC restarted (required by ADFS setup)
+        # This turns out to be a very reliable way to ensure that VM joins AD only when the DC is guaranteed to be ready
+        # This totally eliminates the random errors that occured in WaitForADDomain with the previous logic (and no more need of WaitForADDomain)
         Script WaitForADFSFarmReady
         {
             SetScript =
             {
-                $dnsRecord = $using:AdfsDnsEntryName
-                $domainFQDN = $using:DomainFQDN
-                $dnsRecordFQDN = "$dnsRecord.$domainFQDN"
-                $sleepTime = 15
+                $dnsRecordFQDN = "$($using:AdfsDnsEntryName).$($using:DomainFQDN)"
                 $dnsRecordFound = $false
+                $sleepTime = 15
                 do {
                     try {
-                        # First, make sure the DNS entry for ADFS exists
                         [Net.DNS]::GetHostEntry($dnsRecordFQDN)
                         $dnsRecordFound = $true
                     }
                     catch [System.Net.Sockets.SocketException] {
                         # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
-                        Write-Host "DNS entry not found yet: $_"
+                        Write-Host "DNS record '$dnsRecordFQDN' not found yet: $_"
                         Start-Sleep -Seconds $sleepTime
                     }
                 } while ($false -eq $dnsRecordFound)

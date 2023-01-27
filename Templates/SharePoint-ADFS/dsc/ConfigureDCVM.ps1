@@ -515,6 +515,8 @@
             DependsOn                    = "[WindowsFeature]AddADFS"
         }
 
+        # This DNS record is tested by other VMs to join AD only after it was found
+        # It is added after DSC resource AdfsFarm, because it is the last operation that triggers a reboot of the DC
         DnsRecordA AddADFSHostDNS {
             Name        = $ADFSSiteName
             ZoneName    = $DomainFQDN
