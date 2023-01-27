@@ -479,31 +479,32 @@ configuration ConfigureSPVM
             DependsOn            = "[DnsServerAddress]SetDNS"
         }
 
-        # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signal a restart to DSC engine "RestartCount" times
-        WaitForADDomain WaitForDCReady
-        {
-            DomainName              = $DomainFQDN
-            WaitTimeout             = 1800
-            RestartCount            = 2
-            WaitForValidCredentials = $True
-            Credential              = $DomainAdminCredsQualified
-            DependsOn               = "[Script]WaitForADFSFarmReady"
-        }
+        # # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signal a restart to DSC engine "RestartCount" times
+        # WaitForADDomain WaitForDCReady
+        # {
+        #     DomainName              = $DomainFQDN
+        #     WaitTimeout             = 1800
+        #     RestartCount            = 2
+        #     WaitForValidCredentials = $True
+        #     Credential              = $DomainAdminCredsQualified
+        #     DependsOn               = "[Script]WaitForADFSFarmReady"
+        # }
 
-        # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
-        PendingReboot RebootOnSignalFromWaitForDCReady
-        {
-            Name             = "RebootOnSignalFromWaitForDCReady"
-            SkipCcmClientSDK = $true
-            DependsOn        = "[WaitForADDomain]WaitForDCReady"
-        }
+        # # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
+        # PendingReboot RebootOnSignalFromWaitForDCReady
+        # {
+        #     Name             = "RebootOnSignalFromWaitForDCReady"
+        #     SkipCcmClientSDK = $true
+        #     DependsOn        = "[WaitForADDomain]WaitForDCReady"
+        # }
 
         Computer JoinDomain
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            DependsOn  = "[PendingReboot]RebootOnSignalFromWaitForDCReady"
+            # DependsOn  = "[PendingReboot]RebootOnSignalFromWaitForDCReady"
+            DependsOn  = "[Script]WaitForADFSFarmReady"
         }
 
         PendingReboot RebootOnSignalFromJoinDomain

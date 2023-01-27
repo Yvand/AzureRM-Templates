@@ -120,6 +120,19 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Create accounts and configure SQL Server
         #**********************************************************
+        # SPSetupAccount is needed in SharePoint machines so it should be created ASAP
+        ADUser CreateSPSetupAccount
+        {
+            DomainName           = $DomainFQDN
+            UserName             = $SPSetupCreds.UserName
+            UserPrincipalName    = "$($SPSetupCreds.UserName)@$DomainFQDN"
+            Password             = $SPSetupCredsQualified
+            PasswordNeverExpires = $true
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            Ensure               = "Present"
+            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
+        }
+
         # By default, SPNs MSSQLSvc/SQL.contoso.local:1433 and MSSQLSvc/SQL.contoso.local are set on the machine account
         # They need to be removed before they can be set on the SQL service account
         Script RemoveSQLSpnOnSQLMachine
@@ -192,18 +205,6 @@ configuration ConfigureSQLVM
             InstanceName = "MSSQLSERVER"
             LoginType    = "WindowsUser"
             DependsOn    = "[PendingReboot]RebootOnSignalFromJoinDomain"
-        }
-
-        ADUser CreateSPSetupAccount
-        {
-            DomainName           = $DomainFQDN
-            UserName             = $SPSetupCreds.UserName
-            UserPrincipalName    = "$($SPSetupCreds.UserName)@$DomainFQDN"
-            Password             = $SPSetupCredsQualified
-            PasswordNeverExpires = $true
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         SqlLogin AddSPSetupLogin
