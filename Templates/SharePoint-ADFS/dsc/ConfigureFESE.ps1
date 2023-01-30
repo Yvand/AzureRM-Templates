@@ -145,8 +145,32 @@ configuration ConfigureFEVM
         Script SetLongPathsEnabled
         {
             GetScript = { }
-            TestScript = { return $false }
+            TestScript = {
+                $prop = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -ErrorAction SilentlyContinue
+                if ($null -eq $prop) {
+                    return $false
+                } else {
+                    if ($prop.LongPathsEnabled -eq 1) {
+                        return $true
+                    } else {
+                        return $false
+                    }
+                }
+            }
             SetScript = { New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force }
+        }
+
+        Script SetOneDriveUrlPolicy
+        {
+            GetScript = { }
+            TestScript = { return $null -ne (Get-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -ErrorAction SilentlyContinue) }
+            SetScript = {
+                $url = "http://{0}" -f $using:MySiteHostAlias
+                # Don't use -Force to not remove the content if key already exists
+                New-Item -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -ErrorAction SilentlyContinue
+                # Don't use -Force to not overwrite the property if it already exists (it should not happen)
+                New-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -Value $url -PropertyType String -ErrorAction SilentlyContinue
+            }
         }
 
         Script EnableFileSharing
@@ -223,15 +247,15 @@ configuration ConfigureFEVM
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        # if ($EnableAnalysis) {
-        #     # This resource is for  of dsc logs only and totally optionnal
-        #     cChocoPackageInstaller InstallPython
-        #     {
-        #         Name                 = "python"
-        #         Ensure               = "Present"
-        #         DependsOn            = "[cChocoInstaller]InstallChoco"
-        #     }
-        # }
+        if ($EnableAnalysis) {
+            # This resource is for  of dsc logs only and totally optionnal
+            cChocoPackageInstaller InstallPython
+            {
+                Name                 = "python"
+                Ensure               = "Present"
+                DependsOn            = "[cChocoInstaller]InstallChoco"
+            }
+        }
 
         #**********************************************************
         # Download and install for SharePoint
@@ -296,8 +320,8 @@ configuration ConfigureFEVM
                 {
                     DestinationPath = $packageFilePath
                     Uri             = $packageUrl
-                    ChecksumType    = if ($null -ne $package.ChecksumType) { $package.ChecksumType } else { "None" }
-                    Checksum        = if ($null -ne $package.Checksum) { $package.Checksum } else { $null }
+                    ChecksumType    = $package.ChecksumType
+                    Checksum        = $package.Checksum
                     MatchSource     = $false
                 }
 
@@ -310,15 +334,15 @@ configuration ConfigureFEVM
                         
                         $exitRebootCodes = @(3010, 17022)
                         $needReboot = $false
-                        Write-Verbose -Message "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
+                        Write-Host "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
                         Unblock-File -Path $packageFile -Confirm:$false
                         $process = Start-Process $packageFile.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
                         if ($exitRebootCodes.Contains($process.ExitCode)) {
                             $needReboot = $true
                         }
-                        Write-Verbose -Message "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
+                        Write-Host "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
                         New-Item -Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)" -Force
-                        Write-Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
+                        Write-Host "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
 
                         if ($true -eq $needReboot) {
                             $global:DSCMachineStatus = 1
@@ -365,31 +389,58 @@ configuration ConfigureFEVM
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
 
-        # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
-        WaitForADDomain WaitForDCReady
+        # DNS record for ADFS is created only after the ADFS farm was created and DC restarted (required by ADFS setup)
+        # This turns out to be a very reliable way to ensure that VM joins AD only when the DC is guaranteed to be ready
+        # This totally eliminates the random errors that occured in WaitForADDomain with the previous logic (and no more need of WaitForADDomain)
+        Script WaitForADFSFarmReady
         {
-            DomainName              = $DomainFQDN
-            WaitTimeout             = 1800
-            RestartCount            = 2
-            WaitForValidCredentials = $True
-            Credential              = $DomainAdminCredsQualified
-            DependsOn               = "[DnsServerAddress]SetDNS"
+            SetScript =
+            {
+                $dnsRecordFQDN = "$($using:AdfsDnsEntryName).$($using:DomainFQDN)"
+                $dnsRecordFound = $false
+                $sleepTime = 15
+                do {
+                    try {
+                        [Net.DNS]::GetHostEntry($dnsRecordFQDN)
+                        $dnsRecordFound = $true
+                    }
+                    catch [System.Net.Sockets.SocketException] {
+                        # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
+                        Write-Host "DNS record '$dnsRecordFQDN' not found yet: $_"
+                        Start-Sleep -Seconds $sleepTime
+                    }
+                } while ($false -eq $dnsRecordFound)
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            DependsOn            = "[DnsServerAddress]SetDNS"
         }
 
-        # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
-        PendingReboot RebootOnSignalFromWaitForDCReady
-        {
-            Name             = "RebootOnSignalFromWaitForDCReady"
-            SkipCcmClientSDK = $true
-            DependsOn        = "[WaitForADDomain]WaitForDCReady"
-        }
+        # # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
+        # WaitForADDomain WaitForDCReady
+        # {
+        #     DomainName              = $DomainFQDN
+        #     WaitTimeout             = 1800
+        #     RestartCount            = 2
+        #     WaitForValidCredentials = $True
+        #     Credential              = $DomainAdminCredsQualified
+        #     DependsOn               = "[DnsServerAddress]SetDNS"
+        # }
+
+        # # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
+        # PendingReboot RebootOnSignalFromWaitForDCReady
+        # {
+        #     Name             = "RebootOnSignalFromWaitForDCReady"
+        #     SkipCcmClientSDK = $true
+        #     DependsOn        = "[WaitForADDomain]WaitForDCReady"
+        # }
 
         Computer JoinDomain
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            DependsOn  = "[PendingReboot]RebootOnSignalFromWaitForDCReady"
+            DependsOn  = "[Script]WaitForADFSFarmReady"
         }
 
         PendingReboot RebootOnSignalFromJoinDomain
@@ -414,7 +465,7 @@ configuration ConfigureFEVM
                 # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
                 $domainFQDN = $using:DomainFQDN
                 $computerName = $using:ComputerName
-                Write-Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
+                Write-Host "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
                 setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
@@ -466,6 +517,7 @@ configuration ConfigureFEVM
             GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
+
         # The best test is to check the latest HTTP team site to be created, after all SharePoint services are provisioned.
         # If this server joins the farm while a SharePoint service is being created on the 1st server, it may block its creation forever.
         # Not testing HTTPS avoid potential issues with the root CA cert maybe not present in the machine store yet
@@ -480,7 +532,7 @@ configuration ConfigureFEVM
                 do {
                     try
                     {
-                        Write-Verbose "Trying to connect to $uri..."
+                        Write-Host "Trying to connect to $uri..."
                         # -UseDefaultCredentials: Does NTLM authN
                         # -UseBasicParsing: Avoid exception because IE was not first launched yet
                         $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 10 -ErrorAction Stop -UseBasicParsing
@@ -490,22 +542,22 @@ configuration ConfigureFEVM
                     catch [System.Net.WebException]
                     {
                         # We always expect a WebException until site is actually up. 
-                        # Write-Verbose "Request failed with a WebException: $($_.Exception)"
+                        # Write-Host "Request failed with a WebException: $($_.Exception)"
                         if ($null -ne $_.Exception.Response) {
                             $currentStatusCode = $_.Exception.Response.StatusCode.value__
                         }
                     }
                     catch
                     {
-                        Write-Verbose "Request failed with an unexpected exception: $($_.Exception)"
+                        Write-Host "Request failed with an unexpected exception: $($_.Exception)"
                     }
 
                     if ($currentStatusCode -ne $expectedStatusCode){
-                        Write-Verbose "Connection to $uri... returned status code $currentStatusCode while $expectedStatusCode is expected, retrying in $sleepTime secs..."
+                        Write-Host "Connection to $uri... returned status code $currentStatusCode while $expectedStatusCode is expected, retrying in $sleepTime secs..."
                         Start-Sleep -Seconds $sleepTime
                     }
                     else {
-                        Write-Verbose "Connection to $uri... returned expected status code $currentStatusCode, exiting..."
+                        Write-Host "Connection to $uri... returned expected status code $currentStatusCode, exiting..."
                     }
                 } while ($currentStatusCode -ne $expectedStatusCode)
             }
@@ -568,7 +620,7 @@ configuration ConfigureFEVM
                     $computerNumber = 0
                 }
                 $sleepTimeInSeconds = $computerNumber * 90  # Add a delay of 90 secs between each server
-                Write-Verbose "Computer $computerName is going to wait for $sleepTimeInSeconds seconds before joining the SharePoint farm, to avoid multiple servers joining it at the same time"
+                Write-Host "Computer $computerName is going to wait for $sleepTimeInSeconds seconds before joining the SharePoint farm, to avoid multiple servers joining it at the same time"
                 Start-Sleep -Seconds $sleepTimeInSeconds
                 New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\Flag_WaitToAvoidServersJoiningFarmSimultaneously -Force
             }
@@ -637,30 +689,36 @@ configuration ConfigureFEVM
         {
             SetScript =
             {
-                $warmupJobBlock = {
+                $jobBlock = {
                     $uri = $args[0]
                     try {
-                        Write-Verbose "Connecting to $uri..."
+                        Write-Host "Connecting to $uri..."
                         # -UseDefaultCredentials: Does NTLM authN
                         # -UseBasicParsing: Avoid exception because IE was not first launched yet
                         # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
-                        $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
-                        Write-Verbose "Connected successfully to $uri"
+                        Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
+                        Write-Host "Connected successfully to $uri"
+                    }
+                    catch [System.Exception] {
+                        Write-Host "Unexpected error while connecting to '$uri': $_"
                     }
                     catch {
+                        # It may typically be a System.Management.Automation.ErrorRecord, which does not inherit System.Exception
+                        Write-Host "Unexpected error while connecting to '$uri'"
                     }
                 }
+                [System.Management.Automation.Job[]] $jobs = @()
                 $spsite = "http://$($using:SharePointSitesAuthority)/"
-                Write-Verbose "Warming up '$spsite'..."
-                $job = Start-Job -ScriptBlock $warmupJobBlock -ArgumentList @($spsite)
-                
+                Write-Host "Warming up '$spsite'..."
+                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
+
                 # Must wait for the jobs to complete, otherwise they do not actually run
-                Receive-Job -Job $job -AutoRemoveJob -Wait
+                Receive-Job -Job $jobs -AutoRemoveJob -Wait
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[DnsRecordCname]UpdateDNSAliasSPSites"
+            DependsOn            = "[SPSite]CreateRootSite"
         }
 
         Script SetFarmPropertiesForOIDC
@@ -709,34 +767,34 @@ configuration ConfigureFEVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
-        # if ($EnableAnalysis) {
-        #     # This resource is for analysis of dsc logs only and totally optionnal
-        #     Script parseDscLogs
-        #     {
-        #         TestScript = { return $false }
-        #         SetScript = {
-        #             $setupPath = $using:SetupPath
-        #             $localScriptPath = "$setupPath\parse-dsc-logs.py"
-        #             New-Item -ItemType Directory -Force -Path $setupPath
+        if ($EnableAnalysis) {
+            # This resource is for analysis of dsc logs only and totally optionnal
+            Script parseDscLogs
+            {
+                TestScript = { return $false }
+                SetScript = {
+                    $setupPath = $using:SetupPath
+                    $localScriptPath = "$setupPath\parse-dsc-logs.py"
+                    New-Item -ItemType Directory -Force -Path $setupPath
 
-        #             $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
-        #             $downloader = New-Object -TypeName System.Net.WebClient
-        #             $downloader.DownloadFile($url, $localScriptPath)
+                    $url = "https://gist.githubusercontent.com/Yvand/777a2e97c5d07198b926d7bb4f12ab04/raw/parse-dsc-logs.py"
+                    $downloader = New-Object -TypeName System.Net.WebClient
+                    $downloader.DownloadFile($url, $localScriptPath)
 
-        #             $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
-        #             $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
-        #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
+                    $dscExtensionPath = "C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC"
+                    $folderWithMaxVersionNumber = Get-ChildItem -Directory -Path $dscExtensionPath | Where-Object { $_.Name -match "^[\d\.]+$"} | Sort-Object -Descending -Property Name | Select-Object -First 1
+                    $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
-        #             # Start python script
-        #             Write-Verbose -Message "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
-        #             #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
-        #             #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
-        #             python "$localScriptPath" "$fullPathToDscLogs"
-        #         }
-        #         GetScript = { }
-        #         DependsOn = "[cChocoPackageInstaller]InstallPython"
-        #     }
-        # }
+                    # Start python script
+                    Write-Host "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
+                    #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
+                    #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
+                    python "$localScriptPath" "$fullPathToDscLogs"
+                }
+                GetScript = { }
+                DependsOn = "[cChocoPackageInstaller]InstallPython"
+            }
+        }
 
         Script DscStatus_Finished
         {
@@ -787,13 +845,14 @@ $DomainFQDN = "contoso.local"
 $DCServerName = "DC"
 $SQLServerName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "Subscription-22H2"
+$SharePointVersion = "Subscription-Latest"
 $SharePointSitesAuthority = "spsites"
 $EnableAnalysis = $true
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
 ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -SharePointSitesAuthority $SharePointSitesAuthority -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
+C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.5
 #>
