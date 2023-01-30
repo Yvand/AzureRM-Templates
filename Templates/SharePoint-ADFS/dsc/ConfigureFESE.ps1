@@ -320,8 +320,8 @@ configuration ConfigureFEVM
                 {
                     DestinationPath = $packageFilePath
                     Uri             = $packageUrl
-                    ChecksumType    = $package.ChecksumType
-                    Checksum        = $package.Checksum
+                    ChecksumType    = if ($null -ne $package.ChecksumType) { $package.ChecksumType } else { "None" }
+                    Checksum        = if ($null -ne $package.Checksum) { $package.Checksum } else { $null }
                     MatchSource     = $false
                 }
 
