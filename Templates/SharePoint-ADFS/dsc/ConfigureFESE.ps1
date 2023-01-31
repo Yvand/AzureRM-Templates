@@ -93,92 +93,81 @@ configuration ConfigureFEVM
         # Allow NTLM on HTTPS sites when site host name is different than the machine name - https://docs.microsoft.com/en-US/troubleshoot/windows-server/networking/accessing-server-locally-with-fqdn-cname-alias-denied
         Registry DisableLoopBackCheck { Key = "HKLM:\System\CurrentControlSet\Control\Lsa"; ValueName = "DisableLoopbackCheck"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
 
-        # Enable TLS 1.2 - https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/application-proxy-add-on-premises-application#tls-requirements
-        # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
-        Registry EnableTLS12RegKey1 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' }
-        Registry EnableTLS12RegKey2 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'Enabled';           ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
-        Registry EnableTLS12RegKey3 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' }
-        Registry EnableTLS12RegKey4 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'Enabled';           ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        # # Enable TLS 1.2 - https://learn.microsoft.com/en-us/azure/active-directory/app-proxy/application-proxy-add-on-premises-application#tls-requirements
+        # # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
+        # Registry EnableTLS12RegKey1 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' }
+        # Registry EnableTLS12RegKey2 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'Enabled';           ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        # Registry EnableTLS12RegKey3 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' }
+        # Registry EnableTLS12RegKey4 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'Enabled';           ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
 
-        # Enable strong crypto by default for .NET Framework 4 applications - https://docs.microsoft.com/en-us/dotnet/framework/network-programming/tls#configuring-security-via-the-windows-registry
-        Registry SchUseStrongCrypto         { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
-        Registry SchUseStrongCrypto32       { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
-        Registry SystemDefaultTlsVersions   { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
-        Registry SystemDefaultTlsVersions32 { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        # # Enable strong crypto by default for .NET Framework 4 applications - https://docs.microsoft.com/en-us/dotnet/framework/network-programming/tls#configuring-security-via-the-windows-registry
+        # Registry SchUseStrongCrypto         { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        # Registry SchUseStrongCrypto32       { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        # Registry SystemDefaultTlsVersions   { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        # Registry SystemDefaultTlsVersions32 { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
 
-        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort= 1433 }
-
-        Script DisableIESecurity
-        {
-            TestScript = {
-                return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            }
-            SetScript = {
-                # Source: https://stackoverflow.com/questions/9368305/disable-ie-security-on-windows-server-via-powershell
-                $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
-                #$UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
-                Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
-                #Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0
-
-                if ($false -eq (Test-Path -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer")) {
-                    New-Item -Path "HKLM:\Software\Policies\Microsoft" -Name "Internet Explorer"
-                }
-
-                # Disable the first run wizard of IE
-                $ieFirstRunKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main"
-                if ($false -eq (Test-Path -Path $ieFirstRunKey)) {
-                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "Main"
-                }
-                Set-ItemProperty -Path $ieFirstRunKey -Name "DisableFirstRunCustomize" -Value 1
-                
-                # Set new tabs to open "about:blank" in IE
-                $ieNewTabKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing"
-                if ($false -eq (Test-Path -Path $ieNewTabKey)) {
-                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "TabbedBrowsing"
-                }
-                Set-ItemProperty -Path $ieNewTabKey -Name "NewTabPageShow" -Value 0
-            }
-            GetScript = { }
-        }
+        Registry DisableIESecurityRegKey1 { Key = 'HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}'; ValueName = 'IsInstalled'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' }
+        Registry DisableIESecurityRegKey2 { Key = 'HKLM:\Software\Policies\Microsoft\Internet Explorer\Main'; ValueName = 'DisableFirstRunCustomize'; ValueType = 'Dword'; ValueData = '1'; Force = $true ; Ensure = 'Present' }
+        Registry DisableIESecurityRegKey3 { Key = 'HKLM:\Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing'; ValueName = 'NewTabPageShow'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' }
 
         # From https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell :
         # Starting in Windows 10, version 1607, MAX_PATH limitations have been removed from common Win32 file and directory functions. However, you must opt-in to the new behavior.
-        Script SetLongPathsEnabled
-        {
-            GetScript = { }
-            TestScript = {
-                $prop = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -ErrorAction SilentlyContinue
-                if ($null -eq $prop) {
-                    return $false
-                } else {
-                    if ($prop.LongPathsEnabled -eq 1) {
-                        return $true
-                    } else {
-                        return $false
-                    }
-                }
-            }
-            SetScript = { New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force }
-        }
-
-        Script SetOneDriveUrlPolicy
-        {
-            GetScript = { }
-            TestScript = { return $null -ne (Get-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -ErrorAction SilentlyContinue) }
-            SetScript = {
-                $url = "http://{0}" -f $using:MySiteHostAlias
-                # Don't use -Force to not remove the content if key already exists
-                New-Item -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -ErrorAction SilentlyContinue
-                # Don't use -Force to not overwrite the property if it already exists (it should not happen)
-                New-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -Value $url -PropertyType String -ErrorAction SilentlyContinue
-            }
-        }
-
+        # Registry SetLongPathsEnabled { Key = "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem"; ValueName = "LongPathsEnabled"; ValueType = "DWORD"; ValueData = "1"; Force = $true; Ensure = "Present" }
+        
+        # Allow OneDrive NGSC to connect to SharePoint Subscription / 2019 - https://learn.microsoft.com/en-us/sharepoint/install/configure-syncing-with-the-onedrive-sync-app
+        Registry SetOneDriveUrl { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "http://{0}" -f $MySiteHostAlias; Ensure = "Present" }
+        Registry SetOneDriveName { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremTenantName"; ValueType = "String"; ValueData = "{0} - {1}" -f $DomainNetbiosName, $MySiteHostAlias; Ensure = "Present" }
+        
+        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort= 1433 }
+        
         Script EnableFileSharing
         {
             GetScript = { }
             TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}) }
             SetScript = { Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false }
+        }
+
+        # Create the rules in the firewall required for the distributed cache - https://learn.microsoft.com/en-us/sharepoint/administration/plan-for-feeds-and-the-distributed-cache-service#firewall
+        Script CreateFirewallRulesForDistributedCache
+        {
+            TestScript = {
+                # Test if firewall rules already exist
+                $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
+                $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
+                $spRuleName = "SharePoint Distributed Cache"
+                $firewallRule = Get-NetFirewallRule -DisplayName $spRuleName -ErrorAction SilentlyContinue
+                if ($null -eq $icmpFirewallRule -or $null -eq $firewallRule) {
+                    return $false   # Run SetScript
+                } else {
+                    return $true    # Rules already set
+                }
+            }
+            SetScript = {
+                $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
+                $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
+                if ($null -eq $icmpFirewallRule) {
+                    New-NetFirewallRule -Name Allow_Ping -DisplayName $icmpRuleName `
+                        -Description "Allow ICMPv4 ping" `
+                        -Protocol ICMPv4 `
+                        -IcmpType 8 `
+                        -Enabled True `
+                        -Profile Any `
+                        -Action Allow
+                }
+                Enable-NetFirewallRule -DisplayName $icmpRuleName
+
+                $spRuleName = "SharePoint Distributed Cache"
+                $firewallRule = Get-NetFirewallRule -DisplayName $spRuleName -ErrorAction SilentlyContinue
+                if ($null -eq $firewallRule) {
+                    New-NetFirewallRule -Name "SPDistCache" `
+                        -DisplayName $spRuleName `
+                        -Protocol TCP `
+                        -LocalPort 22233-22236 `
+                        -Group "SharePoint"
+                }                
+                Enable-NetFirewallRule -DisplayName $spRuleName
+            }
+            GetScript = { }
         }
 
         #**********************************************************
@@ -765,6 +754,21 @@ configuration ConfigureFEVM
                 }
             }
             DependsOn            = "[SPFarm]JoinSPFarm"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
+        Script CreateShortcutForSetupFolder
+        {
+            SetScript =
+            {
+                # Create a shortcut to the setup folder
+                $WshShell = New-Object -comObject WScript.Shell
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\Setup data.lnk")
+                $Shortcut.TargetPath = $using:SetupPath
+                $Shortcut.Save()
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
