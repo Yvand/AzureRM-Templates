@@ -136,6 +136,8 @@ configuration ConfigureSPVM
         # Starting in Windows 10, version 1607, MAX_PATH limitations have been removed from common Win32 file and directory functions. However, you must opt-in to the new behavior.
         Registry SetLongPathsEnabled { Key = "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem"; ValueName = "LongPathsEnabled"; ValueType = "DWORD"; ValueData = "1"; Force = $true; Ensure = "Present" }
         
+        Registry ShowWindowsExplorerRibbon { Key = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer"; ValueName = "ExplorerRibbonStartsMinimized"; ValueType = "DWORD"; ValueData = "4"; Force = $true; Ensure = "Present" }
+
         # Allow OneDrive NGSC to connect to SharePoint Subscription / 2019 - https://learn.microsoft.com/en-us/sharepoint/install/configure-syncing-with-the-onedrive-sync-app
         Registry SetOneDriveUrl { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "http://{0}" -f $MySiteHostAlias; Ensure = "Present" }
         Registry SetOneDriveName { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremTenantName"; ValueType = "String"; ValueData = "{0} - {1}" -f $DomainNetbiosName, $MySiteHostAlias; Ensure = "Present" }
@@ -457,6 +459,8 @@ configuration ConfigureSPVM
             SkipCcmClientSDK = $true
             DependsOn        = "[Computer]JoinDomain"
         }
+
+        Registry ShowFileExtensions { Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; ValueName = "HideFileExt"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present"; PsDscRunAsCredential = $DomainAdminCredsQualified }
 
         # This script is still needed
         Script CreateWSManSPNsIfNeeded
@@ -1678,14 +1682,31 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
-        Script CreateShortcutForSetupFolder
+        Script CreateShortcuts
         {
             SetScript =
             {
-                # Create a shortcut to the setup folder
                 $WshShell = New-Object -comObject WScript.Shell
+                # Shortcut to the setup folder
                 $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\Setup data.lnk")
                 $Shortcut.TargetPath = $using:SetupPath
+                $Shortcut.Save()
+
+                # Shortcut for SharePoint Central Administration
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint Central Administration.lnk")
+                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\16\BIN\psconfigui.exe"
+                $Shortcut.Arguments = "-cmd showcentraladmin"
+                $Shortcut.Save()
+
+                # Shortcut for SharePoint Products Configuration Wizard
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint Products Configuration Wizard.lnk")
+                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\16\BIN\psconfigui.exe"
+                $Shortcut.Save()
+
+                # Shortcut for SharePoint Management Shell
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint Management Shell.lnk")
+                $Shortcut.TargetPath = "C:\Windows\System32\WindowsPowerShell\v1.0\PowerShell.exe"
+                $Shortcut.Arguments = " -NoExit -Command ""& 'C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1'"
                 $Shortcut.Save()
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
@@ -1716,6 +1737,17 @@ configuration ConfigureSPVM
                     #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
                     #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
                     python "$localScriptPath" "$fullPathToDscLogs"
+
+                    # Create a shortcut to the DSC logs folder
+                    $WshShell = New-Object -comObject WScript.Shell
+                    $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\DSC logs.lnk")
+                    $Shortcut.TargetPath = $fullPathToDscLogs
+                    $Shortcut.Save()
+
+                    # Create shortcut to DSC configuration folder
+                    $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\DSC config.lnk")
+                    $Shortcut.TargetPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\{0}\DSCWork\ConfigureSPSE.0" -f $folderWithMaxVersionNumber
+                    $Shortcut.Save()
                 }
                 GetScript = { }
                 DependsOn            = "[cChocoPackageInstaller]InstallPython"
