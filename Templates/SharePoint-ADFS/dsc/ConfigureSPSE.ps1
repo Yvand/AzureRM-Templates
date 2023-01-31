@@ -130,71 +130,76 @@ configuration ConfigureSPVM
 
         SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort= 1433 }
 
-        Script DisableIESecurity
-        {
-            TestScript = {
-                return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            }
-            SetScript = {
-                # Source: https://stackoverflow.com/questions/9368305/disable-ie-security-on-windows-server-via-powershell
-                $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
-                #$UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
-                Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
-                #Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0
+        Registry DisableIESecurityRegKey1 { Key = 'HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}'; ValueName = 'IsInstalled'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' }
+        Registry DisableIESecurityRegKey2 { Key = 'HKLM:\Software\Policies\Microsoft\Internet Explorer\Main'; ValueName = 'DisableFirstRunCustomize'; ValueType = 'Dword'; ValueData = '1'; Force = $true ; Ensure = 'Present' }
+        Registry DisableIESecurityRegKey3 { Key = 'HKLM:\Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing'; ValueName = 'NewTabPageShow'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' }
+        # Script DisableIESecurity
+        # {
+        #     TestScript = {
+        #         return $false   # If TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+        #     }
+        #     SetScript = {
+        #         # Source: https://stackoverflow.com/questions/9368305/disable-ie-security-on-windows-server-via-powershell
+        #         $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
+        #         #$UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
+        #         Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
+        #         #Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0
 
-                if ($false -eq (Test-Path -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer")) {
-                    New-Item -Path "HKLM:\Software\Policies\Microsoft" -Name "Internet Explorer"
-                }
+        #         if ($false -eq (Test-Path -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer")) {
+        #             New-Item -Path "HKLM:\Software\Policies\Microsoft" -Name "Internet Explorer"
+        #         }
 
-                # Disable the first run wizard of IE
-                $ieFirstRunKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main"
-                if ($false -eq (Test-Path -Path $ieFirstRunKey)) {
-                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "Main"
-                }
-                Set-ItemProperty -Path $ieFirstRunKey -Name "DisableFirstRunCustomize" -Value 1
+        #         # Disable the first run wizard of IE
+        #         $ieFirstRunKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main"
+        #         if ($false -eq (Test-Path -Path $ieFirstRunKey)) {
+        #             New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "Main"
+        #         }
+        #         Set-ItemProperty -Path $ieFirstRunKey -Name "DisableFirstRunCustomize" -Value 1
                 
-                # Set new tabs to open "about:blank" in IE
-                $ieNewTabKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing"
-                if ($false -eq (Test-Path -Path $ieNewTabKey)) {
-                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "TabbedBrowsing"
-                }
-                Set-ItemProperty -Path $ieNewTabKey -Name "NewTabPageShow" -Value 0
-            }
-            GetScript = { }
-        }
+        #         # Set new tabs to open "about:blank" in IE
+        #         $ieNewTabKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing"
+        #         if ($false -eq (Test-Path -Path $ieNewTabKey)) {
+        #             New-Item -Path "HKLM:\Software\Policies\Microsoft\Internet Explorer" -Name "TabbedBrowsing"
+        #         }
+        #         Set-ItemProperty -Path $ieNewTabKey -Name "NewTabPageShow" -Value 0
+        #     }
+        #     GetScript = { }
+        # }
 
         # From https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell :
         # Starting in Windows 10, version 1607, MAX_PATH limitations have been removed from common Win32 file and directory functions. However, you must opt-in to the new behavior.
-        Script SetLongPathsEnabled
-        {
-            GetScript = { }
-            TestScript = {
-                $prop = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -ErrorAction SilentlyContinue
-                if ($null -eq $prop) {
-                    return $false
-                } else {
-                    if ($prop.LongPathsEnabled -eq 1) {
-                        return $true
-                    } else {
-                        return $false
-                    }
-                }
-            }
-            SetScript = { New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force }
-        }
+        Registry SetLongPathsEnabled { Key = "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem"; ValueName = "LongPathsEnabled"; ValueType = "DWORD"; ValueData = "1"; Force = $true; Ensure = "Present" }
+        # Script SetLongPathsEnabled
+        # {
+        #     GetScript = { }
+        #     TestScript = {
+        #         $prop = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -ErrorAction SilentlyContinue
+        #         if ($null -eq $prop) {
+        #             return $false
+        #         } else {
+        #             if ($prop.LongPathsEnabled -eq 1) {
+        #                 return $true
+        #             } else {
+        #                 return $false
+        #             }
+        #         }
+        #     }
+        #     SetScript = { New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force }
+        # }
 
-        Script SetOneDriveUrlPolicy
-        {
-            GetScript = { }
-            TestScript = { return $null -ne (Get-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -ErrorAction SilentlyContinue) }
-            SetScript = {
-                $url = "http://{0}" -f $using:MySiteHostAlias
-                # Don't use -Force to not remove the content if key already exists
-                New-Item -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -ErrorAction SilentlyContinue
-                # Don't use -Force to not overwrite the property if it already exists (it should not happen)
-                New-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -Value $url -PropertyType String -ErrorAction SilentlyContinue
-            }
-        }
+        Registry SetOneDriveUrlPolicy { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "http://{0}" -f $MySiteHostAlias; Force = $true; Ensure = "Present" }
+        # Script SetOneDriveUrlPolicy
+        # {
+        #     GetScript = { }
+        #     TestScript = { return $null -ne (Get-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -ErrorAction SilentlyContinue) }
+        #     SetScript = {
+        #         $url = "http://{0}" -f $using:MySiteHostAlias
+        #         # Don't use -Force to not remove the content if key already exists
+        #         New-Item -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -ErrorAction SilentlyContinue
+        #         # Don't use -Force to not overwrite the property if it already exists (it should not happen)
+        #         New-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\OneDrive" -Name "SharePointOnPremFrontDoorUrl" -Value $url -PropertyType String -ErrorAction SilentlyContinue
+        #     }
+        # }
 
         Script EnableFileSharing
         {
@@ -1726,6 +1731,21 @@ configuration ConfigureSPVM
                 $accountPattern_Trusted = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|{0}@$($using:DomainFQDN)"
                 $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountPattern_WinClaims, $accountPattern_Trusted, $using:AdditionalUsersPath)
                 Receive-Job -Job $job -AutoRemoveJob -Wait
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
+        Script CreateShortcut
+        {
+            SetScript =
+            {
+                # Create a shortcut to the setup folder
+                $WshShell = New-Object -comObject WScript.Shell
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\Setup data.lnk")
+                $Shortcut.TargetPath = $using:SetupPath
+                $Shortcut.Save()
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
