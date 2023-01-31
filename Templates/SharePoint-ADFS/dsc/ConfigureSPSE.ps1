@@ -187,7 +187,7 @@ configuration ConfigureSPVM
         #     SetScript = { New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force }
         # }
 
-        Registry SetOneDriveUrlPolicy { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "http://{0}" -f $MySiteHostAlias; Force = $true; Ensure = "Present" }
+        Registry SetOneDriveUrlPolicy { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "http://{0}" -f $MySiteHostAlias; Ensure = "Present" }
         # Script SetOneDriveUrlPolicy
         # {
         #     GetScript = { }
