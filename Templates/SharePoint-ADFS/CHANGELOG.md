@@ -17,7 +17,7 @@
   - Add the OU `AdditionalUsers` to the User Profile synchronization connection
   - Grant the domain administrator `Full Control` to the User Profile service application
 - Configuration for SharePoint Subscription and 2019
-  - Set OneDrive NGSC registry keys to be able to sync sites under NySite path
+  - Set OneDrive NGSC registry keys to be able to sync sites located under MySites path
 
 ### Changed
 
