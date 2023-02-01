@@ -30,6 +30,8 @@
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
 
+    [String] $SetupPath = "C:\DSC Data"
+
     # ADFS settings
     [String] $ADFSSiteName = "adfs"
     [String] $AdfsOidcAGName = "SPS-Subscription-OIDC"
@@ -459,15 +461,15 @@
         {
             SetScript = 
             {
-                $destinationPath = "C:\Setup"
+                $destinationPath = $using:SetupPath
                 $adfsSigningCertName = "ADFS Signing.cer"
                 $adfsSigningIssuerCertName = "ADFS Signing issuer.cer"
-                Write-Verbose -Message "Exporting public key of ADFS signing / signing issuer certificates..."
+                Write-Host "Exporting public key of ADFS signing / signing issuer certificates..."
                 New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
                 $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:ADFSSiteName.Signing"
                 $signingCert| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningCertName))
                 Get-ChildItem -Path "cert:\LocalMachine\Root\"| Where-Object{$_.Subject -eq  $signingCert.Issuer}| Select-Object -First 1| Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningIssuerCertName))
-                Write-Verbose -Message "Public key of ADFS signing / signing issuer certificates successfully exported"
+                Write-Host "Public key of ADFS signing / signing issuer certificates successfully exported"
             }
             GetScript =  
             {

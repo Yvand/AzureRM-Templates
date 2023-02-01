@@ -41,7 +41,7 @@ configuration ConfigureFEVM
     
     # Setup settings
     [String] $SetupPath = "C:\DSC Data"
-    [String] $RemoteSetupPath = "\\$DCServerName\C$\Setup"
+    [String] $DCSetupPath = "\\$DCServerName\C$\DSC Data"
     [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
@@ -240,7 +240,7 @@ configuration ConfigureFEVM
         }
 
         if ($EnableAnalysis) {
-            # This resource is for  of dsc logs only and totally optionnal
+            # This resource is only for analyzing dsc logs using a custom Python script
             cChocoPackageInstaller InstallPython
             {
                 Name                 = "python"
@@ -721,11 +721,11 @@ configuration ConfigureFEVM
             {
                 # Import OIDC-specific cookie certificate and set required permissions
                 $spTrustedSitesName = $using:SharePointSitesAuthority
-                $remoteSetupPath = Join-Path -Path $using:RemoteSetupPath -ChildPath "Certificates"
+                $DCSetupPath = Join-Path -Path $using:DCSetupPath -ChildPath "Certificates"
                 
                 # Import OIDC-specific cookie certificate created in 1st SharePoint Server of the farm
                 $cookieCertificateFileName = "SharePoint Cookie Cert.pfx"
-                $cookieCertificateFilePath = Join-Path -Path $remoteSetupPath -ChildPath $cookieCertificateFileName
+                $cookieCertificateFilePath = Join-Path -Path $DCSetupPath -ChildPath $cookieCertificateFileName
                 $cert = Import-PfxCertificate -FilePath $cookieCertificateFilePath -CertStoreLocation Cert:\localMachine\My -Exportable
 
                 # Grant the application pool access to the private key of the cookie certificate
@@ -797,7 +797,7 @@ configuration ConfigureFEVM
             # This resource is for analysis of dsc logs only and totally optionnal
             Script parseDscLogs
             {
-                TestScript = { return $false }
+                TestScript = { return (Test-Path "$setupPath\parse-dsc-logs.py" -PathType Leaf) }
                 SetScript = {
                     $setupPath = $using:SetupPath
                     $localScriptPath = "$setupPath\parse-dsc-logs.py"

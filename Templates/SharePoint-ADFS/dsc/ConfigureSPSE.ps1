@@ -53,7 +53,7 @@ configuration ConfigureSPVM
     
     # Setup settings
     [String] $SetupPath = "C:\DSC Data"
-    [String] $RemoteSetupPath = "\\$DCServerName\C$\Setup"
+    [String] $DCSetupPath = "\\$DCServerName\C$\DSC Data"
     [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
@@ -248,7 +248,7 @@ configuration ConfigureSPVM
         }
 
         if ($EnableAnalysis) {
-            # This resource is for  of dsc logs only and totally optionnal
+            # This resource is only for analyzing dsc logs using a custom Python script
             cChocoPackageInstaller InstallPython
             {
                 Name                 = "python"
@@ -788,7 +788,7 @@ configuration ConfigureSPVM
             Ensure          = "Present"
             Type            = "Directory"
             Recurse         = $true
-            SourcePath      = "$RemoteSetupPath"
+            SourcePath      = "$DCSetupPath"
             DestinationPath = "$SetupPath\Certificates"
             Credential      = $DomainAdminCredsQualified
             DependsOn       = "[Script]RestartSPTimerAfterCreateSPFarm"
@@ -961,9 +961,9 @@ configuration ConfigureSPVM
                 if (!(Test-Path $setupPath -PathType Container)) {
                     New-Item -ItemType Directory -Force -Path $setupPath
                 }
-                $remoteSetupPath = Join-Path -Path $using:RemoteSetupPath -ChildPath "Certificates"
-                if (!(Test-Path $remoteSetupPath -PathType Container)) {
-                    New-Item -ItemType Directory -Force -Path $remoteSetupPath
+                $DCSetupPath = Join-Path -Path $using:DCSetupPath -ChildPath "Certificates"
+                if (!(Test-Path $DCSetupPath -PathType Container)) {
+                    New-Item -ItemType Directory -Force -Path $DCSetupPath
                 }
                 
                 # Setup farm properties to work with OIDC
@@ -973,7 +973,7 @@ configuration ConfigureSPVM
                 $cert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=$cookieCertificateName"
                 Export-Certificate -Cert $cert -FilePath "$cookieCertificateFilePath.cer"
                 Export-PfxCertificate -Cert $cert -FilePath "$cookieCertificateFilePath.pfx" -ProtectTo "$domainAdminUserName"
-                Export-PfxCertificate -Cert $cert -FilePath "$remoteSetupPath\$cookieCertificateName.pfx" -ProtectTo "$domainAdminUserName"
+                Export-PfxCertificate -Cert $cert -FilePath "$DCSetupPath\$cookieCertificateName.pfx" -ProtectTo "$domainAdminUserName"
 
                 # Grant access to the certificate private key.
                 $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
@@ -1633,7 +1633,7 @@ configuration ConfigureSPVM
                     [string[]] $accounts = @()
                     $accounts += $accountPattern_WinClaims -f $env:UserName
                     $accounts += $accountPattern_Trusted -f $env:UserName
-                    $AdditionalUsers = Get-ADUser -Filter "objectClass -like 'user'" -SearchBase $using:AdditionalUsersPath #-ResultSetSize 5
+                    $AdditionalUsers = Get-ADUser -Filter "objectClass -like 'user'" -SearchBase $AdditionalUsersPath #-ResultSetSize 5
                     foreach ($AdditionalUser in $AdditionalUsers) {
                         $accounts += $accountPattern_WinClaims -f $AdditionalUser.SamAccountName
                         $accounts += $accountPattern_Trusted -f $AdditionalUser.SamAccountName
@@ -1717,7 +1717,7 @@ configuration ConfigureSPVM
             # This resource is for analysis of dsc logs only and totally optionnal
             Script parseDscLogs
             {
-                TestScript = { return $false }
+                TestScript = { return (Test-Path "$setupPath\parse-dsc-logs.py" -PathType Leaf) }
                 SetScript = {
                     $setupPath = $using:SetupPath
                     $localScriptPath = "$setupPath\parse-dsc-logs.py"
