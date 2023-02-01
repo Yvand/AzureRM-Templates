@@ -421,7 +421,7 @@ configuration ConfigureSPVM
                 } while ($false -eq $dnsRecordFound)
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            TestScript           = { try { [Net.DNS]::GetHostEntry("$($using:AdfsDnsEntryName).$($using:DomainFQDN)"); return $true } catch { return $false } }
             DependsOn            = "[DnsServerAddress]SetDNS"
         }
 
@@ -449,7 +449,6 @@ configuration ConfigureSPVM
             Name       = $ComputerName
             DomainName = $DomainFQDN
             Credential = $DomainAdminCredsQualified
-            # DependsOn  = "[PendingReboot]RebootOnSignalFromWaitForDCReady"
             DependsOn  = "[Script]WaitForADFSFarmReady"
         }
 
