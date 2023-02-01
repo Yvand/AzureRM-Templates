@@ -641,7 +641,7 @@ configuration ConfigureFEVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPSite]CreateRootSite"
+            DependsOn            = "[DnsRecordCname]UpdateDNSAliasSPSites"
         }
 
         if ($EnableAnalysis) {
@@ -745,9 +745,10 @@ $SharePointVersion = "2019"
 $EnableAnalysis = $false
 $SharePointBits = @()
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.2.0\DSCWork\ConfigureFELegacy.0\ConfigureFEVM"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureFELegacy.0\ConfigureFEVM"
 ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
+C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.83.5
 #>
