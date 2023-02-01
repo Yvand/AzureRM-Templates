@@ -711,7 +711,7 @@ configuration ConfigureFEVM
 
                     # Create shortcut to DSC configuration folder
                     $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\DSC config.lnk")
-                    $Shortcut.TargetPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\{0}\DSCWork\ConfigureSPSE.0" -f $folderWithMaxVersionNumber
+                    $Shortcut.TargetPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\{0}\DSCWork\ConfigureFELegacy.0" -f $folderWithMaxVersionNumber
                     $Shortcut.Save()
                 }
                 GetScript = { }

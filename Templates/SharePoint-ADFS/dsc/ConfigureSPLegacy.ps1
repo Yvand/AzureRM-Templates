@@ -1452,7 +1452,7 @@ configuration ConfigureSPVM
                 $uri = "http://$($using:SharePointSitesAuthority)/"
                 $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"
                 $accountPattern_Trusted = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|{0}@$($using:DomainFQDN)"
-                $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountPattern_WinClaims, $accountPattern_Trusted, $using:AdditionalUsersPath)
+                $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountPattern_WinClaims, $accountPattern_Trusted, $using:AdditionalUsersPath) -InitializationScript { & 'C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\16\CONFIG\POWERSHELL\Registration\SharePoint.ps1' }
                 Receive-Job -Job $job -AutoRemoveJob -Wait
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
@@ -1527,7 +1527,7 @@ configuration ConfigureSPVM
 
                     # Create shortcut to DSC configuration folder
                     $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\DSC config.lnk")
-                    $Shortcut.TargetPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\{0}\DSCWork\ConfigureSPSE.0" -f $folderWithMaxVersionNumber
+                    $Shortcut.TargetPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\{0}\DSCWork\ConfigureSPLegacy.0" -f $folderWithMaxVersionNumber
                     $Shortcut.Save()
                 }
                 GetScript = { }
