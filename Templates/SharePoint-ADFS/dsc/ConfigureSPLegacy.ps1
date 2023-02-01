@@ -1464,6 +1464,9 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
+                $sharePointVersion = $using:SharePointVersion
+                $directoryVersion = "16"
+                if ($sharePointVersion -eq "2013") { $directoryVersion = "15" }
                 $WshShell = New-Object -comObject WScript.Shell
                 # Shortcut to the setup folder
                 $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\Setup data.lnk")
@@ -1471,20 +1474,20 @@ configuration ConfigureSPVM
                 $Shortcut.Save()
 
                 # Shortcut for SharePoint Central Administration
-                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint Central Administration.lnk")
-                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\16\BIN\psconfigui.exe"
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Central Administration.lnk")
+                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\$directoryVersion\BIN\psconfigui.exe"
                 $Shortcut.Arguments = "-cmd showcentraladmin"
                 $Shortcut.Save()
 
                 # Shortcut for SharePoint Products Configuration Wizard
-                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint Products Configuration Wizard.lnk")
-                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\16\BIN\psconfigui.exe"
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Products Configuration Wizard.lnk")
+                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\$directoryVersion\BIN\psconfigui.exe"
                 $Shortcut.Save()
 
                 # Shortcut for SharePoint Management Shell
-                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint Management Shell.lnk")
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Management Shell.lnk")
                 $Shortcut.TargetPath = "C:\Windows\System32\WindowsPowerShell\v1.0\PowerShell.exe"
-                $Shortcut.Arguments = " -NoExit -Command ""& 'C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1'"
+                $Shortcut.Arguments = " -NoExit -Command ""& 'C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\$directoryVersion\CONFIG\POWERSHELL\Registration\SharePoint.ps1'"""
                 $Shortcut.Save()
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.

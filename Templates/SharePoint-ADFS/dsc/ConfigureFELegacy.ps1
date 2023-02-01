@@ -644,6 +644,41 @@ configuration ConfigureFEVM
             DependsOn            = "[DnsRecordCname]UpdateDNSAliasSPSites"
         }
 
+        Script CreateShortcuts
+        {
+            SetScript =
+            {
+                $sharePointVersion = $using:SharePointVersion
+                $directoryVersion = "16"
+                if ($sharePointVersion -eq "2013") { $directoryVersion = "15" }
+                $WshShell = New-Object -comObject WScript.Shell
+                # Shortcut to the setup folder
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\Setup data.lnk")
+                $Shortcut.TargetPath = $using:SetupPath
+                $Shortcut.Save()
+
+                # Shortcut for SharePoint Central Administration
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Central Administration.lnk")
+                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\$directoryVersion\BIN\psconfigui.exe"
+                $Shortcut.Arguments = "-cmd showcentraladmin"
+                $Shortcut.Save()
+
+                # Shortcut for SharePoint Products Configuration Wizard
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Products Configuration Wizard.lnk")
+                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\$directoryVersion\BIN\psconfigui.exe"
+                $Shortcut.Save()
+
+                # Shortcut for SharePoint Management Shell
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Management Shell.lnk")
+                $Shortcut.TargetPath = "C:\Windows\System32\WindowsPowerShell\v1.0\PowerShell.exe"
+                $Shortcut.Arguments = " -NoExit -Command ""& 'C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\$directoryVersion\CONFIG\POWERSHELL\Registration\SharePoint.ps1'"""
+                $Shortcut.Save()
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
         if ($EnableAnalysis) {
             # This resource is for analysis of dsc logs only and totally optionnal
             Script parseDscLogs
