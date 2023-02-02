@@ -306,7 +306,7 @@ configuration ConfigureFEVM
             foreach ($package in ($SharePointBits | Where-Object {$_.Label -eq $SharePointBuildLabel}).Packages) {
                 $packageUrl = [uri] $package.DownloadUrl
                 $packageFilename = $packageUrl.Segments[$packageUrl.Segments.Count - 1]
-                $packageFilePath = Join-Path -Path ([environment]::GetEnvironmentVariable("temp","machine").ToString()) -ChildPath $packageFilename
+                $packageFilePath = Join-Path -Path $SharePointBitsPath -ChildPath $packageFilename
                 
                 xRemoteFile "DownloadSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
                 {
