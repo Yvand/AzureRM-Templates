@@ -53,7 +53,7 @@ There are some differences in the configuration, depending on the SharePoint ver
 ### Input parameters
 
 - parameter `sharePointVersion` lets you choose which version of SharePoint to install:
-  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then install the latest cumulative update available at the time of publishing: January 2023 ([KB 5002331](https://support.microsoft.com/help/5002331) and [KB 5002326](https://support.microsoft.com/help/5002326)) for version `3.2.0`.
+  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then install the latest cumulative update available at the time of publishing: January 2023 ([KB 5002331](https://support.microsoft.com/help/5002331) and [KB 5002326](https://support.microsoft.com/help/5002326)) for current version.
   - `Subscription-22H2`: Same as `Subscription-RTM`, then install the [Feature Update 22H2](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-22h2-release) (September 2022 CU).
   - `Subscription-RTM`: Uses a fresh Windows Server 2022 image, on which SharePoint Subscription RTM is downloaded and installed.
   - `2019`: Uses an image built and maintained by SharePoint Engineering, with SharePoint 2019 bits already installed.
