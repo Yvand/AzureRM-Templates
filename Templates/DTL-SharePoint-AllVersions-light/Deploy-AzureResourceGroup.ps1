@@ -5,6 +5,7 @@
 $resourceGroupLocation = 'westeurope'
 $resourceGroupLocation = 'francecentral'
 $resourceGroupName = 'ydtlight1'
+# $resourceGroupName = 'ydtlight1gf(d)df_-sf.sm'
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot

@@ -4,7 +4,7 @@
 ### Define variables
 $resourceGroupLocation = 'westeurope'
 $resourceGroupLocation = 'francecentral'
-$resourceGroupName = "ydtlfull4"
+$resourceGroupName = "ydtlfull1"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot

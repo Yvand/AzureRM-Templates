@@ -4,6 +4,8 @@
 ### Define variables
 $resourceGroupLocation = 'westeurope'
 # $resourceGroupLocation = 'francecentral'
+$resourceGroupName = "xydsp1"
+# $resourceGroupName = "gf(d)df_-sf.sm"
 $templateFileName = 'azuredeploy.json'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 $scriptRoot = $PSScriptRoot
@@ -27,7 +29,6 @@ $paramFileContent.parameters | Get-Member -MemberType *Property | ForEach-Object
     $parameters.($_.name) = $paramFileContent.parameters.($_.name).value; 
 }
 
-$resourceGroupName = $parameters.dnsLabelPrefix
 $resourceDeploymentName = "$resourceGroupName-deployment"
 Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 
