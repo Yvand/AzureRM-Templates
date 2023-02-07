@@ -18,7 +18,6 @@
 
 - Template
   - Revert SQL image to SQL Server 2019, due to reliability issues with SQL Server 2022 (SQL PowerShell modules not ready yet)
-  - If user chooses SharePoint 2013, template deploys SQL Server 2014 SP3 (latest version it supports)
 - Configuration for DC
   - Review the logic to allow the VM to restart after the AD FS farm was configured (as required), and before the other VMs attempt to join the domain
 - Configuration for all VMs except DC
