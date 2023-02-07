@@ -459,7 +459,7 @@
       "vmSP2016Name": "SP2016",
       "vmSP2013Name": "SP2013",
       "vmDCImage": "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest",
-      "vmSQLImage": "MicrosoftSQLServer:sql2022-ws2022:sqldev-gen2:latest",
+      "vmSQLImage": "MicrosoftSQLServer:sql2019-ws2022:sqldev-gen2:latest",
       "vmSPSubscriptionImage": "[variables('sharePointSettings').sharePointImagesList.Subscription]",
       "vmSP2019Image": "[variables('sharePointSettings').sharePointImagesList.sp2019]",
       "vmSP2016Image": "[variables('sharePointSettings').sharePointImagesList.sp2016]",
