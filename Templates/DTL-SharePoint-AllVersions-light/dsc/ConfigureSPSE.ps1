@@ -46,7 +46,7 @@ configuration ConfigureSPVM
     
     # Setup settings
     [String] $SetupPath = "C:\DSC Data"
-    [String] $DCSetupPath = "\\$DCServerName\C$\Setup"
+    [String] $DCSetupPath = "\\$DCServerName\C$\DSC Data"
     [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
     [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
     [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
