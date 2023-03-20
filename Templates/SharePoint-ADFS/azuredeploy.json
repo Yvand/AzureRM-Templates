@@ -391,6 +391,14 @@
           ]
         },
         {
+          "Label" : "23H1",
+          "Packages" : [
+            {
+              "DownloadUrl" : "https://download.microsoft.com/download/c/6/a/c6a17105-3d86-42ad-888d-49b22383bfa1/uber-subscription-kb5002355-fullfile-x64-glb.exe"
+            }
+          ]
+        },
+        {
           "Label" : "Latest",
           "Packages" : [
             {
