@@ -1565,6 +1565,19 @@ configuration ConfigureSPVM
             PsDscRunAsCredential           = $SPSetupCredsQualified
         }
 
+        SPShellAdmins ShellAdmins
+        {
+            IsSingleInstance     = "Yes"
+            Members              = @($DomainAdminCredsQualified.UserName)
+            Databases        = @(
+                @(MSFT_SPDatabasePermissions {
+                    Name    = $SPDBPrefix + "Content_80"
+                    Members = @($DomainAdminCredsQualified.UserName)
+                })
+            )
+            PsDscRunAsCredential = $SPSetupCredsQualified
+        }
+
         Script WarmupSites
         {
             SetScript =
