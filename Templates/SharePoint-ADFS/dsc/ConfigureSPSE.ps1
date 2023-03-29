@@ -899,6 +899,20 @@ configuration ConfigureSPVM
             DependsOn              = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
+        SPShellAdmins AddShellAdmins
+        {
+            IsSingleInstance = "Yes"
+            Members          = @($DomainAdminCredsQualified.UserName)
+            Databases        = @(
+                @(MSFT_SPDatabasePermissions {
+                    Name    = $SPDBPrefix + "Content_80"
+                    Members = @($DomainAdminCredsQualified.UserName)
+                })
+            )
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPWebApplication]CreateMainWebApp"
+        }
+
         # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
         Script UpdateGPOToTrustRootCACert
         {
@@ -968,9 +982,9 @@ configuration ConfigureSPVM
                 
                 # Setup farm properties to work with OIDC
                 # Create a self-signed certificate in 1st SharePoint Server of the farm
-                $cookieCertificateName = "SharePoint Cookie Cert"
+                $cookieCertificateName = "SharePoint OIDC nonce cert"
                 $cookieCertificateFilePath = Join-Path -Path $setupPath -ChildPath "$cookieCertificateName"
-                $cert = New-SelfSignedCertificate -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=$cookieCertificateName"
+                $cert = New-SelfSignedCertificate -KeyUsage None -KeyUsageProperty None -CertStoreLocation Cert:\LocalMachine\My -Provider 'Microsoft Enhanced RSA and AES Cryptographic Provider' -Subject "CN=$cookieCertificateName"
                 Export-Certificate -Cert $cert -FilePath "$cookieCertificateFilePath.cer"
                 Export-PfxCertificate -Cert $cert -FilePath "$cookieCertificateFilePath.pfx" -ProtectTo "$domainAdminUserName"
                 Export-PfxCertificate -Cert $cert -FilePath "$DCSetupPath\$cookieCertificateName.pfx" -ProtectTo "$domainAdminUserName"
@@ -987,7 +1001,7 @@ configuration ConfigureSPVM
                 # Set farm properties
                 $f = Get-SPFarm
                 $f.Farm.Properties['SP-NonceCookieCertificateThumbprint'] = $cert.Thumbprint
-                $f.Farm.Properties['SP-NonceCookieHMACSecretKey'] = 'seed'
+                $f.Farm.Properties['SP-NonceCookieHMACSecretKey'] = "blablabla et pis c'est tout"
                 $f.Farm.Update()
             }
             GetScript =  
@@ -1563,19 +1577,6 @@ configuration ConfigureSPVM
             Ensure                         = "Present"
             DependsOn                      = "[Script]ExportHighTrustAddinsCert"
             PsDscRunAsCredential           = $SPSetupCredsQualified
-        }
-
-        SPShellAdmins ShellAdmins
-        {
-            IsSingleInstance     = "Yes"
-            Members              = @($DomainAdminCredsQualified.UserName)
-            Databases        = @(
-                @(MSFT_SPDatabasePermissions {
-                    Name    = $SPDBPrefix + "Content_80"
-                    Members = @($DomainAdminCredsQualified.UserName)
-                })
-            )
-            PsDscRunAsCredential = $SPSetupCredsQualified
         }
 
         Script WarmupSites
