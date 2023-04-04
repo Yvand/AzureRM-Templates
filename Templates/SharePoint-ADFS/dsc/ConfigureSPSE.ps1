@@ -1001,7 +1001,7 @@ configuration ConfigureSPVM
                 # Set farm properties
                 $f = Get-SPFarm
                 $f.Farm.Properties['SP-NonceCookieCertificateThumbprint'] = $cert.Thumbprint
-                $f.Farm.Properties['SP-NonceCookieHMACSecretKey'] = "blablabla et pis c'est tout"
+                $f.Farm.Properties['SP-NonceCookieHMACSecretKey'] = "randomString$domainAdminUserName"
                 $f.Farm.Update()
             }
             GetScript =  
