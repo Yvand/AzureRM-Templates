@@ -2,8 +2,8 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    // "sharePointVersion": { "value": "Subscription-22H2" },
-    "sharePointVersion": { "value": "2019" },
+    "sharePointVersion": { "value": "Subscription-23H1" },
+    // "sharePointVersion": { "value": "2019" },
     "domainFQDN": { "value": "contoso.local" },
     "adminUserName": { "value": "yvand" },
     "adminPassword": { "value": null },
