@@ -5,7 +5,7 @@
 ### Added
 
 - Template
-  - Added value `Subscription-23H1` to parameter `sharePointVersion`, to install SharePoint Subscription 23H1
+  - Added value `Subscription-23H1` to parameter `sharePointVersion`, to install SharePoint Subscription with 23H1 update
 
 ### Changed
 
