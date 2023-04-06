@@ -905,7 +905,6 @@
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
-            "diskSizeGB": 128,
             "managedDisk": {
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
@@ -1142,7 +1141,6 @@
             "caching": "ReadWrite",
             "osType": "Windows",
             "createOption": "FromImage",
-            "diskSizeGB": 128,
             "managedDisk": {
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
