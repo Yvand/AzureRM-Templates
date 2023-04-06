@@ -1,6 +1,6 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Unreleased
+## Enhancements & bug-fixes - Published in April 06, 2023
 
 ### Added
 
@@ -19,7 +19,7 @@
   - Add domain administrator as a SharePoint shell admin (done by cmdlet `Add-SPShellAdmin`)
   - For OIDC: Change the nonce secret key to a more unique value and rename the certificate used to sign the nonce
 
-## Enhancements & bug-fixes - Published in February 06, 2023
+## Enhancements & bug-fixes - Published in February 07, 2023
 
 ### Added
 
