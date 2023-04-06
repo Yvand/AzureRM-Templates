@@ -1,9 +1,9 @@
 module "sharepoint" {
   source                                = "Yvand/sharepoint/azurerm"
-  version                               = ">=3.2.0"
+  version                               = ">=3.3.0"
   location                              = "France Central"
   resource_group_name                   = var.resource_group_name
-  sharepoint_version                    = "2019" #"Subscription-Latest"
+  sharepoint_version                    = "Subscription-23H1" #"2019"
   admin_username                        = "yvand"
   admin_password                        = var.admin_password
   service_accounts_password             = var.service_accounts_password
