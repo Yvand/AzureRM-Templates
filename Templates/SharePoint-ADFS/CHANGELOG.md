@@ -6,6 +6,8 @@
 
 - Template
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the May 2023 CU for SharePoint Subscription
+- Configuration for DC
+  - Update DSC module `AdfsDsc`
 
 ## Enhancements & bug-fixes - Published in April 12, 2023
 
