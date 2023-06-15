@@ -99,7 +99,7 @@ configuration ConfigureSQLVM
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
-            PsDscRunAsCredential = $DomainAdminCredsQualified
+            Credential = $DomainAdminCredsQualified
             # DependsOn  = "[PendingReboot]RebootOnSignalFromWaitForDCReady"
             DependsOn  = "[Script]WaitForADFSFarmReady"
         }
