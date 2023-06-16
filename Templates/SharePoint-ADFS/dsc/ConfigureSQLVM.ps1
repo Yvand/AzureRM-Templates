@@ -18,7 +18,8 @@ configuration ConfigureSQLVM
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
-    [PSCredential] $DomainAdminCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
+    # [PSCredential] $DomainAdminCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
+    [PSCredential] $DomainAdminCredsQualified = New-Object PSCredential ("$($DomainAdminCreds.UserName)@$DomainFQDN", $DomainAdminCreds.Password)
     [PSCredential] $SQLCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
     [String] $ComputerName = Get-Content env:computername
     [String] $AdfsDnsEntryName = "adfs"
