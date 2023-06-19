@@ -4,10 +4,40 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "remove state file",
+            "type": "shell",
+            "command": "rm",
+            "args": ["-f", "terraform.tfstate"],
+            "hide": true
+        },
+        {
             "label": "terraform apply",
             "type": "shell",
-            "command": "terraform get -update && rm -f terraform.tfstate && terraform fmt && terraform apply -var-file=/home/yvand/terraform-sharepoint-secrets.tfvars -refresh=false",
-            "problemMatcher": []
+            "command": "terraform get -update && terraform fmt && terraform apply -var-file=/home/yvand/terraform-sharepoint-secrets.tfvars -refresh=false",
+            "problemMatcher": [],
+            "dependsOn": ["remove state file"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true,
+                "focus": true
+            }
+        },
+        {
+            "label": "remove resources and state file",
+            "type": "shell",
+            "command": "az",
+            "args": ["group", "delete", "--name", "${input:resourceGrouppName}", "--force-deletion-types", "Microsoft.Compute/virtualMachines", "--yes"],
+            "problemMatcher": [],
+            "dependsOn": ["remove state file"]
+        }
+    ],
+    "inputs": [
+        {
+            "type": "promptString",
+            "id": "resourceGrouppName",
+            "description": "Name of the resource group.",
+            "default": "resource-groupp-name"
         }
     ]
 }
