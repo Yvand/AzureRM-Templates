@@ -202,11 +202,17 @@ configuration ConfigureFEVM
         {
             Name = "RebootToFinishNet48Install"
         }
+
+        PendingReboot RebootToFinishNet48Install2
+        {
+            Name = "RebootToFinishNet48Install2"
+            DependsOn = "[PendingReboot]RebootToFinishNet48Install"
+        }
         
         cChocoInstaller InstallChoco
         {
             InstallDir = "C:\Chocolatey"
-            DependsOn = "[PendingReboot]RebootToFinishNet48Install"
+            DependsOn = "[PendingReboot]RebootToFinishNet48Install2"
         }
 
         cChocoPackageInstaller InstallEdge
