@@ -20,12 +20,12 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.5.0
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.1.0
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.3.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.4.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
@@ -198,9 +198,16 @@ configuration ConfigureSPVM
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
 
+        # Reboot before installing Chocolatey to finish installation of .NET Framework 4.8 (which requires a reboot to complete) as Chocolatey install fails otherwise
+        PendingReboot RebootToFinishNet48Install
+        {
+            Name = "RebootToFinishNet48Install"
+        }
+
         cChocoInstaller InstallChoco
         {
             InstallDir = "C:\Chocolatey"
+            DependsOn = "[PendingReboot]RebootToFinishNet48Install"
         }
 
         cChocoPackageInstaller InstallEdge
