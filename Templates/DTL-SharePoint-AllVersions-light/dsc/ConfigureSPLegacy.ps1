@@ -28,7 +28,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.4.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.0.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.3.1
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
 
     # Init
@@ -117,6 +117,12 @@ configuration ConfigureSPVM
         
         Registry ShowWindowsExplorerRibbon { Key = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer"; ValueName = "ExplorerRibbonStartsMinimized"; ValueType = "DWORD"; ValueData = "4"; Force = $true; Ensure = "Present" }
 
+        if ($SharePointVersion -eq "2019") {
+            # Allow OneDrive NGSC to connect to SharePoint Subscription / 2019 - https://learn.microsoft.com/en-us/sharepoint/install/configure-syncing-with-the-onedrive-sync-app
+            Registry SetOneDriveUrl { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "http://{0}" -f $SharePointSitesAuthority; Ensure = "Present" }
+            Registry SetOneDriveName { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremTenantName"; ValueType = "String"; ValueData = "{0} - {1}" -f $DomainNetbiosName, $SharePointSitesAuthority; Ensure = "Present" }
+        }
+
         if ($SharePointVersion -eq "2013") {
             # Those 2 registry keys are required in SPS 2013 image to fix the psconfigui timeout error - https://support.microsoft.com/en-us/topic/some-document-conversion-services-in-sharepoint-server-are-not-secure-when-they-run-in-a-particular-environment-c39cd633-1e6a-18b1-9f2f-d0e7073a26bd
             Registry FixDocumentConversionKeyMissing  { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LauncherSettings";     ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
@@ -142,7 +148,7 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
-        # Create the rules in the firewall required for the distributed cache
+        # Create the rules in the firewall required for the distributed cache - https://learn.microsoft.com/en-us/sharepoint/administration/plan-for-feeds-and-the-distributed-cache-service#firewall
         Script CreateFirewallRulesForDistributedCache
         {
             TestScript = {
@@ -198,16 +204,9 @@ configuration ConfigureSPVM
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
 
-        # Reboot before installing Chocolatey to finish installation of .NET Framework 4.8 (which requires a reboot to complete) as Chocolatey install fails otherwise
-        PendingReboot RebootToFinishNet48Install
-        {
-            Name = "RebootToFinishNet48Install"
-        }
-
         cChocoInstaller InstallChoco
         {
             InstallDir = "C:\Chocolatey"
-            DependsOn = "[PendingReboot]RebootToFinishNet48Install"
         }
 
         cChocoPackageInstaller InstallEdge
