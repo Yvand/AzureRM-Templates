@@ -30,6 +30,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.3.1
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
+    Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
 
     # Init
     [String] $InterfaceAlias = (Get-NetAdapter | Where-Object Name -Like "Ethernet*" | Select-Object -First 1).Name
@@ -191,6 +192,13 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
+        xRemoteFile DownloadLDAPCP
+        {
+            DestinationPath = $LDAPCPFileFullPath
+            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp"
+            MatchSource     = $false
+        }
+
         #**********************************************************
         # Install applications using Chocolatey
         #**********************************************************
@@ -231,14 +239,21 @@ configuration ConfigureSPVM
         }
 
         cChocoPackageInstaller InstallVscode
-        {
-            Name                 = "vscode.portable"
+        {   # Install takes about 30 secs
+            Name                 = "vscode"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        cChocoPackageInstaller InstallAzureDataStudio
+        {   # Install takes about 40 secs
+            Name                 = "azure-data-studio"
             Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         # if ($EnableAnalysis) {
-        #     # This resource is for  of dsc logs only and totally optionnal
+        #     # This resource is only for analyzing dsc logs using a custom Python script
         #     cChocoPackageInstaller InstallPython
         #     {
         #         Name                 = "python"
@@ -826,6 +841,23 @@ configuration ConfigureSPVM
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
     }
+}
+
+function Get-LatestGitHubRelease
+{
+    [OutputType([string])]
+    param(
+        [string] $Repo,
+        [string] $Artifact
+    )
+    # Force protocol TLS 1.2 in Invoke-WebRequest to fix TLS/SSL connection error with GitHub in Windows Server 2012 R2, as documented in https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-update-1802
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    # Found in https://blog.markvincze.com/download-artifacts-from-a-latest-github-release-in-sh-and-powershell/
+    $latestRelease = Invoke-WebRequest https://github.com/$Repo/releases/latest -Headers @{"Accept"="application/json"} -UseBasicParsing
+    $json = $latestRelease.Content | ConvertFrom-Json
+    $latestVersion = $json.tag_name
+    $url = "https://github.com/$Repo/releases/download/$latestVersion/$Artifact"
+    return $url
 }
 
 function Get-NetBIOSName
