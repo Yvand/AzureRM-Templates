@@ -48,6 +48,7 @@ configuration ConfigureSPVM
     [String] $DCSetupPath = "\\$DCServerName\C$\DSC Data"
     [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
     [String] $SAMLTrustRealm = "urn:sharepoint:spsites"
+    [String] $LDAPCPFileFullPath = Join-Path -Path $SetupPath -ChildPath "Binaries\LDAPCP.wsp"
     [String] $AdfsDnsEntryName = "adfs"
 
     # SharePoint settings
