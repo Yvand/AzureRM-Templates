@@ -70,6 +70,11 @@ configuration ConfigureFEVM
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
 
+        # Reboot before installing Chocolatey to finish install of .NET Framework 4.8 (which requires a reboot to complete) as Chocolatey install fails otherwise
+        # Do it right at the beginning, otherwise cChocoInstaller fails anyway
+        PendingReboot RebootToFinishNet48Install { Name = "RebootToFinishNet48Install" }
+        cChocoInstaller InstallChoco             { InstallDir = "C:\Chocolatey"; DependsOn = "[PendingReboot]RebootToFinishNet48Install" }
+
         #**********************************************************
         # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
@@ -195,18 +200,6 @@ configuration ConfigureFEVM
             }
             GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-        }
-
-        # Reboot before installing Chocolatey to finish installation of .NET Framework 4.8 (which requires a reboot to complete) as Chocolatey install fails otherwise
-        PendingReboot RebootToFinishNet48Install
-        {
-            Name = "RebootToFinishNet48Install"
-        }
-        
-        cChocoInstaller InstallChoco
-        {
-            InstallDir = "C:\Chocolatey"
-            DependsOn = "[PendingReboot]RebootToFinishNet48Install"
         }
 
         cChocoPackageInstaller InstallEdge

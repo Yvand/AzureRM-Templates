@@ -85,6 +85,7 @@ configuration ConfigureSPVM
         # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
         # Reboot before installing Chocolatey to finish install of .NET Framework 4.8 (which requires a reboot to complete) as Chocolatey install fails otherwise
+        # Do it right at the beginning, otherwise cChocoInstaller fails anyway
         PendingReboot RebootToFinishNet48Install { Name = "RebootToFinishNet48Install" }
         cChocoInstaller InstallChoco             { InstallDir = "C:\Chocolatey"; DependsOn = "[PendingReboot]RebootToFinishNet48Install" }
 
@@ -197,13 +198,6 @@ configuration ConfigureSPVM
             GetScript = { }
         }
 
-        xRemoteFile DownloadLDAPCP
-        {
-            DestinationPath = $LDAPCPFileFullPath
-            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "LDAPCP.wsp"
-            MatchSource     = $false
-        }
-
         #**********************************************************
         # Install applications using Chocolatey
         #**********************************************************
@@ -216,20 +210,6 @@ configuration ConfigureSPVM
             GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
-
-        # Script ForceRebootToFinishNet48Install
-        # {
-        #     # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-        #     TestScript = {
-        #         return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootToFinishNet48Install)
-        #     }
-        #     SetScript = {
-        #         New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootToFinishNet48Install -Force
-        #         $global:DSCMachineStatus = 1
-        #     }
-        #     GetScript = { }
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        # }
 
         cChocoPackageInstaller InstallEdge
         {
@@ -855,23 +835,6 @@ configuration ConfigureSPVM
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
     }
-}
-
-function Get-LatestGitHubRelease
-{
-    [OutputType([string])]
-    param(
-        [string] $Repo,
-        [string] $Artifact
-    )
-    # Force protocol TLS 1.2 in Invoke-WebRequest to fix TLS/SSL connection error with GitHub in Windows Server 2012 R2, as documented in https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-update-1802
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    # Found in https://blog.markvincze.com/download-artifacts-from-a-latest-github-release-in-sh-and-powershell/
-    $latestRelease = Invoke-WebRequest https://github.com/$Repo/releases/latest -Headers @{"Accept"="application/json"} -UseBasicParsing
-    $json = $latestRelease.Content | ConvertFrom-Json
-    $latestVersion = $json.tag_name
-    $url = "https://github.com/$Repo/releases/download/$latestVersion/$Artifact"
-    return $url
 }
 
 function Get-NetBIOSName
