@@ -214,9 +214,24 @@ configuration ConfigureSPVM
         }
 
         # Reboot before installing Chocolatey to finish installation of .NET Framework 4.8 (which requires a reboot to complete) as Chocolatey install fails otherwise
+        Script ForceRebootToFinishNet48Install
+        {
+            # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            TestScript = {
+                return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootToFinishNet48Install)
+            }
+            SetScript = {
+                New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootToFinishNet48Install -Force
+                $global:DSCMachineStatus = 1
+            }
+            GetScript = { }
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+        
         PendingReboot RebootToFinishNet48Install
         {
             Name = "RebootToFinishNet48Install"
+            DependsOn = "[Script]ForceRebootToFinishNet48Install"
         }
         
         cChocoInstaller InstallChoco
