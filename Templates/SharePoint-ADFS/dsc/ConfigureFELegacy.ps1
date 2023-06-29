@@ -72,8 +72,9 @@ configuration ConfigureFEVM
 
         # Reboot before installing Chocolatey to finish install of .NET Framework 4.8 (which requires a reboot to complete) as Chocolatey install fails otherwise
         # Do it right at the beginning, otherwise cChocoInstaller fails anyway
-        PendingReboot RebootToFinishNet48Install { Name = "RebootToFinishNet48Install" }
-        cChocoInstaller InstallChoco             { InstallDir = "C:\Chocolatey"; DependsOn = "[PendingReboot]RebootToFinishNet48Install" }
+        # PendingReboot RebootToFinishNet48Install { Name = "RebootToFinishNet48Install" }
+        # cChocoInstaller InstallChoco             { InstallDir = "C:\Chocolatey"; DependsOn = "[PendingReboot]RebootToFinishNet48Install" }
+        cChocoInstaller InstallChoco             { InstallDir = "C:\Chocolatey"; }
 
         #**********************************************************
         # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
