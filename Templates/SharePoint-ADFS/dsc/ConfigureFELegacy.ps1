@@ -70,10 +70,8 @@ configuration ConfigureFEVM
             TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
 
-        # Reboot before installing Chocolatey to finish install of .NET Framework 4.8 (which requires a reboot to complete) as Chocolatey install fails otherwise
-        # Do it right at the beginning, otherwise cChocoInstaller fails anyway
-        # PendingReboot RebootToFinishNet48Install { Name = "RebootToFinishNet48Install" }
-        # cChocoInstaller InstallChoco             { InstallDir = "C:\Chocolatey"; DependsOn = "[PendingReboot]RebootToFinishNet48Install" }
+        # cChocoInstaller fails with this error: Get-FileDownload for 'https://chocolatey.org/install.ps1' failed on attempt 1 with this error: .NET Framework 4.8 was installed, but a reboot is required.  Please reboot the system and try to install/upgrade Chocolatey again.
+        # But running it right at the beginning eventually works, and somehow it does not propagate the error to the Azure DSC extension (and doing a reboot juste before has no effect)
         cChocoInstaller InstallChoco             { InstallDir = "C:\Chocolatey"; }
 
         #**********************************************************
