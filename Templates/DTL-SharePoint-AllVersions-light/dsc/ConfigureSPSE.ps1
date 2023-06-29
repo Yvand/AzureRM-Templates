@@ -794,7 +794,7 @@ configuration ConfigureSPVM
                 SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
                 UseWReplyParameter           = $true
                 Ensure                       = "Present" 
-                DependsOn                    = "[Script]SetOidcCertificate"
+                DependsOn                    = "[Script]SetFarmPropertiesForOIDC"
                 PsDscRunAsCredential         = $SPSetupCredsQualified
             }
 
