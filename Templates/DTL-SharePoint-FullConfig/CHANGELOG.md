@@ -1,6 +1,6 @@
 # Change log for Azure DevTest Labs template DTL-SharePoint-FullConfig
 
-## Unreleased
+## Enhancements & bug-fixes - Published in June 30, 2023
 
 ### Fixed
 

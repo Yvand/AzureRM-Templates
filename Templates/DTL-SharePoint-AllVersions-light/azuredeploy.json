@@ -1706,11 +1706,11 @@
       "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Basic",
+        "name": "Standard",
         "tier": "Regional"
       },
       "properties": {
-        "publicIPAllocationMethod": "Dynamic",
+        "publicIPAllocationMethod": "Static",
         "dnsSettings": {
           "domainNameLabel": "[toLower(replace(concat(variables('resourceGroupNameFormatted'), '-', 'Bastion'), '_', '-'))]"
         }
