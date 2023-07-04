@@ -1,5 +1,12 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+### Changed
+
+- Template
+  - Changed the prefix of the built-in administrator from `local-` to `l-` so it does not exceed 15 characters, because the reset password feature in Azure requires that it has 15 characters maximum.
+
 ## Enhancements & bug-fixes - Published in June 30, 2023
 
 ### Fixed

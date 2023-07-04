@@ -486,7 +486,7 @@
       "sharePointSitesAuthority": "spsites",
       "sharePointCentralAdminPort": 5000,
       "sharePointBitsSelected": "[if(variables('sharePointSettings').isSharePointSubscription, variables('sharePointSettings').sharePointSubscriptionBits, 'fake')]",
-      "localAdminUserName": "[concat('local-', uniqueString(subscription().subscriptionId))]",
+      "localAdminUserName": "[concat('l-', uniqueString(subscription().subscriptionId))]",
       "enableAnalysis": false,
       "applyBrowserPolicies": true,
       "sqlAlias": "SQLAlias",
