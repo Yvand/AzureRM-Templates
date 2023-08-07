@@ -770,6 +770,11 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
+                # Fix for slipstream installs with 2022-10 CU or newer: Fix the SharePoint configuration wizard hanging at 10% of step 10/10, when executed after installing a CU
+                foreach ($db in Get-SPDatabase) {
+                    $db.GrantOwnerAccessToDatabaseAccount()
+                }
+
                 # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
                 Restart-Service SPTimerV4
                 # 2021-09: In SharePoint 2013, solution deployment failed multiple times with error "Admin SVC must be running in order to create deployment timer job."
