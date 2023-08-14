@@ -770,10 +770,10 @@ configuration ConfigureSPVM
         {
             SetScript =
             {
-                # Fix for slipstream installs with 2022-10 CU or newer: Fix the SharePoint configuration wizard hanging at 10% of step 10/10, when executed after installing a CU
-                foreach ($db in Get-SPDatabase) {
-                    $db.GrantOwnerAccessToDatabaseAccount()
-                }
+                # # Fix for slipstream installs with 2022-10 CU or newer: Fix the SharePoint configuration wizard hanging at 10% of step 10/10, when executed after installing a CU
+                # foreach ($db in Get-SPDatabase) {
+                #     $db.GrantOwnerAccessToDatabaseAccount()
+                # }
 
                 # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
                 Restart-Service SPTimerV4
@@ -1416,6 +1416,22 @@ configuration ConfigureSPVM
             SiteUrl              = "http://$SharePointSitesAuthority/sites/AppCatalog"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPSite]CreateAppCatalog","[SPAppManagementServiceApp]CreateAppManagementServiceApp"
+        }
+
+        Script FixMissingDatabasesPermission
+        {
+            SetScript =
+            {
+                # Fix for slipstream installs with 2022-10 CU or newer: Fix the SharePoint configuration wizard hanging at 10% of step 10/10, when executed after installing a CU
+                # Do this after all databases were created, and just before a new server may join the SharePoint farm
+                foreach ($db in Get-SPDatabase) {
+                    $db.GrantOwnerAccessToDatabaseAccount()
+                }
+            }
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
         
         # This team site is tested by VM FE to wait before joining the farm, so it acts as a milestone and it should be created only when all SharePoint services are created
