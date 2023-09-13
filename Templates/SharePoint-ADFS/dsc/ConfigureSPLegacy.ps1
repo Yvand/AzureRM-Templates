@@ -69,8 +69,12 @@ configuration ConfigureSPVM
     [String] $AddinsSiteName = "Provider-hosted addins"
     [String] $TrustedIdChar = "e"
     [String] $SPTeamSiteTemplate = "STS#3"
+    [String] $ClaimsProviderReleaseId = "latest"
     if ([String]::Equals($SharePointVersion, "2013") -or [String]::Equals($SharePointVersion, "2016")) {
         $SPTeamSiteTemplate = "STS#0"
+        if ([String]::Equals($SharePointVersion, "2013")) {
+            $ClaimsProviderReleaseId = "118551802"
+        }
     }
 
     Node localhost
@@ -216,7 +220,7 @@ configuration ConfigureSPVM
         xRemoteFile DownloadLDAPCP
         {
             DestinationPath = $LDAPCPFileFullPath
-            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "*.wsp" -ReleaseId "latest"
+            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "*.wsp" -ReleaseId $ClaimsProviderReleaseId
             MatchSource     = $false
         }
 
