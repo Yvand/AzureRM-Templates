@@ -1644,7 +1644,7 @@ configuration ConfigureSPVM
                     $uri = $args[0]
                     $accountPattern_WinClaims = $args[1]
                     $accountPattern_Trusted = $args[2]
-                    $AdditionalUsersPath = $args[3]
+                    $directoryBase = $args[3]
 
                     try {
                         $site = Get-SPSite -Identity $uri -ErrorAction SilentlyContinue
@@ -1655,48 +1655,63 @@ configuration ConfigureSPVM
                     catch {
                         Write-Host "Unable to get UserProfileManager: $_"
                         # If Write-Error is called, then the Script resource is going to failed state
-                        # Write-Error -Exception $_ -Message "Unable to get UserProfileManager for '$accountName'"
+                        # Write-Error -Exception $_ -Message "Unable to get UserProfileManager for '$($account.AccountName)'"
                         return
                     }
 
                     # Accessing $using:DomainAdminCredsQualified here somehow causes a deserialization error, so use $env:UserName instead
-                    [string[]] $accounts = @()
-                    $accounts += $accountPattern_WinClaims -f $env:UserName
-                    $accounts += $accountPattern_Trusted -f $env:UserName
-                    $AdditionalUsers = Get-ADUser -Filter "objectClass -like 'user'" -SearchBase $AdditionalUsersPath #-ResultSetSize 5
-                    foreach ($AdditionalUser in $AdditionalUsers) {
-                        $accounts += $accountPattern_WinClaims -f $AdditionalUser.SamAccountName
-                        $accounts += $accountPattern_Trusted -f $AdditionalUser.SamAccountName
+                    [object []] $accounts = @(
+                        @{
+                            "AccountName"   = $accountPattern_WinClaims -f $env:UserName;
+                            "PreferredName" = $env:UserName;
+                        },
+                        @{
+                            "AccountName"   = $accountPattern_Trusted -f $env:UserName;
+                            "PreferredName" = $env:UserName;
+                        }
+                    )
+                    
+                    $directoryUsers = Get-ADUser -Filter "objectClass -like 'user'" -Properties @("SamAccountName", "displayName") -SearchBase $directoryBase #-ResultSetSize 5
+                    foreach ($directoryUser in $directoryUsers) {
+                        $accounts += 
+                        @{
+                            "AccountName"   = $accountPattern_WinClaims -f $directoryUser.SamAccountName;
+                            "PreferredName" = $directoryUser["displayName"];
+                        },
+                        @{
+                            "AccountName"   = $accountPattern_Trusted -f $directoryUser.SamAccountName;
+                            "PreferredName" = $directoryUser["displayName"];
+                        }
                     }
 
-                    foreach ($accountName in $accounts) {
-                        $profile = $null
+                    foreach ($account in $accounts) {
+                        $userProfile = $null
                         try {
-                            $profile = $upm.GetUserProfile($accountName)
-                            Write-Host "Got existing user profile for '$accountName'"
+                            $userProfile = $upm.GetUserProfile($account.AccountName)
+                            Write-Host "Got existing user profile for '$($account.AccountName)'"
                         }
                         catch {
-                            $profile = $upm.CreateUserProfile($accountName);
-                            Write-Host "Successfully created user profile for '$accountName'"
+                            $userProfile = $upm.CreateUserProfile($account.AccountName, $account.PreferredName);
+                            Write-Host "Successfully created user profile for '$($account.AccountName)'"
                         }
                     
-                        if ($null -eq $profile) {
-                            Write-Host "Unable to get/create the profile for '$accountName', give up"
+                        if ($null -eq $userProfile) {
+                            Write-Host "Unable to get/create the profile for '$($account.AccountName)', give up"
                             continue
                         }
                         
-                        if ($null -eq $profile.PersonalSite) {
-                            Write-Host "Adding creation of personal site for '$accountName' to the queue..."
+                        if ($null -eq $userProfile.PersonalSite) {
+                            Write-Host "Adding creation of personal site for '$($account.AccountName)' to the queue..."
                             try {
-                                $profile.CreatePersonalSiteEnque($false)
-                                Write-Host "Successfully enqueued the creation of personal site for '$accountName'"
+                                $userProfile.CreatePersonalSiteEnque($false)
+                                Write-Host "Successfully enqueued the creation of personal site for '$($account.AccountName)'"
                             }
                             catch {
-                                Write-Host "Could not enqueue creation of personal site for '$accountName': $_"
+                                Write-Host "Could not enqueue creation of personal site for '$($account.AccountName)': $_"
                             }
                         } else 
                         {
-                            Write-Host "Personal site for '$accountName' already exists, nothing to do"
+                            Write-Host "Personal site for '$($account.AccountName)' already exists, nothing to do"
                         }
                     }
                 }
