@@ -1116,6 +1116,65 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
+        Script ConfigureUPAClaimProvider
+        {
+            SetScript = 
+            {
+                # Gets the trust
+                $spTrustName = $using:DomainFQDN
+                $spSiteUrl = "http://$($using:SharePointSitesAuthority)/"
+                $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
+
+                $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
+                if ($null -eq $trust) {
+                    Write-Host "Could not get the trust $spTrustName, give up"
+                    return;
+                }
+
+                # Creates the claims provider if it does not already exist
+                $claimsProvider = Get-SPClaimProvider -Identity $spTrustName -ErrorAction SilentlyContinue
+                if ($null -eq $claimsProvider) {
+                    # -ne Remove-SPClaimProvider -Identity $claimsProvider
+                    $claimsProviderName = "UPA Claim Provider"
+                    $claimsProvider = New-SPClaimProvider -AssemblyName "Microsoft.SharePoint, Version=16.0.0.0, Culture=neutral, publicKeyToken=71e9bce111e9429c" -Default:$false `
+                        -DisplayName $claimsProviderName -Description $claimsProviderName -Type "Microsoft.SharePoint.Administration.Claims.SPTrustedBackedByUPAClaimProvider" `
+                        -TrustedTokenIssuer $trust
+                }
+
+                # Running the set would replace LDAPCP as the active claim provider for this trust
+                # Set-SPTrustedIdentityTokenIssuer $trust -ClaimProvider $claimsProvider -IsOpenIDConnect
+
+                # Sets the property IsPeoplePickerSearchable on specific profile properties
+                $site = $(Get-SPWebApplication $spSiteUrl).Sites[0] 
+                $context= Get-SPServiceContext $site
+                $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
+                $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
+                $properties = $ps.Properties
+
+                $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
+                foreach ($p in $PropertyNames) { 
+                    $property = $properties.GetPropertyByName($p) 
+                    if ($property) {
+                        $property.CoreProperty.IsPeoplePickerSearchable = $true 
+                        $property.CoreProperty.Commit() 
+                        Write-Host "Updated property $($property.Name) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
+                    } 
+                }
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+				return $false
+            }
+            DependsOn            = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
         SPWebAppAuthentication ConfigureMainWebAppAuthentication
         {
             WebAppUrl = "http://$SharePointSitesAuthority/"
