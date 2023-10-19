@@ -1368,34 +1368,34 @@ configuration ConfigureSPVM
                 $spTrustName = $using:DomainFQDN
                 $spSiteUrl = "http://$($using:SharePointSitesAuthority)/"
                 
+                Write-Host "Start configuration for ConfigureUPAClaimProvider using spTrustName '$spTrustName' and spSiteUrl '$spSiteUrl'"
+                $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
+                if ($null -eq $trust) {
+                    Write-Host "Could not get the trust $spTrustName, give up"
+                    return;
+                }
+
+                # Creates the claims provider if it does not already exist
+                $claimsProvider = Get-SPClaimProvider -Identity $spTrustName -ErrorAction SilentlyContinue
+                if ($null -eq $claimsProvider) {
+                    $claimsProviderName = "UPA Claim Provider"
+                    $claimsProvider = New-SPClaimProvider -AssemblyName "Microsoft.SharePoint, Version=16.0.0.0, Culture=neutral, publicKeyToken=71e9bce111e9429c" -Default:$false `
+                        -DisplayName $claimsProviderName -Description $claimsProviderName -Type "Microsoft.SharePoint.Administration.Claims.SPTrustedBackedByUPAClaimProvider" `
+                        -TrustedTokenIssuer $trust
+                }
+
+                # Running this set below would set SPTrustedBackedByUPAClaimProvider as the active claims provider for this trust
+                # But it wouldn't work since properties "SPS-ClaimProviderID" and "SPS-ClaimProviderType" of trusted profiles are not set
+                # Set-SPTrustedIdentityTokenIssuer $trust -ClaimProvider $claimsProvider -IsOpenIDConnect
+
+                # Sets the property IsPeoplePickerSearchable on specific profile properties
+                $site = $(Get-SPWebApplication $spSiteUrl).Sites[0] 
+                $context = Get-SPServiceContext $site
+                $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
+                $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
+                $properties = $ps.Properties
+
                 try {
-                    Write-Host "Start configuration for ConfigureUPAClaimProvider using spTrustName '$spTrustName' and spSiteUrl '$spSiteUrl'"
-                    $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
-                    if ($null -eq $trust) {
-                        Write-Host "Could not get the trust $spTrustName, give up"
-                        return;
-                    }
-
-                    # Creates the claims provider if it does not already exist
-                    $claimsProvider = Get-SPClaimProvider -Identity $spTrustName -ErrorAction SilentlyContinue
-                    if ($null -eq $claimsProvider) {
-                        $claimsProviderName = "UPA Claim Provider"
-                        $claimsProvider = New-SPClaimProvider -AssemblyName "Microsoft.SharePoint, Version=16.0.0.0, Culture=neutral, publicKeyToken=71e9bce111e9429c" -Default:$false `
-                            -DisplayName $claimsProviderName -Description $claimsProviderName -Type "Microsoft.SharePoint.Administration.Claims.SPTrustedBackedByUPAClaimProvider" `
-                            -TrustedTokenIssuer $trust
-                    }
-
-                    # Running this set below would set SPTrustedBackedByUPAClaimProvider as the active claims provider for this trust
-                    # But it wouldn't work since properties "SPS-ClaimProviderID" and "SPS-ClaimProviderType" of trusted profiles are not set
-                    # Set-SPTrustedIdentityTokenIssuer $trust -ClaimProvider $claimsProvider -IsOpenIDConnect
-
-                    # Sets the property IsPeoplePickerSearchable on specific profile properties
-                    $site = $(Get-SPWebApplication $spSiteUrl).Sites[0] 
-                    $context = Get-SPServiceContext $site
-                    $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
-                    $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
-                    $properties = $ps.Properties
-
                     $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
                     foreach ($propertyName in $PropertyNames) { 
                         $property = $properties.GetPropertyByName($propertyName)
