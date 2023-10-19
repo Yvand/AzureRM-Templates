@@ -1339,6 +1339,22 @@ configuration ConfigureSPVM
             DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
 
+        SPUserProfileSyncConnection ADImportConnection {
+            UserProfileService    = $UpaServiceName
+            Forest                = $DomainFQDN
+            Name                  = $DomainFQDN
+            ConnectionCredentials = $SPADDirSyncCredsQualified
+            Server                = $DomainLDAPPath
+            UseSSL                = $true
+            Port                  = 636
+            IncludedOUs           = @("CN=Users,$DomainLDAPPath", $AdditionalUsersPath)
+            Force                 = $false
+            ConnectionType        = "ActiveDirectory"
+            UseDisabledFilter     = $true
+            PsDscRunAsCredential  = $SPSetupCredsQualified
+            DependsOn             = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
+        }
+
         # Configure the SPTrustedBackedByUPAClaimProvider as much as possible. The remaining steps are:
         # - In User Profile Service:
         #    - Create a synchronization connection that uses the authentication type "Trusted Claims Provider Authentication"
@@ -1412,22 +1428,6 @@ configuration ConfigureSPVM
             }
             DependsOn            = "[SPTrustedIdentityTokenIssuer]CreateSPTrust", "[SPSite]CreateRootSite", "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
             PsDscRunAsCredential = $DomainAdminCredsQualified
-        }
-
-        SPUserProfileSyncConnection ADImportConnection {
-            UserProfileService    = $UpaServiceName
-            Forest                = $DomainFQDN
-            Name                  = $DomainFQDN
-            ConnectionCredentials = $SPADDirSyncCredsQualified
-            Server                = $DomainLDAPPath
-            UseSSL                = $true
-            Port                  = 636
-            IncludedOUs           = @("CN=Users,$DomainLDAPPath", $AdditionalUsersPath)
-            Force                 = $false
-            ConnectionType        = "ActiveDirectory"
-            UseDisabledFilter     = $true
-            PsDscRunAsCredential  = $SPSetupCredsQualified
-            DependsOn             = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
 
         SPSecurityTokenServiceConfig ConfigureSTS {
