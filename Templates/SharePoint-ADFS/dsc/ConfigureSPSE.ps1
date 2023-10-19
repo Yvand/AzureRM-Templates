@@ -1347,7 +1347,12 @@ configuration ConfigureSPVM
             DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
 
-        # This must be run after the User Profile service was created, otherwise it will throw an error
+        # Configure the SPTrustedBackedByUPAClaimProvider as much as possible. The remaining steps are:
+        # - In User Profile Service:
+        #    - Create a synchronization connection that uses the authentication type "Trusted Claims Provider Authentication"
+        #    - Edit profile property "Claim User Identifier" to remove default mapping, and readd one that uses the LDAP attribute "userPrincipalName"
+        # - In the trust: Associate the claims provider: $trust = Get-SPTrustedIdentityTokenIssuer "contoso.local"; $trust.ClaimProviderName = "contoso.local"; $trust.Update()
+        # This must be run after the User Profile service was created
         Script ConfigureUPAClaimProvider
         {
             SetScript = 
@@ -1355,42 +1360,53 @@ configuration ConfigureSPVM
                 # Gets the trust
                 $spTrustName = $using:DomainFQDN
                 $spSiteUrl = "http://$($using:SharePointSitesAuthority)/"
-                $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
+                
+                try {
+                    Write-Host "Start configuration for ConfigureUPAClaimProvider using spTrustName '$spTrustName' and spSiteUrl '$spSiteUrl'"
+                    $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
+                    if ($null -eq $trust) {
+                        Write-Host "Could not get the trust $spTrustName, give up"
+                        return;
+                    }
 
-                $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
-                if ($null -eq $trust) {
-                    Write-Host "Could not get the trust $spTrustName, give up"
-                    return;
+                    # Creates the claims provider if it does not already exist
+                    $claimsProvider = Get-SPClaimProvider -Identity $spTrustName -ErrorAction SilentlyContinue
+                    if ($null -eq $claimsProvider) {
+                        $claimsProviderName = "UPA Claim Provider"
+                        $claimsProvider = New-SPClaimProvider -AssemblyName "Microsoft.SharePoint, Version=16.0.0.0, Culture=neutral, publicKeyToken=71e9bce111e9429c" -Default:$false `
+                            -DisplayName $claimsProviderName -Description $claimsProviderName -Type "Microsoft.SharePoint.Administration.Claims.SPTrustedBackedByUPAClaimProvider" `
+                            -TrustedTokenIssuer $trust
+                    }
+
+                    # Running this set below would set SPTrustedBackedByUPAClaimProvider as the active claims provider for this trust
+                    # But it wouldn't work since properties "SPS-ClaimProviderID" and "SPS-ClaimProviderType" of trusted profiles are not set
+                    # Set-SPTrustedIdentityTokenIssuer $trust -ClaimProvider $claimsProvider -IsOpenIDConnect
+
+                    # Sets the property IsPeoplePickerSearchable on specific profile properties
+                    $site = $(Get-SPWebApplication $spSiteUrl).Sites[0] 
+                    $context= Get-SPServiceContext $site
+                    $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
+                    $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
+                    $properties = $ps.Properties
+
+                    $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
+                    foreach ($propertyName in $PropertyNames) { 
+                        $property = $properties.GetPropertyByName($propertyName) 
+                        if ($property) {
+                            $property.CoreProperty.IsPeoplePickerSearchable = $true 
+                            # Somehow this may throw this error: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property."
+                            $property.CoreProperty.Commit()
+                            Write-Host "Updated property $($property.Name) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
+                        } 
+                    }
+                    Write-Host "Finished configuration for ConfigureUPAClaimProvider"
                 }
-
-                # Creates the claims provider if it does not already exist
-                $claimsProvider = Get-SPClaimProvider -Identity $spTrustName -ErrorAction SilentlyContinue
-                if ($null -eq $claimsProvider) {
-                    # -ne Remove-SPClaimProvider -Identity $claimsProvider
-                    $claimsProviderName = "UPA Claim Provider"
-                    $claimsProvider = New-SPClaimProvider -AssemblyName "Microsoft.SharePoint, Version=16.0.0.0, Culture=neutral, publicKeyToken=71e9bce111e9429c" -Default:$false `
-                        -DisplayName $claimsProviderName -Description $claimsProviderName -Type "Microsoft.SharePoint.Administration.Claims.SPTrustedBackedByUPAClaimProvider" `
-                        -TrustedTokenIssuer $trust
+                catch [System.Exception] {
+                    Write-Host "Unexpected error in ConfigureUPAClaimProvider: $_"
                 }
-
-                # Running this set below would replace LDAPCP as the active claim provider for this trust
-                # Set-SPTrustedIdentityTokenIssuer $trust -ClaimProvider $claimsProvider -IsOpenIDConnect
-
-                # Sets the property IsPeoplePickerSearchable on specific profile properties
-                $site = $(Get-SPWebApplication $spSiteUrl).Sites[0] 
-                $context= Get-SPServiceContext $site
-                $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
-                $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
-                $properties = $ps.Properties
-
-                $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
-                foreach ($p in $PropertyNames) { 
-                    $property = $properties.GetPropertyByName($p) 
-                    if ($property) {
-                        $property.CoreProperty.IsPeoplePickerSearchable = $true 
-                        $property.CoreProperty.Commit() 
-                        Write-Host "Updated property $($property.Name) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
-                    } 
+                catch {
+                    # It may typically be a System.Management.Automation.ErrorRecord, which does not inherit System.Exception
+                    Write-Host "Unexpected error in ConfigureUPAClaimProvider"
                 }
             }
             GetScript =  
