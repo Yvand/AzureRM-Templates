@@ -616,7 +616,7 @@
                         MSFT_AdfsLdapMapping
                         {
                             LdapAttribute     = 'tokenGroups(longDomainQualifiedName)'
-                            OutgoingClaimType = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+                            OutgoingClaimType = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/groupsid'
                         }
                     )
                 }
