@@ -1752,6 +1752,7 @@ configuration ConfigureSPVM
                             $property.CoreProperty.IsPeoplePickerSearchable = $true 
                             # Somehow this may throw this error: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property."
                             $property.CoreProperty.Commit()
+                            $property.Commit()
                             Write-Host "Updated property $($property.Name) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
                         } 
                     }
