@@ -1744,27 +1744,28 @@ configuration ConfigureSPVM
                 $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
                 $properties = $ps.Properties
 
-                try {
+                # try {
                     $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
                     foreach ($propertyName in $PropertyNames) { 
                         $property = $properties.GetPropertyByName($propertyName)
                         if ($property) {
+                            $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
                             $property.CoreProperty.IsPeoplePickerSearchable = $true 
                             # Somehow this may throw this error: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property."
                             $property.CoreProperty.Commit()
-                            $property.Commit()
+                            # $property.Commit()
                             Write-Host "Updated property $($property.Name) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
-                        } 
+                        }
                     }
                     Write-Host "Finished configuration for ConfigureUPAClaimProvider"
-                }
-                catch [System.Exception] {
-                    Write-Host "Unexpected error in ConfigureUPAClaimProvider: $_"
-                }
-                catch {
-                    # It may typically be a System.Management.Automation.ErrorRecord, which does not inherit System.Exception
-                    Write-Host "Unexpected error in ConfigureUPAClaimProvider"
-                }
+                # }
+                # catch [System.Exception] {
+                #     Write-Host "Unexpected error in ConfigureUPAClaimProvider: $_"
+                # }
+                # catch {
+                #     # It may typically be a System.Management.Automation.ErrorRecord, which does not inherit System.Exception
+                #     Write-Host "Unexpected error in ConfigureUPAClaimProvider"
+                # }
             }
             GetScript            =  
             {
