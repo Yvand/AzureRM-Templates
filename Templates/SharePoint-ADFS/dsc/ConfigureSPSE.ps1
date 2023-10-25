@@ -1626,8 +1626,8 @@ configuration ConfigureSPVM
 
                     try {
                         $site = Get-SPSite -Identity $uri -ErrorAction SilentlyContinue
-                        $ctx = Get-SPServiceContext $site -ErrorAction SilentlyContinue
-                        $upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($ctx)
+                        $context = Get-SPServiceContext $site -ErrorAction SilentlyContinue
+                        $upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($context)
                         Write-Host "Got UserProfileManager"
                     }
                     catch {
@@ -1692,6 +1692,18 @@ configuration ConfigureSPVM
                             Write-Host "Personal site for '$($account.AccountName)' already exists, nothing to do"
                         }
                     }
+
+                    $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
+                    $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
+                    $properties = $ps.Properties
+                    $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
+                    foreach ($propertyName in $PropertyNames) { 
+                        $property = $properties.GetPropertyByName($propertyName)
+                        if ($property) {
+                            Write-Host "Checking property $($propertyName)"
+                            $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
+                        }
+                    }
                 }
                 $uri = "http://$($using:SharePointSitesAuthority)/"
                 $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"
@@ -1739,8 +1751,8 @@ configuration ConfigureSPVM
                 # Set-SPTrustedIdentityTokenIssuer $trust -ClaimProvider $claimsProvider -IsOpenIDConnect
 
                 # Sets the property IsPeoplePickerSearchable on specific profile properties
-                $site = $(Get-SPWebApplication $spSiteUrl).Sites[0] 
-                $context = Get-SPServiceContext $site
+                $site = Get-SPSite -Identity $spSiteUrl -ErrorAction SilentlyContinue
+                $context = Get-SPServiceContext $site -ErrorAction SilentlyContinue
                 $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
                 $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
                 $properties = $ps.Properties
