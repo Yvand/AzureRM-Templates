@@ -1713,11 +1713,12 @@ configuration ConfigureSPVM
         Script ConfigureUPAClaimProvider {
             SetScript            = 
             {
-                # Gets the trust
+                Write-Host "Start configuration for ConfigureUPAClaimProvider"
                 $spTrustName = $using:DomainFQDN
                 $spSiteUrl = "http://$($using:SharePointSitesAuthority)/"
+                Write-Host "Start configuration for ConfigureUPAClaimProvider using spTrustName '$($spTrustName)' and spSiteUrl '$($spSiteUrl)'"
                 
-                Write-Host "Start configuration for ConfigureUPAClaimProvider using spTrustName '$spTrustName' and spSiteUrl '$spSiteUrl'"
+                # Gets the trust
                 $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
                 if ($null -eq $trust) {
                     Write-Host "Could not get the trust $spTrustName, give up"
@@ -1749,31 +1750,15 @@ configuration ConfigureSPVM
                 foreach ($propertyName in $PropertyNames) { 
                     $property = $properties.GetPropertyByName($propertyName)
                     if ($property) {
-                        $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
-                        # $property.CoreProperty.IsPeoplePickerSearchable = $true 
-                        # # Somehow this may throw this error: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property."
-                        # $property.CoreProperty.Commit()
-                        # # $property.Commit()
-                        # Write-Output "Updated property $($property.Name) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
-                    }
-                }
-
-                $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
-                $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
-                $properties = $ps.Properties
-                $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
-                foreach ($propertyName in $PropertyNames) { 
-                    $property = $properties.GetPropertyByName($propertyName)
-                    if ($property) {
-                        Write-Output "Updating property $($property.Name)"
+                        Write-Host "Updating property $($propertyName)"
                         $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
                         $property.CoreProperty.IsPeoplePickerSearchable = $true 
                         # Somehow this may throw this error: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property."
                         $property.CoreProperty.Commit()
-                        Write-Output "Updated property $($property.Name) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
+                        Write-Host "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
                     }
                 }
-                Write-Output "Finished configuration for ConfigureUPAClaimProvider"
+                Write-Host "Finished configuration for ConfigureUPAClaimProvider"
                 # }
                 # catch [System.Exception] {
                 #     Write-Host "Unexpected error in ConfigureUPAClaimProvider: $_"
