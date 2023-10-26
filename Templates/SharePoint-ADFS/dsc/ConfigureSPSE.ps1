@@ -1693,25 +1693,25 @@ configuration ConfigureSPVM
                         }
                     }
 
-                    # $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
-                    # $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
-                    # $properties = $ps.Properties
-                    # $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
-                    # foreach ($propertyName in $PropertyNames) { 
-                    #     $property = $properties.GetPropertyByName($propertyName)
-                    #     if ($property) {
-                    #         Write-Host "Checking property $($propertyName)"
-                    #         $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
-                    #         $m_DisplayNamesValue = $property.CoreProperty.GetType().GetField("m_DisplayNames", [System.Reflection.BindingFlags]"NonPublic, Instance").GetValue($property.CoreProperty)
-                    #         if ($m_DisplayNamesValue) {
-                    #             Write-Host "Property $($propertyName) has m_DisplayNamesValue $($m_DisplayNamesValue.DefaultLanguage)"
-                    #         }
-                    #         $property.CoreProperty.IsPeoplePickerSearchable = $true
-                    #         # Somehow this may throw this error: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property."
-                    #         $property.CoreProperty.Commit()
-                    #         Write-Host "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
-                    #     }
-                    # }
+                    $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
+                    $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
+                    $properties = $ps.Properties
+                    $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
+                    foreach ($propertyName in $PropertyNames) { 
+                        $property = $properties.GetPropertyByName($propertyName)
+                        if ($property) {
+                            Write-Host "Checking property $($propertyName)"
+                            $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
+                            $m_DisplayNamesValue = $property.CoreProperty.GetType().GetField("m_DisplayNames", [System.Reflection.BindingFlags]"NonPublic, Instance").GetValue($property.CoreProperty)
+                            if ($m_DisplayNamesValue) {
+                                Write-Host "Property $($propertyName) has m_DisplayNamesValue $($m_DisplayNamesValue.DefaultLanguage)"
+                            }
+                            $property.CoreProperty.IsPeoplePickerSearchable = $true
+                            # Somehow this may throw this error: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property."
+                            $property.CoreProperty.Commit()
+                            Write-Host "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
+                        }
+                    }
                 }
                 $uri = "http://$($using:SharePointSitesAuthority)/"
                 $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"
@@ -1761,8 +1761,6 @@ configuration ConfigureSPVM
                 # Sets the property IsPeoplePickerSearchable on specific profile properties
                 $site = Get-SPSite -Identity $spSiteUrl -ErrorAction SilentlyContinue
                 $context = Get-SPServiceContext $site -ErrorAction SilentlyContinue
-                $upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($context)
-                $userProfile = $upm.GetUserProfile("i:0#.w|$($using:DomainNetbiosName)\$($env:UserName)")
                 $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
                 $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
                 $properties = $ps.Properties
