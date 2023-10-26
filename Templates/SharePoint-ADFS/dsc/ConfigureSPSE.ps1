@@ -1696,6 +1696,8 @@ configuration ConfigureSPVM
                     $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
                     $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
                     $properties = $ps.Properties
+                    $properties.Count # will call LoadProperties()
+                    #$properties.GetType().GetMethod("LoadProperties", [System.Reflection.BindingFlags]"NonPublic, Instance").Invoke($properties, $null);
                     $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
                     foreach ($propertyName in $PropertyNames) { 
                         $property = $properties.GetPropertyByName($propertyName)
@@ -1704,7 +1706,7 @@ configuration ConfigureSPVM
                             $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
                             $m_DisplayNamesValue = $property.CoreProperty.GetType().GetField("m_DisplayNames", [System.Reflection.BindingFlags]"NonPublic, Instance").GetValue($property.CoreProperty)
                             if ($m_DisplayNamesValue) {
-                                Write-Host "Property $($propertyName) has m_DisplayNamesValue $($m_DisplayNamesValue.DefaultLanguage)"
+                                Write-Host "Property $($propertyName) has m_DisplayNamesValue.DefaultLanguage $($m_DisplayNamesValue.DefaultLanguage) and m_DisplayNamesValue.Count $($m_DisplayNamesValue.Count)"
                             }
                             $property.CoreProperty.IsPeoplePickerSearchable = $true
                             # Somehow this may throw this error: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property."
@@ -1764,6 +1766,8 @@ configuration ConfigureSPVM
                 $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
                 $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
                 $properties = $ps.Properties
+                $properties.Count # will call LoadProperties()
+                #$properties.GetType().GetMethod("LoadProperties", [System.Reflection.BindingFlags]"NonPublic, Instance").Invoke($properties, $null);
 
                 # try {
                 $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
@@ -1774,7 +1778,7 @@ configuration ConfigureSPVM
                         $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
                         $m_DisplayNamesValue = $property.CoreProperty.GetType().GetField("m_DisplayNames", [System.Reflection.BindingFlags]"NonPublic, Instance").GetValue($property.CoreProperty)
                         if ($m_DisplayNamesValue) {
-                            Write-Host "Property $($propertyName) has m_DisplayNamesValue $($m_DisplayNamesValue.DefaultLanguage)"
+                            Write-Host "Property $($propertyName) has m_DisplayNamesValue.DefaultLanguage $($m_DisplayNamesValue.DefaultLanguage) and m_DisplayNamesValue.Count $($m_DisplayNamesValue.Count)"
                             $property.CoreProperty.IsPeoplePickerSearchable = $true 
                             # Somehow this may throw this error: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property."
                             $property.CoreProperty.Commit()
