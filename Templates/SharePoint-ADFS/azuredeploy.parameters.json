@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "sharePointVersion": { "value": "Subscription-Latest" },
+    "sharePointVersion": { "value": "Subscription-RTM" },
     // "sharePointVersion": { "value": "2019" },
     "domainFQDN": { "value": "contoso.local" },
     "adminUserName": { "value": "yvand" },
@@ -13,11 +13,11 @@
     "addPublicIPAddress": { "value": "SharePointVMsOnly" },
     // "addPublicIPAddress": { "value": "No" },
     "RDPTrafficAllowed": { "value": "10.20.30.40" },
-    "numberOfAdditionalFrontEnd": { "value": 1 },
+    "numberOfAdditionalFrontEnd": { "value": 0 },
     "enableHybridBenefitServerLicenses": { "value": true },
     "enableAutomaticUpdates": { "value": true },
     "sharePointDataDiskSize": { "value": 0 },
-    "addAzureBastion": { "value": true },
+    "addAzureBastion": { "value": false },
     "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" }
   }
 }

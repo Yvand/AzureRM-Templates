@@ -81,7 +81,7 @@ The following parameters configure how to connect to the virtual machines, and t
   - The DNS name format of virtual machines is `"[resourceGroupName]-[vm_name].[region].cloudapp.azure.com"` and is recorded as output in the state file.
 - parameter `RDPTrafficAllowed` specifies if RDP traffic is allowed:
   - If `"No"` (default): Firewall denies all incoming RDP traffic.
-  - If `"*"` or `"Internet"`: Firewall accepts all incoming RDP traffic from Internet.
+  - If `"*"` or `"Internet"`: Firewall accepts all incoming RDP traffic from Internet (very, very much not recommended).
   - If CIDR notation (e.g. `"192.168.99.0/24"` or `"2001:1234::/64"`) or IP address (e.g. `"192.168.99.0"` or `"2001:1234::"`): Firewall accepts incoming RDP traffic from the IP addresses specified.
 - parameter `addAzureBastion`:
   - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) to allow a secure remote access to virtual machines.
