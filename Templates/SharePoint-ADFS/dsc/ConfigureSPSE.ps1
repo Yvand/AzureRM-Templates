@@ -1693,6 +1693,12 @@ configuration ConfigureSPVM
                         }
                     }
 
+                    # LanguageSynchronizationJob must be executed before updating profile properties, to ensure their property DisplayNameLocalized is set with a localized value
+                    # This is populated in SQL table [SPDSC_UPA_Profiles].[upa].[PropertyListLoc]
+                    # If this value is not set, $property.CoreProperty.Commit() will throw: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property." 
+                    $job = Get-SPTimerJob -Type "Microsoft.Office.Server.Administration.UserProfileApplication+LanguageSynchronizationJob"
+                    $job.Execute()
+
                     $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
                     $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
                     $properties = $ps.Properties
