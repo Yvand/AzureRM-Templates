@@ -1329,11 +1329,11 @@ configuration ConfigureSPVM
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
         }
 
-        # Grant spsvc full control to UPA to allow newsfeeds to work properly
         SPServiceAppSecurity SetUserProfileServiceSecurity {
             ServiceAppName       = $UpaServiceName
             SecurityType         = "SharingPermissions"
             MembersToInclude     = @(
+                # Grant spsvc full control to UPA to allow newsfeeds to work properly
                 MSFT_SPServiceAppSecurityEntry {
                     Username     = $SPSvcCredsQualified.UserName
                     AccessLevels = @("Full Control")
@@ -1352,22 +1352,19 @@ configuration ConfigureSPVM
         # - In User Profile Service:
         #    - Create a synchronization connection that uses the authentication type "Trusted Claims Provider Authentication"
         #    - Edit profile property "Claim User Identifier" to remove default mapping, and readd one that uses the LDAP attribute "userPrincipalName"
-        # - In the trust: Associate the claims provider: $trust = Get-SPTrustedIdentityTokenIssuer "contoso.local"; $trust.ClaimProviderName = "contoso.local"; $trust.Update()
-        # This must be run after the User Profile service was created
+        # - In the trust: Associate the claims provider: $trust = Get-SPTrustedIdentityTokenIssuer "contoso.local"; $trust.ClaimProviderName = "contoso.local"; $trust.Update();
         Script ConfigureUPAClaimProvider {
             SetScript            = 
             {
-                Write-Host "Start configuration for ConfigureUPAClaimProvider"
                 $spTrustName = $using:DomainFQDN
                 $spSiteUrl = "http://$($using:SharePointSitesAuthority)/"
+                Write-Host "Start configuration for ConfigureUPAClaimProvider using spTrustName '$($spTrustName)' and spSiteUrl '$($spSiteUrl)'"                
 
                 # LanguageSynchronizationJob must be executed before updating profile properties, to ensure their property DisplayNameLocalized is set with a localized value
-                # This is populated in SQL table [SPDSC_UPA_Profiles].[upa].[PropertyListLoc]
-                # If this value is not set, $property.CoreProperty.Commit() will throw: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property." 
+                # LanguageSynchronizationJob basically populates SQL table [SPDSC_UPA_Profiles].[upa].[PropertyListLoc]
+                # If this job is not run, $property.CoreProperty.Commit() will throw: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property." 
                 $job = Get-SPTimerJob -Type "Microsoft.Office.Server.Administration.UserProfileApplication+LanguageSynchronizationJob"
                 $job.Execute()
-                
-                Write-Host "Start configuration for ConfigureUPAClaimProvider using spTrustName '$($spTrustName)' and spSiteUrl '$($spSiteUrl)'"
                 
                 # Gets the trust
                 $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
@@ -1395,32 +1392,23 @@ configuration ConfigureSPVM
                 $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
                 $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
                 $properties = $ps.Properties
-                $properties.Count # will call LoadProperties()
+                # $properties.Count # will call LoadProperties()
                 #$properties.GetType().GetMethod("LoadProperties", [System.Reflection.BindingFlags]"NonPublic, Instance").Invoke($properties, $null);
 
-                # try {
                 $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
                 foreach ($propertyName in $PropertyNames) { 
                     $property = $properties.GetPropertyByName($propertyName)
                     if ($property) {
                         Write-Host "Updating property $($propertyName)"
-                        $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
-                        $m_DisplayNamesValue = $property.CoreProperty.GetType().GetField("m_DisplayNames", [System.Reflection.BindingFlags]"NonPublic, Instance").GetValue($property.CoreProperty)
-                        Write-Host "Property $($propertyName) has m_DisplayNamesValue.DefaultLanguage $($m_DisplayNamesValue.DefaultLanguage) and m_DisplayNamesValue.Count $($m_DisplayNamesValue.Count)"
+                        # $property.CoreProperty.DisplayNameLocalized
+                        # $m_DisplayNamesValue = $property.CoreProperty.GetType().GetField("m_DisplayNames", [System.Reflection.BindingFlags]"NonPublic, Instance").GetValue($property.CoreProperty)
+                        # Write-Host "Property $($propertyName) has m_DisplayNamesValue.DefaultLanguage $($m_DisplayNamesValue.DefaultLanguage) and m_DisplayNamesValue.Count $($m_DisplayNamesValue.Count)"
                         $property.CoreProperty.IsPeoplePickerSearchable = $true 
                         $property.CoreProperty.Commit()
                         Write-Host "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
                     }
                 }
                 Write-Host "Finished configuration for ConfigureUPAClaimProvider"
-                # }
-                # catch [System.Exception] {
-                #     Write-Host "Unexpected error in ConfigureUPAClaimProvider: $_"
-                # }
-                # catch {
-                #     # It may typically be a System.Management.Automation.ErrorRecord, which does not inherit System.Exception
-                #     Write-Host "Unexpected error in ConfigureUPAClaimProvider"
-                # }
             }
             GetScript            =  
             {
