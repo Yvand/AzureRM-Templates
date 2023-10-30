@@ -1392,17 +1392,12 @@ configuration ConfigureSPVM
                 $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
                 $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
                 $properties = $ps.Properties
-                # $properties.Count # will call LoadProperties()
-                #$properties.GetType().GetMethod("LoadProperties", [System.Reflection.BindingFlags]"NonPublic, Instance").Invoke($properties, $null);
 
-                $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
-                foreach ($propertyName in $PropertyNames) { 
+                $propertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
+                foreach ($propertyName in $propertyNames) { 
                     $property = $properties.GetPropertyByName($propertyName)
                     if ($property) {
                         Write-Host "Updating property $($propertyName)"
-                        # $property.CoreProperty.DisplayNameLocalized
-                        # $m_DisplayNamesValue = $property.CoreProperty.GetType().GetField("m_DisplayNames", [System.Reflection.BindingFlags]"NonPublic, Instance").GetValue($property.CoreProperty)
-                        # Write-Host "Property $($propertyName) has m_DisplayNamesValue.DefaultLanguage $($m_DisplayNamesValue.DefaultLanguage) and m_DisplayNamesValue.Count $($m_DisplayNamesValue.Count)"
                         $property.CoreProperty.IsPeoplePickerSearchable = $true 
                         $property.CoreProperty.Commit()
                         Write-Host "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
