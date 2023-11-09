@@ -1049,7 +1049,7 @@ configuration ConfigureSPVM
                 }
                 MSFT_SPClaimTypeMapping {
                     Name              = "group"
-                    IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/groupsid"
+                    IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 }
             )
             SigningCertificateFilePath = "$SetupPath\Certificates\ADFS Signing.cer"
@@ -1090,18 +1090,10 @@ configuration ConfigureSPVM
                 $config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname")
                 $config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/primarygroupsid")
                 $config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")
-
-                # Configure group claim type
-                $newCTConfig = New-Object ldapcp.ClaimTypeConfig
-                $newCTConfig.ClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/groupsid"
-                $newCTConfig.EntityType = [ldapcp.DirectoryObjectType]::Group
-                $newCTConfig.LDAPClass = "group"
-                $newCTConfig.LDAPAttribute = "sAMAccountName"
-                $config.ClaimTypes.Add($newCTConfig)
                 
                 # Configure augmentation
                 $config.EnableAugmentation = $true
-                $config.MainGroupClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/groupsid"
+                $config.MainGroupClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 foreach ($connection in $config.LDAPConnectionsProp) {
                     $connection.EnableAugmentation = $true
                 }
