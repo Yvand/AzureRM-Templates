@@ -1,5 +1,13 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+### Changed
+
+- Configuration for SPSE
+  - Add claim type groupsid to make the switch to SPTrustedBackedByUPAClaimProvider easier. There are remaining steps needed to finalize its configuration
+  - Set registry keys to configure OneDrive NGSC for OIDC authentication
+
 ## Enhancements & bug-fixes - Published in November 16, 2023
 
 ### Changed
