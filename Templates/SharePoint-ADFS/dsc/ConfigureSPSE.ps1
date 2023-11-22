@@ -1051,6 +1051,10 @@ configuration ConfigureSPVM
                     Name              = "group"
                     IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 }
+                MSFT_SPClaimTypeMapping {
+                    Name              = "groupsid"
+                    IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/groupsid"
+                }
             )
             SigningCertificateFilePath = "$SetupPath\Certificates\ADFS Signing.cer"
             ClaimProviderName          = "LDAPCP"
