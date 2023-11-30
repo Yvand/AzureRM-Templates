@@ -872,16 +872,16 @@ configuration ConfigureSPVM
         }
 
         # Distributed Cache is now enabled directly by the SPFarm resource
-        SPDistributedCacheService EnableDistributedCache
-        {
-            Name                 = "AppFabricCachingService"
-            CacheSizeInMB        = 1000 # Default size is 819MB on a server with 16GB of RAM (5%)
-            CreateFirewallRules  = $true
-            ServiceAccount       = $SPFarmCredsQualified.UserName
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            Ensure               = "Present"
-            DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
-        }
+        # SPDistributedCacheService EnableDistributedCache
+        # {
+        #     Name                 = "AppFabricCachingService"
+        #     CacheSizeInMB        = 1000 # Default size is 819MB on a server with 16GB of RAM (5%)
+        #     CreateFirewallRules  = $true
+        #     ServiceAccount       = $SPFarmCredsQualified.UserName
+        #     PsDscRunAsCredential       = $SPSetupCredsQualified
+        #     Ensure               = "Present"
+        #     DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
+        # }
 
         #**********************************************************
         # Service instances are started at the beginning of the deployment to give some time between this and creation of service applications
