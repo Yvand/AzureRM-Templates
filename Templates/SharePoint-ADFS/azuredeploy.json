@@ -423,12 +423,13 @@
       ]
     },
     "networkSettings": {
+      "OutboundInternetAccessMethod": "AzureFirewallProxy",
       "vNetPrivatePrefix": "10.1.0.0/16",
       "subnetDCPrefix": "10.1.1.0/24",
       "dcPrivateIPAddress": "10.1.1.4",
       "subnetSQLPrefix": "10.1.2.0/24",
       "subnetSPPrefix": "10.1.3.0/24",
-      "vNetPrivateName": "[concat(variables('resourceGroupNameFormatted'), '-vnet')]",
+      "virtualNetworkName": "[concat(variables('resourceGroupNameFormatted'), '-vnet')]",
       "subnetDCName": "Subnet-DC",
       "subnetSQLName": "Subnet-SQL",
       "subnetSPName": "Subnet-SP",
@@ -552,9 +553,9 @@
       }
     },
     {
-      "name": "[variables('networkSettings').vNetPrivateName]",
+      "name": "[variables('networkSettings').virtualNetworkName]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2022-07-01",
+      "apiVersion": "2023-06-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetDCName)]",
@@ -592,7 +593,8 @@
               "addressPrefix": "[variables('networkSettings').subnetSPPrefix]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSubnetSPName)]"
-              }
+              },
+              "defaultOutboundAccess": false
             }
           }
         ]
@@ -602,7 +604,7 @@
       "condition": "[equals(parameters('addPublicIPAddress'), 'Yes')]",
       "name": "[variables('vmsResourcesNames').vmDCPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2022-07-01",
+      "apiVersion": "2023-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Basic",
@@ -621,7 +623,7 @@
       "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').virtualNetworkName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmDCPublicIPName)]"
       ],
       "properties": {
@@ -632,7 +634,7 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[variables('networkSettings').dcPrivateIPAddress]",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetDCName)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, variables('networkSettings').subnetDCName)]"
               },
               "publicIPAddress": "[if(equals(parameters('addPublicIPAddress'), 'Yes'), variables('networkSettings').vmDCPublicIPNicAssociation, json('null'))]"
             }
@@ -747,7 +749,7 @@
       "condition": "[equals(parameters('addPublicIPAddress'), 'Yes')]",
       "name": "[variables('vmsResourcesNames').vmSQLPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2022-07-01",
+      "apiVersion": "2023-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Basic",
@@ -766,7 +768,7 @@
       "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').virtualNetworkName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmSQLPublicIPName)]"
       ],
       "properties": {
@@ -776,7 +778,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSQLName)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, variables('networkSettings').subnetSQLName)]"
               },
               "publicIPAddress": "[if(equals(parameters('addPublicIPAddress'), 'Yes'), variables('networkSettings').vmSQLPublicIPNicAssociation, json('null'))]"
             }
@@ -843,7 +845,7 @@
       "condition": "[or(equals(parameters('addPublicIPAddress'), 'Yes'), equals(parameters('addPublicIPAddress'), 'SharePointVMsOnly'))]",
       "name": "[variables('vmsResourcesNames').vmSPPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2022-07-01",
+      "apiVersion": "2023-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Basic",
@@ -862,7 +864,7 @@
       "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').virtualNetworkName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmsResourcesNames').vmSPPublicIPName)]"
       ],
       "properties": {
@@ -872,9 +874,9 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, variables('networkSettings').subnetSPName)]"
               },
-              "publicIPAddress": "[if(or(equals(parameters('addPublicIPAddress'), 'Yes'), equals(parameters('addPublicIPAddress'), 'SharePointVMsOnly')), variables('networkSettings').vmSPPublicIPNicAssociation, json('null'))]"
+              "publicIPAddress": "[if(or(equals(parameters('addPublicIPAddress'), 'XXXYes'), equals(parameters('addPublicIPAddress'), 'XXXSharePointVMsOnly')), variables('networkSettings').vmSPPublicIPNicAssociation, json('null'))]"
             }
           }
         ]
@@ -1082,7 +1084,7 @@
       "condition": "[and(greaterOrEquals(parameters('numberOfAdditionalFrontEnd'), 1), or(equals(parameters('addPublicIPAddress'), 'Yes'), equals(parameters('addPublicIPAddress'), 'SharePointVMsOnly')))]",
       "name": "[concat(variables('vmsResourcesNames').vmFEPublicIPName, '-', copyIndex())]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2022-07-01",
+      "apiVersion": "2023-06-01",
       "location": "[parameters('location')]",
       "copy": {
         "name": "frontendPublicIPAddresses",
@@ -1106,7 +1108,7 @@
       "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').virtualNetworkName)]",
         "frontendPublicIPAddresses"
       ],
       "copy": {
@@ -1120,7 +1122,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, variables('networkSettings').subnetSPName)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, variables('networkSettings').subnetSPName)]"
               },
               "publicIPAddress": "[if(or(equals(parameters('addPublicIPAddress'), 'Yes'), equals(parameters('addPublicIPAddress'), 'SharePointVMsOnly')), json(concat('{\"id\": \"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmsResourcesNames').vmFEPublicIPName, '-', copyIndex())), '\" }')), json('null'))]"
             }
@@ -1501,12 +1503,12 @@
     },
     {
       "condition": "[equals(parameters('addAzureBastion'), true())]",
-      "name": "[concat(variables('networkSettings').vNetPrivateName, '/', 'AzureBastionSubnet')]",
+      "name": "[concat(variables('networkSettings').virtualNetworkName, '/', 'AzureBastionSubnet')]",
       "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2022-07-01",
+      "apiVersion": "2023-05-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').virtualNetworkName)]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', 'NSG-Subnet-AzureBastion')]"
       ],
       "properties": {
@@ -1520,7 +1522,7 @@
       "condition": "[equals(parameters('addAzureBastion'), true())]",
       "name": "PublicIP-Bastion",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2022-07-01",
+      "apiVersion": "2023-06-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard",
@@ -1537,11 +1539,11 @@
       "condition": "[equals(parameters('addAzureBastion'), true())]",
       "name": "Bastion",
       "type": "Microsoft.Network/bastionHosts",
-      "location": "[parameters('location')]",
       "apiVersion": "2022-07-01",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', 'PublicIP-Bastion')]",
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, 'AzureBastionSubnet')]"
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, 'AzureBastionSubnet')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -1553,9 +1555,133 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'PublicIP-Bastion')]"
               },
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').vNetPrivateName, 'AzureBastionSubnet')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, 'AzureBastionSubnet')]"
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[equals(variables('networkSettings').OutboundInternetAccessMethod, 'AzureFirewallProxy')]",
+      "name": "[concat(variables('networkSettings').virtualNetworkName, '/', 'AzureFirewallSubnet')]",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2023-05-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').virtualNetworkName)]"
+      ],
+      "properties": {
+        "addressPrefix": "10.1.5.0/24",
+        "defaultOutboundAccess": false
+      }
+    },
+    {
+      "condition": "[equals(variables('networkSettings').OutboundInternetAccessMethod, 'AzureFirewallProxy')]",
+      "name": "PublicIP-azfirewall",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-06-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[toLower(replace(concat(variables('resourceGroupNameFormatted'), '-', 'azfirewall'), '_', '-'))]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(variables('networkSettings').OutboundInternetAccessMethod, 'AzureFirewallProxy')]",
+      "name": "Azure-Firewall-Proxy",
+      "type": "Microsoft.Network/azureFirewalls",
+      "apiVersion": "2023-06-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'PublicIP-azfirewall')]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, 'AzureFirewallSubnet')]",
+        "[resourceId('Microsoft.Network/firewallPolicies', 'Azure_Firewall_policy')]"
+      ],
+      "properties": {
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/firewallPolicies', 'Azure_Firewall_policy')]"
+        },
+        "ipConfigurations": [
+          {
+            "id": "firewallIpConfig",
+            "name": "firewallIpConfig",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'PublicIP-azfirewall')]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, 'AzureFirewallSubnet')]"
+              }
+            }
+          }
+        ],
+        "sku": {
+          "name": "AZFW_VNet",
+          "tier": "Standard"
+        }
+      }
+    },
+    {
+      "condition": "[equals(variables('networkSettings').OutboundInternetAccessMethod, 'AzureFirewallProxy')]",
+      "name": "Azure_Firewall_policy",
+      "type": "Microsoft.Network/firewallPolicies",
+      "apiVersion": "2023-06-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "explicitProxy": {
+          "enableExplicitProxy": true,
+          "enablePacFile": false,
+          "httpPort": 8080,
+          "httpsPort": 8443
+        }
+      }
+    },
+    {
+      "condition": "[equals(variables('networkSettings').OutboundInternetAccessMethod, 'AzureFirewallProxy')]",
+      "name": "Azure_Firewall_policy/proxy-rules-collection",
+      "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+      "apiVersion": "2023-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/firewallPolicies', 'Azure_Firewall_policy')]"
+      ],
+      "properties": {
+        "priority": 100,
+        "ruleCollections": [
+          {
+            "name": "proxy-rules",
+            "priority": 100,
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "action": {
+              "type": "Allow"
+            },
+            "rules": [
+              {
+                "name": "proxy-allow-all-outbound",
+                "ruleType": "ApplicationRule",
+                "destinationAddresses": [ "*" ],
+                "fqdnTags": [ "string" ],
+                "protocols": [
+                  {
+                    "port": 443,
+                    "protocolType": "Https"
+                  },
+                  {
+                    "port": 80,
+                    "protocolType": "Http"
+                  }
+                ],
+                "sourceAddresses": [ "*" ],
+                "targetFqdns": [ "*" ],
+                "terminateTLS": false
+              }
+            ]
           }
         ]
       }
