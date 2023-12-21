@@ -1727,15 +1727,15 @@
             [string]$localDomainFqdn = 'contoso.local'
           )
           $proxy = 'http={0}:{1};https={0}:{2}' -f $proxyIp, $proxyHttpPort, $proxyHttpsPort
+          $bypasslist = '*.{0};<local>' -f $localDomainFqdn
 
           # Set WinHTTP proxy
-          netsh winhttp set proxy proxy-server=$proxy bypass-list='*.contoso.local;<local>'
+          netsh winhttp set proxy proxy-server=$proxy bypass-list=$bypasslist
 
           # Set WinINET proxy
           # Based on https://blog.workinghardinit.work/2020/03/06/configure-wininet-proxy-server-with-powershell/
           # Edit the variables below to fit your environment
           $proxyEnabled = 1
-          $bypasslist = '*.{0};<local>' -f $localDomainFqdn
 
           # Enable machine wide proxy settings (0: per-machine proxy / 1 (or not set): per-user)
           New-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\Internet Settings' -Name 'ProxySettingsPerUser' -PropertyType DWORD -Value 0 -Force
