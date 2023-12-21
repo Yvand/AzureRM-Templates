@@ -429,6 +429,8 @@
       "dcPrivateIPAddress": "10.1.1.4",
       "subnetSQLPrefix": "10.1.2.0/24",
       "subnetSPPrefix": "10.1.3.0/24",
+      "azFirewallAddressPrefix": "10.1.5.0/24",
+      "azFirewallPrivateIPAddress": "10.1.5.4",
       "virtualNetworkName": "[concat(variables('resourceGroupNameFormatted'), '-vnet')]",
       "subnetDCName": "Subnet-DC",
       "subnetSQLName": "Subnet-SQL",
@@ -1574,7 +1576,7 @@
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').virtualNetworkName)]"
       ],
       "properties": {
-        "addressPrefix": "10.1.5.0/24",
+        "addressPrefix": "[variables('networkSettings').azFirewallAddressPrefix]",
         "defaultOutboundAccess": false
       }
     },
@@ -1698,9 +1700,16 @@
         "[resourceId('Microsoft.Compute/virtualMachines', variables('vmsSettings').vmSPName)]"
       ],
       "properties": {
+        "parameters": [
+          {
+            "name": "proxyIp",
+            "value": "10.1.5.4"
+          }
+        ],
         "source": {
           "script": "
-          $proxyIp = '10.1.5.4'
+          param([string]$proxyIp)
+          #$proxyIp = '10.1.5.4'
           $proxy = 'http={0}:8080;https={0}:8443' -f $proxyIp
 
           # Set WinHTTP proxy
@@ -1730,7 +1739,7 @@
           Bitsadmin /util /setieproxy localsystem MANUAL_PROXY $proxy $bypasslist
           "
         },
-        "timeoutInSeconds": 600,
+        "timeoutInSeconds": 300,
         "treatFailureAsDeploymentFailure": true
       }
     }
