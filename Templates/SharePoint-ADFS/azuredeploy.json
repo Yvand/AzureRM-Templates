@@ -1703,14 +1703,30 @@
         "parameters": [
           {
             "name": "proxyIp",
-            "value": "10.1.5.4"
+            "value": "[variables('networkSettings').azFirewallPrivateIPAddress]"
+          },
+          {
+            "name": "proxyHttpPort",
+            "value": "8080"
+          },
+          {
+            "name": "proxyHttpsPort",
+            "value": "8443"
+          },
+          {
+            "name": "localDomainFqdn",
+            "value": "[parameters('domainFQDN')]"
           }
         ],
         "source": {
           "script": "
-          param([string]$proxyIp)
-          #$proxyIp = '10.1.5.4'
-          $proxy = 'http={0}:8080;https={0}:8443' -f $proxyIp
+          param(
+            [string]$proxyIp = '10.1.5.4',
+            [string]$proxyHttpPort = '8080',
+            [string]$proxyHttpsPort = '8443',
+            [string]$localDomainFqdn = 'contoso.local'
+          )
+          $proxy = 'http={0}:{1};https={0}:{2}' -f $proxyIp, $proxyHttpPort, $proxyHttpsPort
 
           # Set WinHTTP proxy
           netsh winhttp set proxy proxy-server=$proxy bypass-list='*.contoso.local;<local>'
@@ -1719,7 +1735,7 @@
           # Based on https://blog.workinghardinit.work/2020/03/06/configure-wininet-proxy-server-with-powershell/
           # Edit the variables below to fit your environment
           $proxyEnabled = 1
-          $bypasslist = '*.contoso.local;<local>'
+          $bypasslist = '*.{0};<local>' -f $localDomainFqdn
 
           # Enable machine wide proxy settings (0: per-machine proxy / 1 (or not set): per-user)
           New-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\Internet Settings' -Name 'ProxySettingsPerUser' -PropertyType DWORD -Value 0 -Force
