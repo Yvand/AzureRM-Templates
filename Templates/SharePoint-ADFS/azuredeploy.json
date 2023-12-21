@@ -1707,37 +1707,7 @@
           }
         ],
         "source": {
-          "script": "
-          param([string]$proxyIp)
-          #$proxyIp = '10.1.5.4'
-          $proxy = 'http={0}:8080;https={0}:8443' -f $proxyIp
-
-          # Set WinHTTP proxy
-          netsh winhttp set proxy proxy-server=$proxy bypass-list='*.contoso.local;<local>'
-
-          # Set WinINET proxy
-          # Based on https://blog.workinghardinit.work/2020/03/06/configure-wininet-proxy-server-with-powershell/
-          # Edit the variables below to fit your environment
-          $proxyEnabled = 1
-          $bypasslist = '*.contoso.local;<local>'
-
-          # Enable machine wide proxy settings (0: per-machine proxy / 1 (or not set): per-user)
-          New-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\Internet Settings' -Name 'ProxySettingsPerUser' -PropertyType DWORD -Value 0 -Force
-          $proxyBytes = [system.Text.Encoding]::ASCII.GetBytes($proxy)
-          $bypassBytes = [system.Text.Encoding]::ASCII.GetBytes($bypasslist)
-          $defaultConnectionSettings = [byte[]]@(@(70, 0, 0, 0, 0, 0, 0, 0, $proxyEnabled, 0, 0, 0, $proxyBytes.Length, 0, 0, 0) + $proxyBytes + @($bypassBytes.Length, 0, 0, 0) + $bypassBytes + @(1..36 | % { 0 }))
-
-          $registryPaths = @('HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings', 'HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings')
-          foreach ($registryPath in $registryPaths) {
-              Set-ItemProperty -Path $registryPath -Name ProxyServer -Value $proxy
-              Set-ItemProperty -Path $registryPath -Name ProxyEnable -Value $proxyEnabled
-              Set-ItemProperty -Path $registryPath -Name ProxyOverride -Value $bypasslist
-              Set-ItemProperty -Path '$registryPath\\Connections' -Name DefaultConnectionSettings -Value $defaultConnectionSettings
-          }
-
-          # Running Bitsadmin is required for the WS-Management service to actually use the proxy to download the DSC config
-          Bitsadmin /util /setieproxy localsystem MANUAL_PROXY $proxy $bypasslist
-          "
+          "script": ""
         },
         "timeoutInSeconds": 300,
         "treatFailureAsDeploymentFailure": true
