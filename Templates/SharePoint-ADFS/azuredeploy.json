@@ -463,10 +463,12 @@
       ]
     },
     "azureFirewallSettings": {
+      "firewallEnabled": true,
       "firewallAddressPrefix": "10.1.5.0/24",
       "firewallPrivateIPAddress": "10.1.5.4",
       "firewallHttpPort": 8080,
       "firewallHttpsPort": 8443,
+      "firewallName": "HTTP-Proxy",
       "firewallPolicyResourceName": "explicit-proxy-policy"
     },
     "vmsSettings": {
@@ -1016,7 +1018,7 @@
         "[resourceId('Microsoft.Compute/virtualMachines', variables('vmsSettings').vmSPName)]",
         "[resourceId('Microsoft.Compute/virtualMachines/runCommands', variables('vmsSettings').vmSPName, 'IncreaseMaxEnvelopeSizeQuota')]",
         "[resourceId('Microsoft.Compute/virtualMachines/runCommands', variables('vmsSettings').vmSPName, 'SetProxy')]",
-        "[resourceId('Microsoft.Network/azureFirewalls', 'Azure-Firewall-Proxy')]"
+        "[resourceId('Microsoft.Network/azureFirewalls', variables('azureFirewallSettings').firewallName)]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -1572,7 +1574,7 @@
       }
     },
     {
-      "condition": "[equals(variables('networkSettings').OutboundInternetAccessMethod, 'AzureFirewallProxy')]",
+      "condition": "[equals(variables('azureFirewallSettings').firewallEnabled, true())]",
       "name": "[concat(variables('networkSettings').virtualNetworkName, '/', 'AzureFirewallSubnet')]",
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2023-05-01",
@@ -1586,7 +1588,7 @@
       }
     },
     {
-      "condition": "[equals(variables('networkSettings').OutboundInternetAccessMethod, 'AzureFirewallProxy')]",
+      "condition": "[equals(variables('azureFirewallSettings').firewallEnabled, true())]",
       "name": "PublicIP-azfirewall",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2023-06-01",
@@ -1603,8 +1605,8 @@
       }
     },
     {
-      "condition": "[equals(variables('networkSettings').OutboundInternetAccessMethod, 'AzureFirewallProxy')]",
-      "name": "Azure-Firewall-Proxy",
+      "condition": "[equals(variables('azureFirewallSettings').firewallEnabled, true())]",
+      "name": "[variables('azureFirewallSettings').firewallName]",
       "type": "Microsoft.Network/azureFirewalls",
       "apiVersion": "2023-06-01",
       "location": "[parameters('location')]",
@@ -1638,7 +1640,7 @@
       }
     },
     {
-      "condition": "[equals(variables('networkSettings').OutboundInternetAccessMethod, 'AzureFirewallProxy')]",
+      "condition": "[equals(variables('azureFirewallSettings').firewallEnabled, true())]",
       "name": "[variables('azureFirewallSettings').firewallPolicyResourceName]",
       "type": "Microsoft.Network/firewallPolicies",
       "apiVersion": "2023-06-01",
@@ -1653,8 +1655,8 @@
       }
     },
     {
-      "condition": "[equals(variables('networkSettings').OutboundInternetAccessMethod, 'AzureFirewallProxy')]",
-      "name": "[concat(variables('azureFirewallSettings').firewallPolicyResourceName, '/', 'proxy-rules-collection')]",
+      "condition": "[equals(variables('azureFirewallSettings').firewallEnabled, true())]",
+      "name": "[concat(variables('azureFirewallSettings').firewallPolicyResourceName, '/', 'http-proxy-rule-collection')]",
       "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
       "apiVersion": "2023-06-01",
       "dependsOn": [
@@ -1664,7 +1666,7 @@
         "priority": 100,
         "ruleCollections": [
           {
-            "name": "proxy-rules",
+            "name": "http-proxy-rules",
             "priority": 100,
             "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
             "action": {
@@ -1672,7 +1674,7 @@
             },
             "rules": [
               {
-                "name": "proxy-allow-all-outbound",
+                "name": "outbound-allow-all",
                 "ruleType": "ApplicationRule",
                 "destinationAddresses": [ "*" ],
                 "fqdnTags": [ "*" ],
@@ -1696,7 +1698,7 @@
       }
     },
     {
-      "condition": "[equals(variables('networkSettings').OutboundInternetAccessMethod, 'AzureFirewallProxy')]",
+      "condition": "[equals(variables('azureFirewallSettings').firewallEnabled, true())]",
       "name": "[concat(variables('vmsSettings').vmSPName,'/SetProxy')]",
       "type": "Microsoft.Compute/virtualMachines/runCommands",
       "location": "[parameters('location')]",
