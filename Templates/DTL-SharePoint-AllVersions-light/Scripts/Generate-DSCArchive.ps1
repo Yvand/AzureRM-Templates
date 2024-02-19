@@ -1,6 +1,8 @@
 #Requires -PSEdition Desktop
 #Requires -Module Az.Compute
 
+# Get-Command -Verb Publish -Noun AzVM* -Module Az.Compute
+
 param(
     [string] $vmName = "*",
     [string] $dscFolderRelativePath = ".\dsc"
