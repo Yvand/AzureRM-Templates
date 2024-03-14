@@ -52,7 +52,7 @@ There are some differences in the configuration, depending on the SharePoint ver
 ### Input parameters
 
 - parameter `sharePointVersion` lets you choose which version of SharePoint to install:
-  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: March 2024 CU / [KB5002564](https://support.microsoft.com/help/5002564).
+  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: February 2024 ([kb5002560](https://support.microsoft.com/help/5002560)).
   - `Subscription-24H1`: Same as `Subscription-RTM`, then installs the [Feature Update 24H1](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-24h1-release) (March 2024 CU / [KB5002564](https://support.microsoft.com/help/5002564)).
   - `Subscription-23H2`: Same as `Subscription-RTM`, then installs the [Feature Update 23H2](https://learn.microsoft.com/en-us/SharePoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-23h2-release) (September 2023 CU / [KB5002474](https://support.microsoft.com/help/5002474)).
   - `Subscription-23H1`: Same as `Subscription-RTM`, then installs the [Feature Update 23H1](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-23h1-release) (March 2023 CU / [KB5002355](https://support.microsoft.com/help/5002355)).
@@ -106,7 +106,7 @@ You can visit <https://azure.com/e/c494029b0b034b8ca356c926dfd2688a> to estimate
 
 Additional notes:
 
-- Using the default options, the complete deployment takes about 1h (but it is worth it).
+- Using the default options, the complete deployment takes about 1h15 (but it is worth it).
 - Deploying any post-RTM SharePoint Subscription build adds only an extra 5-10 minutes to the total deployment time (compared to RTM), partly because the updates are installed before the farm is created.
 - Once it is completed, the template will return valuable information in the 'Outputs' of the deployment.
 - For various (very good) reasons, in SQL and SharePoint VMs, the name of the local (not domain) administrator is set with a string that is unique to your subscription (e.g. `"local-[q1w2e3r4t5]"`). It is recorded in the 'Outputs' of the deployment once it is completed.
