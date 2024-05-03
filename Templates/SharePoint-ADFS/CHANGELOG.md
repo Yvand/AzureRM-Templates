@@ -1,6 +1,17 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+### Changed
+
+- DSC configurations
+  - Updated DSC module `ActiveDirectoryDsc` to 6.4.0
+  - Updated DSC module `ComputerManagementDsc` to 9.1.0
+  - Updated DSC module `SharePointDSC` to 5.5.0
+
 ## Enhancements & bug-fixes - Published in February 26, 2024
+
+### Changed
 
 - Template
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the February 2024 CU for SharePoint Subscription
