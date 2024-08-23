@@ -204,6 +204,12 @@ configuration ConfigureSPVM
             SetScript  = { Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false }
         }
 
+        Script EnableRemoteEventViewerConnection {
+            GetScript  = { }
+            TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "Remote Event Log Management" -Enabled True -ErrorAction SilentlyContinue | Where-Object { $_.Profile -eq "Domain" }) }
+            SetScript  = { Set-NetFirewallRule -DisplayGroup "Remote Event Log Management" -Enabled True -Profile Domain -Confirm:$false }
+        }
+
         # Create the rules in the firewall required for the distributed cache - https://learn.microsoft.com/en-us/sharepoint/administration/plan-for-feeds-and-the-distributed-cache-service#firewall
         Script CreateFirewallRulesForDistributedCache {
             TestScript = {
@@ -220,18 +226,19 @@ configuration ConfigureSPVM
                 }
             }
             SetScript  = {
-                $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
-                $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
-                if ($null -eq $icmpFirewallRule) {
-                    New-NetFirewallRule -Name Allow_Ping -DisplayName $icmpRuleName `
-                        -Description "Allow ICMPv4 ping" `
-                        -Protocol ICMPv4 `
-                        -IcmpType 8 `
-                        -Enabled True `
-                        -Profile Any `
-                        -Action Allow
-                }
-                Enable-NetFirewallRule -DisplayName $icmpRuleName
+                # $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
+                # $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
+                # if ($null -eq $icmpFirewallRule) {
+                #     New-NetFirewallRule -Name Allow_Ping -DisplayName $icmpRuleName `
+                #         -Description "Allow ICMPv4 ping" `
+                #         -Protocol ICMPv4 `
+                #         -IcmpType 8 `
+                #         -Enabled True `
+                #         -Profile Any `
+                #         -Action Allow
+                # }
+                # Enable-NetFirewallRule -DisplayName $icmpRuleName
+                Enable-NetFirewallRule -displayName "File and Printer Sharing (Echo Request - ICMPv4-In)"
 
                 $spRuleName = "SharePoint Distributed Cache"
                 $firewallRule = Get-NetFirewallRule -DisplayName $spRuleName -ErrorAction SilentlyContinue
