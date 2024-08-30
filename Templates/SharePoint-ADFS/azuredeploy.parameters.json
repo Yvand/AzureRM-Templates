@@ -3,21 +3,36 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "sharePointVersion": { "value": "Subscription-Latest" },
-    // "sharePointVersion": { "value": "2019" },
     "domainFQDN": { "value": "contoso.local" },
     "adminUserName": { "value": "yvand" },
-    "adminPassword": { "value": null },
-    "serviceAccountsPassword": { "value": null },
     "vmsTimeZone": { "value": "Romance Standard Time" },
     "vmSPStorageAccountType": { "value": "Premium_LRS" },
-    "addPublicIPAddress": { "value": "SharePointVMsOnly" },
-    // "addPublicIPAddress": { "value": "No" },
+    "internet_access_method": { "value": "AzureFirewallProxy" },
     "RDPTrafficAllowed": { "value": "10.20.30.40" },
-    "numberOfAdditionalFrontEnd": { "value": 0 },
+    "numberOfAdditionalFrontEnd": { "value": 1 },
     "enableHybridBenefitServerLicenses": { "value": true },
     "enableAutomaticUpdates": { "value": true },
     "sharePointDataDiskSize": { "value": 0 },
     "addAzureBastion": { "value": false },
-    "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" }
+    "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" },
+    "_artifactsLocationSasToken": { "value": "" },
+    "vmsAutoShutdownTime": {
+      "value": "1900"
+    },
+    "vmDCSize": {
+      "value": "Standard_B2s"
+    },
+    "vmDCStorageAccountType": {
+      "value": "StandardSSD_LRS"
+    },
+    "vmSQLSize": {
+      "value": "Standard_B2ms"
+    },
+    "vmSQLStorageAccountType": {
+      "value": "StandardSSD_LRS"
+    },
+    "vmSPSize": {
+      "value": "Standard_B4ms"
+    }
   }
 }
