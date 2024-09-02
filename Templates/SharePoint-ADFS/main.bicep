@@ -1047,6 +1047,108 @@ resource vm_sp_dsc_configurevm 'Microsoft.Compute/virtualMachines/extensions@202
   }
 }
 
+// Create resources for VMs FEs
+resource vms_fes_pips 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
+  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1 && internet_access_method == 'PublicIPAddress') {
+    name: 'vm-fe${i}-pip'
+    location: location
+    sku: {
+      name: 'Basic'
+      tier: 'Regional'
+    }
+    properties: {
+      publicIPAllocationMethod: 'Static'
+      dnsSettings: {
+        domainNameLabel: '${toLower('${resourceGroupNameFormatted}-${vmsSettings.vmFEName}')}-${i}'
+      }
+    }
+  }
+]
+
+resource vms_fes_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
+  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1) {
+    name: 'vm-fe${i}-nic'
+    location: location
+    properties: {
+      ipConfigurations: [
+        {
+          name: 'ipconfig1'
+          properties: {
+            privateIPAllocationMethod: 'Dynamic'
+            subnet: {
+              id: resourceId(
+                'Microsoft.Network/virtualNetworks/subnets',
+                virtual_network.name,
+                networkSettings.subnetSPName
+              )
+            }
+            publicIPAddress: (internet_access_method == 'PublicIPAddress'
+              ? json('{"id": "${vms_fes_pips[i].id}"}')
+              : null)
+          }
+        }
+      ]
+    }
+    dependsOn: [
+      vms_fes_pips[i]
+    ]
+  }
+]
+
+resource vms_fes_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
+  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1) {
+    name: 'vm-fe${i}'
+    location: location
+    properties: {
+      hardwareProfile: {
+        vmSize: vmSPSize
+      }
+      osProfile: {
+        computerName: '${vmsSettings.vmFEName}-${i}'
+        adminUsername: deploymentSettings.localAdminUserName
+        adminPassword: adminPassword
+        windowsConfiguration: {
+          timeZone: vmsTimeZone
+          enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
+          provisionVMAgent: true
+          patchSettings: {
+            patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+            assessmentMode: 'ImageDefault'
+          }
+        }
+      }
+      storageProfile: {
+        imageReference: {
+          publisher: split(vmsSettings.vmSharePointImage, ':')[0]
+          offer: split(vmsSettings.vmSharePointImage, ':')[1]
+          sku: split(vmsSettings.vmSharePointImage, ':')[2]
+          version: split(vmsSettings.vmSharePointImage, ':')[3]
+        }
+        osDisk: {
+          name: 'vm-fe${i}-disk-os'
+          caching: 'ReadWrite'
+          osType: 'Windows'
+          createOption: 'FromImage'
+          managedDisk: {
+            storageAccountType: vmSPStorageAccountType
+          }
+        }
+      }
+      networkProfile: {
+        networkInterfaces: [
+          {
+            id: vms_fes_nic[i].id
+          }
+        ]
+      }
+      licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+    }
+    dependsOn: [
+      vms_fes_nic[i]
+    ]
+  }
+]
+
 output publicIPAddressDC string = internet_access_method == 'PublicIPAddress'
   ? vm_dc_pip.properties.dnsSettings.fqdn
   : ''
