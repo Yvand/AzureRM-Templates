@@ -208,14 +208,14 @@ param vmsTimeZone string = 'Romance Standard Time'
 @maxLength(4)
 param vmsAutoShutdownTime string = '1900'
 
-@description('Enable automatic Windows Updates.')
-param enableAutomaticUpdates bool = true
+// @description('Enable automatic Windows Updates.')
+// param enableAutomaticUpdates bool = true
 
 @description('Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information.')
 param enableHybridBenefitServerLicenses bool = false
 
-@description('Size in Gb of the additional data disk attached to SharePoint VMs. Set to 0 to not create it')
-param sharePointDataDiskSize int = 0
+// @description('Size in Gb of the additional data disk attached to SharePoint VMs. Set to 0 to not create it')
+// param sharePointDataDiskSize int = 0
 
 @description('Size of the DC VM')
 param vmDCSize string = 'Standard_B2s'
@@ -337,22 +337,12 @@ var networkSettings = {
   dcPrivateIPAddress: '10.1.1.4'
   subnetSQLPrefix: '10.1.2.0/24'
   subnetSPPrefix: '10.1.3.0/24'
-  vNetPrivateName: '${resourceGroupNameFormatted}-vnet'
-  subnetDCName: 'Subnet-DC'
-  subnetSQLName: 'Subnet-SQL'
-  subnetSPName: 'Subnet-SP'
-  vmDCPublicIPNicAssociation: {
-    id: vm_dc_pip.id
-  }
-  // vmSQLPublicIPNicAssociation: {
-  //   id: vm_sql_pip.id
-  // }
-  // vmSPPublicIPNicAssociation: {
-  //   id: vmsResourcesNames_vmSPPublicIP.id
-  // }
+  subnetDCName: 'subnet-dc'
+  subnetSQLName: 'subnet-sql'
+  subnetSPName: 'subnet-sp'
   nsgRuleAllowIncomingRdp: [
     {
-      name: 'allow-rdp-rule'
+      name: 'nsg-rule-allow-rdp'
       properties: {
         description: 'Allow RDP'
         protocol: 'Tcp'
@@ -368,6 +358,7 @@ var networkSettings = {
   ]
 }
 var vmsSettings = {
+  enableAutomaticUpdates: true
   vmDCName: 'DC'
   vmSQLName: 'SQL'
   vmSPName: 'SP'
@@ -431,15 +422,6 @@ var deploymentSettings = {
   spAppPoolUserName: 'spapppool'
   spADDirSyncUserName: 'spdirsync'
 }
-var vmSPDataDisk = [
-  {
-    lun: 0
-    name: 'Disk-SP-Data'
-    caching: 'ReadWrite'
-    createOption: 'Empty'
-    diskSizeGB: sharePointDataDiskSize
-  }
-]
 
 var firewall_proxy_settings = {
   vNetAzureFirewallPrefix: '10.1.5.0/24'
@@ -449,33 +431,33 @@ var firewall_proxy_settings = {
 }
 
 // Start creating resources
-resource networkSettings_nsgSubnetDC 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
+resource nsg_subnet_dc 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: 'NSG-Subnet-DC'
   location: location
   properties: {
-    securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? json('null') : networkSettings.nsgRuleAllowIncomingRdp)
+    securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
   }
 }
 
-resource networkSettings_nsgSubnetSQL 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
+resource nsg_subnet_sql 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: 'NSG-Subnet-SQL'
   location: location
   properties: {
-    securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? json('null') : networkSettings.nsgRuleAllowIncomingRdp)
+    securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
   }
 }
 
-resource networkSettings_nsgSubnetSP 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
+resource nsg_subnet_sp 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: 'NSG-Subnet-SP'
   location: location
   properties: {
-    securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? json('null') : networkSettings.nsgRuleAllowIncomingRdp)
+    securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
   }
 }
 
 // Create the virtual network, 3 subnets, and associate each subnet with its Network Security Group
-resource networkSettings_vNetPrivate 'Microsoft.Network/virtualNetworks@2023-11-01' = {
-  name: networkSettings.vNetPrivateName
+resource virtual_network 'Microsoft.Network/virtualNetworks@2023-11-01' = {
+  name: 'vnet-${uniqueString(resourceGroup().id)}'
   location: location
   properties: {
     addressSpace: {
@@ -490,7 +472,7 @@ resource networkSettings_vNetPrivate 'Microsoft.Network/virtualNetworks@2023-11-
           defaultOutboundAccess: false
           addressPrefix: networkSettings.subnetDCPrefix
           networkSecurityGroup: {
-            id: networkSettings_nsgSubnetDC.id
+            id: nsg_subnet_dc.id
           }
         }
       }
@@ -500,7 +482,7 @@ resource networkSettings_vNetPrivate 'Microsoft.Network/virtualNetworks@2023-11-
           defaultOutboundAccess: false
           addressPrefix: networkSettings.subnetSQLPrefix
           networkSecurityGroup: {
-            id: networkSettings_nsgSubnetSQL.id
+            id: nsg_subnet_sql.id
           }
         }
       }
@@ -510,7 +492,7 @@ resource networkSettings_vNetPrivate 'Microsoft.Network/virtualNetworks@2023-11-
           defaultOutboundAccess: false
           addressPrefix: networkSettings.subnetSPPrefix
           networkSecurityGroup: {
-            id: networkSettings_nsgSubnetSP.id
+            id: nsg_subnet_sp.id
           }
         }
       }
@@ -547,20 +529,15 @@ resource vm_dc_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
           subnet: {
             id: resourceId(
               'Microsoft.Network/virtualNetworks/subnets',
-              networkSettings.vNetPrivateName,
+              virtual_network.name,
               networkSettings.subnetDCName
             )
           }
-          publicIPAddress: ((internet_access_method == 'PublicIPAddress')
-            ? networkSettings.vmDCPublicIPNicAssociation
-            : json('null'))
+          publicIPAddress: ((internet_access_method == 'PublicIPAddress') ? { id: vm_dc_pip.id } : null)
         }
       }
     ]
   }
-  dependsOn: [
-    networkSettings_vNetPrivate
-  ]
 }
 
 resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
@@ -576,10 +553,10 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       adminPassword: adminPassword
       windowsConfiguration: {
         timeZone: vmsTimeZone
-        enableAutomaticUpdates: enableAutomaticUpdates
+        enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
         provisionVMAgent: true
         patchSettings: {
-          patchMode: (enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
           assessmentMode: 'ImageDefault'
         }
       }
@@ -609,11 +586,11 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         }
       ]
     }
-    licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : json('null'))
+    licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
   }
 }
 
-resource vm_dc_def_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (internet_access_method == 'AzureFirewallProxy') {
+resource vm_dc_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (internet_access_method == 'AzureFirewallProxy') {
   parent: vm_dc_def
   name: 'vm-${vm_dc_def.name}-runcommand-setproxy'
   location: location
@@ -649,7 +626,7 @@ resource vm_dc_dsc_configuredc 'Microsoft.Compute/virtualMachines/extensions@202
   name: 'ConfigureDCVM'
   location: location
   dependsOn: [
-    vm_dc_def_runcommand_setproxy
+    vm_dc_runcommand_setproxy
   ]
   properties: {
     publisher: 'Microsoft.Powershell'
@@ -719,22 +696,15 @@ resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
           subnet: {
             id: resourceId(
               'Microsoft.Network/virtualNetworks/subnets',
-              networkSettings.vNetPrivateName,
+              virtual_network.name,
               networkSettings.subnetSQLName
             )
           }
-          publicIPAddress: ((internet_access_method == 'PublicIPAddress')
-            ? {
-                id: vm_sql_pip.id
-              }
-            : null)
+          publicIPAddress: ((internet_access_method == 'PublicIPAddress') ? { id: vm_sql_pip.id } : null)
         }
       }
     ]
   }
-  dependsOn: [
-    networkSettings_vNetPrivate
-  ]
 }
 
 resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
@@ -750,10 +720,10 @@ resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       adminPassword: adminPassword
       windowsConfiguration: {
         timeZone: vmsTimeZone
-        enableAutomaticUpdates: enableAutomaticUpdates
+        enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
         provisionVMAgent: true
         patchSettings: {
-          patchMode: (enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
           assessmentMode: 'ImageDefault'
         }
       }
@@ -787,9 +757,9 @@ resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   }
 }
 
-resource vm_sql_def_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (internet_access_method == 'AzureFirewallProxy') {
+resource vm_sql_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (internet_access_method == 'AzureFirewallProxy') {
   parent: vm_sql_def
-  name: 'vm-${vm_sql_def.name}-runcommand-setproxy'
+  name: 'runcommand-setproxy'
   location: location
   properties: {
     source: {
@@ -818,12 +788,12 @@ resource vm_sql_def_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCo
   }
 }
 
-resource vm_sql_dsc_configuredc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+resource vm_sql_dsc_configurevm 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
   parent: vm_sql_def
   name: 'ConfigureSQLVM'
   location: location
   dependsOn: [
-    vm_sql_def_runcommand_setproxy
+    vm_sql_runcommand_setproxy
   ]
   properties: {
     publisher: 'Microsoft.Powershell'
@@ -865,6 +835,226 @@ resource vm_sql_dsc_configuredc 'Microsoft.Compute/virtualMachines/extensions@20
   }
 }
 
+// Create resources for VM SP
+resource vm_sp_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (internet_access_method == 'PublicIPAddress') {
+  name: vmsResourcesNames.vmSPPublicIPName
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSPName}')
+    }
+  }
+}
+
+resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
+  name: vmsResourcesNames.vmSPNicName
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          subnet: {
+            id: resourceId(
+              'Microsoft.Network/virtualNetworks/subnets',
+              virtual_network.name,
+              networkSettings.subnetSPName
+            )
+          }
+          publicIPAddress: ((internet_access_method == 'PublicIPAddress') ? { id: vm_sp_pip.id } : null)
+        }
+      }
+    ]
+  }
+}
+
+resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
+  name: vmsSettings.vmSPName
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: vmSPSize
+    }
+    osProfile: {
+      computerName: vmsSettings.vmSPName
+      adminUsername: deploymentSettings.localAdminUserName
+      adminPassword: adminPassword
+      windowsConfiguration: {
+        timeZone: vmsTimeZone
+        enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
+        provisionVMAgent: true
+        patchSettings: {
+          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          assessmentMode: 'ImageDefault'
+        }
+      }
+    }
+    storageProfile: {
+      imageReference: {
+        publisher: split(vmsSettings.vmSharePointImage, ':')[0]
+        offer: split(vmsSettings.vmSharePointImage, ':')[1]
+        sku: split(vmsSettings.vmSharePointImage, ':')[2]
+        version: split(vmsSettings.vmSharePointImage, ':')[3]
+      }
+      osDisk: {
+        name: 'Disk-${vmsSettings.vmSPName}-OS'
+        caching: 'ReadWrite'
+        osType: 'Windows'
+        createOption: 'FromImage'
+        managedDisk: {
+          storageAccountType: vmSPStorageAccountType
+        }
+      }
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: vm_sp_nic.id
+        }
+      ]
+    }
+    licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+  }
+}
+
+resource vm_sp_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (internet_access_method == 'AzureFirewallProxy') {
+  parent: vm_sp_def
+  name: 'runcommand-setproxy'
+  location: location
+  properties: {
+    source: {
+      script: 'param([string]$proxyIp, [string]$proxyHttpPort, [string]$proxyHttpsPort, [string]$localDomainFqdn) $proxy : "http={0}:{1};https={0}:{2}" -f $proxyIp, $proxyHttpPort, $proxyHttpsPort; $bypasslist : "*.{0};<local>" -f $localDomainFqdn; netsh winhttp set proxy proxy-server=$proxy bypass-list=$bypasslist; $proxyEnabled = 1; New-ItemProperty -Path "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" -Name "ProxySettingsPerUser" -PropertyType DWORD -Value 0 -Force; $proxyBytes = [system.Text.Encoding]::ASCII.GetBytes($proxy); $bypassBytes = [system.Text.Encoding]::ASCII.GetBytes($bypasslist); $defaultConnectionSettings = [byte[]]@(@(70, 0, 0, 0, 0, 0, 0, 0, $proxyEnabled, 0, 0, 0, $proxyBytes.Length, 0, 0, 0) + $proxyBytes + @($bypassBytes.Length, 0, 0, 0) + $bypassBytes + @(1..36 | % { 0 })); $registryPaths = @("HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"); foreach ($registryPath in $registryPaths) { Set-ItemProperty -Path $registryPath -Name ProxyServer -Value $proxy; Set-ItemProperty -Path $registryPath -Name ProxyEnable -Value $proxyEnabled; Set-ItemProperty -Path $registryPath -Name ProxyOverride -Value $bypasslist; Set-ItemProperty -Path "$registryPath\\Connections" -Name DefaultConnectionSettings -Value $defaultConnectionSettings; } Bitsadmin /util /setieproxy localsystem MANUAL_PROXY $proxy $bypasslist;'
+    }
+    parameters: [
+      {
+        name: 'proxyIp'
+        value: firewall_proxy_settings.azureFirewallIPAddress
+      }
+      {
+        name: 'proxyHttpPort'
+        value: firewall_proxy_settings.http_port
+      }
+      {
+        name: 'proxyHttpsPort'
+        value: firewall_proxy_settings.https_port
+      }
+      {
+        name: 'proxyIp'
+        value: domainFQDN
+      }
+    ]
+    timeoutInSeconds: 90
+    treatFailureAsDeploymentFailure: false
+  }
+}
+
+resource vm_sp_runcommand_increase_dsc_quota 'Microsoft.Compute/virtualMachines/runCommands@2023-03-01' = {
+  parent: vm_sp_def
+  name: 'runcommand-increase-dsc-quota'
+  location: location
+  properties: {
+    source: {
+      script: 'Set-Item -Path WSMan:\\localhost\\MaxEnvelopeSizeKb -Value 2048'
+    }
+    timeoutInSeconds: 90
+    treatFailureAsDeploymentFailure: false
+  }
+}
+
+resource vm_sp_dsc_configurevm 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+  parent: vm_sp_def
+  name: 'ConfigureSQLVM'
+  location: location
+  dependsOn: [
+    vm_sp_runcommand_setproxy
+    vm_sp_runcommand_increase_dsc_quota
+  ]
+  properties: {
+    publisher: 'Microsoft.Powershell'
+    type: 'DSC'
+    typeHandlerVersion: '2.9'
+    autoUpgradeMinorVersion: true
+    forceUpdateTag: dscSettings.forceUpdateTag
+    settings: {
+      wmfVersion: 'latest'
+      configuration: {
+        url: dscSettings.vmSPScriptFileUri
+        script: dscSettings.vmSPScript
+        function: dscSettings.vmSPFunction
+      }
+      configurationArguments: {
+        DNSServerIP: networkSettings.dcPrivateIPAddress
+        DomainFQDN: domainFQDN
+        DCServerName: vmsSettings.vmDCName
+        SQLServerName: vmsSettings.vmSQLName
+        SQLAlias: deploymentSettings.sqlAlias
+        SharePointVersion: sharePointVersion
+        SharePointSitesAuthority: deploymentSettings.sharePointSitesAuthority
+        SharePointCentralAdminPort: deploymentSettings.sharePointCentralAdminPort
+        EnableAnalysis: deploymentSettings.enableAnalysis
+        SharePointBits: deploymentSettings.sharePointBitsSelected
+      }
+      privacy: {
+        dataCollection: 'enable'
+      }
+    }
+    protectedSettings: {
+      configurationArguments: {
+        DomainAdminCreds: {
+          UserName: adminUserName
+          Password: adminPassword
+        }
+        SPSetupCreds: {
+          UserName: deploymentSettings.spSetupUserName
+          Password: serviceAccountsPassword
+        }
+        SPFarmCreds: {
+          UserName: deploymentSettings.spFarmUserName
+          Password: serviceAccountsPassword
+        }
+        SPSvcCreds: {
+          UserName: deploymentSettings.spSvcUserName
+          Password: serviceAccountsPassword
+        }
+        SPAppPoolCreds: {
+          UserName: deploymentSettings.spAppPoolUserName
+          Password: serviceAccountsPassword
+        }
+        SPADDirSyncCreds: {
+          UserName: deploymentSettings.spADDirSyncUserName
+          Password: serviceAccountsPassword
+        }
+        SPPassphraseCreds: {
+          UserName: 'Passphrase'
+          Password: serviceAccountsPassword
+        }
+        SPSuperUserCreds: {
+          UserName: deploymentSettings.spSuperUserName
+          Password: serviceAccountsPassword
+        }
+        SPSuperReaderCreds: {
+          UserName: deploymentSettings.spSuperReaderName
+          Password: serviceAccountsPassword
+        }
+      }
+    }
+  }
+}
+
 output publicIPAddressDC string = internet_access_method == 'PublicIPAddress'
   ? vm_dc_pip.properties.dnsSettings.fqdn
+  : ''
+
+output publicIPAddressSQL string = internet_access_method == 'PublicIPAddress'
+  ? vm_sql_pip.properties.dnsSettings.fqdn
+  : ''
+
+output publicIPAddressSP string = internet_access_method == 'PublicIPAddress'
+  ? vm_sp_pip.properties.dnsSettings.fqdn
   : ''
