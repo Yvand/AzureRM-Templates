@@ -330,6 +330,7 @@ var sharePointSettings = {
     }
   ]
 }
+
 var networkSettings = {
   vNetPrivatePrefix: '10.1.0.0/16'
   subnetDCPrefix: '10.1.1.0/24'
@@ -344,7 +345,7 @@ var networkSettings = {
     id: vm_dc_pip.id
   }
   // vmSQLPublicIPNicAssociation: {
-  //   id: vmsResourcesNames_vmSQLPublicIP.id
+  //   id: vm_sql_pip.id
   // }
   // vmSPPublicIPNicAssociation: {
   //   id: vmsResourcesNames_vmSPPublicIP.id
@@ -441,12 +442,13 @@ var vmSPDataDisk = [
 ]
 
 var firewall_proxy_settings = {
-  vNetAzureFirewallPrefix : '10.1.5.0/24'
-  azureFirewallIPAddress  : '10.1.5.4'
-  http_port               : '8080'
-  https_port              : '8443'
+  vNetAzureFirewallPrefix: '10.1.5.0/24'
+  azureFirewallIPAddress: '10.1.5.4'
+  http_port: '8080'
+  https_port: '8443'
 }
 
+// Start creating resources
 resource networkSettings_nsgSubnetDC 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: 'NSG-Subnet-DC'
   location: location
@@ -639,6 +641,227 @@ resource vm_dc_def_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCom
     ]
     timeoutInSeconds: 90
     treatFailureAsDeploymentFailure: false
+  }
+}
+
+resource vm_dc_dsc_configuredc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+  parent: vm_dc_def
+  name: 'ConfigureDCVM'
+  location: location
+  dependsOn: [
+    vm_dc_def_runcommand_setproxy
+  ]
+  properties: {
+    publisher: 'Microsoft.Powershell'
+    type: 'DSC'
+    typeHandlerVersion: '2.9'
+    autoUpgradeMinorVersion: true
+    forceUpdateTag: dscSettings.forceUpdateTag
+    settings: {
+      wmfVersion: 'latest'
+      configuration: {
+        url: dscSettings.vmDCScriptFileUri
+        script: dscSettings.vmDCScript
+        function: dscSettings.vmDCFunction
+      }
+      configurationArguments: {
+        domainFQDN: domainFQDN
+        PrivateIP: networkSettings.dcPrivateIPAddress
+        SPServerName: vmsSettings.vmSPName
+        SharePointSitesAuthority: deploymentSettings.sharePointSitesAuthority
+        SharePointCentralAdminPort: deploymentSettings.sharePointCentralAdminPort
+        ApplyBrowserPolicies: deploymentSettings.applyBrowserPolicies
+      }
+      privacy: {
+        dataCollection: 'enable'
+      }
+    }
+    protectedSettings: {
+      configurationArguments: {
+        AdminCreds: {
+          UserName: adminUserName
+          Password: adminPassword
+        }
+        AdfsSvcCreds: {
+          UserName: deploymentSettings.adfsSvcUserName
+          Password: serviceAccountsPassword
+        }
+      }
+    }
+  }
+}
+
+// Create resources for VM SQL
+resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (internet_access_method == 'PublicIPAddress') {
+  name: vmsResourcesNames.vmSQLPublicIPName
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSQLName}')
+    }
+  }
+}
+
+resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
+  name: vmsResourcesNames.vmSQLNicName
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          subnet: {
+            id: resourceId(
+              'Microsoft.Network/virtualNetworks/subnets',
+              networkSettings.vNetPrivateName,
+              networkSettings.subnetSQLName
+            )
+          }
+          publicIPAddress: ((internet_access_method == 'PublicIPAddress')
+            ? {
+                id: vm_sql_pip.id
+              }
+            : null)
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    networkSettings_vNetPrivate
+  ]
+}
+
+resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
+  name: vmsSettings.vmSQLName
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: vmSQLSize
+    }
+    osProfile: {
+      computerName: vmsSettings.vmSQLName
+      adminUsername: deploymentSettings.localAdminUserName
+      adminPassword: adminPassword
+      windowsConfiguration: {
+        timeZone: vmsTimeZone
+        enableAutomaticUpdates: enableAutomaticUpdates
+        provisionVMAgent: true
+        patchSettings: {
+          patchMode: (enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          assessmentMode: 'ImageDefault'
+        }
+      }
+    }
+    storageProfile: {
+      imageReference: {
+        publisher: split(vmsSettings.vmSQLImage, ':')[0]
+        offer: split(vmsSettings.vmSQLImage, ':')[1]
+        sku: split(vmsSettings.vmSQLImage, ':')[2]
+        version: split(vmsSettings.vmSQLImage, ':')[3]
+      }
+      osDisk: {
+        name: 'Disk-${vmsSettings.vmSQLName}-OS'
+        caching: 'ReadWrite'
+        osType: 'Windows'
+        createOption: 'FromImage'
+        diskSizeGB: 128
+        managedDisk: {
+          storageAccountType: vmSQLStorageAccountType
+        }
+      }
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: vm_sql_nic.id
+        }
+      ]
+    }
+    licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+  }
+}
+
+resource vm_sql_def_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (internet_access_method == 'AzureFirewallProxy') {
+  parent: vm_sql_def
+  name: 'vm-${vm_sql_def.name}-runcommand-setproxy'
+  location: location
+  properties: {
+    source: {
+      script: 'param([string]$proxyIp, [string]$proxyHttpPort, [string]$proxyHttpsPort, [string]$localDomainFqdn) $proxy : "http={0}:{1};https={0}:{2}" -f $proxyIp, $proxyHttpPort, $proxyHttpsPort; $bypasslist : "*.{0};<local>" -f $localDomainFqdn; netsh winhttp set proxy proxy-server=$proxy bypass-list=$bypasslist; $proxyEnabled = 1; New-ItemProperty -Path "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" -Name "ProxySettingsPerUser" -PropertyType DWORD -Value 0 -Force; $proxyBytes = [system.Text.Encoding]::ASCII.GetBytes($proxy); $bypassBytes = [system.Text.Encoding]::ASCII.GetBytes($bypasslist); $defaultConnectionSettings = [byte[]]@(@(70, 0, 0, 0, 0, 0, 0, 0, $proxyEnabled, 0, 0, 0, $proxyBytes.Length, 0, 0, 0) + $proxyBytes + @($bypassBytes.Length, 0, 0, 0) + $bypassBytes + @(1..36 | % { 0 })); $registryPaths = @("HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"); foreach ($registryPath in $registryPaths) { Set-ItemProperty -Path $registryPath -Name ProxyServer -Value $proxy; Set-ItemProperty -Path $registryPath -Name ProxyEnable -Value $proxyEnabled; Set-ItemProperty -Path $registryPath -Name ProxyOverride -Value $bypasslist; Set-ItemProperty -Path "$registryPath\\Connections" -Name DefaultConnectionSettings -Value $defaultConnectionSettings; } Bitsadmin /util /setieproxy localsystem MANUAL_PROXY $proxy $bypasslist;'
+    }
+    parameters: [
+      {
+        name: 'proxyIp'
+        value: firewall_proxy_settings.azureFirewallIPAddress
+      }
+      {
+        name: 'proxyHttpPort'
+        value: firewall_proxy_settings.http_port
+      }
+      {
+        name: 'proxyHttpsPort'
+        value: firewall_proxy_settings.https_port
+      }
+      {
+        name: 'proxyIp'
+        value: domainFQDN
+      }
+    ]
+    timeoutInSeconds: 90
+    treatFailureAsDeploymentFailure: false
+  }
+}
+
+resource vm_sql_dsc_configuredc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+  parent: vm_sql_def
+  name: 'ConfigureSQLVM'
+  location: location
+  dependsOn: [
+    vm_sql_def_runcommand_setproxy
+  ]
+  properties: {
+    publisher: 'Microsoft.Powershell'
+    type: 'DSC'
+    typeHandlerVersion: '2.9'
+    autoUpgradeMinorVersion: true
+    forceUpdateTag: dscSettings.forceUpdateTag
+    settings: {
+      wmfVersion: 'latest'
+      configuration: {
+        url: dscSettings.vmSQLScriptFileUri
+        script: dscSettings.vmSQLScript
+        function: dscSettings.vmSQLFunction
+      }
+      configurationArguments: {
+        DNSServerIP: networkSettings.dcPrivateIPAddress
+        DomainFQDN: domainFQDN
+      }
+      privacy: {
+        dataCollection: 'enable'
+      }
+    }
+    protectedSettings: {
+      configurationArguments: {
+        DomainAdminCreds: {
+          UserName: adminUserName
+          Password: adminPassword
+        }
+        SqlSvcCreds: {
+          UserName: deploymentSettings.sqlSvcUserName
+          Password: serviceAccountsPassword
+        }
+        SPSetupCreds: {
+          UserName: deploymentSettings.spSetupUserName
+          Password: serviceAccountsPassword
+        }
+      }
+    }
   }
 }
 
