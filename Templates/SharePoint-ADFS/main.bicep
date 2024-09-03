@@ -434,8 +434,8 @@ var deploymentSettings = {
 var firewall_proxy_settings = {
   vNetAzureFirewallPrefix: '10.1.5.0/24'
   azureFirewallIPAddress: '10.1.5.4'
-  http_port: '8080'
-  https_port: '8443'
+  http_port: 8080
+  https_port: 8443
 }
 
 // Start creating resources
@@ -614,7 +614,7 @@ resource vm_dc_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
       }
       {
         name: 'proxyHttpPort'
-        value: firewall_proxy_settings.http_port
+        value: string(firewall_proxy_settings.http_port)
       }
       {
         name: 'proxyHttpsPort'
@@ -781,7 +781,7 @@ resource vm_sql_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runComman
       }
       {
         name: 'proxyHttpPort'
-        value: firewall_proxy_settings.http_port
+        value: string(firewall_proxy_settings.http_port)
       }
       {
         name: 'proxyHttpsPort'
@@ -947,7 +947,7 @@ resource vm_sp_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
       }
       {
         name: 'proxyHttpPort'
-        value: firewall_proxy_settings.http_port
+        value: string(firewall_proxy_settings.http_port)
       }
       {
         name: 'proxyHttpsPort'
@@ -1172,7 +1172,7 @@ resource vm_fe_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
         }
         {
           name: 'proxyHttpPort'
-          value: firewall_proxy_settings.http_port
+          value: string(firewall_proxy_settings.http_port)
         }
         {
           name: 'proxyHttpsPort'
@@ -1249,18 +1249,328 @@ resource vm_fe_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
   }
 ]
 
+// Azure Bastion
+resource bastion_subnet_nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = if (addAzureBastion == true) {
+  name: 'bastion-subnet-nsg'
+  location: location
+  properties: {
+    securityRules: [
+      {
+        name: 'AllowHttpsInBound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: 'Internet'
+          destinationPortRange: '443'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 100
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'AllowGatewayManagerInBound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: 'GatewayManager'
+          destinationPortRange: '443'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 110
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'AllowLoadBalancerInBound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: 'AzureLoadBalancer'
+          destinationPortRange: '443'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 120
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'AllowBastionHostCommunicationInBound'
+        properties: {
+          protocol: '*'
+          sourcePortRange: '*'
+          sourceAddressPrefix: 'VirtualNetwork'
+          destinationPortRanges: [
+            '8080'
+            '5701'
+          ]
+          destinationAddressPrefix: 'VirtualNetwork'
+          access: 'Allow'
+          priority: 130
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'DenyAllInBound'
+        properties: {
+          protocol: '*'
+          sourcePortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationPortRange: '*'
+          destinationAddressPrefix: '*'
+          access: 'Deny'
+          priority: 1000
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'AllowSshRdpOutBound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationPortRanges: [
+            '22'
+            '3389'
+          ]
+          destinationAddressPrefix: 'VirtualNetwork'
+          access: 'Allow'
+          priority: 100
+          direction: 'Outbound'
+        }
+      }
+      {
+        name: 'AllowAzureCloudCommunicationOutBound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationPortRange: '443'
+          destinationAddressPrefix: 'AzureCloud'
+          access: 'Allow'
+          priority: 110
+          direction: 'Outbound'
+        }
+      }
+      {
+        name: 'AllowBastionHostCommunicationOutBound'
+        properties: {
+          protocol: '*'
+          sourcePortRange: '*'
+          sourceAddressPrefix: 'VirtualNetwork'
+          destinationPortRanges: [
+            '8080'
+            '5701'
+          ]
+          destinationAddressPrefix: 'VirtualNetwork'
+          access: 'Allow'
+          priority: 120
+          direction: 'Outbound'
+        }
+      }
+      {
+        name: 'AllowGetSessionInformationOutBound'
+        properties: {
+          protocol: '*'
+          sourcePortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: 'Internet'
+          destinationPortRanges: [
+            '80'
+            '443'
+          ]
+          access: 'Allow'
+          priority: 130
+          direction: 'Outbound'
+        }
+      }
+      {
+        name: 'DenyAllOutBound'
+        properties: {
+          protocol: '*'
+          sourcePortRange: '*'
+          destinationPortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
+          access: 'Deny'
+          priority: 1000
+          direction: 'Outbound'
+        }
+      }
+    ]
+  }
+}
+
+resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (addAzureBastion == true) {
+  parent: virtual_network
+  name: 'AzureBastionSubnet'
+  properties: {
+    addressPrefix: '10.1.4.0/24'
+    networkSecurityGroup: {
+      id: bastion_subnet_nsg.id
+    }
+  }
+}
+
+resource bastion_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (addAzureBastion == true) {
+  name: 'bastion-pip'
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: toLower(replace('${resourceGroupNameFormatted}-Bastion', '_', '-'))
+    }
+  }
+}
+
+resource bastion_def 'Microsoft.Network/bastionHosts@2023-11-01' = if (addAzureBastion == true) {
+  name: 'Bastion'
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'IpConf'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          publicIPAddress: {
+            id: bastion_pip.id
+          }
+          subnet: {
+            id: bastion_subnet.id
+          }
+        }
+      }
+    ]
+  }
+}
+
+// Resources for Azure Firewall
+resource firewall_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (outbound_access_method == 'AzureFirewallProxy') {
+  parent: virtual_network
+  name: 'AzureFirewallSubnet'
+  properties: {
+    addressPrefix: firewall_proxy_settings.vNetAzureFirewallPrefix
+    defaultOutboundAccess: false
+  }
+}
+
+resource firewall_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbound_access_method == 'AzureFirewallProxy') {
+  name: 'firewall-pip'
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: toLower('${resourceGroupNameFormatted}-Firewall')
+    }
+  }
+}
+
+resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2023-11-01' = {
+  name: 'firewall-policy-proxy'
+  location: location
+  properties: {
+    sku: {
+      tier: 'Standard'
+    }
+    threatIntelMode: 'Alert'
+    explicitProxy: {
+      enableExplicitProxy: true
+      httpPort: firewall_proxy_settings.http_port
+      httpsPort: firewall_proxy_settings.https_port
+      enablePacFile: false
+    }
+  }
+}
+
+resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2023-11-01' = {
+  name: 'rules'
+  parent: firewall_policy_proxy
+  properties: {
+    priority: 100
+    ruleCollections: [
+      {
+        name: 'proxy-allow-all-outbound'
+        ruleCollectionType: 'FirewallPolicyFilterRuleCollection'
+        action: {
+          type: 'Allow'
+        }
+        priority: 100
+        rules: [
+          {
+            ruleType: 'ApplicationRule'
+            sourceAddresses: [
+              '*'
+            ]
+            targetFqdns: [
+              '*'
+            ]
+            protocols: [
+              {
+                port: 443
+                protocolType: 'Https'
+              }
+              {
+                port: 80
+                protocolType: 'Http'
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+
+resource firewall_def 'Microsoft.Network/azureFirewalls@2023-11-01' = if (outbound_access_method == 'AzureFirewallProxy') {
+  name: 'firewall'
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'IpConf'
+        properties: {
+          subnet: {
+            id: firewall_subnet.id
+          }
+          publicIPAddress: {
+            id: firewall_pip.id
+          }
+        }
+      }
+    ]
+    firewallPolicy: {
+      id: firewall_policy_proxy.id
+    }
+    sku: {
+      name: 'AZFW_VNet'
+      tier: 'Standard'
+    }
+    threatIntelMode: 'Alert'
+  }
+}
+
 output publicIPAddressDC string = outbound_access_method == 'PublicIPAddress'
   ? vm_dc_pip.properties.dnsSettings.fqdn
   : ''
-
 output publicIPAddressSQL string = outbound_access_method == 'PublicIPAddress'
   ? vm_sql_pip.properties.dnsSettings.fqdn
   : ''
-
 output publicIPAddressSP string = outbound_access_method == 'PublicIPAddress'
   ? vm_sp_pip.properties.dnsSettings.fqdn
   : ''
-
 output vm_fe_public_dns array = [
-  for i in range(0, numberOfAdditionalFrontEnd): vm_fe_pip[i].properties.dnsSettings.fqdn
+  for i in range(0, numberOfAdditionalFrontEnd): (outbound_access_method == 'PublicIPAddress')
+    ? vm_fe_pip[i].properties.dnsSettings.fqdn
+    : null
 ]
+output domainAdminAccount string = '${substring(domainFQDN,0,indexOf(domainFQDN,'.'))}\\${adminUserName}'
+output domainAdminAccountFormatForBastion string = '${adminUserName}@${domainFQDN}'
+output localAdminAccount string = deploymentSettings.localAdminUserName
