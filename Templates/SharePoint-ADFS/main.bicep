@@ -6,13 +6,13 @@ param location string = resourceGroup().location
 
 @description('Version of SharePoint farm to create.')
 @allowed([
-  '2016'
-  '2019'
-  'Subscription-RTM'
-  'Subscription-22H2'
-  'Subscription-23H1'
-  'Subscription-23H2'
   'Subscription-Latest'
+  'Subscription-23H2'
+  'Subscription-23H1'
+  'Subscription-22H2'
+  'Subscription-RTM'
+  '2019'
+  '2016'
 ])
 param sharePointVersion string = 'Subscription-Latest'
 
@@ -33,18 +33,26 @@ param numberOfAdditionalFrontEnd int = 0
 @description('Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information.')
 param addAzureBastion bool = false
 
-@description('Specify if each VM should have a public IP and be reachable from Internet.')
+@description('''
+Select how the virtual machines connect to internet.
+IMPORTANT: With AzureFirewallProxy, you need to either enable Azure Bastion, or manually add a public IP address to a virtual machine, to be able to connect to it.
+''')
 @allowed([
   'PublicIPAddress'
   'AzureFirewallProxy'
 ])
-param internet_access_method string = 'PublicIPAddress'
+param outbound_access_method string = 'PublicIPAddress'
 
-@description('Specify if RDP traffic is allowed:<br>- If \'No\' (default): Firewall denies all incoming RDP traffic.<br>- If \'*\' or \'Internet\': Firewall accepts all incoming RDP traffic from Internet.<br>- If CIDR notation (e.g. 192.168.99.0/24 or 2001:1234::/64) or IP address (e.g. 192.168.99.0 or 2001:1234::): Firewall accepts incoming RDP traffic from the IP addresses specified.')
+@description('''
+Specify if RDP traffic to the virtual machines is allowed:
+- If "No" (default): RDP traffic is blocked.
+- If "*" or "Internet": RDP traffic is opened to the world.
+- If CIDR notation (e.g. 192.168.99.0/24 or 2001:1234::/64) or an IP address (e.g. 192.168.99.0 or 2001:1234::): RDP traffic is possible for the IP addresses / pattern specified.
+''')
 @minLength(1)
 param RDPTrafficAllowed string = 'No'
 
-@description('Name of the AD and SharePoint administrator. \'admin\' and \'administrator\' are not allowed.')
+@description('Name of the AD and SharePoint administrator. "admin" and "administrator" are not allowed.')
 @minLength(1)
 param adminUserName string
 
@@ -337,9 +345,9 @@ var networkSettings = {
   dcPrivateIPAddress: '10.1.1.4'
   subnetSQLPrefix: '10.1.2.0/24'
   subnetSPPrefix: '10.1.3.0/24'
-  subnetDCName: 'subnet-dc'
-  subnetSQLName: 'subnet-sql'
-  subnetSPName: 'subnet-sp'
+  subnetDCName: 'vnet-subnet-dc'
+  subnetSQLName: 'vnet-subnet-sql'
+  subnetSPName: 'vnet-subnet-sp'
   nsgRuleAllowIncomingRdp: [
     {
       name: 'nsg-rule-allow-rdp'
@@ -431,8 +439,9 @@ var firewall_proxy_settings = {
 }
 
 // Start creating resources
+// Network security groups for each subnet
 resource nsg_subnet_dc 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
-  name: 'NSG-Subnet-DC'
+  name: 'vnet-subnet-dc-nsg'
   location: location
   properties: {
     securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
@@ -440,7 +449,7 @@ resource nsg_subnet_dc 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
 }
 
 resource nsg_subnet_sql 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
-  name: 'NSG-Subnet-SQL'
+  name: 'vnet-subnet-sql-nsg'
   location: location
   properties: {
     securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
@@ -448,7 +457,7 @@ resource nsg_subnet_sql 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
 }
 
 resource nsg_subnet_sp 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
-  name: 'NSG-Subnet-SP'
+  name: 'vnet-subnet-sp-nsg'
   location: location
   properties: {
     securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
@@ -501,8 +510,8 @@ resource virtual_network 'Microsoft.Network/virtualNetworks@2023-11-01' = {
 }
 
 // Create resources for VM DC
-resource vm_dc_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (internet_access_method == 'PublicIPAddress') {
-  name: vmsResourcesNames.vmDCPublicIPName
+resource vm_dc_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbound_access_method == 'PublicIPAddress') {
+  name: 'vm-dc-pip'
   location: location
   sku: {
     name: 'Standard'
@@ -517,7 +526,7 @@ resource vm_dc_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (intern
 }
 
 resource vm_dc_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
-  name: vmsResourcesNames.vmDCNicName
+  name: 'vm-dc-nic'
   location: location
   properties: {
     ipConfigurations: [
@@ -533,7 +542,7 @@ resource vm_dc_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
               networkSettings.subnetDCName
             )
           }
-          publicIPAddress: ((internet_access_method == 'PublicIPAddress') ? { id: vm_dc_pip.id } : null)
+          publicIPAddress: ((outbound_access_method == 'PublicIPAddress') ? { id: vm_dc_pip.id } : null)
         }
       }
     ]
@@ -541,7 +550,7 @@ resource vm_dc_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
 }
 
 resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
-  name: vmsSettings.vmDCName
+  name: 'vm-dc'
   location: location
   properties: {
     hardwareProfile: {
@@ -569,7 +578,7 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         version: split(vmsSettings.vmDCImage, ':')[3]
       }
       osDisk: {
-        name: 'Disk-${vm_dc_nic.name}-OS'
+        name: 'vm-dc-disk-os'
         caching: 'ReadWrite'
         osType: 'Windows'
         createOption: 'FromImage'
@@ -590,9 +599,9 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   }
 }
 
-resource vm_dc_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (internet_access_method == 'AzureFirewallProxy') {
+resource vm_dc_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (outbound_access_method == 'AzureFirewallProxy') {
   parent: vm_dc_def
-  name: 'vm-${vm_dc_def.name}-runcommand-setproxy'
+  name: 'runcommand-setproxy'
   location: location
   properties: {
     source: {
@@ -621,9 +630,9 @@ resource vm_dc_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
   }
 }
 
-resource vm_dc_dsc_configuredc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+resource vm_dc_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
   parent: vm_dc_def
-  name: 'ConfigureDCVM'
+  name: 'apply-dsc'
   location: location
   dependsOn: [
     vm_dc_runcommand_setproxy
@@ -669,8 +678,8 @@ resource vm_dc_dsc_configuredc 'Microsoft.Compute/virtualMachines/extensions@202
 }
 
 // Create resources for VM SQL
-resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (internet_access_method == 'PublicIPAddress') {
-  name: vmsResourcesNames.vmSQLPublicIPName
+resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbound_access_method == 'PublicIPAddress') {
+  name: 'vm-sql-pip'
   location: location
   sku: {
     name: 'Standard'
@@ -685,7 +694,7 @@ resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (inter
 }
 
 resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
-  name: vmsResourcesNames.vmSQLNicName
+  name: 'vm-sql-nic'
   location: location
   properties: {
     ipConfigurations: [
@@ -700,7 +709,7 @@ resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
               networkSettings.subnetSQLName
             )
           }
-          publicIPAddress: ((internet_access_method == 'PublicIPAddress') ? { id: vm_sql_pip.id } : null)
+          publicIPAddress: ((outbound_access_method == 'PublicIPAddress') ? { id: vm_sql_pip.id } : null)
         }
       }
     ]
@@ -708,7 +717,7 @@ resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
 }
 
 resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
-  name: vmsSettings.vmSQLName
+  name: 'vm-sql'
   location: location
   properties: {
     hardwareProfile: {
@@ -736,7 +745,7 @@ resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         version: split(vmsSettings.vmSQLImage, ':')[3]
       }
       osDisk: {
-        name: 'Disk-${vmsSettings.vmSQLName}-OS'
+        name: 'vm-sql-disk-os'
         caching: 'ReadWrite'
         osType: 'Windows'
         createOption: 'FromImage'
@@ -757,7 +766,7 @@ resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   }
 }
 
-resource vm_sql_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (internet_access_method == 'AzureFirewallProxy') {
+resource vm_sql_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (outbound_access_method == 'AzureFirewallProxy') {
   parent: vm_sql_def
   name: 'runcommand-setproxy'
   location: location
@@ -788,9 +797,9 @@ resource vm_sql_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runComman
   }
 }
 
-resource vm_sql_dsc_configurevm 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+resource vm_sql_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
   parent: vm_sql_def
-  name: 'ConfigureSQLVM'
+  name: 'apply-dsc'
   location: location
   dependsOn: [
     vm_sql_runcommand_setproxy
@@ -836,8 +845,8 @@ resource vm_sql_dsc_configurevm 'Microsoft.Compute/virtualMachines/extensions@20
 }
 
 // Create resources for VM SP
-resource vm_sp_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (internet_access_method == 'PublicIPAddress') {
-  name: vmsResourcesNames.vmSPPublicIPName
+resource vm_sp_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbound_access_method == 'PublicIPAddress') {
+  name: 'vm-sp-pip'
   location: location
   sku: {
     name: 'Standard'
@@ -852,7 +861,7 @@ resource vm_sp_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (intern
 }
 
 resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
-  name: vmsResourcesNames.vmSPNicName
+  name: 'vm-sp-nic'
   location: location
   properties: {
     ipConfigurations: [
@@ -867,7 +876,7 @@ resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
               networkSettings.subnetSPName
             )
           }
-          publicIPAddress: ((internet_access_method == 'PublicIPAddress') ? { id: vm_sp_pip.id } : null)
+          publicIPAddress: ((outbound_access_method == 'PublicIPAddress') ? { id: vm_sp_pip.id } : null)
         }
       }
     ]
@@ -875,7 +884,7 @@ resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
 }
 
 resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
-  name: vmsSettings.vmSPName
+  name: 'vm-sp'
   location: location
   properties: {
     hardwareProfile: {
@@ -903,7 +912,7 @@ resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         version: split(vmsSettings.vmSharePointImage, ':')[3]
       }
       osDisk: {
-        name: 'Disk-${vmsSettings.vmSPName}-OS'
+        name: 'vm-sp-disk-os'
         caching: 'ReadWrite'
         osType: 'Windows'
         createOption: 'FromImage'
@@ -923,7 +932,7 @@ resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   }
 }
 
-resource vm_sp_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (internet_access_method == 'AzureFirewallProxy') {
+resource vm_sp_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = if (outbound_access_method == 'AzureFirewallProxy') {
   parent: vm_sp_def
   name: 'runcommand-setproxy'
   location: location
@@ -967,9 +976,9 @@ resource vm_sp_runcommand_increase_dsc_quota 'Microsoft.Compute/virtualMachines/
   }
 }
 
-resource vm_sp_dsc_configurevm 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+resource vm_sp_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
   parent: vm_sp_def
-  name: 'ConfigureSQLVM'
+  name: 'apply-dsc'
   location: location
   dependsOn: [
     vm_sp_runcommand_setproxy
@@ -1048,8 +1057,8 @@ resource vm_sp_dsc_configurevm 'Microsoft.Compute/virtualMachines/extensions@202
 }
 
 // Create resources for VMs FEs
-resource vms_fes_pips 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
-  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1 && internet_access_method == 'PublicIPAddress') {
+resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
+  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1 && outbound_access_method == 'PublicIPAddress') {
     name: 'vm-fe${i}-pip'
     location: location
     sku: {
@@ -1065,7 +1074,7 @@ resource vms_fes_pips 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
   }
 ]
 
-resource vms_fes_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
+resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
   for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1) {
     name: 'vm-fe${i}-nic'
     location: location
@@ -1082,23 +1091,24 @@ resource vms_fes_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
                 networkSettings.subnetSPName
               )
             }
-            publicIPAddress: (internet_access_method == 'PublicIPAddress'
-              ? json('{"id": "${vms_fes_pips[i].id}"}')
-              : null)
+            publicIPAddress: (outbound_access_method == 'PublicIPAddress' ? json('{"id": "${vm_fe_pip[i].id}"}') : null)
           }
         }
       ]
     }
     dependsOn: [
-      vms_fes_pips[i]
+      vm_fe_pip[i]
     ]
   }
 ]
 
-resource vms_fes_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
+resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
   for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1) {
     name: 'vm-fe${i}'
     location: location
+    dependsOn: [
+      vm_fe_nic[i]
+    ]
     properties: {
       hardwareProfile: {
         vmSize: vmSPSize
@@ -1137,26 +1147,120 @@ resource vms_fes_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
       networkProfile: {
         networkInterfaces: [
           {
-            id: vms_fes_nic[i].id
+            id: vm_fe_nic[i].id
           }
         ]
       }
       licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
     }
-    dependsOn: [
-      vms_fes_nic[i]
-    ]
   }
 ]
 
-output publicIPAddressDC string = internet_access_method == 'PublicIPAddress'
+resource vm_fe_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = [
+  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1 && outbound_access_method == 'AzureFirewallProxy') {
+    parent: vm_fe_def[i]
+    name: 'runcommand-setproxy'
+    location: location
+    properties: {
+      source: {
+        script: 'param([string]$proxyIp, [string]$proxyHttpPort, [string]$proxyHttpsPort, [string]$localDomainFqdn) $proxy : "http={0}:{1};https={0}:{2}" -f $proxyIp, $proxyHttpPort, $proxyHttpsPort; $bypasslist : "*.{0};<local>" -f $localDomainFqdn; netsh winhttp set proxy proxy-server=$proxy bypass-list=$bypasslist; $proxyEnabled = 1; New-ItemProperty -Path "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" -Name "ProxySettingsPerUser" -PropertyType DWORD -Value 0 -Force; $proxyBytes = [system.Text.Encoding]::ASCII.GetBytes($proxy); $bypassBytes = [system.Text.Encoding]::ASCII.GetBytes($bypasslist); $defaultConnectionSettings = [byte[]]@(@(70, 0, 0, 0, 0, 0, 0, 0, $proxyEnabled, 0, 0, 0, $proxyBytes.Length, 0, 0, 0) + $proxyBytes + @($bypassBytes.Length, 0, 0, 0) + $bypassBytes + @(1..36 | % { 0 })); $registryPaths = @("HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"); foreach ($registryPath in $registryPaths) { Set-ItemProperty -Path $registryPath -Name ProxyServer -Value $proxy; Set-ItemProperty -Path $registryPath -Name ProxyEnable -Value $proxyEnabled; Set-ItemProperty -Path $registryPath -Name ProxyOverride -Value $bypasslist; Set-ItemProperty -Path "$registryPath\\Connections" -Name DefaultConnectionSettings -Value $defaultConnectionSettings; } Bitsadmin /util /setieproxy localsystem MANUAL_PROXY $proxy $bypasslist;'
+      }
+      parameters: [
+        {
+          name: 'proxyIp'
+          value: firewall_proxy_settings.azureFirewallIPAddress
+        }
+        {
+          name: 'proxyHttpPort'
+          value: firewall_proxy_settings.http_port
+        }
+        {
+          name: 'proxyHttpsPort'
+          value: firewall_proxy_settings.https_port
+        }
+        {
+          name: 'proxyIp'
+          value: domainFQDN
+        }
+      ]
+      timeoutInSeconds: 90
+      treatFailureAsDeploymentFailure: false
+    }
+  }
+]
+
+resource vm_fe_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = [
+  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1) {
+    parent: vm_fe_def[i]
+    name: 'apply-dsc'
+    location: location
+    dependsOn: [
+      vm_fe_runcommand_setproxy[i]
+    ]
+    properties: {
+      publisher: 'Microsoft.Powershell'
+      type: 'DSC'
+      typeHandlerVersion: '2.9'
+      autoUpgradeMinorVersion: true
+      forceUpdateTag: dscSettings.forceUpdateTag
+      settings: {
+        wmfVersion: 'latest'
+        configuration: {
+          url: dscSettings.vmFEScriptFileUri
+          script: dscSettings.vmFEScript
+          function: dscSettings.vmFEFunction
+        }
+        configurationArguments: {
+          DNSServerIP: networkSettings.dcPrivateIPAddress
+          DomainFQDN: domainFQDN
+          DCServerName: vmsSettings.vmDCName
+          SQLServerName: vmsSettings.vmSQLName
+          SQLAlias: deploymentSettings.sqlAlias
+          SharePointVersion: sharePointVersion
+          SharePointSitesAuthority: deploymentSettings.sharePointSitesAuthority
+          EnableAnalysis: deploymentSettings.enableAnalysis
+          SharePointBits: deploymentSettings.sharePointBitsSelected
+        }
+        privacy: {
+          dataCollection: 'enable'
+        }
+      }
+      protectedSettings: {
+        configurationArguments: {
+          DomainAdminCreds: {
+            UserName: adminUserName
+            Password: adminPassword
+          }
+          SPSetupCreds: {
+            UserName: deploymentSettings.spSetupUserName
+            Password: serviceAccountsPassword
+          }
+          SPFarmCreds: {
+            UserName: deploymentSettings.spFarmUserName
+            Password: serviceAccountsPassword
+          }
+          SPPassphraseCreds: {
+            UserName: 'Passphrase'
+            Password: serviceAccountsPassword
+          }
+        }
+      }
+    }
+  }
+]
+
+output publicIPAddressDC string = outbound_access_method == 'PublicIPAddress'
   ? vm_dc_pip.properties.dnsSettings.fqdn
   : ''
 
-output publicIPAddressSQL string = internet_access_method == 'PublicIPAddress'
+output publicIPAddressSQL string = outbound_access_method == 'PublicIPAddress'
   ? vm_sql_pip.properties.dnsSettings.fqdn
   : ''
 
-output publicIPAddressSP string = internet_access_method == 'PublicIPAddress'
+output publicIPAddressSP string = outbound_access_method == 'PublicIPAddress'
   ? vm_sp_pip.properties.dnsSettings.fqdn
   : ''
+
+output vm_fe_public_dns array = [
+  for i in range(0, numberOfAdditionalFrontEnd): vm_fe_pip[i].properties.dnsSettings.fqdn
+]
