@@ -672,6 +672,20 @@ resource vm_dc_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
   }
 }
 
+resource vm_dc_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (vmsAutoShutdownTime != '9999') {
+  name: 'shutdown-computevm-${vm_dc_def.name}'
+  location: location
+  properties: {
+    targetResourceId: vm_dc_def.id
+    status: 'Enabled'
+    taskType: 'ComputeVmShutdownTask'
+    timeZoneId: vmsTimeZone
+    dailyRecurrence: {
+      time: vmsAutoShutdownTime
+    }
+  }
+}
+
 // Create resources for VM SQL
 resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbound_access_method == 'PublicIPAddress') {
   name: 'vm-sql-pip'
@@ -835,6 +849,20 @@ resource vm_sql_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-
           Password: serviceAccountsPassword
         }
       }
+    }
+  }
+}
+
+resource vm_sql_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (vmsAutoShutdownTime != '9999') {
+  name: 'shutdown-computevm-${vm_sql_def.name}'
+  location: location
+  properties: {
+    targetResourceId: vm_sql_def.id
+    status: 'Enabled'
+    taskType: 'ComputeVmShutdownTask'
+    timeZoneId: vmsTimeZone
+    dailyRecurrence: {
+      time: vmsAutoShutdownTime
     }
   }
 }
@@ -1051,6 +1079,20 @@ resource vm_sp_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
   }
 }
 
+resource vm_sp_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (vmsAutoShutdownTime != '9999') {
+  name: 'shutdown-computevm-${vm_sp_def.name}'
+  location: location
+  properties: {
+    targetResourceId: vm_sp_def.id
+    status: 'Enabled'
+    taskType: 'ComputeVmShutdownTask'
+    timeZoneId: vmsTimeZone
+    dailyRecurrence: {
+      time: vmsAutoShutdownTime
+    }
+  }
+}
+
 // Create resources for VMs FEs
 resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
   for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1 && outbound_access_method == 'PublicIPAddress') {
@@ -1239,6 +1281,22 @@ resource vm_fe_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
             Password: serviceAccountsPassword
           }
         }
+      }
+    }
+  }
+]
+
+resource vm_fe_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = [
+  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1 && vmsAutoShutdownTime != '9999') {
+    name: 'shutdown-computevm-${vm_fe_def[i].name}'
+    location: location
+    properties: {
+      targetResourceId: vm_fe_def[i].id
+      status: 'Enabled'
+      taskType: 'ComputeVmShutdownTask'
+      timeZoneId: vmsTimeZone
+      dailyRecurrence: {
+        time: vmsAutoShutdownTime
       }
     }
   }
@@ -1468,7 +1526,7 @@ resource firewall_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (out
   }
 }
 
-resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2023-11-01' = {
+resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2023-11-01' = if (outbound_access_method == 'AzureFirewallProxy') {
   name: 'firewall-policy-proxy'
   location: location
   properties: {
@@ -1485,7 +1543,7 @@ resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2023-11-01' =
   }
 }
 
-resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2023-11-01' = {
+resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2023-11-01' = if (outbound_access_method == 'AzureFirewallProxy') {
   name: 'rules'
   parent: firewall_policy_proxy
   properties: {
