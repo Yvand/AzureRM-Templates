@@ -11,7 +11,7 @@
     // "outbound_access_method": { "value": "AzureFirewallProxy" },
     "rdp_traffic_rule": { "value": "10.20.30.40" },
     "front_end_server_count": { "value": 1 },
-    "enableH_hybrid_benefit_server_licenses": { "value": true },
+    "enable_hybrid_benefit_server_licenses": { "value": true },
     "enable_azure_bastion": { "value": false },
     "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" },
     "_artifactsLocationSasToken": { "value": "" },

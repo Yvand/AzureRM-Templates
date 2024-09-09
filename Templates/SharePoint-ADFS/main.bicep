@@ -30,28 +30,6 @@ param domain_fqdn string = 'contoso.local'
 ])
 param front_end_server_count int = 0
 
-@description('Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information.')
-param enable_azure_bastion bool = false
-
-@description('''
-Select how the virtual machines connect to internet.
-IMPORTANT: With AzureFirewallProxy, you need to either enable Azure Bastion, or manually add a public IP address to a virtual machine, to be able to connect to it.
-''')
-@allowed([
-  'PublicIPAddress'
-  'AzureFirewallProxy'
-])
-param outbound_access_method string = 'PublicIPAddress'
-
-@description('''
-Specify if a rule in the network security groups should allow the inbound RDP traffic:
-- "No" (default): No rule is created, RDP traffic is blocked.
-- "*" or "Internet": RDP traffic is allowed from everywhere.
-- CIDR notation (e.g. 192.168.99.0/24 or 2001:1234::/64) or an IP address (e.g. 192.168.99.0 or 2001:1234::): RDP traffic is allowed from the IP addresses / pattern specified.
-''')
-@minLength(1)
-param rdp_traffic_rule string = 'No'
-
 @description('Name of the AD and SharePoint administrator. "admin" and "administrator" are not allowed.')
 @minLength(1)
 param admin_username string
@@ -65,6 +43,31 @@ param admin_password string
 @minLength(8)
 @secure()
 param other_accounts_password string
+
+@description('''
+Specify if a rule in the network security groups should allow the inbound RDP traffic:
+- "No" (default): No rule is created, RDP traffic is blocked.
+- "*" or "Internet": RDP traffic is allowed from everywhere.
+- CIDR notation (e.g. 192.168.99.0/24 or 2001:1234::/64) or an IP address (e.g. 192.168.99.0 or 2001:1234::): RDP traffic is allowed from the IP addresses / pattern specified.
+''')
+@minLength(1)
+param rdp_traffic_rule string = 'No'
+
+@description('''
+Select how the virtual machines connect to internet.
+IMPORTANT: With AzureFirewallProxy, you need to either enable Azure Bastion, or manually add a public IP address to a virtual machine, to be able to connect to it.
+''')
+@allowed([
+  'PublicIPAddress'
+  'AzureFirewallProxy'
+])
+param outbound_access_method string = 'PublicIPAddress'
+
+@description('Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information.')
+param enable_azure_bastion bool = false
+
+@description('Enable the Azure Hybrid Benefit on virtual machines, to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information.')
+param enable_hybrid_benefit_server_licenses bool = false
 
 @description('Time zone of the virtual machines. Type "[TimeZoneInfo]::GetSystemTimeZones().Id" in PowerShell to get the list.')
 @minLength(2)
@@ -216,9 +219,6 @@ param time_zone string = 'Romance Standard Time'
 @maxLength(4)
 param auto_shutdown_time string = '1900'
 
-@description('Enable the Azure Hybrid Benefit on virtual machines, to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information.')
-param enableH_hybrid_benefit_server_licenses bool = false
-
 @description('Size of the DC VM')
 param vm_dc_size string = 'Standard_B2s'
 
@@ -268,6 +268,7 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 @secure()
 param _artifactsLocationSasToken string = ''
 
+// Local variables
 var resourceGroupNameFormatted = replace(
   replace(replace(replace(resourceGroup().name, '.', '-'), '(', '-'), ')', '-'),
   '_',
@@ -584,7 +585,7 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         }
       ]
     }
-    licenseType: (enableH_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
+    licenseType: (enable_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
   }
 }
 
@@ -765,7 +766,7 @@ resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         }
       ]
     }
-    licenseType: (enableH_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
+    licenseType: (enable_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
   }
 }
 
@@ -945,7 +946,7 @@ resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         }
       ]
     }
-    licenseType: (enableH_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
+    licenseType: (enable_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
   }
 }
 
@@ -1182,7 +1183,7 @@ resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
           }
         ]
       }
-      licenseType: (enableH_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
+      licenseType: (enable_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
     }
   }
 ]
