@@ -2,35 +2,35 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "sharepoint_version": { "value": "Subscription-RTM" },
-    "domain_fqdn": { "value": "contoso.local" },
-    "admin_username": { "value": "yvand" },
-    "time_zone": { "value": "Romance Standard Time" },
-    "vm_sharepoint_storage": { "value": "Premium_LRS" },
-    "outbound_access_method": { "value": "PublicIPAddress" },
-    // "outbound_access_method": { "value": "AzureFirewallProxy" },
-    "rdp_traffic_rule": { "value": "10.20.30.40" },
-    "front_end_server_count": { "value": 1 },
-    "enable_hybrid_benefit_server_licenses": { "value": true },
+    "sharePointVersion": { "value": "Subscription-RTM" },
+    "domainFqdn": { "value": "contoso.local" },
+    "adminUsername": { "value": "yvand" },
+    "timeZone": { "value": "Romance Standard Time" },
+    "vmSharePointStorage": { "value": "Premium_LRS" },
+    "outboundAccessMethod": { "value": "PublicIPAddress" },
+    // "outboundAccessMethod": { "value": "AzureFirewallProxy" },
+    "rdpTrafficRule": { "value": "10.20.30.40" },
+    "frontEndServerCount": { "value": 1 },
+    "enableHybridBenefitServerLicenses": { "value": true },
     "enable_azure_bastion": { "value": false },
     "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" },
     "_artifactsLocationSasToken": { "value": "" },
-    "auto_shutdown_time": {
+    "autoShutdownTime": {
       "value": "1900"
     },
-    "vm_dc_size": {
+    "vmDcSize": {
       "value": "Standard_B2s"
     },
-    "vm_dc_storage": {
+    "vmDcStorage": {
       "value": "StandardSSD_LRS"
     },
-    "vm_sql_size": {
+    "vmSqlSize": {
       "value": "Standard_B2ms"
     },
-    "vm_sql_storage": {
+    "vmSqlStorage": {
       "value": "StandardSSD_LRS"
     },
-    "vm_sharepoint_size": {
+    "vmSharePointSize": {
       "value": "Standard_B4ms"
     }
   }

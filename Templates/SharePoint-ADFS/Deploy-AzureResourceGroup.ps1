@@ -3,7 +3,7 @@
 
 ### Set variables
 $resourceGroupLocation = 'francecentral'
-$resourceGroupName = "xxydsp1"
+$resourceGroupName = "xxydsp2"
 # $resourceGroupName = "gf(d)df_-sf.sm"
 $templateFileName = 'main.bicep'
 $templateParametersFileName = 'azuredeploy.parameters.json'
@@ -12,8 +12,8 @@ $templateParametersFileName = 'azuredeploy.parameters.json'
 # $securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
 $passwords = New-Object -TypeName HashTable
-$passwords.admin_password = $securePassword
-$passwords.other_accounts_password = $securePassword
+$passwords.adminPassword = $securePassword
+$passwords.otherAccountsPassword = $securePassword
 
 # ### Set parameters
 $scriptRoot = $PSScriptRoot
@@ -21,8 +21,8 @@ $scriptRoot = $PSScriptRoot
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 # $parameters = New-Object -TypeName HashTable
-# $parameters.admin_password = $securePassword
-# $parameters.other_accounts_password = $securePassword
+# $parameters.adminPassword = $securePassword
+# $parameters.otherAccountsPassword = $securePassword
 # $paramFileContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
 # $paramFileContent.parameters | Get-Member -MemberType *Property | ForEach-Object { 
 #     $parameters.($_.name) = $paramFileContent.parameters.($_.name).value; 
