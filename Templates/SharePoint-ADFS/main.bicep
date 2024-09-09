@@ -14,13 +14,13 @@ param location string = resourceGroup().location
   '2019'
   '2016'
 ])
-param sharePointVersion string = 'Subscription-Latest'
+param sharepoint_version string = 'Subscription-Latest'
 
 @description('FQDN of the AD forest to create.')
 @minLength(5)
-param domainFQDN string = 'contoso.local'
+param domain_fqdn string = 'contoso.local'
 
-@description('Number of MinRole Front-end to add to the farm. The MinRole type can be changed later as needed.')
+@description('Number of servers with MinRole Front-end to add to the farm.')
 @allowed([
   0
   1
@@ -28,10 +28,10 @@ param domainFQDN string = 'contoso.local'
   3
   4
 ])
-param numberOfAdditionalFrontEnd int = 0
+param front_end_server_count int = 0
 
 @description('Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information.')
-param addAzureBastion bool = false
+param enable_azure_bastion bool = false
 
 @description('''
 Select how the virtual machines connect to internet.
@@ -44,27 +44,27 @@ IMPORTANT: With AzureFirewallProxy, you need to either enable Azure Bastion, or 
 param outbound_access_method string = 'PublicIPAddress'
 
 @description('''
-Specify if RDP traffic to the virtual machines is allowed:
-- If "No" (default): RDP traffic is blocked.
-- If "*" or "Internet": RDP traffic is opened to the world.
-- If CIDR notation (e.g. 192.168.99.0/24 or 2001:1234::/64) or an IP address (e.g. 192.168.99.0 or 2001:1234::): RDP traffic is possible for the IP addresses / pattern specified.
+Specify if a rule in the network security groups should allow the inbound RDP traffic:
+- "No" (default): No rule is created, RDP traffic is blocked.
+- "*" or "Internet": RDP traffic is allowed from everywhere.
+- CIDR notation (e.g. 192.168.99.0/24 or 2001:1234::/64) or an IP address (e.g. 192.168.99.0 or 2001:1234::): RDP traffic is allowed from the IP addresses / pattern specified.
 ''')
 @minLength(1)
-param RDPTrafficAllowed string = 'No'
+param rdp_traffic_rule string = 'No'
 
 @description('Name of the AD and SharePoint administrator. "admin" and "administrator" are not allowed.')
 @minLength(1)
-param adminUserName string
+param admin_username string
 
-@description('Input must meet password complexity requirements as documented in https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-')
+@description('Password for the admin account. Input must meet password complexity requirements as documented in https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-')
 @minLength(8)
 @secure()
-param adminPassword string
+param admin_password string
 
-@description('Password for all service accounts and SharePoint passphrase. Input must meet password complexity requirements as documented in https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-')
+@description('Password for all the other accounts and the SharePoint passphrase. Input must meet password complexity requirements as documented in https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-')
 @minLength(8)
 @secure()
-param serviceAccountsPassword string
+param other_accounts_password string
 
 @description('Time zone of the virtual machines. Type "[TimeZoneInfo]::GetSystemTimeZones().Id" in PowerShell to get the list.')
 @minLength(2)
@@ -209,24 +209,18 @@ param serviceAccountsPassword string
   'Samoa Standard Time'
   'Line Islands Standard Time'
 ])
-param vmsTimeZone string = 'Romance Standard Time'
+param time_zone string = 'Romance Standard Time'
 
-@description('The time at which VMs will be automatically shutdown (24h HHmm format). Set value to \'9999\' to NOT configure the auto shutdown.')
+@description('The time at which the virtual machines will automatically shutdown and be deallocated (24h HHmm format). Set value to \'9999\' to NOT configure the auto shutdown.')
 @minLength(4)
 @maxLength(4)
-param vmsAutoShutdownTime string = '1900'
+param auto_shutdown_time string = '1900'
 
-// @description('Enable automatic Windows Updates.')
-// param enableAutomaticUpdates bool = true
-
-@description('Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information.')
-param enableHybridBenefitServerLicenses bool = false
-
-// @description('Size in Gb of the additional data disk attached to SharePoint VMs. Set to 0 to not create it')
-// param sharePointDataDiskSize int = 0
+@description('Enable the Azure Hybrid Benefit on virtual machines, to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information.')
+param enableH_hybrid_benefit_server_licenses bool = false
 
 @description('Size of the DC VM')
-param vmDCSize string = 'Standard_B2s'
+param vm_dc_size string = 'Standard_B2s'
 
 @description('Type of storage for the managed disks. Visit \'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes\' for more information')
 @allowed([
@@ -237,10 +231,10 @@ param vmDCSize string = 'Standard_B2s'
   'StandardSSD_ZRS'
   'UltraSSD_LRS'
 ])
-param vmDCStorageAccountType string = 'StandardSSD_LRS'
+param vm_dc_storage string = 'StandardSSD_LRS'
 
 @description('Size of the SQL VM')
-param vmSQLSize string = 'Standard_B2ms'
+param vm_sql_size string = 'Standard_B2ms'
 
 @description('Type of storage for the managed disks. Visit \'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes\' for more information')
 @allowed([
@@ -251,10 +245,10 @@ param vmSQLSize string = 'Standard_B2ms'
   'StandardSSD_ZRS'
   'UltraSSD_LRS'
 ])
-param vmSQLStorageAccountType string = 'StandardSSD_LRS'
+param vm_sql_storage string = 'StandardSSD_LRS'
 
 @description('Size of the SharePoint VM')
-param vmSPSize string = 'Standard_B4ms'
+param vm_sharepoint_size string = 'Standard_B4ms'
 
 @description('Type of storage for the managed disks. Visit \'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes\' for more information')
 @allowed([
@@ -265,7 +259,7 @@ param vmSPSize string = 'Standard_B4ms'
   'StandardSSD_ZRS'
   'UltraSSD_LRS'
 ])
-param vmSPStorageAccountType string = 'StandardSSD_LRS'
+param vm_sharepoint_storage string = 'StandardSSD_LRS'
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
 param _artifactsLocation string = deployment().properties.templateLink.uri
@@ -280,7 +274,7 @@ var resourceGroupNameFormatted = replace(
   '-'
 )
 var sharePointSettings = {
-  isSharePointSubscription: (startsWith(sharePointVersion, 'subscription') ? true : false)
+  isSharePointSubscription: (startsWith(sharepoint_version, 'subscription') ? true : false)
   sharePointImagesList: {
     Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest'
     sp2019: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2019gen2smalldisk:latest'
@@ -356,7 +350,7 @@ var networkSettings = {
         protocol: 'Tcp'
         sourcePortRange: '*'
         destinationPortRange: '3389'
-        sourceAddressPrefix: RDPTrafficAllowed
+        sourceAddressPrefix: rdp_traffic_rule
         destinationAddressPrefix: '*'
         access: 'Allow'
         priority: 110
@@ -375,7 +369,7 @@ var vmsSettings = {
   vmSQLImage: 'MicrosoftSQLServer:sql2022-ws2022:sqldev-gen2:latest'
   vmSharePointImage: (sharePointSettings.isSharePointSubscription
     ? sharePointSettings.sharePointImagesList.Subscription
-    : ((sharePointVersion == '2019')
+    : ((sharepoint_version == '2019')
         ? sharePointSettings.sharePointImagesList.sp2019
         : sharePointSettings.sharePointImagesList.sp2016))
 }
@@ -439,7 +433,7 @@ resource nsg_subnet_dc 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: 'vnet-subnet-dc-nsg'
   location: location
   properties: {
-    securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
+    securityRules: ((toLower(rdp_traffic_rule) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
   }
 }
 
@@ -447,7 +441,7 @@ resource nsg_subnet_sql 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: 'vnet-subnet-sql-nsg'
   location: location
   properties: {
-    securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
+    securityRules: ((toLower(rdp_traffic_rule) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
   }
 }
 
@@ -455,7 +449,7 @@ resource nsg_subnet_sp 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: 'vnet-subnet-sp-nsg'
   location: location
   properties: {
-    securityRules: ((toLower(RDPTrafficAllowed) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
+    securityRules: ((toLower(rdp_traffic_rule) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
   }
 }
 
@@ -549,14 +543,14 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   location: location
   properties: {
     hardwareProfile: {
-      vmSize: vmDCSize
+      vmSize: vm_dc_size
     }
     osProfile: {
       computerName: vmsSettings.vmDCName
-      adminUsername: adminUserName
-      adminPassword: adminPassword
+      adminUsername: admin_username
+      adminPassword: admin_password
       windowsConfiguration: {
-        timeZone: vmsTimeZone
+        timeZone: time_zone
         enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
         provisionVMAgent: true
         patchSettings: {
@@ -579,7 +573,7 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         createOption: 'FromImage'
         diskSizeGB: 32
         managedDisk: {
-          storageAccountType: vmDCStorageAccountType
+          storageAccountType: vm_dc_storage
         }
       }
     }
@@ -590,7 +584,7 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         }
       ]
     }
-    licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+    licenseType: (enableH_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
   }
 }
 
@@ -617,7 +611,7 @@ resource vm_dc_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
       }
       {
         name: 'localDomainFqdn'
-        value: domainFQDN
+        value: domain_fqdn
       }
     ]
     timeoutInSeconds: 90
@@ -646,7 +640,7 @@ resource vm_dc_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
         function: dscSettings.vmDCFunction
       }
       configurationArguments: {
-        domainFQDN: domainFQDN
+        domainFQDN: domain_fqdn
         PrivateIP: networkSettings.dcPrivateIPAddress
         SPServerName: vmsSettings.vmSPName
         SharePointSitesAuthority: deploymentSettings.sharePointSitesAuthority
@@ -660,28 +654,28 @@ resource vm_dc_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
     protectedSettings: {
       configurationArguments: {
         AdminCreds: {
-          UserName: adminUserName
-          Password: adminPassword
+          UserName: admin_username
+          Password: admin_password
         }
         AdfsSvcCreds: {
           UserName: deploymentSettings.adfsSvcUserName
-          Password: serviceAccountsPassword
+          Password: other_accounts_password
         }
       }
     }
   }
 }
 
-resource vm_dc_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (vmsAutoShutdownTime != '9999') {
+resource vm_dc_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (auto_shutdown_time != '9999') {
   name: 'shutdown-computevm-${vm_dc_def.name}'
   location: location
   properties: {
     targetResourceId: vm_dc_def.id
     status: 'Enabled'
     taskType: 'ComputeVmShutdownTask'
-    timeZoneId: vmsTimeZone
+    timeZoneId: time_zone
     dailyRecurrence: {
-      time: vmsAutoShutdownTime
+      time: auto_shutdown_time
     }
   }
 }
@@ -730,14 +724,14 @@ resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   location: location
   properties: {
     hardwareProfile: {
-      vmSize: vmSQLSize
+      vmSize: vm_sql_size
     }
     osProfile: {
       computerName: vmsSettings.vmSQLName
       adminUsername: deploymentSettings.localAdminUserName
-      adminPassword: adminPassword
+      adminPassword: admin_password
       windowsConfiguration: {
-        timeZone: vmsTimeZone
+        timeZone: time_zone
         enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
         provisionVMAgent: true
         patchSettings: {
@@ -760,7 +754,7 @@ resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         createOption: 'FromImage'
         diskSizeGB: 128
         managedDisk: {
-          storageAccountType: vmSQLStorageAccountType
+          storageAccountType: vm_sql_storage
         }
       }
     }
@@ -771,7 +765,7 @@ resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         }
       ]
     }
-    licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+    licenseType: (enableH_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
   }
 }
 
@@ -798,7 +792,7 @@ resource vm_sql_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runComman
       }
       {
         name: 'localDomainFqdn'
-        value: domainFQDN
+        value: domain_fqdn
       }
     ]
     timeoutInSeconds: 90
@@ -828,7 +822,7 @@ resource vm_sql_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-
       }
       configurationArguments: {
         DNSServerIP: networkSettings.dcPrivateIPAddress
-        DomainFQDN: domainFQDN
+        DomainFQDN: domain_fqdn
       }
       privacy: {
         dataCollection: 'enable'
@@ -837,32 +831,32 @@ resource vm_sql_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-
     protectedSettings: {
       configurationArguments: {
         DomainAdminCreds: {
-          UserName: adminUserName
-          Password: adminPassword
+          UserName: admin_username
+          Password: admin_password
         }
         SqlSvcCreds: {
           UserName: deploymentSettings.sqlSvcUserName
-          Password: serviceAccountsPassword
+          Password: other_accounts_password
         }
         SPSetupCreds: {
           UserName: deploymentSettings.spSetupUserName
-          Password: serviceAccountsPassword
+          Password: other_accounts_password
         }
       }
     }
   }
 }
 
-resource vm_sql_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (vmsAutoShutdownTime != '9999') {
+resource vm_sql_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (auto_shutdown_time != '9999') {
   name: 'shutdown-computevm-${vm_sql_def.name}'
   location: location
   properties: {
     targetResourceId: vm_sql_def.id
     status: 'Enabled'
     taskType: 'ComputeVmShutdownTask'
-    timeZoneId: vmsTimeZone
+    timeZoneId: time_zone
     dailyRecurrence: {
-      time: vmsAutoShutdownTime
+      time: auto_shutdown_time
     }
   }
 }
@@ -911,14 +905,14 @@ resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   location: location
   properties: {
     hardwareProfile: {
-      vmSize: vmSPSize
+      vmSize: vm_sharepoint_size
     }
     osProfile: {
       computerName: vmsSettings.vmSPName
       adminUsername: deploymentSettings.localAdminUserName
-      adminPassword: adminPassword
+      adminPassword: admin_password
       windowsConfiguration: {
-        timeZone: vmsTimeZone
+        timeZone: time_zone
         enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
         provisionVMAgent: true
         patchSettings: {
@@ -940,7 +934,7 @@ resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         osType: 'Windows'
         createOption: 'FromImage'
         managedDisk: {
-          storageAccountType: vmSPStorageAccountType
+          storageAccountType: vm_sharepoint_storage
         }
       }
     }
@@ -951,7 +945,7 @@ resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         }
       ]
     }
-    licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+    licenseType: (enableH_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
   }
 }
 
@@ -978,7 +972,7 @@ resource vm_sp_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
       }
       {
         name: 'localDomainFqdn'
-        value: domainFQDN
+        value: domain_fqdn
       }
     ]
     timeoutInSeconds: 90
@@ -1022,11 +1016,11 @@ resource vm_sp_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
       }
       configurationArguments: {
         DNSServerIP: networkSettings.dcPrivateIPAddress
-        DomainFQDN: domainFQDN
+        DomainFQDN: domain_fqdn
         DCServerName: vmsSettings.vmDCName
         SQLServerName: vmsSettings.vmSQLName
         SQLAlias: deploymentSettings.sqlAlias
-        SharePointVersion: sharePointVersion
+        SharePointVersion: sharepoint_version
         SharePointSitesAuthority: deploymentSettings.sharePointSitesAuthority
         SharePointCentralAdminPort: deploymentSettings.sharePointCentralAdminPort
         EnableAnalysis: deploymentSettings.enableAnalysis
@@ -1039,63 +1033,63 @@ resource vm_sp_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
     protectedSettings: {
       configurationArguments: {
         DomainAdminCreds: {
-          UserName: adminUserName
-          Password: adminPassword
+          UserName: admin_username
+          Password: admin_password
         }
         SPSetupCreds: {
           UserName: deploymentSettings.spSetupUserName
-          Password: serviceAccountsPassword
+          Password: other_accounts_password
         }
         SPFarmCreds: {
           UserName: deploymentSettings.spFarmUserName
-          Password: serviceAccountsPassword
+          Password: other_accounts_password
         }
         SPSvcCreds: {
           UserName: deploymentSettings.spSvcUserName
-          Password: serviceAccountsPassword
+          Password: other_accounts_password
         }
         SPAppPoolCreds: {
           UserName: deploymentSettings.spAppPoolUserName
-          Password: serviceAccountsPassword
+          Password: other_accounts_password
         }
         SPADDirSyncCreds: {
           UserName: deploymentSettings.spADDirSyncUserName
-          Password: serviceAccountsPassword
+          Password: other_accounts_password
         }
         SPPassphraseCreds: {
           UserName: 'Passphrase'
-          Password: serviceAccountsPassword
+          Password: other_accounts_password
         }
         SPSuperUserCreds: {
           UserName: deploymentSettings.spSuperUserName
-          Password: serviceAccountsPassword
+          Password: other_accounts_password
         }
         SPSuperReaderCreds: {
           UserName: deploymentSettings.spSuperReaderName
-          Password: serviceAccountsPassword
+          Password: other_accounts_password
         }
       }
     }
   }
 }
 
-resource vm_sp_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (vmsAutoShutdownTime != '9999') {
+resource vm_sp_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (auto_shutdown_time != '9999') {
   name: 'shutdown-computevm-${vm_sp_def.name}'
   location: location
   properties: {
     targetResourceId: vm_sp_def.id
     status: 'Enabled'
     taskType: 'ComputeVmShutdownTask'
-    timeZoneId: vmsTimeZone
+    timeZoneId: time_zone
     dailyRecurrence: {
-      time: vmsAutoShutdownTime
+      time: auto_shutdown_time
     }
   }
 }
 
 // Create resources for VMs FEs
 resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
-  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1 && outbound_access_method == 'PublicIPAddress') {
+  for i in range(0, front_end_server_count): if (front_end_server_count >= 1 && outbound_access_method == 'PublicIPAddress') {
     name: 'vm-fe${i}-pip'
     location: location
     sku: {
@@ -1112,7 +1106,7 @@ resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
 ]
 
 resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
-  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1) {
+  for i in range(0, front_end_server_count): if (front_end_server_count >= 1) {
     name: 'vm-fe${i}-nic'
     location: location
     properties: {
@@ -1140,7 +1134,7 @@ resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
 ]
 
 resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
-  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1) {
+  for i in range(0, front_end_server_count): if (front_end_server_count >= 1) {
     name: 'vm-fe${i}'
     location: location
     dependsOn: [
@@ -1148,14 +1142,14 @@ resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
     ]
     properties: {
       hardwareProfile: {
-        vmSize: vmSPSize
+        vmSize: vm_sharepoint_size
       }
       osProfile: {
         computerName: '${vmsSettings.vmFEName}-${i}'
         adminUsername: deploymentSettings.localAdminUserName
-        adminPassword: adminPassword
+        adminPassword: admin_password
         windowsConfiguration: {
-          timeZone: vmsTimeZone
+          timeZone: time_zone
           enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
           provisionVMAgent: true
           patchSettings: {
@@ -1177,7 +1171,7 @@ resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
           osType: 'Windows'
           createOption: 'FromImage'
           managedDisk: {
-            storageAccountType: vmSPStorageAccountType
+            storageAccountType: vm_sharepoint_storage
           }
         }
       }
@@ -1188,13 +1182,13 @@ resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
           }
         ]
       }
-      licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+      licenseType: (enableH_hybrid_benefit_server_licenses ? 'Windows_Server' : null)
     }
   }
 ]
 
 resource vm_fe_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = [
-  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1 && outbound_access_method == 'AzureFirewallProxy') {
+  for i in range(0, front_end_server_count): if (front_end_server_count >= 1 && outbound_access_method == 'AzureFirewallProxy') {
     parent: vm_fe_def[i]
     name: 'runcommand-setproxy'
     location: location
@@ -1217,7 +1211,7 @@ resource vm_fe_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
         }
         {
           name: 'localDomainFqdn'
-          value: domainFQDN
+          value: domain_fqdn
         }
       ]
       timeoutInSeconds: 90
@@ -1227,7 +1221,7 @@ resource vm_fe_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
 ]
 
 resource vm_fe_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = [
-  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1) {
+  for i in range(0, front_end_server_count): if (front_end_server_count >= 1) {
     parent: vm_fe_def[i]
     name: 'apply-dsc'
     location: location
@@ -1249,11 +1243,11 @@ resource vm_fe_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
         }
         configurationArguments: {
           DNSServerIP: networkSettings.dcPrivateIPAddress
-          DomainFQDN: domainFQDN
+          DomainFQDN: domain_fqdn
           DCServerName: vmsSettings.vmDCName
           SQLServerName: vmsSettings.vmSQLName
           SQLAlias: deploymentSettings.sqlAlias
-          SharePointVersion: sharePointVersion
+          SharePointVersion: sharepoint_version
           SharePointSitesAuthority: deploymentSettings.sharePointSitesAuthority
           EnableAnalysis: deploymentSettings.enableAnalysis
           SharePointBits: deploymentSettings.sharePointBitsSelected
@@ -1265,20 +1259,20 @@ resource vm_fe_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
       protectedSettings: {
         configurationArguments: {
           DomainAdminCreds: {
-            UserName: adminUserName
-            Password: adminPassword
+            UserName: admin_username
+            Password: admin_password
           }
           SPSetupCreds: {
             UserName: deploymentSettings.spSetupUserName
-            Password: serviceAccountsPassword
+            Password: other_accounts_password
           }
           SPFarmCreds: {
             UserName: deploymentSettings.spFarmUserName
-            Password: serviceAccountsPassword
+            Password: other_accounts_password
           }
           SPPassphraseCreds: {
             UserName: 'Passphrase'
-            Password: serviceAccountsPassword
+            Password: other_accounts_password
           }
         }
       }
@@ -1287,23 +1281,23 @@ resource vm_fe_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
 ]
 
 resource vm_fe_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = [
-  for i in range(0, numberOfAdditionalFrontEnd): if (numberOfAdditionalFrontEnd >= 1 && vmsAutoShutdownTime != '9999') {
+  for i in range(0, front_end_server_count): if (front_end_server_count >= 1 && auto_shutdown_time != '9999') {
     name: 'shutdown-computevm-${vm_fe_def[i].name}'
     location: location
     properties: {
       targetResourceId: vm_fe_def[i].id
       status: 'Enabled'
       taskType: 'ComputeVmShutdownTask'
-      timeZoneId: vmsTimeZone
+      timeZoneId: time_zone
       dailyRecurrence: {
-        time: vmsAutoShutdownTime
+        time: auto_shutdown_time
       }
     }
   }
 ]
 
 // Resources for Azure Bastion
-resource bastion_subnet_nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = if (addAzureBastion == true) {
+resource bastion_subnet_nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = if (enable_azure_bastion == true) {
   name: 'bastion-subnet-nsg'
   location: location
   properties: {
@@ -1454,7 +1448,7 @@ resource bastion_subnet_nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01'
   }
 }
 
-resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (addAzureBastion == true) {
+resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (enable_azure_bastion == true) {
   parent: virtual_network
   name: 'AzureBastionSubnet'
   properties: {
@@ -1465,7 +1459,7 @@ resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' =
   }
 }
 
-resource bastion_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (addAzureBastion == true) {
+resource bastion_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (enable_azure_bastion == true) {
   name: 'bastion-pip'
   location: location
   sku: {
@@ -1480,7 +1474,7 @@ resource bastion_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (addA
   }
 }
 
-resource bastion_def 'Microsoft.Network/bastionHosts@2023-11-01' = if (addAzureBastion == true) {
+resource bastion_def 'Microsoft.Network/bastionHosts@2023-11-01' = if (enable_azure_bastion == true) {
   name: 'bastion'
   location: location
   properties: {
@@ -1620,10 +1614,10 @@ output publicIPAddressSP string = outbound_access_method == 'PublicIPAddress'
   ? vm_sp_pip.properties.dnsSettings.fqdn
   : ''
 output vm_fe_public_dns array = [
-  for i in range(0, numberOfAdditionalFrontEnd): (outbound_access_method == 'PublicIPAddress')
+  for i in range(0, front_end_server_count): (outbound_access_method == 'PublicIPAddress')
     ? vm_fe_pip[i].properties.dnsSettings.fqdn
     : null
 ]
-output domainAdminAccount string = '${substring(domainFQDN,0,indexOf(domainFQDN,'.'))}\\${adminUserName}'
-output domainAdminAccountFormatForBastion string = '${adminUserName}@${domainFQDN}'
+output domainAdminAccount string = '${substring(domain_fqdn,0,indexOf(domain_fqdn,'.'))}\\${admin_username}'
+output domainAdminAccountFormatForBastion string = '${admin_username}@${domain_fqdn}'
 output localAdminAccount string = deploymentSettings.localAdminUserName

@@ -2,35 +2,35 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "sharePointVersion": { "value": "Subscription-RTM" },
-    "domainFQDN": { "value": "contoso.local" },
-    "adminUserName": { "value": "yvand" },
-    "vmsTimeZone": { "value": "Romance Standard Time" },
-    "vmSPStorageAccountType": { "value": "Premium_LRS" },
-    // "outbound_access_method": { "value": "PublicIPAddress" },
-    "outbound_access_method": { "value": "AzureFirewallProxy" },
-    "RDPTrafficAllowed": { "value": "10.20.30.40" },
-    "numberOfAdditionalFrontEnd": { "value": 1 },
-    "enableHybridBenefitServerLicenses": { "value": true },
-    "addAzureBastion": { "value": false },
+    "sharepoint_version": { "value": "Subscription-RTM" },
+    "domain_fqdn": { "value": "contoso.local" },
+    "admin_username": { "value": "yvand" },
+    "time_zone": { "value": "Romance Standard Time" },
+    "vm_sharepoint_storage": { "value": "Premium_LRS" },
+    "outbound_access_method": { "value": "PublicIPAddress" },
+    // "outbound_access_method": { "value": "AzureFirewallProxy" },
+    "rdp_traffic_rule": { "value": "10.20.30.40" },
+    "front_end_server_count": { "value": 1 },
+    "enableH_hybrid_benefit_server_licenses": { "value": true },
+    "enable_azure_bastion": { "value": false },
     "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" },
     "_artifactsLocationSasToken": { "value": "" },
-    "vmsAutoShutdownTime": {
+    "auto_shutdown_time": {
       "value": "1900"
     },
-    "vmDCSize": {
+    "vm_dc_size": {
       "value": "Standard_B2s"
     },
-    "vmDCStorageAccountType": {
+    "vm_dc_storage": {
       "value": "StandardSSD_LRS"
     },
-    "vmSQLSize": {
+    "vm_sql_size": {
       "value": "Standard_B2ms"
     },
-    "vmSQLStorageAccountType": {
+    "vm_sql_storage": {
       "value": "StandardSSD_LRS"
     },
-    "vmSPSize": {
+    "vm_sharepoint_size": {
       "value": "Standard_B4ms"
     }
   }

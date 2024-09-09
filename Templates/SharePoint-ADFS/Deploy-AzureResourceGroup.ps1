@@ -12,8 +12,8 @@ $templateParametersFileName = 'azuredeploy.parameters.json'
 # $securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
 $passwords = New-Object -TypeName HashTable
-$passwords.adminPassword = $securePassword
-$passwords.serviceAccountsPassword = $securePassword
+$passwords.admin_password = $securePassword
+$passwords.other_accounts_password = $securePassword
 
 # ### Set parameters
 $scriptRoot = $PSScriptRoot
@@ -21,8 +21,8 @@ $scriptRoot = $PSScriptRoot
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 # $parameters = New-Object -TypeName HashTable
-# $parameters.adminPassword = $securePassword
-# $parameters.serviceAccountsPassword = $securePassword
+# $parameters.admin_password = $securePassword
+# $parameters.other_accounts_password = $securePassword
 # $paramFileContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
 # $paramFileContent.parameters | Get-Member -MemberType *Property | ForEach-Object { 
 #     $parameters.($_.name) = $paramFileContent.parameters.($_.name).value; 
