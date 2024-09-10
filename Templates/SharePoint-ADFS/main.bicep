@@ -327,10 +327,18 @@ var sharePointSettings = {
       ]
     }
     {
+      Label: '24H1'
+      Packages: [
+        {
+          DownloadUrl: 'https://download.microsoft.com/download/b/a/b/bab0c7cc-0454-474b-8538-7927f75e6486/uber-subscription-kb5002564-fullfile-x64-glb.exe'
+        }
+      ]
+    }
+    {
       Label: 'Latest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/8/7/9/8798c828-1d2c-442d-9a98-e6ce59166690/uber-subscription-kb5002560-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/9/0/b/90b9d2b0-0f76-408d-950f-b3b2f3c50c83/uber-subscription-kb5002629-fullfile-x64-glb.exe'
         }
       ]
     }
