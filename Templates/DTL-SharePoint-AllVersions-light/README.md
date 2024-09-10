@@ -1,4 +1,4 @@
-# Azure template for SharePoint 2019 / 2016 / 2013, optimized for DevTest Labs
+# Azure template for SharePoint 2019 / 2016, optimized for DevTest Labs
 
 ## Presentation
 
@@ -8,7 +8,7 @@
 
 > **Note:** A public version of this template is available at <https://github.com/Azure/azure-devtestlab/tree/master/Environments/SharePoint-AllVersions>
 
-This template deploys SharePoint Subscription, 2019, 2016 and 2013. Each SharePoint version is independent and may or may not be deployed, depending on your needs.  
+This template deploys SharePoint Subscription, 2019 and 2016. Each SharePoint version is independent and may or may not be deployed, depending on your needs.  
 A DC is provisioned and configured with ADFS and ADCS (both are optional), and a unique SQL Server is provisioned for all SharePoint farms.  
 Each SharePoint farm has a lightweight configuration to provision quickly: 1 web application with 1 site collection, using Windows NTLM on Default zone, and optionally ADFS on Intranet zone.
 
@@ -38,7 +38,7 @@ Here is the default size and storage type per virtual machine role:
 
 - DC: Size [Standard_B2s](https://docs.microsoft.com/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 4 GiB RAM) and OS disk is a 32 GiB [standard SSD E4](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds).
 - SQL Server: Size [Standard_B2ms](https://docs.microsoft.com/azure/virtual-machines/sizes-b-series-burstable) (2 vCPU / 8 GiB RAM) and OS disk is a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds).
-- SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) and OS disk is either a 32 GiB [standard SSD E4](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint Subscription and 2019), or a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint 2016 and 2013).
+- SharePoint: Size [Standard_B4ms](https://docs.microsoft.com/azure/virtual-machines/sizes-b-series-burstable) (4 vCPU / 16 GiB RAM) and OS disk is either a 32 GiB [standard SSD E4](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint Subscription and 2019), or a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint 2016).
 
 You can visit <https://azure.com/e/c494029b0b034b8ca356c926dfd2688a> to estimate the monthly cost of the template in the region/currency of your choice, assuming it is created using the default settings and runs 24*7.
 

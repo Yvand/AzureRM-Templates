@@ -1,5 +1,40 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Unreleased
+
+### Added
+
+- Template
+  - Add parameter `outboundAccessMethod`, to choose how the virtual machines connect to internet. Now, they can connect through either a public IP, or using Azure Firewall as an HTTP proxy
+
+### Changed
+
+- Template
+  - Convert the template to Bicep
+  - Rename most of the parameters
+  - Update the display name of most of the resources to be more consistent and reflect their relationship with each other
+- DSC configurations
+  - Updated DSC module `ActiveDirectoryDsc` to 6.4.0
+  - Updated DSC module `ComputerManagementDsc` to 9.1.0
+  - Updated DSC module `SharePointDSC` to 5.5.0
+
+## Enhancements & bug-fixes - Published in February 26, 2024
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the February 2024 CU for SharePoint Subscription
+  - Remove SharePoint 2013
+- All SharePoint configurations
+  - Add network share `SPLOGS` on folder `C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\16\LOGS`
+- Configuration for SPSE
+  - Update the registry keys required to allow OneDrive on OIDC authentication
+  - Update claims provider to LDAPCPSE
+  - It is no longer needed to restart the VM to be able to create the SPTrustedIdentityTokenIssuer, which saves a few minutes
+- Configuration for SPLE
+  - Update claims provider to LDAPCPSE
+  - It is no longer needed to restart the VM to be able to create the SPTrustedIdentityTokenIssuer, which saves a few minutes
+
 ## Enhancements & bug-fixes - Published in December 18, 2023
 
 ### Changed

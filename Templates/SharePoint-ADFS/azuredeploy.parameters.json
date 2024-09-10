@@ -2,22 +2,36 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "sharePointVersion": { "value": "Subscription-Latest" },
-    // "sharePointVersion": { "value": "2019" },
-    "domainFQDN": { "value": "contoso.local" },
-    "adminUserName": { "value": "yvand" },
-    "adminPassword": { "value": null },
-    "serviceAccountsPassword": { "value": null },
-    "vmsTimeZone": { "value": "Romance Standard Time" },
-    "vmSPStorageAccountType": { "value": "Premium_LRS" },
-    "addPublicIPAddress": { "value": "SharePointVMsOnly" },
-    // "addPublicIPAddress": { "value": "No" },
-    "RDPTrafficAllowed": { "value": "10.20.30.40" },
-    "numberOfAdditionalFrontEnd": { "value": 0 },
+    "sharePointVersion": { "value": "Subscription-RTM" },
+    "domainFqdn": { "value": "contoso.local" },
+    "adminUsername": { "value": "yvand" },
+    "timeZone": { "value": "Romance Standard Time" },
+    "vmSharePointStorage": { "value": "Premium_LRS" },
+    "outboundAccessMethod": { "value": "PublicIPAddress" },
+    // "outboundAccessMethod": { "value": "AzureFirewallProxy" },
+    "rdpTrafficRule": { "value": "10.20.30.40" },
+    "frontEndServersCount": { "value": 1 },
     "enableHybridBenefitServerLicenses": { "value": true },
-    "enableAutomaticUpdates": { "value": true },
-    "sharePointDataDiskSize": { "value": 0 },
-    "addAzureBastion": { "value": false },
-    "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" }
+    "enableAzureBastion": { "value": false },
+    "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" },
+    "_artifactsLocationSasToken": { "value": "" },
+    "autoShutdownTime": {
+      "value": "1900"
+    },
+    "vmDcSize": {
+      "value": "Standard_B2s"
+    },
+    "vmDcStorage": {
+      "value": "StandardSSD_LRS"
+    },
+    "vmSqlSize": {
+      "value": "Standard_B2ms"
+    },
+    "vmSqlStorage": {
+      "value": "StandardSSD_LRS"
+    },
+    "vmSharePointSize": {
+      "value": "Standard_B4ms"
+    }
   }
 }
