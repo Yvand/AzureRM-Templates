@@ -1,10 +1,10 @@
 metadata description = 'Create a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration that would take ages to perform manually, and install useful softwares like Fiddler, vscode, np++, 7zip, ULS Viewer to get ready to use'
 metadata author = 'Yvand'
 
-@description('Location for all resources.')
+@description('Location for all the resources.')
 param location string = resourceGroup().location
 
-@description('Version of SharePoint farm to create.')
+@description('Version of the SharePoint farm to create.')
 @allowed([
   'Subscription-Latest'
   'Subscription-23H2'
@@ -16,7 +16,7 @@ param location string = resourceGroup().location
 ])
 param sharePointVersion string = 'Subscription-Latest'
 
-@description('FQDN of the AD forest to create.')
+@description('FQDN of the Active Directory forest.')
 @minLength(5)
 param domainFqdn string = 'contoso.local'
 
@@ -28,9 +28,9 @@ param domainFqdn string = 'contoso.local'
   3
   4
 ])
-param frontEndServerCount int = 0
+param frontEndServersCount int = 0
 
-@description('Name of the AD and SharePoint administrator. "admin" and "administrator" are not allowed.')
+@description('Name of the Active Directory and SharePoint administrator. "admin" and "administrator" are not allowed.')
 @minLength(1)
 param adminUsername string
 
@@ -48,7 +48,7 @@ param otherAccountsPassword string
 Specify if a rule in the network security groups should allow the inbound RDP traffic:
 - "No" (default): No rule is created, RDP traffic is blocked.
 - "*" or "Internet": RDP traffic is allowed from everywhere.
-- CIDR notation (e.g. 192.168.99.0/24 or 2001:1234::/64) or an IP address (e.g. 192.168.99.0 or 2001:1234::): RDP traffic is allowed from the IP addresses / pattern specified.
+- CIDR notation (e.g. 192.168.99.0/24 or 2001:1234::/64) or an IP address (e.g. 192.168.99.0 or 2001:1234::): RDP traffic is allowed from the IP address / pattern specified.
 ''')
 @minLength(1)
 param rdpTrafficRule string = 'No'
@@ -64,7 +64,7 @@ IMPORTANT: With AzureFirewallProxy, you need to either enable Azure Bastion, or 
 param outboundAccessMethod string = 'PublicIPAddress'
 
 @description('Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information.')
-param enable_azure_bastion bool = false
+param enableAzureBastion bool = false
 
 @description('Enable the Azure Hybrid Benefit on virtual machines, to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information.')
 param enableHybridBenefitServerLicenses bool = false
@@ -214,49 +214,52 @@ param enableHybridBenefitServerLicenses bool = false
 ])
 param timeZone string = 'Romance Standard Time'
 
-@description('The time at which the virtual machines will automatically shutdown and be deallocated (24h HHmm format). Set value to \'9999\' to NOT configure the auto shutdown.')
+@description('The time (24h HHmm format) at which the virtual machines will automatically be shutdown and deallocated. Set value to "9999" to NOT configure the auto shutdown.')
 @minLength(4)
 @maxLength(4)
 param autoShutdownTime string = '1900'
 
-@description('Size of the DC VM')
+@description('Size of the DC virtual machine.')
 param vmDcSize string = 'Standard_B2s'
 
-@description('Type of storage for the managed disks. Visit \'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes\' for more information')
+@description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
   'Standard_LRS'
   'StandardSSD_LRS'
-  'Premium_LRS'
-  'Premium_ZRS'
   'StandardSSD_ZRS'
+  'Premium_LRS'
+  'PremiumV2_LRS'
+  'Premium_ZRS'
   'UltraSSD_LRS'
 ])
 param vmDcStorage string = 'StandardSSD_LRS'
 
-@description('Size of the SQL VM')
+@description('Size of the SQL virtual machine.')
 param vmSqlSize string = 'Standard_B2ms'
 
-@description('Type of storage for the managed disks. Visit \'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes\' for more information')
+@description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
   'Standard_LRS'
   'StandardSSD_LRS'
-  'Premium_LRS'
-  'Premium_ZRS'
   'StandardSSD_ZRS'
+  'Premium_LRS'
+  'PremiumV2_LRS'
+  'Premium_ZRS'
   'UltraSSD_LRS'
 ])
 param vmSqlStorage string = 'StandardSSD_LRS'
 
-@description('Size of the SharePoint VM')
+@description('Size of the SharePoint virtual machine(s).')
 param vmSharePointSize string = 'Standard_B4ms'
 
-@description('Type of storage for the managed disks. Visit \'https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes\' for more information')
+@description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
   'Standard_LRS'
   'StandardSSD_LRS'
-  'Premium_LRS'
-  'Premium_ZRS'
   'StandardSSD_ZRS'
+  'Premium_LRS'
+  'PremiumV2_LRS'
+  'Premium_ZRS'
   'UltraSSD_LRS'
 ])
 param vmSharePointStorage string = 'StandardSSD_LRS'
@@ -1090,7 +1093,7 @@ resource vm_sp_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (au
 
 // Create resources for VMs FEs
 resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
-  for i in range(0, frontEndServerCount): if (frontEndServerCount >= 1 && outboundAccessMethod == 'PublicIPAddress') {
+  for i in range(0, frontEndServersCount): if (frontEndServersCount >= 1 && outboundAccessMethod == 'PublicIPAddress') {
     name: 'vm-fe${i}-pip'
     location: location
     sku: {
@@ -1107,7 +1110,7 @@ resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
 ]
 
 resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
-  for i in range(0, frontEndServerCount): if (frontEndServerCount >= 1) {
+  for i in range(0, frontEndServersCount): if (frontEndServersCount >= 1) {
     name: 'vm-fe${i}-nic'
     location: location
     properties: {
@@ -1135,7 +1138,7 @@ resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
 ]
 
 resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
-  for i in range(0, frontEndServerCount): if (frontEndServerCount >= 1) {
+  for i in range(0, frontEndServersCount): if (frontEndServersCount >= 1) {
     name: 'vm-fe${i}'
     location: location
     dependsOn: [
@@ -1189,7 +1192,7 @@ resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
 ]
 
 resource vm_fe_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommands@2024-07-01' = [
-  for i in range(0, frontEndServerCount): if (frontEndServerCount >= 1 && outboundAccessMethod == 'AzureFirewallProxy') {
+  for i in range(0, frontEndServersCount): if (frontEndServersCount >= 1 && outboundAccessMethod == 'AzureFirewallProxy') {
     parent: vm_fe_def[i]
     name: 'runcommand-setproxy'
     location: location
@@ -1222,7 +1225,7 @@ resource vm_fe_runcommand_setproxy 'Microsoft.Compute/virtualMachines/runCommand
 ]
 
 resource vm_fe_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = [
-  for i in range(0, frontEndServerCount): if (frontEndServerCount >= 1) {
+  for i in range(0, frontEndServersCount): if (frontEndServersCount >= 1) {
     parent: vm_fe_def[i]
     name: 'apply-dsc'
     location: location
@@ -1282,7 +1285,7 @@ resource vm_fe_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
 ]
 
 resource vm_fe_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = [
-  for i in range(0, frontEndServerCount): if (frontEndServerCount >= 1 && autoShutdownTime != '9999') {
+  for i in range(0, frontEndServersCount): if (frontEndServersCount >= 1 && autoShutdownTime != '9999') {
     name: 'shutdown-computevm-${vm_fe_def[i].name}'
     location: location
     properties: {
@@ -1298,7 +1301,7 @@ resource vm_fe_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = [
 ]
 
 // Resources for Azure Bastion
-resource bastion_subnet_nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = if (enable_azure_bastion == true) {
+resource bastion_subnet_nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = if (enableAzureBastion == true) {
   name: 'bastion-subnet-nsg'
   location: location
   properties: {
@@ -1449,7 +1452,7 @@ resource bastion_subnet_nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01'
   }
 }
 
-resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (enable_azure_bastion == true) {
+resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (enableAzureBastion == true) {
   parent: virtual_network
   name: 'AzureBastionSubnet'
   properties: {
@@ -1460,7 +1463,7 @@ resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' =
   }
 }
 
-resource bastion_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (enable_azure_bastion == true) {
+resource bastion_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (enableAzureBastion == true) {
   name: 'bastion-pip'
   location: location
   sku: {
@@ -1475,7 +1478,7 @@ resource bastion_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (enab
   }
 }
 
-resource bastion_def 'Microsoft.Network/bastionHosts@2023-11-01' = if (enable_azure_bastion == true) {
+resource bastion_def 'Microsoft.Network/bastionHosts@2023-11-01' = if (enableAzureBastion == true) {
   name: 'bastion'
   location: location
   properties: {
@@ -1615,7 +1618,7 @@ output publicIPAddressSP string = outboundAccessMethod == 'PublicIPAddress'
   ? vm_sp_pip.properties.dnsSettings.fqdn
   : ''
 output vm_fe_public_dns array = [
-  for i in range(0, frontEndServerCount): (outboundAccessMethod == 'PublicIPAddress')
+  for i in range(0, frontEndServersCount): (outboundAccessMethod == 'PublicIPAddress')
     ? vm_fe_pip[i].properties.dnsSettings.fqdn
     : null
 ]

@@ -82,7 +82,7 @@ The following parameters configure how to connect to the virtual machines, and t
   - If `"No"` (default): Firewall denies all incoming RDP traffic.
   - If `"*"` or `"Internet"`: Firewall accepts all incoming RDP traffic from Internet (very, very much not recommended).
   - If CIDR notation (e.g. `"192.168.99.0/24"` or `"2001:1234::/64"`) or IP address (e.g. `"192.168.99.0"` or `"2001:1234::"`): Firewall accepts incoming RDP traffic from the IP addresses specified.
-- parameter `enable_azure_bastion`:
+- parameter `enableAzureBastion`:
   - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) to allow a secure remote access to virtual machines.
   - if `false` (default): Service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is not created.
 

@@ -10,9 +10,9 @@
     "outboundAccessMethod": { "value": "PublicIPAddress" },
     // "outboundAccessMethod": { "value": "AzureFirewallProxy" },
     "rdpTrafficRule": { "value": "10.20.30.40" },
-    "frontEndServerCount": { "value": 1 },
+    "frontEndServersCount": { "value": 1 },
     "enableHybridBenefitServerLicenses": { "value": true },
-    "enable_azure_bastion": { "value": false },
+    "enableAzureBastion": { "value": false },
     "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" },
     "_artifactsLocationSasToken": { "value": "" },
     "autoShutdownTime": {
