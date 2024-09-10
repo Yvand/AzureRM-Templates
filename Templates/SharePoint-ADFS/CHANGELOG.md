@@ -12,13 +12,16 @@
 
 - Template
   - Convert the template to Bicep
-  - Rename most of the parameters
+  - [BREAKING CHANGE] Rename most of the parameters
   - Update the display name of most of the resources to be more consistent and reflect their relationship with each other
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the August 2024 CU for SharePoint Subscription
-- DSC configurations
+- All DSC configurations
+  - Add a firewall rule to all virtual machines to allow remote event viewer connections
   - Updated DSC module `ActiveDirectoryDsc` to 6.4.0
   - Updated DSC module `ComputerManagementDsc` to 9.1.0
   - Updated DSC module `SharePointDSC` to 5.5.0
+- DSC Configuration for DC
+  - Updated DSC module `AdfsDsc` to 1.4.0
 
 ## Enhancements & bug-fixes - Published in February 26, 2024
 
