@@ -39,7 +39,7 @@ output "admin_password" {
   sensitive = true
 }
 
-output "service_accounts_password" {
-  value     = module.sharepoint.service_accounts_password
+output "other_accounts_password" {
+  value     = module.sharepoint.other_accounts_password
   sensitive = true
 }

@@ -30,6 +30,13 @@
             "args": ["group", "delete", "--name", "${input:resourceGrouppName}", "--force-deletion-types", "Microsoft.Compute/virtualMachines", "--yes"],
             "problemMatcher": [],
             "dependsOn": ["remove state file"]
+        },
+        {
+            "label": "upgrade providers",
+            "type": "shell",
+            "command": "terraform",
+            "args": ["init", "-upgrade"],
+            "problemMatcher": []
         }
     ],
     "inputs": [
