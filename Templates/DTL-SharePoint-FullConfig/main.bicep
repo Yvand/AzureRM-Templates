@@ -216,11 +216,6 @@ param enableHybridBenefitServerLicenses bool = false
 ])
 param timeZone string = 'Romance Standard Time'
 
-@description('The time (24h HHmm format) at which the virtual machines will automatically be shutdown and deallocated. Set value to "9999" to NOT configure the auto shutdown.')
-@minLength(4)
-@maxLength(4)
-param autoShutdownTime string = '1900'
-
 @description('Size of the DC virtual machine.')
 param vmDcSize string = 'Standard_B2s'
 
@@ -267,7 +262,7 @@ param vmSharePointSize string = 'Standard_B4ms'
 param vmSharePointStorage string = 'StandardSSD_LRS'
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
-param _artifactsLocation string = deployment().properties.templateLink.uri
+param _artifactsLocation string = 'https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/DTL-SharePoint-FullConfig'
 
 @description('The sasToken required to access _artifactsLocation. When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.')
 @secure()
@@ -279,6 +274,7 @@ var resourceGroupNameFormatted = replace(
   '_',
   '-'
 )
+var _artifactsLocationWithTrailingSlash = '${_artifactsLocation}/'
 var sharePointSettings = {
   isSharePointSubscription: (startsWith(sharePointVersion, 'subscription') ? true : false)
   sharePointImagesList: {
@@ -398,20 +394,20 @@ var vmsSettings = {
 
 var dscSettings = {
   forceUpdateTag: '1.0'
-  vmDCScriptFileUri: uri(_artifactsLocation, 'dsc/ConfigureDCVM.zip${_artifactsLocationSasToken}')
+  vmDCScriptFileUri: uri(_artifactsLocationWithTrailingSlash, 'dsc/ConfigureDCVM.zip${_artifactsLocationSasToken}')
   vmDCScript: 'ConfigureDCVM.ps1'
   vmDCFunction: 'ConfigureDCVM'
-  vmSQLScriptFileUri: uri(_artifactsLocation, 'dsc/ConfigureSQLVM.zip${_artifactsLocationSasToken}')
+  vmSQLScriptFileUri: uri(_artifactsLocationWithTrailingSlash, 'dsc/ConfigureSQLVM.zip${_artifactsLocationSasToken}')
   vmSQLScript: 'ConfigureSQLVM.ps1'
   vmSQLFunction: 'ConfigureSQLVM'
   vmSPScriptFileUri: uri(
-    _artifactsLocation,
+    _artifactsLocationWithTrailingSlash,
     '${(sharePointSettings.isSharePointSubscription ? 'dsc/ConfigureSPSE.zip' : 'dsc/ConfigureSPLegacy.zip')}${_artifactsLocationSasToken}'
   )
   vmSPScript: (sharePointSettings.isSharePointSubscription ? 'ConfigureSPSE.ps1' : 'ConfigureSPLegacy.ps1')
   vmSPFunction: 'ConfigureSPVM'
   vmFEScriptFileUri: uri(
-    _artifactsLocation,
+    _artifactsLocationWithTrailingSlash,
     '${(sharePointSettings.isSharePointSubscription ? 'dsc/ConfigureFESE.zip' : 'dsc/ConfigureFELegacy.zip')}${_artifactsLocationSasToken}'
   )
   vmFEScript: (sharePointSettings.isSharePointSubscription ? 'ConfigureFESE.ps1' : 'ConfigureFELegacy.ps1')
@@ -688,20 +684,6 @@ resource vm_dc_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
   }
 }
 
-resource vm_dc_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (autoShutdownTime != '9999') {
-  name: 'shutdown-computevm-${vm_dc_def.name}'
-  location: location
-  properties: {
-    targetResourceId: vm_dc_def.id
-    status: 'Enabled'
-    taskType: 'ComputeVmShutdownTask'
-    timeZoneId: timeZone
-    dailyRecurrence: {
-      time: autoShutdownTime
-    }
-  }
-}
-
 // Create resources for VM SQL
 resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outboundAccessMethod == 'PublicIPAddress') {
   name: 'vm-sql-pip'
@@ -865,20 +847,6 @@ resource vm_sql_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-
           Password: otherAccountsPassword
         }
       }
-    }
-  }
-}
-
-resource vm_sql_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (autoShutdownTime != '9999') {
-  name: 'shutdown-computevm-${vm_sql_def.name}'
-  location: location
-  properties: {
-    targetResourceId: vm_sql_def.id
-    status: 'Enabled'
-    taskType: 'ComputeVmShutdownTask'
-    timeZoneId: timeZone
-    dailyRecurrence: {
-      time: autoShutdownTime
     }
   }
 }
@@ -1095,20 +1063,6 @@ resource vm_sp_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
   }
 }
 
-resource vm_sp_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = if (autoShutdownTime != '9999') {
-  name: 'shutdown-computevm-${vm_sp_def.name}'
-  location: location
-  properties: {
-    targetResourceId: vm_sp_def.id
-    status: 'Enabled'
-    taskType: 'ComputeVmShutdownTask'
-    timeZoneId: timeZone
-    dailyRecurrence: {
-      time: autoShutdownTime
-    }
-  }
-}
-
 // Create resources for VMs FEs
 resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
   for i in range(0, frontEndServersCount): if (frontEndServersCount >= 1 && outboundAccessMethod == 'PublicIPAddress') {
@@ -1297,22 +1251,6 @@ resource vm_fe_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-0
             Password: otherAccountsPassword
           }
         }
-      }
-    }
-  }
-]
-
-resource vm_fe_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = [
-  for i in range(0, frontEndServersCount): if (frontEndServersCount >= 1 && autoShutdownTime != '9999') {
-    name: 'shutdown-computevm-${vm_fe_def[i].name}'
-    location: location
-    properties: {
-      targetResourceId: vm_fe_def[i].id
-      status: 'Enabled'
-      taskType: 'ComputeVmShutdownTask'
-      timeZoneId: timeZone
-      dailyRecurrence: {
-        time: autoShutdownTime
       }
     }
   }
