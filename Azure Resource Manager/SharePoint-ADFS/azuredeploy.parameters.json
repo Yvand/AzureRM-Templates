@@ -2,10 +2,10 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "sharePointVersion": { "value": "Subscription-24H2" },
+    "sharePointVersion": { "value": "Subscription-Latest" },
     // "sharePointVersion": { "value": "2019" },
-    "domainFqdn": { "value": "xcontoso.local" },
-    "adminUsername": { "value": "xyvand" },
+    "domainFqdn": { "value": "contoso.local" },
+    "adminUsername": { "value": "yvand" },
     "timeZone": { "value": "Romance Standard Time" },
     "vmSharePointStorage": { "value": "Premium_LRS" },
     // "outboundAccessMethod": { "value": "PublicIPAddress" },
@@ -14,25 +14,25 @@
     "frontEndServersCount": { "value": 1 },
     "enableHybridBenefitServerLicenses": { "value": true },
     "enableAzureBastion": { "value": true },
-    "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/SharePoint-ADFS/" },
+    "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/convert-to-bicep/Azure%20Resource@20Manager/SharePoint-ADFS/" },
     "_artifactsLocationSasToken": { "value": "" },
     "autoShutdownTime": {
       "value": "1900"
     },
     "vmDcSize": {
-      "value": "Standard_B2s"
+      "value": "Standard_B2als_v2"
     },
     "vmDcStorage": {
       "value": "StandardSSD_LRS"
     },
     "vmSqlSize": {
-      "value": "Standard_B2ms"
+      "value": "Standard_B2as_v2"
     },
     "vmSqlStorage": {
       "value": "StandardSSD_LRS"
     },
     "vmSharePointSize": {
-      "value": "Standard_B4ms"
+      "value": "Standard_B4as_v2"
     }
   }
 }
