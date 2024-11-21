@@ -3,7 +3,7 @@
 
 ### Set variables
 $resourceGroupLocation = 'francecentral'
-$resourceGroupName = "xxydsp2"
+$resourceGroupName = "xxydsp1"
 # $resourceGroupName = "gf(d)df_-sf.sm"
 $templateFileName = 'main.bicep'
 $templateParametersFileName = 'azuredeploy.parameters.json'
