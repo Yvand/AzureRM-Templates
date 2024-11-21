@@ -262,7 +262,7 @@ param vmSharePointSize string = 'Standard_B4ms'
 param vmSharePointStorage string = 'StandardSSD_LRS'
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
-param _artifactsLocation string = 'https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/DTL-SharePoint-FullConfig'
+param _artifactsLocation string = 'https://github.com/Yvand/AzureRM-Templates/raw/dev/Azure DevTest Labs/DTL-SharePoint-FullConfig'
 
 @description('The sasToken required to access _artifactsLocation. When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.')
 @secure()
@@ -278,7 +278,7 @@ var _artifactsLocationWithTrailingSlash = '${_artifactsLocation}/'
 var sharePointSettings = {
   isSharePointSubscription: (startsWith(sharePointVersion, 'subscription') ? true : false)
   sharePointImagesList: {
-    Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest'
+    Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest'
     sp2019: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2019gen2smalldisk:latest'
     sp2016: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2016:latest'
   }
@@ -344,7 +344,7 @@ var sharePointSettings = {
       Label: 'Latest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/6/6/a/66a0057f-79af-4307-8263-103ee75ef5c6/uber-subscription-kb5002640-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/4/b/4/4b4d907f-2e25-4972-a7b1-dfe8d1c0fadb/uber-subscription-kb5002651-fullfile-x64-glb.exe'
         }
       ]
     }
