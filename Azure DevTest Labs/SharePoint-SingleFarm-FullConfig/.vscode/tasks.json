@@ -19,6 +19,52 @@
             "presentation": {
                 "reveal": "silent"
             }
+        },
+        {
+            "label": "generate all dsc archives",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/Generate-DSCArchive.ps1",
+            "args": [
+                "-vmName",
+                "*",
+                "-dscFolderRelativePath",
+                "'${workspaceFolder}\\dsc'"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "generate specified dsc archives",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/Generate-DSCArchive.ps1",
+            "args": [
+                "-vmName",
+                "${input:vmName}",
+                "-dscFolderRelativePath",
+                "'${workspaceFolder}\\dsc'"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "remove resource group",
+            "type": "shell",
+            "command": "az",
+            "args": ["group", "delete", "--name", "${input:resourceGrouppName}", "--force-deletion-types", "Microsoft.Compute/virtualMachines", "--no-wait", "--yes"],
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "type": "promptString",
+            "id": "vmName",
+            "description": "Name of the virtual machine.",
+            "default": "SPSE"
+        },
+        {
+            "type": "promptString",
+            "id": "resourceGrouppName",
+            "description": "Name of the resource group.",
+            "default": "resource-groupp-name"
         }
     ]
 }
