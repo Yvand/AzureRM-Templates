@@ -222,7 +222,7 @@ param timeZone string = 'Romance Standard Time'
 param autoShutdownTime string = '1900'
 
 @description('Size of the DC virtual machine.')
-param vmDcSize string = 'Standard_B2s'
+param vmDcSize string = 'Standard_B2als_v2'
 
 @description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
@@ -237,7 +237,7 @@ param vmDcSize string = 'Standard_B2s'
 param vmDcStorage string = 'StandardSSD_LRS'
 
 @description('Size of the SQL virtual machine.')
-param vmSqlSize string = 'Standard_B2ms'
+param vmSqlSize string = 'Standard_B2as_v2'
 
 @description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
@@ -252,7 +252,7 @@ param vmSqlSize string = 'Standard_B2ms'
 param vmSqlStorage string = 'StandardSSD_LRS'
 
 @description('Size of the SharePoint virtual machine(s).')
-param vmSharePointSize string = 'Standard_B4ms'
+param vmSharePointSize string = 'Standard_B4as_v2'
 
 @description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
