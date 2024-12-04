@@ -1,15 +1,18 @@
 #Requires -PSEdition Core
 #Requires -Module Az.Resources
 
+param(
+    [string] $resourceGroupLocation = "francecentral",
+    [string] $resourceGroupName = "ydtlfull1",
+    [string] $password = ""
+)
+
 ### Set variables
-$resourceGroupLocation = 'westeurope'
-$resourceGroupLocation = 'francecentral'
-$resourceGroupName = "ydtlfull1"
 $templateFileName = 'main.bicep'
 $templateParametersFileName = 'azuredeploy.parameters.json'
 
 ### Set passwords
-# $securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
+$securePassword = $password | ConvertTo-SecureString -AsPlainText -Force -ErrorAction SilentlyContinue
 if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
 $passwords = New-Object -TypeName HashTable
 $passwords.adminPassword = $securePassword
@@ -17,8 +20,8 @@ $passwords.otherAccountsPassword = $securePassword
 
 # ### Set parameters
 $scriptRoot = $PSScriptRoot
-#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SharePoint-ADFS"
-$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
+#$scriptRoot = "C:\YvanData\repos\AzureRM-Templates\Azure Resource Manager\SharePoint-ADFS"
+$templateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 # $parameters = New-Object -TypeName HashTable
 # $parameters.adminPassword = $securePassword
@@ -55,7 +58,7 @@ if ($null -eq (Get-AzResourceGroup -ResourceGroupName $resourceGroupName -ErrorA
 ### Test template and deploy if it is valid, otherwise display error details
 $checkTemplate = Test-AzResourceGroupDeployment `
     -ResourceGroupName $resourceGroupName `
-    -TemplateFile $TemplateFile `
+    -TemplateFile $templateFile `
     -Verbose `
     -TemplateParameterFile $templateParametersFile `
     @passwords
@@ -69,7 +72,7 @@ if ($checkTemplate.Count -eq 0) {
     $result = New-AzResourceGroupDeployment `
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
-        -TemplateFile $TemplateFile `
+        -TemplateFile $templateFile `
         -Verbose -Force `
         -TemplateParameterFile $templateParametersFile `
         @passwords 

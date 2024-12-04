@@ -21,6 +21,19 @@
             }
         },
         {
+            "label": "deploy template",
+            "type": "shell",
+            "command": "${workspaceFolder}/DeployTemplate.ps1",
+            "args": ["-password", "${input:accountsPassword}"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true,
+                "focus": true
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "generate all dsc archives",
             "type": "shell",
             "command": "${workspaceFolder}/scripts/Generate-DSCArchive.ps1",
@@ -65,6 +78,13 @@
             "id": "resourceGrouppName",
             "description": "Name of the resource group.",
             "default": "resource-groupp-name"
+        },
+        {
+            "type": "promptString",
+            "id": "accountsPassword",
+            "description": "The password requires at least 8 characters.",
+            "default": "",
+            "password": true
         }
     ]
 }
