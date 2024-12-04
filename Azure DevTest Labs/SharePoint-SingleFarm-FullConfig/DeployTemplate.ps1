@@ -1,42 +1,41 @@
 #Requires -PSEdition Core
 #Requires -Module Az.Resources
 
-### Define variables
+### Set variables
 $resourceGroupLocation = 'westeurope'
 $resourceGroupLocation = 'francecentral'
 $resourceGroupName = "ydtlfull1"
-$templateFileName = 'azuredeploy.json'
+$templateFileName = 'main.bicep'
 $templateParametersFileName = 'azuredeploy.parameters.json'
-$scriptRoot = $PSScriptRoot
-#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SharePoint-ADFS"
-$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
-$templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
 
 ### Set passwords
 # $securePassword = $password| ConvertTo-SecureString -AsPlainText -Force
 if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
 $passwords = New-Object -TypeName HashTable
 $passwords.adminPassword = $securePassword
-$passwords.serviceAccountsPassword = $securePassword
+$passwords.otherAccountsPassword = $securePassword
 
-### Set parameters
-$parameters = New-Object -TypeName HashTable
-$parameters.adminPassword = $securePassword
-$parameters.serviceAccountsPassword = $securePassword
-$paramFileContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
-$paramFileContent.parameters | Get-Member -MemberType *Property | ForEach-Object { 
-    $parameters.($_.name) = $paramFileContent.parameters.($_.name).value; 
-}
+# ### Set parameters
+$scriptRoot = $PSScriptRoot
+#$scriptRoot = "C:\Job\Dev\Github\AzureRM-Templates\SharePoint\SharePoint-ADFS"
+$TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
+$templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
+# $parameters = New-Object -TypeName HashTable
+# $parameters.adminPassword = $securePassword
+# $parameters.otherAccountsPassword = $securePassword
+# $paramFileContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
+# $paramFileContent.parameters | Get-Member -MemberType *Property | ForEach-Object { 
+#     $parameters.($_.name) = $paramFileContent.parameters.($_.name).value; 
+# }
 
-$resourceDeploymentName = "$resourceGroupName-deployment"
 Write-Host "Starting deployment of template in resource group '$resourceGroupName' in '$resourceGroupLocation'..." -ForegroundColor Green
 
-### Ensure connection to Azure RM
+### Validate connection to Azure
 $azurecontext = $null
 $azurecontext = Get-AzContext -ErrorAction SilentlyContinue
 if ($null -eq $azurecontext -or $null -eq $azurecontext.Account -or $null -eq $azurecontext.Subscription) {
-    Write-Host "Launching Azure authentication prompt..." -ForegroundColor Green
-    Connect-AzAccount
+    Write-Host "Connecting to Azure..." -ForegroundColor Green
+    Connect-AzAccount -UseDeviceAuthentication
     $azurecontext = Get-AzContext -ErrorAction SilentlyContinue
 }
 if ($null -eq $azurecontext -or $null -eq $azurecontext.Account -or $null -eq $azurecontext.Subscription) { 
@@ -44,7 +43,7 @@ if ($null -eq $azurecontext -or $null -eq $azurecontext.Account -or $null -eq $a
     return
 }
 
-### Create Resource Group if it doesn't exist
+### Create the resource group if needed
 if ($null -eq (Get-AzResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue)) {
     New-AzResourceGroup `
         -Name $resourceGroupName `
@@ -62,10 +61,11 @@ $checkTemplate = Test-AzResourceGroupDeployment `
     @passwords
     # -TemplateParameterObject $parameters
 
+$resourceDeploymentName = "$resourceGroupName-deployment"
 if ($checkTemplate.Count -eq 0) {
     # Template is valid, deploy it
     $startTime = $(Get-Date)
-    Write-Host "Starting template deployment..." -ForegroundColor Green
+    Write-Host "Starting deployment of template..." -ForegroundColor Green
     $result = New-AzResourceGroupDeployment `
         -Name $resourceDeploymentName `
         -ResourceGroupName $resourceGroupName `
