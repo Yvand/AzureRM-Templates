@@ -2,8 +2,8 @@
 #Requires -Module Az.Resources
 
 param(
-    [string] $resourceGroupLocation = "francecentral", # "gf(d)df_-sf.sm"
-    [string] $resourceGroupName = "xxydsp1",
+    [string] $resourceGroupLocation = "francecentral",
+    [string] $resourceGroupName = "xxydsp1", # "gf(d)df_-sf.sm"
     [string] $password = ""
 )
 
