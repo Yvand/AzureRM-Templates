@@ -14,7 +14,7 @@
     "frontEndServersCount": { "value": 0 },
     "enableHybridBenefitServerLicenses": { "value": true },
     "enableAzureBastion": { "value": false },
-    "_artifactsLocation": { "value": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/refs/heads/fix-arm-template/Azure%20Resource%20Manager/SharePoint-ADFS/" },
+    "_artifactsLocation": { "value": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/refs/heads/convert-to-bicep/Azure%20Resource%20Manager/SharePoint-ADFS/" },
     "_artifactsLocationSasToken": { "value": "" },
     "autoShutdownTime": {
       "value": "1900"
