@@ -77,7 +77,7 @@ if ($templateErrors.Count -gt 0) {
 # Template is valid, deploy it
 $resourceDeploymentName = "$resourceGroupName-deployment"
 $startTime = $(Get-Date)
-Write-Host "Starting deployment of template..." -ForegroundColor Green
+Write-Host "Template is valid, starting deployment..." -ForegroundColor Green
 $result = New-AzResourceGroupDeployment `
     -Name $resourceDeploymentName `
     -ResourceGroupName $resourceGroupName `

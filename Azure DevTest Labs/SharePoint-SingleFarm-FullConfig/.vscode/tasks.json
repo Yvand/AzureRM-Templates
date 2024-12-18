@@ -90,14 +90,12 @@
         {
             "type": "promptString",
             "id": "resourceGrouppName",
-            "description": "Name of the resource group.",
-            "default": "resource-groupp-name"
+            "description": "Name of the resource group."
         },
         {
             "type": "promptString",
             "id": "accountsPassword",
-            "description": "The password requires at least 8 characters.",
-            "default": "",
+            "description": "The password for all the accouts. It requires at least 8 characters.",
             "password": true
         }
     ]
