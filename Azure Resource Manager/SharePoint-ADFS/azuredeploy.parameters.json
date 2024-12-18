@@ -2,12 +2,11 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    // "sharePointVersion": { "value": "Subscription-Latest" },
-    "sharePointVersion": { "value": "2019" },
+    "sharePointVersion": { "value": "Subscription-Latest" },
+    // "sharePointVersion": { "value": "2019" },
     "domainFqdn": { "value": "contoso.local" },
     "adminUsername": { "value": "yvand" },
     "timeZone": { "value": "Romance Standard Time" },
-    "vmSharePointStorage": { "value": "Premium_LRS" },
     "outboundAccessMethod": { "value": "PublicIPAddress" },
     // "outboundAccessMethod": { "value": "AzureFirewallProxy" },
     "rdpTrafficRule": { "value": "10.20.30.40" },
@@ -19,20 +18,15 @@
     "autoShutdownTime": {
       "value": "1900"
     },
-    "vmDcSize": {
-      "value": "Standard_B2als_v2"
-    },
-    "vmDcStorage": {
-      "value": "StandardSSD_LRS"
-    },
-    "vmSqlSize": {
-      "value": "Standard_B2as_v2"
-    },
-    "vmSqlStorage": {
-      "value": "StandardSSD_LRS"
-    },
-    "vmSharePointSize": {
-      "value": "Standard_B4as_v2"
-    }
+    "vmSharePointStorage": { "value": "Premium_LRS" }
+    // "vmDcSize": {
+    //   "value": "Standard_B2als_v2"
+    // },
+    // "vmSqlSize": {
+    //   "value": "Standard_B2as_v2"
+    // },
+    // "vmSharePointSize": {
+    //   "value": "Standard_B4as_v2"
+    // }
   }
 }
