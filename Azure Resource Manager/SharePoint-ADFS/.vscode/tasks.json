@@ -24,7 +24,12 @@
             "label": "deploy template",
             "type": "shell",
             "command": "${workspaceFolder}/DeployTemplate.ps1",
-            "args": ["-password", "${input:accountsPassword}"],
+            "args": [
+                "-resourceGroupName",
+                "${input:resourceGrouppName}",
+                "-password",
+                "${input:accountsPassword}"
+            ],
             "presentation": {
                 "reveal": "always",
                 "panel": "dedicated",
@@ -62,7 +67,16 @@
             "label": "remove resource group",
             "type": "shell",
             "command": "az",
-            "args": ["group", "delete", "--name", "${input:resourceGrouppName}", "--force-deletion-types", "Microsoft.Compute/virtualMachines", "--no-wait", "--yes"],
+            "args": [
+                "group",
+                "delete",
+                "--name",
+                "${input:resourceGrouppName}",
+                "--force-deletion-types",
+                "Microsoft.Compute/virtualMachines",
+                "--no-wait",
+                "--yes"
+            ],
             "problemMatcher": []
         }
     ],
