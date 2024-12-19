@@ -23,7 +23,7 @@ param provisionSharePoint2016 bool = false
 
 @description('FQDN of the AD forest to create.')
 @minLength(5)
-param domainFQDN string = 'contoso.local'
+param domainFqdn string = 'contoso.local'
 
 @description('Specify if ADFS shoulde be provisioned, and used in SharePoint in an extended zone.')
 param configureADFS bool = false
@@ -52,7 +52,7 @@ param adminPassword string
 @description('Password for all service accounts and SharePoint passphrase. Input must meet password complexity requirements as documented in https://learn.microsoft.com/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm-')
 @minLength(8)
 @secure()
-param serviceAccountsPassword string
+param otherAccountsPassword string
 
 @description('Time zone of the virtual machines. Type "[TimeZoneInfo]::GetSystemTimeZones().Id" in PowerShell to get the list.')
 @minLength(2)
@@ -198,9 +198,6 @@ param serviceAccountsPassword string
   'Line Islands Standard Time'
 ])
 param timeZone string = 'Romance Standard Time'
-
-@description('Enable automatic Windows Updates.')
-param enableAutomaticUpdates bool = true
 
 @description('Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information.')
 param enableHybridBenefitServerLicenses bool = false
@@ -573,5 +570,185 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       ]
     }
     licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+  }
+}
+
+resource vm_dc_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+  parent: vm_dc_def
+  name: 'apply-dsc'
+  location: location
+  properties: {
+    publisher: 'Microsoft.Powershell'
+    type: 'DSC'
+    typeHandlerVersion: '2.9'
+    autoUpgradeMinorVersion: true
+    forceUpdateTag: dscSettings.forceUpdateTag
+    settings: {
+      wmfVersion: 'latest'
+      configuration: {
+        url: dscSettings.vmDCScriptFileUri
+        script: dscSettings.vmDCScript
+        function: dscSettings.vmDCFunction
+      }
+      configurationArguments: {
+        domainFQDN: domainFqdn
+        PrivateIP: networkSettings.dcPrivateIPAddress
+        SPServerName: ((provisionSharePointSubscription != 'No')
+          ? vmsSettings.vmSPSubscriptionName
+          : (provisionSharePoint2019 ? vmsSettings.vmSP2019Image : vmsSettings.vmSP2016Image))
+        SharePointSitesAuthority: '${deploymentSettings.sharePointSitesAuthority}SE'
+        SharePointCentralAdminPort: deploymentSettings.sharePointCentralAdminPort
+        ApplyBrowserPolicies: deploymentSettings.applyBrowserPolicies
+        ConfigureADFS: configureADFS
+      }
+      privacy: {
+        dataCollection: 'enable'
+      }
+    }
+    protectedSettings: {
+      configurationArguments: {
+        AdminCreds: {
+          UserName: adminUsername
+          Password: adminPassword
+        }
+        AdfsSvcCreds: {
+          UserName: deploymentSettings.adfsSvcUserName
+          Password: otherAccountsPassword
+        }
+      }
+    }
+  }
+}
+
+// Create resources for VM SQL
+resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = {
+  name: 'vm-sql-pip'
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSQLName}')
+    }
+  }
+}
+
+resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
+  name: 'vm-sql-nic'
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          subnet: {
+            id: resourceId(
+              'Microsoft.Network/virtualNetworks/subnets',
+              virtual_network.name,
+              networkSettings.subnetSQLName
+            )
+          }
+          publicIPAddress: { id: vm_sql_pip.id }
+        }
+      }
+    ]
+  }
+}
+
+resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
+  name: 'vm-sql'
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: vmSqlSize
+    }
+    osProfile: {
+      computerName: vmsSettings.vmSQLName
+      adminUsername: deploymentSettings.localAdminUserName
+      adminPassword: adminPassword
+      windowsConfiguration: {
+        timeZone: timeZone
+        enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
+        provisionVMAgent: true
+        patchSettings: {
+          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          assessmentMode: 'ImageDefault'
+        }
+      }
+    }
+    storageProfile: {
+      imageReference: {
+        publisher: split(vmsSettings.vmSQLImage, ':')[0]
+        offer: split(vmsSettings.vmSQLImage, ':')[1]
+        sku: split(vmsSettings.vmSQLImage, ':')[2]
+        version: split(vmsSettings.vmSQLImage, ':')[3]
+      }
+      osDisk: {
+        name: 'vm-sql-disk-os'
+        caching: 'ReadWrite'
+        osType: 'Windows'
+        createOption: 'FromImage'
+        diskSizeGB: 128
+        managedDisk: {
+          storageAccountType: vmSqlStorage
+        }
+      }
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: vm_sql_nic.id
+        }
+      ]
+    }
+    licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+  }
+}
+
+resource vm_sql_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+  parent: vm_sql_def
+  name: 'apply-dsc'
+  location: location
+  properties: {
+    publisher: 'Microsoft.Powershell'
+    type: 'DSC'
+    typeHandlerVersion: '2.9'
+    autoUpgradeMinorVersion: true
+    forceUpdateTag: dscSettings.forceUpdateTag
+    settings: {
+      wmfVersion: 'latest'
+      configuration: {
+        url: dscSettings.vmSQLScriptFileUri
+        script: dscSettings.vmSQLScript
+        function: dscSettings.vmSQLFunction
+      }
+      configurationArguments: {
+        DNSServerIP: networkSettings.dcPrivateIPAddress
+        DomainFQDN: domainFqdn
+      }
+      privacy: {
+        dataCollection: 'enable'
+      }
+    }
+    protectedSettings: {
+      configurationArguments: {
+        DomainAdminCreds: {
+          UserName: adminUsername
+          Password: adminPassword
+        }
+        SqlSvcCreds: {
+          UserName: deploymentSettings.sqlSvcUserName
+          Password: otherAccountsPassword
+        }
+        SPSetupCreds: {
+          UserName: deploymentSettings.spSetupUserName
+          Password: otherAccountsPassword
+        }
+      }
+    }
   }
 }
