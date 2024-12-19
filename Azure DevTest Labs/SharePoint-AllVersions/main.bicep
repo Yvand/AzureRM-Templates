@@ -362,18 +362,18 @@ var vmsSettings = {
   vmSP2019Image: sharePointSettings.sharePointImagesList.sp2019
   vmSP2016Image: sharePointSettings.sharePointImagesList.sp2016
 }
-var vmsResourcesNames = {
-  vmDCNicName: 'NIC-${vmsSettings.vmDCName}-0'
-  vmDCPublicIPName: 'PublicIP-${vmsSettings.vmDCName}'
-  vmSQLNicName: 'NIC-${vmsSettings.vmSQLName}-0'
-  vmSQLPublicIPName: 'PublicIP-${vmsSettings.vmSQLName}'
-  vmSPSubscriptionNicName: 'NIC-${vmsSettings.vmSPSubscriptionName}-0'
-  vmSPSubscriptionPublicIPName: 'PublicIP-${vmsSettings.vmSPSubscriptionName}'
-  vmSP2019NicName: 'NIC-${vmsSettings.vmSP2019Name}-0'
-  vmSP2019PublicIPName: 'PublicIP-${vmsSettings.vmSP2019Name}'
-  vmSP2016NicName: 'NIC-${vmsSettings.vmSP2016Name}-0'
-  vmSP2016PublicIPName: 'PublicIP-${vmsSettings.vmSP2016Name}'
-}
+// var vmsResourcesNames = {
+//   vmDCNicName: 'NIC-${vmsSettings.vmDCName}-0'
+//   vmDCPublicIPName: 'PublicIP-${vmsSettings.vmDCName}'
+//   vmSQLNicName: 'NIC-${vmsSettings.vmSQLName}-0'
+//   vmSQLPublicIPName: 'PublicIP-${vmsSettings.vmSQLName}'
+//   vmSPSubscriptionNicName: 'NIC-${vmsSettings.vmSPSubscriptionName}-0'
+//   vmSPSubscriptionPublicIPName: 'PublicIP-${vmsSettings.vmSPSubscriptionName}'
+//   vmSP2019NicName: 'NIC-${vmsSettings.vmSP2019Name}-0'
+//   vmSP2019PublicIPName: 'PublicIP-${vmsSettings.vmSP2019Name}'
+//   vmSP2016NicName: 'NIC-${vmsSettings.vmSP2016Name}-0'
+//   vmSP2016PublicIPName: 'PublicIP-${vmsSettings.vmSP2016Name}'
+// }
 var dscSettings = {
   forceUpdateTag: '1.0'
   vmDCScriptFileUri: uri(_artifactsLocationWithTrailingSlash, 'dsc/ConfigureDCVM.zip${_artifactsLocationSasToken}')
@@ -746,6 +746,155 @@ resource vm_sql_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-
         }
         SPSetupCreds: {
           UserName: deploymentSettings.spSetupUserName
+          Password: otherAccountsPassword
+        }
+      }
+    }
+  }
+}
+
+// Create resources for VM SP SE
+resource vm_spse_pip 'Microsoft.Network/publicIPAddresses@2022-07-01' = if (provisionSharePointSubscription != 'No') {
+  name: 'vm_spse_pip'
+  location: location
+  sku: {
+    name: 'Basic'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSPSubscriptionName}')
+    }
+  }
+}
+
+resource vm_spse_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = if (provisionSharePointSubscription != 'No') {
+  name: 'vm-spse-nic'
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          subnet: {
+            id: resourceId(
+              'Microsoft.Network/virtualNetworks/subnets',
+              virtual_network.name,
+              networkSettings.subnetSPName
+            )
+          }
+          publicIPAddress:{ id: vm_spse_pip.id }
+        }
+      }
+    ]
+  }
+}
+
+resource vm_spse_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
+  name: 'vm-spse'
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: vmSharePointSize
+    }
+    osProfile: {
+      computerName: vmsSettings.vmSPSubscriptionName
+      adminUsername: deploymentSettings.localAdminUserName
+      adminPassword: adminPassword
+      windowsConfiguration: {
+        timeZone: timeZone
+        enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
+        provisionVMAgent: true
+        patchSettings: {
+          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          assessmentMode: 'ImageDefault'
+        }
+      }
+    }
+    storageProfile: {
+      imageReference: {
+        publisher: split(vmsSettings.vmSPSubscriptionImage, ':')[0]
+        offer: split(vmsSettings.vmSPSubscriptionImage, ':')[1]
+        sku: split(vmsSettings.vmSPSubscriptionImage, ':')[2]
+        version: split(vmsSettings.vmSPSubscriptionImage, ':')[3]
+      }
+      osDisk: {
+        name: 'vm-spse-disk-os'
+        caching: 'ReadWrite'
+        osType: 'Windows'
+        createOption: 'FromImage'
+        managedDisk: {
+          storageAccountType: vmSharePointStorage
+        }
+      }
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: vm_spse_nic.id
+        }
+      ]
+    }
+    licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+  }
+}
+
+resource vm_spse_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+  parent: vm_spse_def
+  name: 'apply-dsc'
+  location: location
+  properties: {
+    publisher: 'Microsoft.Powershell'
+    type: 'DSC'
+    typeHandlerVersion: '2.9'
+    autoUpgradeMinorVersion: true
+    forceUpdateTag: dscSettings.forceUpdateTag
+    settings: {
+      wmfVersion: 'latest'
+      configuration: {
+        url: dscSettings.vmSPSubscriptionScriptFileUri
+        script: dscSettings.vmSPSubscriptionScript
+        function: dscSettings.vmSPFunction
+      }
+      configurationArguments: {
+        DNSServerIP: networkSettings.dcPrivateIPAddress
+        DomainFQDN: domainFqdn
+        DCServerName: vmsSettings.vmDCName
+        SQLServerName: vmsSettings.vmSQLName
+        SQLAlias: deploymentSettings.sqlAlias
+        SharePointVersion: provisionSharePointSubscription
+        SharePointSitesAuthority: '${deploymentSettings.sharePointSitesAuthority}SE'
+        SharePointCentralAdminPort: deploymentSettings.sharePointCentralAdminPort
+        EnableAnalysis: deploymentSettings.enableAnalysis
+        SharePointBits: sharePointSettings.sharePointSubscriptionBits
+        ConfigureADFS: configureADFS
+      }
+      privacy: {
+        dataCollection: 'enable'
+      }
+    }
+    protectedSettings: {
+      configurationArguments: {
+        DomainAdminCreds: {
+          UserName: adminUsername
+          Password: adminPassword
+        }
+        SPSetupCreds: {
+          UserName: deploymentSettings.spSetupUserName
+          Password: otherAccountsPassword
+        }
+        SPFarmCreds: {
+          UserName: deploymentSettings.spFarmUserName
+          Password: otherAccountsPassword
+        }
+        SPAppPoolCreds: {
+          UserName: deploymentSettings.spAppPoolUserName
+          Password: otherAccountsPassword
+        }
+        SPPassphraseCreds: {
+          UserName: 'Passphrase'
           Password: otherAccountsPassword
         }
       }
