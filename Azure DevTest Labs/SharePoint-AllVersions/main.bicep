@@ -255,12 +255,13 @@ param _artifactsLocation string = 'https://github.com/Yvand/AzureRM-Templates/ra
 param _artifactsLocationSasToken string = ''
 
 // Local variables
+var _artifactsLocationWithTrailingSlash = '${_artifactsLocation}/'
 var resourceGroupNameFormatted = replace(
   replace(replace(replace(resourceGroup().name, '.', '-'), '(', '-'), ')', '-'),
   '_',
   '-'
 )
-var _artifactsLocationWithTrailingSlash = '${_artifactsLocation}/'
+
 var sharePointSettings = {
   sharePointImagesList: {
     Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest'
@@ -319,6 +320,7 @@ var sharePointSettings = {
     }
   ]
 }
+
 var networkSettings = {
   vNetPrivatePrefix: '10.1.0.0/16'
   subnetDCPrefix: '10.1.1.0/24'
@@ -349,6 +351,7 @@ var networkSettings = {
     }
   ]
 }
+
 var vmsSettings = {
   enableAutomaticUpdates: true
   vmDCName: 'DC'
@@ -362,18 +365,7 @@ var vmsSettings = {
   vmSP2019Image: sharePointSettings.sharePointImagesList.sp2019
   vmSP2016Image: sharePointSettings.sharePointImagesList.sp2016
 }
-// var vmsResourcesNames = {
-//   vmDCNicName: 'NIC-${vmsSettings.vmDCName}-0'
-//   vmDCPublicIPName: 'PublicIP-${vmsSettings.vmDCName}'
-//   vmSQLNicName: 'NIC-${vmsSettings.vmSQLName}-0'
-//   vmSQLPublicIPName: 'PublicIP-${vmsSettings.vmSQLName}'
-//   vmSPSubscriptionNicName: 'NIC-${vmsSettings.vmSPSubscriptionName}-0'
-//   vmSPSubscriptionPublicIPName: 'PublicIP-${vmsSettings.vmSPSubscriptionName}'
-//   vmSP2019NicName: 'NIC-${vmsSettings.vmSP2019Name}-0'
-//   vmSP2019PublicIPName: 'PublicIP-${vmsSettings.vmSP2019Name}'
-//   vmSP2016NicName: 'NIC-${vmsSettings.vmSP2016Name}-0'
-//   vmSP2016PublicIPName: 'PublicIP-${vmsSettings.vmSP2016Name}'
-// }
+
 var dscSettings = {
   forceUpdateTag: '1.0'
   vmDCScriptFileUri: uri(_artifactsLocationWithTrailingSlash, 'dsc/ConfigureDCVM.zip${_artifactsLocationSasToken}')
@@ -394,6 +386,7 @@ var dscSettings = {
   vmSPLegacyScript: 'ConfigureSPLegacy.ps1'
   vmSPFunction: 'ConfigureSPVM'
 }
+
 var deploymentSettings = {
   sharePointSitesAuthority: 'spsites'
   sharePointCentralAdminPort: 5000
@@ -792,7 +785,7 @@ resource vm_spse_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = if (prov
   }
 }
 
-resource vm_spse_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
+resource vm_spse_def 'Microsoft.Compute/virtualMachines@2024-07-01' = if (provisionSharePointSubscription != 'No') {
   name: 'vm-spse'
   location: location
   properties: {
@@ -841,7 +834,7 @@ resource vm_spse_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   }
 }
 
-resource vm_spse_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+resource vm_spse_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = if (provisionSharePointSubscription != 'No') {
   parent: vm_spse_def
   name: 'apply-dsc'
   location: location
@@ -869,6 +862,155 @@ resource vm_spse_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024
         SharePointCentralAdminPort: deploymentSettings.sharePointCentralAdminPort
         EnableAnalysis: deploymentSettings.enableAnalysis
         SharePointBits: sharePointSettings.sharePointSubscriptionBits
+        ConfigureADFS: configureADFS
+      }
+      privacy: {
+        dataCollection: 'enable'
+      }
+    }
+    protectedSettings: {
+      configurationArguments: {
+        DomainAdminCreds: {
+          UserName: adminUsername
+          Password: adminPassword
+        }
+        SPSetupCreds: {
+          UserName: deploymentSettings.spSetupUserName
+          Password: otherAccountsPassword
+        }
+        SPFarmCreds: {
+          UserName: deploymentSettings.spFarmUserName
+          Password: otherAccountsPassword
+        }
+        SPAppPoolCreds: {
+          UserName: deploymentSettings.spAppPoolUserName
+          Password: otherAccountsPassword
+        }
+        SPPassphraseCreds: {
+          UserName: 'Passphrase'
+          Password: otherAccountsPassword
+        }
+      }
+    }
+  }
+}
+
+// Create resources for VM SP 2019
+resource vm_sp2019_pip 'Microsoft.Network/publicIPAddresses@2022-07-01' = if (provisionSharePoint2019 == true) {
+  name: 'vm_sp2019_pip'
+  location: location
+  sku: {
+    name: 'Basic'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSP2019Name}')
+    }
+  }
+}
+
+resource vm_sp2019_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = if (provisionSharePoint2019 == true) {
+  name: 'vm-vm_sp2019_nic-nic'
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          subnet: {
+            id: resourceId(
+              'Microsoft.Network/virtualNetworks/subnets',
+              virtual_network.name,
+              networkSettings.subnetSPName
+            )
+          }
+          publicIPAddress:{ id: vm_sp2019_pip.id }
+        }
+      }
+    ]
+  }
+}
+
+resource vm_sp2019_def 'Microsoft.Compute/virtualMachines@2024-07-01' = if (provisionSharePoint2019 == true) {
+  name: 'vm-sp2019'
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: vmSharePointSize
+    }
+    osProfile: {
+      computerName: vmsSettings.vmSPSubscriptionName
+      adminUsername: deploymentSettings.localAdminUserName
+      adminPassword: adminPassword
+      windowsConfiguration: {
+        timeZone: timeZone
+        enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
+        provisionVMAgent: true
+        patchSettings: {
+          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          assessmentMode: 'ImageDefault'
+        }
+      }
+    }
+    storageProfile: {
+      imageReference: {
+        publisher: split(vmsSettings.vmSP2019Image, ':')[0]
+        offer: split(vmsSettings.vmSP2019Image, ':')[1]
+        sku: split(vmsSettings.vmSP2019Image, ':')[2]
+        version: split(vmsSettings.vmSP2019Image, ':')[3]
+      }
+      osDisk: {
+        name: 'vm-sp2019-disk-os'
+        caching: 'ReadWrite'
+        osType: 'Windows'
+        createOption: 'FromImage'
+        managedDisk: {
+          storageAccountType: vmSharePointStorage
+        }
+      }
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: vm_sp2019_nic.id
+        }
+      ]
+    }
+    licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+  }
+}
+
+resource vm_sp2019_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = if (provisionSharePoint2019 == true) {
+  parent: vm_sp2019_def
+  name: 'apply-dsc'
+  location: location
+  properties: {
+    publisher: 'Microsoft.Powershell'
+    type: 'DSC'
+    typeHandlerVersion: '2.9'
+    autoUpgradeMinorVersion: true
+    forceUpdateTag: dscSettings.forceUpdateTag
+    settings: {
+      wmfVersion: 'latest'
+      configuration: {
+        url: dscSettings.vmSPLegacyScriptFileUri
+        script: dscSettings.vmSPLegacyScript
+        function: dscSettings.vmSPFunction
+      }
+      configurationArguments: {
+        DNSServerIP: networkSettings.dcPrivateIPAddress
+        DomainFQDN: domainFqdn
+        DCServerName: vmsSettings.vmDCName
+        SQLServerName: vmsSettings.vmSQLName
+        SQLAlias: deploymentSettings.sqlAlias
+        SharePointVersion: '2019'
+        SharePointSitesAuthority: '${deploymentSettings.sharePointSitesAuthority}2019'
+        SharePointCentralAdminPort: deploymentSettings.sharePointCentralAdminPort
+        EnableAnalysis: deploymentSettings.enableAnalysis
+        SharePointBits: null
         ConfigureADFS: configureADFS
       }
       privacy: {
