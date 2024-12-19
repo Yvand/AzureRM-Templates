@@ -5,13 +5,17 @@
 
 param(
     [string] $vmName = "*",
-    [string] $dscFolderRelativePath = ".\dsc"
+    [string] $dscFolderPath = ".\dsc"
 )
 
-if (Test-Path $dscFolderRelativePath) {
-    $dscSourceFilePaths = Get-ChildItem $dscFolderRelativePath -File -Filter "Configure$vmName*.ps1"
+if (Test-Path $dscFolderPath) {
+    Write-Host "Generating DSC archives in folder '$dscFolderPath' for VMs '$vmName'" -ForegroundColor Cyan
+    $dscSourceFilePaths = Get-ChildItem $dscFolderPath -File -Filter "Configure$vmName*.ps1"
     foreach ($dscSourceFilePath in $dscSourceFilePaths) {
         $dscArchiveFilePath = "$($dscSourceFilePath.DirectoryName)\$($dscSourceFilePath.BaseName).zip"
-        Publish-AzVMDscConfiguration -ConfigurationPath "$dscFolderRelativePath\$($dscSourceFilePath.Name)" -OutputArchivePath $dscArchiveFilePath -Force -Verbose
+        Publish-AzVMDscConfiguration -ConfigurationPath "$dscFolderPath\$($dscSourceFilePath.Name)" -OutputArchivePath $dscArchiveFilePath -Force -Verbose
     }
+}
+else {  
+    Write-Host "folder '$dscFolderPath' not found" -ForegroundColor Red
 }
