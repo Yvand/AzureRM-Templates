@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.31.92.45157",
-      "templateHash": "10278992207078131240"
+      "templateHash": "1582568054234889739"
     },
     "description": "Deploy SharePoint Subscription / 2019 / 2016 with a lightweight configuration. Each version is independent and may or may not be deployed.",
     "author": "Yvand"
@@ -865,7 +865,7 @@
       "name": "vm-spse-pip",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Basic",
+        "name": "Standard",
         "tier": "Regional"
       },
       "properties": {
@@ -1028,7 +1028,7 @@
       "name": "vm-sp2019-pip",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Basic",
+        "name": "Standard",
         "tier": "Regional"
       },
       "properties": {
@@ -1191,7 +1191,7 @@
       "name": "vm-sp2016-pip",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Basic",
+        "name": "Standard",
         "tier": "Regional"
       },
       "properties": {
