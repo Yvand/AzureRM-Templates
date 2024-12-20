@@ -3,21 +3,18 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "provisionSharePointSubscription": { "value": "Subscription-Latest" },
-    "provisionSharePoint2019": { "value": false },
+    "provisionSharePoint2019": { "value": true },
     "provisionSharePoint2016": { "value": false },
     "configureADFS": { "value": true },
-    "domainFQDN": { "value": "contoso.local" },
-    "adminUserName": { "value": "Yvand" },
+    "domainFqdn": { "value": "contoso.local" },
+    "adminUsername": { "value": "Yvand" },
     "adminPassword": { "value": null },
-    "serviceAccountsPassword": { "value": null },
-    "vmsTimeZone": { "value": "Romance Standard Time" },
-    // "vmSPStorageAccountType": { "value": "Premium_LRS" },
-    "addPublicIPAddress": { "value": "SharePointVMsOnly" },
-    // "addPublicIPAddress": { "value": "No" },
-    "RDPTrafficAllowed": { "value": "10.20.30.40" },
+    "otherAccountsPassword": { "value": null },
+    "timeZone": { "value": "Romance Standard Time" },
+    "vmSharePointStorage": { "value": "Premium_LRS" },
+    "rdpTrafficRule": { "value": "10.20.30.40" },
     "enableHybridBenefitServerLicenses": { "value": true },
-    "enableAutomaticUpdates": { "value": true },
-    "addAzureBastion": { "value": true },
-    "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/dev/Templates/DTL-SharePoint-AllVersions-light" }
+    "enableAzureBastion": { "value": false }
+    // "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/DTL-SharePoint-AllVersions-light" }
   }
 }
