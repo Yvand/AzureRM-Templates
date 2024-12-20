@@ -769,7 +769,7 @@ resource vm_spse_pip 'Microsoft.Network/publicIPAddresses@2022-07-01' = if (prov
   name: 'vm-spse-pip'
   location: location
   sku: {
-    name: 'Basic'
+    name: 'Standard'
     tier: 'Regional'
   }
   properties: {
@@ -918,7 +918,7 @@ resource vm_sp2019_pip 'Microsoft.Network/publicIPAddresses@2022-07-01' = if (pr
   name: 'vm-sp2019-pip'
   location: location
   sku: {
-    name: 'Basic'
+    name: 'Standard'
     tier: 'Regional'
   }
   properties: {
@@ -1067,7 +1067,7 @@ resource vm_sp2016_pip 'Microsoft.Network/publicIPAddresses@2022-07-01' = if (pr
   name: 'vm-sp2016-pip'
   location: location
   sku: {
-    name: 'Basic'
+    name: 'Standard'
     tier: 'Regional'
   }
   properties: {
