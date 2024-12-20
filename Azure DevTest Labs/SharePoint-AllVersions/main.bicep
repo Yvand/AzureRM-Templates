@@ -6,12 +6,14 @@ param location string = resourceGroup().location
 
 @description('Specify if a SharePoint Subscription farm should be provisioned, and which version if so.')
 @allowed([
-  'No'
-  'Subscription-RTM'
-  'Subscription-22H2'
-  'Subscription-23H1'
-  'Subscription-23H2'
   'Subscription-Latest'
+  'Subscription-24H2'
+  'Subscription-24H1'
+  'Subscription-23H2'
+  'Subscription-23H1'
+  'Subscription-22H2'
+  'Subscription-RTM'
+  'No'
 ])
 param provisionSharePointSubscription string = 'Subscription-Latest'
 
@@ -29,7 +31,7 @@ param domainFqdn string = 'contoso.local'
 param configureADFS bool = false
 
 @description('Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information.')
-param addAzureBastion bool = false
+param enableAzureBastion bool = false
 
 @description('''
 Specify if a rule in the network security groups should allow the inbound RDP traffic:
@@ -307,6 +309,22 @@ var sharePointSettings = {
       Packages: [
         {
           DownloadUrl: 'https://download.microsoft.com/download/f/5/5/f5559e3f-8b24-419f-b238-b09cf986e927/uber-subscription-kb5002474-fullfile-x64-glb.exe'
+        }
+      ]
+    }
+    {
+      Label: '24H1'
+      Packages: [
+        {
+          DownloadUrl: 'https://download.microsoft.com/download/b/a/b/bab0c7cc-0454-474b-8538-7927f75e6486/uber-subscription-kb5002564-fullfile-x64-glb.exe'
+        }
+      ]
+    }
+    {
+      Label: '24H2'
+      Packages: [
+        {
+          DownloadUrl: 'https://download.microsoft.com/download/6/6/a/66a0057f-79af-4307-8263-103ee75ef5c6/uber-subscription-kb5002640-fullfile-x64-glb.exe'
         }
       ]
     }
@@ -748,7 +766,7 @@ resource vm_sql_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-
 
 // Create resources for VM SP SE
 resource vm_spse_pip 'Microsoft.Network/publicIPAddresses@2022-07-01' = if (provisionSharePointSubscription != 'No') {
-  name: 'vm_spse_pip'
+  name: 'vm-spse-pip'
   location: location
   sku: {
     name: 'Basic'
@@ -897,7 +915,7 @@ resource vm_spse_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024
 
 // Create resources for VM SP 2019
 resource vm_sp2019_pip 'Microsoft.Network/publicIPAddresses@2022-07-01' = if (provisionSharePoint2019 == true) {
-  name: 'vm_sp2019_pip'
+  name: 'vm-sp2019-pip'
   location: location
   sku: {
     name: 'Basic'
@@ -912,7 +930,7 @@ resource vm_sp2019_pip 'Microsoft.Network/publicIPAddresses@2022-07-01' = if (pr
 }
 
 resource vm_sp2019_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = if (provisionSharePoint2019 == true) {
-  name: 'vm-vm_sp2019_nic-nic'
+  name: 'vm-sp2019-nic'
   location: location
   properties: {
     ipConfigurations: [
@@ -942,7 +960,7 @@ resource vm_sp2019_def 'Microsoft.Compute/virtualMachines@2024-07-01' = if (prov
       vmSize: vmSharePointSize
     }
     osProfile: {
-      computerName: vmsSettings.vmSPSubscriptionName
+      computerName: vmsSettings.vmSP2019Name
       adminUsername: deploymentSettings.localAdminUserName
       adminPassword: adminPassword
       windowsConfiguration: {
@@ -1041,5 +1059,353 @@ resource vm_sp2019_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@20
         }
       }
     }
+  }
+}
+
+// Create resources for VM SP 2016
+resource vm_sp2016_pip 'Microsoft.Network/publicIPAddresses@2022-07-01' = if (provisionSharePoint2016 == true) {
+  name: 'vm-sp2016-pip'
+  location: location
+  sku: {
+    name: 'Basic'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSP2016Name}')
+    }
+  }
+}
+
+resource vm_sp2016_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = if (provisionSharePoint2016 == true) {
+  name: 'vm-sp2016-nic'
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          subnet: {
+            id: resourceId(
+              'Microsoft.Network/virtualNetworks/subnets',
+              virtual_network.name,
+              networkSettings.subnetSPName
+            )
+          }
+          publicIPAddress:{ id: vm_sp2016_pip.id }
+        }
+      }
+    ]
+  }
+}
+
+resource vm_sp2016_def 'Microsoft.Compute/virtualMachines@2024-07-01' = if (provisionSharePoint2016 == true) {
+  name: 'vm-sp2016'
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: vmSharePointSize
+    }
+    osProfile: {
+      computerName: vmsSettings.vmSP2016Name
+      adminUsername: deploymentSettings.localAdminUserName
+      adminPassword: adminPassword
+      windowsConfiguration: {
+        timeZone: timeZone
+        enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
+        provisionVMAgent: true
+        patchSettings: {
+          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          assessmentMode: 'ImageDefault'
+        }
+      }
+    }
+    storageProfile: {
+      imageReference: {
+        publisher: split(vmsSettings.vmSP2016Image, ':')[0]
+        offer: split(vmsSettings.vmSP2016Image, ':')[1]
+        sku: split(vmsSettings.vmSP2016Image, ':')[2]
+        version: split(vmsSettings.vmSP2016Image, ':')[3]
+      }
+      osDisk: {
+        name: 'vm-sp2016-disk-os'
+        caching: 'ReadWrite'
+        osType: 'Windows'
+        createOption: 'FromImage'
+        managedDisk: {
+          storageAccountType: vmSharePointStorage
+        }
+      }
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: vm_sp2016_nic.id
+        }
+      ]
+    }
+    licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+  }
+}
+
+resource vm_sp2016_ext_applydsc 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = if (provisionSharePoint2016 == true) {
+  parent: vm_sp2016_def
+  name: 'apply-dsc'
+  location: location
+  properties: {
+    publisher: 'Microsoft.Powershell'
+    type: 'DSC'
+    typeHandlerVersion: '2.9'
+    autoUpgradeMinorVersion: true
+    forceUpdateTag: dscSettings.forceUpdateTag
+    settings: {
+      wmfVersion: 'latest'
+      configuration: {
+        url: dscSettings.vmSPLegacyScriptFileUri
+        script: dscSettings.vmSPLegacyScript
+        function: dscSettings.vmSPFunction
+      }
+      configurationArguments: {
+        DNSServerIP: networkSettings.dcPrivateIPAddress
+        DomainFQDN: domainFqdn
+        DCServerName: vmsSettings.vmDCName
+        SQLServerName: vmsSettings.vmSQLName
+        SQLAlias: deploymentSettings.sqlAlias
+        SharePointVersion: '2016'
+        SharePointSitesAuthority: '${deploymentSettings.sharePointSitesAuthority}2016'
+        SharePointCentralAdminPort: deploymentSettings.sharePointCentralAdminPort
+        EnableAnalysis: deploymentSettings.enableAnalysis
+        SharePointBits: null
+        ConfigureADFS: configureADFS
+      }
+      privacy: {
+        dataCollection: 'enable'
+      }
+    }
+    protectedSettings: {
+      configurationArguments: {
+        DomainAdminCreds: {
+          UserName: adminUsername
+          Password: adminPassword
+        }
+        SPSetupCreds: {
+          UserName: deploymentSettings.spSetupUserName
+          Password: otherAccountsPassword
+        }
+        SPFarmCreds: {
+          UserName: deploymentSettings.spFarmUserName
+          Password: otherAccountsPassword
+        }
+        SPAppPoolCreds: {
+          UserName: deploymentSettings.spAppPoolUserName
+          Password: otherAccountsPassword
+        }
+        SPPassphraseCreds: {
+          UserName: 'Passphrase'
+          Password: otherAccountsPassword
+        }
+      }
+    }
+  }
+}
+
+// Resources for Azure Bastion
+resource bastion_subnet_nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = if (enableAzureBastion == true) {
+  name: 'bastion-subnet-nsg'
+  location: location
+  properties: {
+    securityRules: [
+      {
+        name: 'AllowHttpsInBound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: 'Internet'
+          destinationPortRange: '443'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 100
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'AllowGatewayManagerInBound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: 'GatewayManager'
+          destinationPortRange: '443'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 110
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'AllowLoadBalancerInBound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: 'AzureLoadBalancer'
+          destinationPortRange: '443'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 120
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'AllowBastionHostCommunicationInBound'
+        properties: {
+          protocol: '*'
+          sourcePortRange: '*'
+          sourceAddressPrefix: 'VirtualNetwork'
+          destinationPortRanges: [
+            '8080'
+            '5701'
+          ]
+          destinationAddressPrefix: 'VirtualNetwork'
+          access: 'Allow'
+          priority: 130
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'DenyAllInBound'
+        properties: {
+          protocol: '*'
+          sourcePortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationPortRange: '*'
+          destinationAddressPrefix: '*'
+          access: 'Deny'
+          priority: 1000
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'AllowSshRdpOutBound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationPortRanges: [
+            '22'
+            '3389'
+          ]
+          destinationAddressPrefix: 'VirtualNetwork'
+          access: 'Allow'
+          priority: 100
+          direction: 'Outbound'
+        }
+      }
+      {
+        name: 'AllowAzureCloudCommunicationOutBound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationPortRange: '443'
+          destinationAddressPrefix: 'AzureCloud'
+          access: 'Allow'
+          priority: 110
+          direction: 'Outbound'
+        }
+      }
+      {
+        name: 'AllowBastionHostCommunicationOutBound'
+        properties: {
+          protocol: '*'
+          sourcePortRange: '*'
+          sourceAddressPrefix: 'VirtualNetwork'
+          destinationPortRanges: [
+            '8080'
+            '5701'
+          ]
+          destinationAddressPrefix: 'VirtualNetwork'
+          access: 'Allow'
+          priority: 120
+          direction: 'Outbound'
+        }
+      }
+      {
+        name: 'AllowGetSessionInformationOutBound'
+        properties: {
+          protocol: '*'
+          sourcePortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: 'Internet'
+          destinationPortRanges: [
+            '80'
+            '443'
+          ]
+          access: 'Allow'
+          priority: 130
+          direction: 'Outbound'
+        }
+      }
+      {
+        name: 'DenyAllOutBound'
+        properties: {
+          protocol: '*'
+          sourcePortRange: '*'
+          destinationPortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
+          access: 'Deny'
+          priority: 1000
+          direction: 'Outbound'
+        }
+      }
+    ]
+  }
+}
+
+resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (enableAzureBastion == true) {
+  parent: virtual_network
+  name: 'AzureBastionSubnet'
+  properties: {
+    addressPrefix: '10.1.4.0/24'
+    networkSecurityGroup: {
+      id: bastion_subnet_nsg.id
+    }
+  }
+}
+
+resource bastion_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (enableAzureBastion == true) {
+  name: 'bastion-pip'
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: toLower(replace('${resourceGroupNameFormatted}-Bastion', '_', '-'))
+    }
+  }
+}
+
+resource bastion_def 'Microsoft.Network/bastionHosts@2023-11-01' = if (enableAzureBastion == true) {
+  name: 'bastion'
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'IpConf'
+        properties: {
+          privateIPAllocationMethod: 'Dynamic'
+          publicIPAddress: {
+            id: bastion_pip.id
+          }
+          subnet: {
+            id: bastion_subnet.id
+          }
+        }
+      }
+    ]
   }
 }
