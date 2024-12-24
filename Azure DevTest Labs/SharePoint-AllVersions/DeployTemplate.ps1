@@ -93,7 +93,7 @@ if ($result.ProvisioningState -eq "Succeeded") {
     Write-Host "Deployment completed successfully in $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Green
     $outputs = (Get-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -Name $resourceDeploymentName).Outputs        
     $outputMessage = "Use the account ""$($outputs.domainAdminAccount.value)"" (""$($outputs.domainAdminAccountFormatForBastion.value)"") to sign in"
-    $outputMessage += $outputs.ContainsKey("publicIPAddressSP") ? " to ""$($outputs.publicIPAddressSP.value)""" : "."
+    $outputMessage += $outputs.ContainsKey("publicIPAddressSPSE") ? " to ""$($outputs.publicIPAddressSPSE.value)""" : "."
     Write-Host $outputMessage -ForegroundColor Green
 }
 else {
