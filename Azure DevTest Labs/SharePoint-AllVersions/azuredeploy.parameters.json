@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "provisionSharePointSubscription": { "value": "Subscription-Latest" },
-    "provisionSharePoint2019": { "value": true },
+    "provisionSharePoint2019": { "value": false },
     "provisionSharePoint2016": { "value": false },
     "configureADFS": { "value": true },
     "domainFqdn": { "value": "contoso.local" },
@@ -12,9 +12,9 @@
     "otherAccountsPassword": { "value": null },
     "timeZone": { "value": "Romance Standard Time" },
     "vmSharePointStorage": { "value": "Premium_LRS" },
-    "rdpTrafficRule": { "value": "10.20.30.40" },
+    "rdpTrafficRule": { "value": "No" },
     "enableHybridBenefitServerLicenses": { "value": true },
-    "enableAzureBastion": { "value": false }
+    "enableAzureBastion": { "value": true }
     // "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/DTL-SharePoint-AllVersions-light" }
   }
 }

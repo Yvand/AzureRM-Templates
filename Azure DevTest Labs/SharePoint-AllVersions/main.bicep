@@ -266,7 +266,7 @@ var resourceGroupNameFormatted = replace(
 
 var sharePointSettings = {
   sharePointImagesList: {
-    Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest'
+    Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest'
     sp2019: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2019gen2smalldisk:latest'
     sp2016: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2016:latest'
   }
@@ -796,7 +796,7 @@ resource vm_spse_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = if (prov
               networkSettings.subnetSPName
             )
           }
-          publicIPAddress:{ id: vm_spse_pip.id }
+          publicIPAddress: { id: vm_spse_pip.id }
         }
       }
     ]
@@ -945,7 +945,7 @@ resource vm_sp2019_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = if (pr
               networkSettings.subnetSPName
             )
           }
-          publicIPAddress:{ id: vm_sp2019_pip.id }
+          publicIPAddress: { id: vm_sp2019_pip.id }
         }
       }
     ]
@@ -1094,7 +1094,7 @@ resource vm_sp2016_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = if (pr
               networkSettings.subnetSPName
             )
           }
-          publicIPAddress:{ id: vm_sp2016_pip.id }
+          publicIPAddress: { id: vm_sp2016_pip.id }
         }
       }
     ]
@@ -1409,3 +1409,14 @@ resource bastion_def 'Microsoft.Network/bastionHosts@2023-11-01' = if (enableAzu
     ]
   }
 }
+
+output publicIPAddressDC string = vm_dc_pip.properties.dnsSettings.fqdn
+output publicIPAddressSQL string = vm_sql_pip.properties.dnsSettings.fqdn
+output publicIPAddressSPSE string = provisionSharePointSubscription != 'No'
+  ? vm_spse_pip.properties.dnsSettings.fqdn
+  : ''
+output publicIPAddressSP2019 string = provisionSharePoint2019 == true ? vm_sp2019_pip.properties.dnsSettings.fqdn : ''
+output publicIPAddressSP2016 string = provisionSharePoint2016 == true ? vm_sp2016_pip.properties.dnsSettings.fqdn : ''
+output domainAdminAccount string = '${substring(domainFqdn,0,indexOf(domainFqdn,'.'))}\\${adminUsername}'
+output domainAdminAccountFormatForBastion string = '${adminUsername}@${domainFqdn}'
+output localAdminAccount string = deploymentSettings.localAdminUserName

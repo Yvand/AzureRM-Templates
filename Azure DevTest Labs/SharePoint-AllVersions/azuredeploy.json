@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.31.92.45157",
-      "templateHash": "1582568054234889739"
+      "version": "0.32.4.45862",
+      "templateHash": "3586754938508912134"
     },
     "description": "Deploy SharePoint Subscription / 2019 / 2016 with a lightweight configuration. Each version is independent and may or may not be deployed.",
     "author": "Yvand"
@@ -345,7 +345,7 @@
     "resourceGroupNameFormatted": "[replace(replace(replace(replace(resourceGroup().name, '.', '-'), '(', '-'), ')', '-'), '_', '-')]",
     "sharePointSettings": {
       "sharePointImagesList": {
-        "Subscription": "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest",
+        "Subscription": "MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest",
         "sp2019": "MicrosoftSharePoint:MicrosoftSharePointServer:sp2019gen2smalldisk:latest",
         "sp2016": "MicrosoftSharePoint:MicrosoftSharePointServer:sp2016:latest"
       },
@@ -1560,5 +1560,39 @@
         "[resourceId('Microsoft.Network/virtualNetworks/subnets', format('vnet-{0}', uniqueString(resourceGroup().id)), 'AzureBastionSubnet')]"
       ]
     }
-  ]
+  ],
+  "outputs": {
+    "publicIPAddressDC": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', 'vm-dc-pip'), '2023-11-01').dnsSettings.fqdn]"
+    },
+    "publicIPAddressSQL": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', 'vm-sql-pip'), '2023-11-01').dnsSettings.fqdn]"
+    },
+    "publicIPAddressSPSE": {
+      "type": "string",
+      "value": "[if(not(equals(parameters('provisionSharePointSubscription'), 'No')), reference(resourceId('Microsoft.Network/publicIPAddresses', 'vm-spse-pip'), '2022-07-01').dnsSettings.fqdn, '')]"
+    },
+    "publicIPAddressSP2019": {
+      "type": "string",
+      "value": "[if(equals(parameters('provisionSharePoint2019'), true()), reference(resourceId('Microsoft.Network/publicIPAddresses', 'vm-sp2019-pip'), '2022-07-01').dnsSettings.fqdn, '')]"
+    },
+    "publicIPAddressSP2016": {
+      "type": "string",
+      "value": "[if(equals(parameters('provisionSharePoint2016'), true()), reference(resourceId('Microsoft.Network/publicIPAddresses', 'vm-sp2016-pip'), '2022-07-01').dnsSettings.fqdn, '')]"
+    },
+    "domainAdminAccount": {
+      "type": "string",
+      "value": "[format('{0}\\{1}', substring(parameters('domainFqdn'), 0, indexOf(parameters('domainFqdn'), '.')), parameters('adminUsername'))]"
+    },
+    "domainAdminAccountFormatForBastion": {
+      "type": "string",
+      "value": "[format('{0}@{1}', parameters('adminUsername'), parameters('domainFqdn'))]"
+    },
+    "localAdminAccount": {
+      "type": "string",
+      "value": "[variables('deploymentSettings').localAdminUserName]"
+    }
+  }
 }
