@@ -5,17 +5,17 @@
 ### Added
 
 - Template
-  - Add value `Subscription-24H1` to parameter `sharePointVersion`, to install SharePoint Subscription with 24H1 update
-  - Add value `Subscription-24H2` to parameter `sharePointVersion`, to install SharePoint Subscription with 24H2 update
+  - Added value `Subscription-24H1` to parameter `sharePointVersion`, to install SharePoint Subscription with 24H1 update
+  - Added value `Subscription-24H2` to parameter `sharePointVersion`, to install SharePoint Subscription with 24H2 update
 
 ### Changed
 
 - Template
-  - Convert the template to Bicep
-  - Update the default size of the virtual machines to use the [Basv2 series](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/basv2-series?tabs=sizebasic). It is newer, cheaper and more performant than the [Bv1 series](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/bv1-series?tabs=sizebasic) used until now.
-  - [BREAKING CHANGE] Rename most of the parameters
+  - [BREAKING CHANGE] Renamed most of the parameters
+  - Converted the template to Bicep
+  - Updated the default size of the virtual machines to use the [Basv2 series](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/basv2-series?tabs=sizebasic). It is newer, cheaper and more performant than the [Bv1 series](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/bv1-series?tabs=sizebasic) used until now.
   - Update the display name of most of the resources to be more consistent and reflect their relationship with each other
-  - Enable [Trusted launch](https://learn.microsoft.com/azure/virtual-machines/trusted-launch-existing-vm), with secure boot and Virtual Trusted Platform Module, on all virtual machines except SharePoint 2016
+  - Enabled [Trusted launch](https://learn.microsoft.com/azure/virtual-machines/trusted-launch-existing-vm), with secure boot and Virtual Trusted Platform Module, on all virtual machines except SharePoint 2016
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the December 2024 CU for SharePoint Subscription
 - All DSC configurations
   - Add a firewall rule to all virtual machines to allow remote event viewer connections
