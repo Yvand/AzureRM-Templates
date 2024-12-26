@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.32.4.45862",
-      "templateHash": "3586754938508912134"
+      "templateHash": "7116870476483050165"
     },
     "description": "Deploy SharePoint Subscription / 2019 / 2016 with a lightweight configuration. Each version is independent and may or may not be deployed.",
     "author": "Yvand"
@@ -661,7 +661,14 @@
             }
           ]
         },
-        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', null())]"
+        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', null())]",
+        "securityProfile": {
+          "securityType": "TrustedLaunch",
+          "uefiSettings": {
+            "secureBootEnabled": true,
+            "vTpmEnabled": true
+          }
+        }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', 'vm-dc-nic')]"
@@ -805,7 +812,14 @@
             }
           ]
         },
-        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', null())]"
+        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', null())]",
+        "securityProfile": {
+          "securityType": "TrustedLaunch",
+          "uefiSettings": {
+            "secureBootEnabled": true,
+            "vTpmEnabled": true
+          }
+        }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', 'vm-sql-nic')]"
@@ -950,7 +964,14 @@
             }
           ]
         },
-        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', null())]"
+        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', null())]",
+        "securityProfile": {
+          "securityType": "TrustedLaunch",
+          "uefiSettings": {
+            "secureBootEnabled": true,
+            "vTpmEnabled": true
+          }
+        }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', 'vm-spse-nic')]"
@@ -1113,7 +1134,14 @@
             }
           ]
         },
-        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', null())]"
+        "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), 'Windows_Server', null())]",
+        "securityProfile": {
+          "securityType": "TrustedLaunch",
+          "uefiSettings": {
+            "secureBootEnabled": true,
+            "vTpmEnabled": true
+          }
+        }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', 'vm-sp2019-nic')]"
