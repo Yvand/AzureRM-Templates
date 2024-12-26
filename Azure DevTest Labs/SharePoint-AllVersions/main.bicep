@@ -581,6 +581,13 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       ]
     }
     licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+    securityProfile: {
+      securityType: 'TrustedLaunch'
+      uefiSettings: {
+        secureBootEnabled: true
+        vTpmEnabled: true
+      }
+    }
   }
 }
 
@@ -717,6 +724,13 @@ resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       ]
     }
     licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+    securityProfile: {
+      securityType: 'TrustedLaunch'
+      uefiSettings: {
+        secureBootEnabled: true
+        vTpmEnabled: true
+      }
+    }
   }
 }
 
@@ -849,6 +863,13 @@ resource vm_spse_def 'Microsoft.Compute/virtualMachines@2024-07-01' = if (provis
       ]
     }
     licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+    securityProfile: {
+      securityType: 'TrustedLaunch'
+      uefiSettings: {
+        secureBootEnabled: true
+        vTpmEnabled: true
+      }
+    }
   }
 }
 
@@ -998,6 +1019,13 @@ resource vm_sp2019_def 'Microsoft.Compute/virtualMachines@2024-07-01' = if (prov
       ]
     }
     licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+    securityProfile: {
+      securityType: 'TrustedLaunch'
+      uefiSettings: {
+        secureBootEnabled: true
+        vTpmEnabled: true
+      }
+    }
   }
 }
 
