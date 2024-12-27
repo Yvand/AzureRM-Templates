@@ -394,6 +394,15 @@ var vmsSettings = {
     : ((sharePointVersion == '2019')
         ? sharePointSettings.sharePointImagesList.sp2019
         : sharePointSettings.sharePointImagesList.sp2016))
+  vmSharePointSecurityProfile: sharePointVersion == '2016'
+    ? null
+    : {
+        securityType: 'TrustedLaunch'
+        uefiSettings: {
+          secureBootEnabled: true
+          vTpmEnabled: true
+        }
+      }
 }
 
 var dscSettings = {
@@ -607,6 +616,13 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       ]
     }
     licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+    securityProfile: {
+      securityType: 'TrustedLaunch'
+      uefiSettings: {
+        secureBootEnabled: true
+        vTpmEnabled: true
+      }
+    }
   }
 }
 
@@ -788,6 +804,13 @@ resource vm_sql_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       ]
     }
     licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+    securityProfile: {
+      securityType: 'TrustedLaunch'
+      uefiSettings: {
+        secureBootEnabled: true
+        vTpmEnabled: true
+      }
+    }
   }
 }
 
@@ -968,6 +991,7 @@ resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       ]
     }
     licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+    securityProfile: vmsSettings.vmSharePointSecurityProfile
   }
 }
 
@@ -1205,6 +1229,7 @@ resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
         ]
       }
       licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
+      securityProfile: vmsSettings.vmSharePointSecurityProfile
     }
   }
 ]
@@ -1626,15 +1651,11 @@ resource firewall_def 'Microsoft.Network/azureFirewalls@2023-11-01' = if (outbou
   }
 }
 
-output publicIPAddressDC string = outboundAccessMethod == 'PublicIPAddress'
-  ? vm_dc_pip.properties.dnsSettings.fqdn
-  : ''
+output publicIPAddressDC string = outboundAccessMethod == 'PublicIPAddress' ? vm_dc_pip.properties.dnsSettings.fqdn : ''
 output publicIPAddressSQL string = outboundAccessMethod == 'PublicIPAddress'
   ? vm_sql_pip.properties.dnsSettings.fqdn
   : ''
-output publicIPAddressSP string = outboundAccessMethod == 'PublicIPAddress'
-  ? vm_sp_pip.properties.dnsSettings.fqdn
-  : ''
+output publicIPAddressSP string = outboundAccessMethod == 'PublicIPAddress' ? vm_sp_pip.properties.dnsSettings.fqdn : ''
 output vm_fe_public_dns array = [
   for i in range(0, frontEndServersCount): (outboundAccessMethod == 'PublicIPAddress')
     ? vm_fe_pip[i].properties.dnsSettings.fqdn

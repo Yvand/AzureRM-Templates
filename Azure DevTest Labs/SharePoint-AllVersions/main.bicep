@@ -250,7 +250,7 @@ param vmSharePointSize string = 'Standard_B4as_v2'
 param vmSharePointStorage string = 'StandardSSD_LRS'
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
-param _artifactsLocation string = 'https://github.com/Yvand/AzureRM-Templates/raw/master/Templates/DTL-SharePoint-AllVersions-light'
+param _artifactsLocation string = 'https://github.com/Yvand/AzureRM-Templates/raw/convert-to-bicep/Azure%20DevTest%20Labs/DTL-SharePoint-AllVersions-light'
 
 @description('The sasToken required to access _artifactsLocation. When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.')
 @secure()

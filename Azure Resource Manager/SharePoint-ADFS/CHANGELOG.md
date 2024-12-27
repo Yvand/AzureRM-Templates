@@ -1,5 +1,12 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - 
+
+### Changed
+
+- Template
+  - Enabled [Trusted launch](https://learn.microsoft.com/azure/virtual-machines/trusted-launch-existing-vm), with secure boot and Virtual Trusted Platform Module, on all virtual machines except SharePoint 2016
+
 ## Enhancements & bug-fixes - Published in December 18, 2024
 
 ### Changed
