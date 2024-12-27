@@ -15,6 +15,6 @@
     "rdpTrafficRule": { "value": "No" },
     "enableHybridBenefitServerLicenses": { "value": true },
     "enableAzureBastion": { "value": false }
-    // "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/Azure%20DevTest%20Labs/DTL-SharePoint-AllVersions-light" }
+    // "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/Azure%20DevTest%20Labs/SharePoint-multiFarms-lightConfig" }
   }
 }
