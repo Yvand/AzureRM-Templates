@@ -15,6 +15,6 @@
     "enableHybridBenefitServerLicenses": { "value": true },
     "enableAzureBastion": { "value": false },
     "vmSharePointStorage": { "value": "Premium_LRS" }
-    // "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/Azure%20DevTest%20Labs/DTL-SharePoint-FullConfig" }
+    // "_artifactsLocation": { "value": "https://github.com/Yvand/AzureRM-Templates/raw/master/Azure%20DevTest%20Labs/SharePoint-SingleFarm-FullConfig" }
   }
 }
