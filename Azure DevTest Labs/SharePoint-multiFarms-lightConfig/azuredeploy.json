@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.32.4.45862",
-      "templateHash": "13538408368532641022"
+      "templateHash": "8282571211891046042"
     },
     "description": "Deploy SharePoint Subscription / 2019 / 2016 with a lightweight configuration. Each version is independent and may or may not be deployed.",
     "author": "Yvand"
@@ -327,7 +327,7 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/convert-to-bicep/Azure%20DevTest%20Labs/SharePoint-multiFarms-lightConfig",
+      "defaultValue": "https://github.com/Yvand/AzureRM-Templates/raw/master/Azure%20DevTest%20Labs/SharePoint-multiFarms-lightConfig",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
