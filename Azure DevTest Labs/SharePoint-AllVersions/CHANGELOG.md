@@ -1,6 +1,6 @@
 # Change log for Azure DevTest Labs template SharePoint-AllVersions
 
-## Enhancements & bug-fixes - Published in December 26, 2024
+## Enhancements & bug-fixes - Published in December 27, 2024
 
 ### Added
 
