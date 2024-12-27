@@ -1,4 +1,4 @@
-# Change log for Azure DevTest Labs template DTL-SharePoint-FullConfig
+# Change log for Azure DevTest Labs template SharePoint-singleFarm-fullConfig
 
 ## Enhancements & bug-fixes - Published in December 27, 2024
 

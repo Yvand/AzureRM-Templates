@@ -1,4 +1,4 @@
-# Change log for Azure DevTest Labs template SharePoint-AllVersions
+# Change log for Azure DevTest Labs template SharePoint-multiFarms-lightConfig
 
 ## Enhancements & bug-fixes - Published in December 27, 2024
 
