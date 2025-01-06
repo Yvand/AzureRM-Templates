@@ -65,6 +65,14 @@ IMPORTANT: With AzureFirewallProxy, you need to either enable Azure Bastion, or 
 ])
 param outboundAccessMethod string = 'PublicIPAddress'
 
+@description('Set if the Public IP addresses of virtual machines should have a name label.')
+@allowed([
+  'No'
+  'SharePointVMsOnly'
+  'Yes'
+])
+param addNameToPublicIpAddresses string = 'SharePointVMsOnly'
+
 @description('Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information.')
 param enableAzureBastion bool = false
 
@@ -539,9 +547,11 @@ resource vm_dc_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbou
   }
   properties: {
     publicIPAllocationMethod: 'Static'
-    dnsSettings: {
-      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmDCName}')
-    }
+    dnsSettings: addNameToPublicIpAddresses == 'Yes'
+      ? {
+          domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmDCName}')
+        }
+      : null
   }
 }
 
@@ -728,9 +738,11 @@ resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbo
   }
   properties: {
     publicIPAllocationMethod: 'Static'
-    dnsSettings: {
-      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSQLName}')
-    }
+    dnsSettings: addNameToPublicIpAddresses == 'Yes'
+      ? {
+          domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSQLName}')
+        }
+      : null
   }
 }
 
@@ -916,9 +928,11 @@ resource vm_sp_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbou
   }
   properties: {
     publicIPAllocationMethod: 'Static'
-    dnsSettings: {
-      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSPName}')
-    }
+    dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+      ? {
+          domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSPName}')
+        }
+      : null
   }
 }
 
@@ -1144,9 +1158,11 @@ resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
     }
     properties: {
       publicIPAllocationMethod: 'Static'
-      dnsSettings: {
-        domainNameLabel: '${toLower('${resourceGroupNameFormatted}-${vmsSettings.vmFEName}')}-${i}'
-      }
+      dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+        ? {
+            domainNameLabel: '${toLower('${resourceGroupNameFormatted}-${vmsSettings.vmFEName}')}-${i}'
+          }
+        : null
     }
   }
 ]
@@ -1651,14 +1667,22 @@ resource firewall_def 'Microsoft.Network/azureFirewalls@2023-11-01' = if (outbou
   }
 }
 
-output publicIPAddressDC string = outboundAccessMethod == 'PublicIPAddress' ? vm_dc_pip.properties.dnsSettings.fqdn : ''
-output publicIPAddressSQL string = outboundAccessMethod == 'PublicIPAddress'
-  ? vm_sql_pip.properties.dnsSettings.fqdn
+output publicIPAddressDC string = outboundAccessMethod == 'PublicIPAddress'
+  ? addNameToPublicIpAddresses == 'Yes' ? vm_dc_pip.properties.dnsSettings.fqdn : vm_dc_pip.properties.ipAddress
   : ''
-output publicIPAddressSP string = outboundAccessMethod == 'PublicIPAddress' ? vm_sp_pip.properties.dnsSettings.fqdn : ''
+output publicIPAddressSQL string = outboundAccessMethod == 'PublicIPAddress'
+  ? addNameToPublicIpAddresses == 'Yes' ? vm_sql_pip.properties.dnsSettings.fqdn : vm_sql_pip.properties.ipAddress
+  : ''
+output publicIPAddressSP string = outboundAccessMethod == 'PublicIPAddress'
+  ? addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+      ? vm_sp_pip.properties.dnsSettings.fqdn
+      : vm_sp_pip.properties.ipAddress
+  : ''
 output vm_fe_public_dns array = [
   for i in range(0, frontEndServersCount): (outboundAccessMethod == 'PublicIPAddress')
-    ? vm_fe_pip[i].properties.dnsSettings.fqdn
+    ? addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+        ? vm_fe_pip[i].properties.dnsSettings.fqdn
+        : vm_fe_pip[i].properties.ipAddress
     : null
 ]
 output domainAdminAccount string = '${substring(domainFqdn,0,indexOf(domainFqdn,'.'))}\\${adminUsername}'
