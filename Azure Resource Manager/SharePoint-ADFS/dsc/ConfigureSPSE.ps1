@@ -1274,7 +1274,7 @@ configuration ConfigureSPVM
             Url                  = "http://$SharePointSitesAuthority/"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
-            Name                 = "Team site"
+            Name                 = "root site"
             Template             = $SPTeamSiteTemplate
             CreateDefaultGroups  = $true
             PsDscRunAsCredential = $SPSetupCredsQualified
