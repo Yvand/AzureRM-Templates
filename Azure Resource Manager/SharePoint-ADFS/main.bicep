@@ -290,7 +290,7 @@ var resourceGroupNameFormatted = replace(
 var sharePointSettings = {
   isSharePointSubscription: (startsWith(sharePointVersion, 'subscription') ? true : false)
   sharePointImagesList: {
-    Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest'
+    Subscription: 'MicrosoftWindowsServer:WindowsServer:2025-datacenter-azure-edition:latest'
     sp2019: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2019gen2smalldisk:latest'
     sp2016: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2016:latest'
   }
@@ -395,7 +395,7 @@ var vmsSettings = {
   vmSQLName: 'SQL'
   vmSPName: 'SP'
   vmFEName: 'FE'
-  vmDCImage: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest'
+  vmDCImage: 'MicrosoftWindowsServer:WindowsServer:2025-datacenter-azure-edition-smalldisk:latest'
   vmSQLImage: 'MicrosoftSQLServer:sql2022-ws2022:sqldev-gen2:latest'
   vmSharePointImage: (sharePointSettings.isSharePointSubscription
     ? sharePointSettings.sharePointImagesList.Subscription
@@ -595,7 +595,7 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
         provisionVMAgent: true
         patchSettings: {
-          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByPlatform' : 'Manual')
           assessmentMode: 'ImageDefault'
         }
       }
@@ -975,7 +975,9 @@ resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
         provisionVMAgent: true
         patchSettings: {
-          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          patchMode: (vmsSettings.enableAutomaticUpdates
+            ? sharePointSettings.isSharePointSubscription ? 'AutomaticByPlatform' : 'AutomaticByOS'
+            : 'Manual')
           assessmentMode: 'ImageDefault'
         }
       }
@@ -1215,7 +1217,9 @@ resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
           enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
           provisionVMAgent: true
           patchSettings: {
-            patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+            patchMode: (vmsSettings.enableAutomaticUpdates
+              ? sharePointSettings.isSharePointSubscription ? 'AutomaticByPlatform' : 'AutomaticByOS'
+              : 'Manual')
             assessmentMode: 'ImageDefault'
           }
         }

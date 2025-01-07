@@ -7,6 +7,9 @@
 - Template
   - Enabled [Trusted launch](https://learn.microsoft.com/azure/virtual-machines/trusted-launch-existing-vm), with secure boot and Virtual Trusted Platform Module, on all virtual machines except SharePoint 2016
   - Added parameter `addNameToPublicIpAddresses`, to decide which virtual machines should have a public name associated to their public IP address. Default value is to add it to SharePoint virtual machines only.
+  - Upgraded the virtual machines DC and SharePoint Subscription to Windows Server 2025.
+- DSC Configuration for SPSE
+  - Renamed root site to "root site"
 
 ## Enhancements & bug-fixes - Published in December 18, 2024
 
