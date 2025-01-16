@@ -120,9 +120,7 @@ configuration ConfigureSPVM
         DnsServerAddress SetDNS {
             Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily = 'IPv4' 
         }
-        NetConnectionProfile SetNetworkInterfaceToPrivate {
-            InterfaceAlias = $InterfaceAlias; NetworkCategory = 'Private' 
-        }
+        
 
         # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
         xCredSSP CredSSPServer {
