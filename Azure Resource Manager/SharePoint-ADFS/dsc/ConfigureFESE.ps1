@@ -95,9 +95,7 @@ configuration ConfigureFEVM
         DnsServerAddress SetDNS {
             Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily = 'IPv4' 
         }
-        NetConnectionProfile SetNetworkInterfaceToPrivate {
-            InterfaceAlias = $InterfaceAlias; NetworkCategory = 'Private' 
-        }
+        
 
         # # xCredSSP is required for SharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
         # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
