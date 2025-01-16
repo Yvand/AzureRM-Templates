@@ -365,13 +365,9 @@ var sharePointSettings = {
 
 var networkSettings = {
   vNetPrivatePrefix: '10.1.0.0/16'
-  subnetDCPrefix: '10.1.1.0/24'
+  mainSubnetName: 'vnet-subnet-main'
+  mainSubnetPrefix: '10.1.1.0/24'
   dcPrivateIPAddress: '10.1.1.4'
-  subnetSQLPrefix: '10.1.2.0/24'
-  subnetSPPrefix: '10.1.3.0/24'
-  subnetDCName: 'vnet-subnet-dc'
-  subnetSQLName: 'vnet-subnet-sql'
-  subnetSPName: 'vnet-subnet-sp'
   nsgRuleAllowIncomingRdp: [
     {
       name: 'nsg-rule-allow-rdp'
@@ -468,7 +464,7 @@ var set_proxy_script = 'param([string]$proxyIp, [string]$proxyHttpPort, [string]
 
 // Start creating resources
 // Network security groups for each subnet
-resource nsg_subnet_dc 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
+resource nsg_subnet_main 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: 'vnet-subnet-dc-nsg'
   location: location
   properties: {
@@ -476,23 +472,7 @@ resource nsg_subnet_dc 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   }
 }
 
-resource nsg_subnet_sql 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
-  name: 'vnet-subnet-sql-nsg'
-  location: location
-  properties: {
-    securityRules: ((toLower(rdpTrafficRule) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
-  }
-}
-
-resource nsg_subnet_sp 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
-  name: 'vnet-subnet-sp-nsg'
-  location: location
-  properties: {
-    securityRules: ((toLower(rdpTrafficRule) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
-  }
-}
-
-// Create the virtual network, 3 subnets, and associate each subnet with its Network Security Group
+// Setup the network
 resource virtual_network 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   name: 'vnet-${uniqueString(resourceGroup().id)}'
   location: location
@@ -504,32 +484,12 @@ resource virtual_network 'Microsoft.Network/virtualNetworks@2023-11-01' = {
     }
     subnets: [
       {
-        name: networkSettings.subnetDCName
+        name: networkSettings.mainSubnetName
         properties: {
           defaultOutboundAccess: false
-          addressPrefix: networkSettings.subnetDCPrefix
+          addressPrefix: networkSettings.mainSubnetPrefix
           networkSecurityGroup: {
-            id: nsg_subnet_dc.id
-          }
-        }
-      }
-      {
-        name: networkSettings.subnetSQLName
-        properties: {
-          defaultOutboundAccess: false
-          addressPrefix: networkSettings.subnetSQLPrefix
-          networkSecurityGroup: {
-            id: nsg_subnet_sql.id
-          }
-        }
-      }
-      {
-        name: networkSettings.subnetSPName
-        properties: {
-          defaultOutboundAccess: false
-          addressPrefix: networkSettings.subnetSPPrefix
-          networkSecurityGroup: {
-            id: nsg_subnet_sp.id
+            id: nsg_subnet_main.id
           }
         }
       }
@@ -569,7 +529,7 @@ resource vm_dc_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
             id: resourceId(
               'Microsoft.Network/virtualNetworks/subnets',
               virtual_network.name,
-              networkSettings.subnetDCName
+              networkSettings.mainSubnetName
             )
           }
           publicIPAddress: ((outboundAccessMethod == 'PublicIPAddress') ? { id: vm_dc_pip.id } : null)
@@ -749,6 +709,9 @@ resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbo
 resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
   name: 'vm-sql-nic'
   location: location
+  dependsOn: [
+    vm_dc_nic
+  ]
   properties: {
     ipConfigurations: [
       {
@@ -759,7 +722,7 @@ resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
             id: resourceId(
               'Microsoft.Network/virtualNetworks/subnets',
               virtual_network.name,
-              networkSettings.subnetSQLName
+              networkSettings.mainSubnetName
             )
           }
           publicIPAddress: ((outboundAccessMethod == 'PublicIPAddress') ? { id: vm_sql_pip.id } : null)
@@ -939,6 +902,9 @@ resource vm_sp_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbou
 resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
   name: 'vm-sp-nic'
   location: location
+  dependsOn: [
+    vm_dc_nic
+  ]
   properties: {
     ipConfigurations: [
       {
@@ -949,7 +915,7 @@ resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
             id: resourceId(
               'Microsoft.Network/virtualNetworks/subnets',
               virtual_network.name,
-              networkSettings.subnetSPName
+              networkSettings.mainSubnetName
             )
           }
           publicIPAddress: ((outboundAccessMethod == 'PublicIPAddress') ? { id: vm_sp_pip.id } : null)
@@ -1183,7 +1149,7 @@ resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
               id: resourceId(
                 'Microsoft.Network/virtualNetworks/subnets',
                 virtual_network.name,
-                networkSettings.subnetSPName
+                networkSettings.mainSubnetName
               )
             }
             publicIPAddress: (outboundAccessMethod == 'PublicIPAddress' ? json('{"id": "${vm_fe_pip[i].id}"}') : null)
@@ -1193,6 +1159,7 @@ resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
     }
     dependsOn: [
       vm_fe_pip[i]
+      vm_dc_nic
     ]
   }
 ]
