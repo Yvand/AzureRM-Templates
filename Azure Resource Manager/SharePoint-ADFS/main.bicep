@@ -1545,6 +1545,10 @@ resource bastion_def 'Microsoft.Network/bastionHosts@2023-11-01' = if (enableAzu
   name: 'bastion'
   location: location
   properties: {
+    // Preparing for Developer SKU
+    // virtualNetwork: {
+    //   id: virtual_network.id
+    // }
     ipConfigurations: [
       {
         name: 'IpConf'
