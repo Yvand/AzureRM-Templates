@@ -1,6 +1,6 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Enhancements & bug-fixes - 
+## Enhancements & bug-fixes - Unreleased
 
 ### Changed
 
@@ -9,6 +9,9 @@
   - Added parameter `addNameToPublicIpAddresses`, to decide which virtual machines should have a public name associated to their public IP address. Default value is to add it to SharePoint virtual machines only.
   - Upgraded the virtual machines DC and SharePoint Subscription to Windows Server 2025.
   - Changed the network configuration to use a single subnet for all the virtual machines. This avoids potential network issues due to Defender network access policies, which may block some traffic between subnets due to a JIT access configuration.
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the January 2025 CU for SharePoint Subscription
+- All DSC configurations
+  - Bumped DSC modules
 - DSC Configuration for SPSE
   - Renamed root site to "root site"
 
