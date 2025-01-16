@@ -453,8 +453,8 @@ var deploymentSettings = {
 }
 
 var firewall_proxy_settings = {
-  vNetAzureFirewallPrefix: '10.1.5.0/24'
-  azureFirewallIPAddress: '10.1.5.4'
+  vNetAzureFirewallPrefix: '10.1.3.0/24'
+  azureFirewallIPAddress: '10.1.3.4'
   http_port: 8080
   https_port: 8443
 }
@@ -1486,7 +1486,7 @@ resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' =
   parent: virtual_network
   name: 'AzureBastionSubnet'
   properties: {
-    addressPrefix: '10.1.4.0/24'
+    addressPrefix: '10.1.2.0/24'
     networkSecurityGroup: {
       id: bastion_subnet_nsg.id
     }
