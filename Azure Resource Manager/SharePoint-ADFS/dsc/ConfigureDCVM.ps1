@@ -15,9 +15,9 @@
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryCSDsc -ModuleVersion 5.0.0
-    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
+    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.1.0 # Custom
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.2.0 # Custom
     Import-DscResource -ModuleName AdfsDsc -ModuleVersion 1.4.0
 
     # Init
@@ -253,16 +253,16 @@
         WindowsFeature AddDNS {
             Name = "DNS"; Ensure = "Present" 
         }
-        NetConnectionProfile SetPrivate {
+        NetConnectionProfile SetNetworkInterfaceToPrivate {
             InterfaceAlias = $InterfaceAlias; NetworkCategory = 'Private' 
         }
         DnsServerAddress SetDNS {
             Address = '127.0.0.1' ; InterfaceAlias = $InterfaceAlias; AddressFamily = 'IPv4' 
         }
-        IPAddress NewIPv4Address
-        {
-            IPAddress = '10.1.1.4'; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPV4'
-        }
+        # IPAddress NewIPv4Address
+        # {
+        #     IPAddress = '10.1.1.4'; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPV4'
+        # }
 
         ADDomain CreateADForest {
             DomainName                    = $DomainFQDN
