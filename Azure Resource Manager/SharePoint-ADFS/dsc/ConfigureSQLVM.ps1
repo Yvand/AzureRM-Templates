@@ -40,6 +40,9 @@ configuration ConfigureSQLVM
         WindowsFeature AddADPowerShell { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
         
         DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        NetConnectionProfile SetNetworkInterfaceToPrivate {
+            InterfaceAlias = $InterfaceAlias; NetworkCategory = 'Private' 
+        }
 
         Script EnableFileSharing {
             GetScript  = { }
