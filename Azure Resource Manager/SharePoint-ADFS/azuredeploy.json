@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.32.4.45862",
-      "templateHash": "5199758106902788229"
+      "templateHash": "126299939822417373"
     },
     "description": "Create a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).",
     "author": "Yvand"
@@ -437,7 +437,7 @@
           "Label": "Latest",
           "Packages": [
             {
-              "DownloadUrl": "https://download.microsoft.com/download/1/5/a/15a07d07-02eb-4abb-a3fc-f6ba153fed91/uber-subscription-kb5002676-fullfile-x64-glb.exe"
+              "DownloadUrl": "https://download.microsoft.com/download/6/d/8/6d81a11e-567d-4527-bfc7-e2cbf890254b/uber-subscription-kb5002681-fullfile-x64-glb.exe"
             }
           ]
         }

@@ -74,7 +74,7 @@ IMPORTANT: If you set parameter `outboundAccessMethod` to `AzureFirewallProxy`, 
 ## Input parameters
 
 - Parameter `sharePointVersion` lets you choose which version of SharePoint to install:
-  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: January 2025 ([KB5002676](https://support.microsoft.com/help/5002676)).
+  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: February 2025 ([KB5002681](https://support.microsoft.com/help/5002681)).
   - `Subscription-24H2`: Same as `Subscription-RTM`, then installs the [Feature Update 24H2](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-24h2-release) (September 2024 CU / [kb5002640](https://support.microsoft.com/help/5002640)).
   - `Subscription-24H1`: Same as `Subscription-RTM`, then installs the [Feature Update 24H1](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-24h1-release) (March 2024 CU / [KB5002564](https://support.microsoft.com/help/5002564)).
   - `Subscription-23H2`: Same as `Subscription-RTM`, then installs the [Feature Update 23H2](https://learn.microsoft.com/en-us/SharePoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-23h2-release) (September 2023 CU / [KB5002474](https://support.microsoft.com/help/5002474)).
@@ -104,9 +104,10 @@ You can visit <https://azure.com/e/26eea69e35b04cb884b83ce06feadb5c> to estimate
 ## Known issues
 
 - The password for the User Profile directory synchronization connection (value of parameter `otherAccountsPassword`) needs to be re-entered in the "Edit synchronization connection" page, otherwise the import fails (password decryption error).
-- When parameter `outboundAccessMethod` is `AzureFirewallProxy`, most of the softwares installed through Chocolatey failed to download and are not installed.
+- When parameter `outboundAccessMethod` is `AzureFirewallProxy`, most of the softwares installed through Chocolatey fail to download and are not installed.
 - When deploying SharePoint 2016 or 2019, the trial enterprise license has already expired, so you must enter your own in the central administration, then run iisreset and restart the SPTimerV4 service on all the servers.
 - When deploying SharePoint 2016 or 2019, the installation of softwares through Chocolatey fails for most of them.
+- The first time you connect to a SharePoint Subscription VM, it restarts a few seconds later.
 
 ## More information
 
