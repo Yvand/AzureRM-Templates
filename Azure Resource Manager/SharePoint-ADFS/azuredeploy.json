@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.32.4.45862",
-      "templateHash": "126299939822417373"
+      "templateHash": "2038791777844197161"
     },
     "description": "Create a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).",
     "author": "Yvand"
@@ -1445,170 +1445,15 @@
     },
     {
       "condition": "[equals(parameters('enableAzureBastion'), true())]",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2023-11-01",
-      "name": "bastion-subnet-nsg",
-      "location": "[parameters('location')]",
-      "properties": {
-        "securityRules": [
-          {
-            "name": "AllowHttpsInBound",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "sourceAddressPrefix": "Internet",
-              "destinationPortRange": "443",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "AllowGatewayManagerInBound",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "sourceAddressPrefix": "GatewayManager",
-              "destinationPortRange": "443",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 110,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "AllowLoadBalancerInBound",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "sourceAddressPrefix": "AzureLoadBalancer",
-              "destinationPortRange": "443",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 120,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "AllowBastionHostCommunicationInBound",
-            "properties": {
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "sourceAddressPrefix": "VirtualNetwork",
-              "destinationPortRanges": [
-                "8080",
-                "5701"
-              ],
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 130,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "DenyAllInBound",
-            "properties": {
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "sourceAddressPrefix": "*",
-              "destinationPortRange": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Deny",
-              "priority": 1000,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "AllowSshRdpOutBound",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "sourceAddressPrefix": "*",
-              "destinationPortRanges": [
-                "22",
-                "3389"
-              ],
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "AllowAzureCloudCommunicationOutBound",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "sourceAddressPrefix": "*",
-              "destinationPortRange": "443",
-              "destinationAddressPrefix": "AzureCloud",
-              "access": "Allow",
-              "priority": 110,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "AllowBastionHostCommunicationOutBound",
-            "properties": {
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "sourceAddressPrefix": "VirtualNetwork",
-              "destinationPortRanges": [
-                "8080",
-                "5701"
-              ],
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 120,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "AllowGetSessionInformationOutBound",
-            "properties": {
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "Internet",
-              "destinationPortRanges": [
-                "80",
-                "443"
-              ],
-              "access": "Allow",
-              "priority": 130,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "DenyAllOutBound",
-            "properties": {
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Deny",
-              "priority": 1000,
-              "direction": "Outbound"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "condition": "[equals(parameters('enableAzureBastion'), true())]",
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "apiVersion": "2023-11-01",
       "name": "[format('{0}/{1}', format('vnet-{0}', uniqueString(resourceGroup().id)), 'AzureBastionSubnet')]",
       "properties": {
-        "addressPrefix": "10.1.2.0/24",
-        "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'bastion-subnet-nsg')]"
-        }
+        "addressPrefix": "10.1.2.0/26",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', 'bastion-subnet-nsg')]",
         "[resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', uniqueString(resourceGroup().id)))]"
       ]
     },
@@ -1632,10 +1477,20 @@
     {
       "condition": "[equals(parameters('enableAzureBastion'), true())]",
       "type": "Microsoft.Network/bastionHosts",
-      "apiVersion": "2023-11-01",
+      "apiVersion": "2024-03-01",
       "name": "bastion",
       "location": "[parameters('location')]",
+      "sku": {
+        "name": "Basic"
+      },
       "properties": {
+        "scaleUnits": 2,
+        "enableTunneling": false,
+        "enableIpConnect": false,
+        "disableCopyPaste": false,
+        "enableShareableLink": false,
+        "enableKerberos": false,
+        "enableSessionRecording": false,
         "ipConfigurations": [
           {
             "name": "IpConf",
