@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Template
+  - Fixed connecting to VMs through Azure Bastion
 - DSC Configuration for DC
   - Removed NetConnectionProfile (to set the network interface as private) as it randomly causes errors
 - DSC Configuration for SPSE
