@@ -16,7 +16,7 @@ configuration ConfigureSQLVM
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
-    $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
+    $Interface = Get-NetAdapter| Where-Object InterfaceDescription -Like "Microsoft Hyper-V Network Adapter*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
     
     # Format credentials to be qualified by domain name: "domain\username"

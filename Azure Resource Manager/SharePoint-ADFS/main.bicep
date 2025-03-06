@@ -515,10 +515,11 @@ resource vm_dc_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbou
   }
 }
 
-resource vm_dc_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
+resource vm_dc_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'vm-dc-nic'
   location: location
   properties: {
+    enableAcceleratedNetworking: true
     ipConfigurations: [
       {
         name: 'ipconfig1'
@@ -706,13 +707,14 @@ resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbo
   }
 }
 
-resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
+resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'vm-sql-nic'
   location: location
   dependsOn: [
-    vm_dc_nic
+    vm_dc_nic // This ensures that this NIC does not take DC's'reserved static IP
   ]
   properties: {
+    enableAcceleratedNetworking: true
     ipConfigurations: [
       {
         name: 'ipconfig1'
@@ -899,13 +901,14 @@ resource vm_sp_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbou
   }
 }
 
-resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
+resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'vm-sp-nic'
   location: location
   dependsOn: [
-    vm_dc_nic
+    vm_dc_nic // This ensures that this NIC does not take DC's'reserved static IP
   ]
   properties: {
+    enableAcceleratedNetworking: true
     ipConfigurations: [
       {
         name: 'ipconfig1'
@@ -1135,12 +1138,13 @@ resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
   }
 ]
 
-resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
+resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2024-05-01' = [
   for i in range(0, frontEndServersCount): if (frontEndServersCount >= 1) {
     name: 'vm-fe${i}-nic'
     location: location
     properties: {
-      ipConfigurations: [
+    enableAcceleratedNetworking: true
+    ipConfigurations: [
         {
           name: 'ipconfig1'
           properties: {
@@ -1159,7 +1163,7 @@ resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
     }
     dependsOn: [
       vm_fe_pip[i]
-      vm_dc_nic
+      vm_dc_nic // This ensures that this NIC does not take DC's'reserved static IP
     ]
   }
 ]

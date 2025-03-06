@@ -30,7 +30,7 @@ configuration ConfigureFEVM
     Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.2.1
 
     # Init
-    [String] $InterfaceAlias = (Get-NetAdapter | Where-Object Name -Like "Ethernet*" | Select-Object -First 1).Name
+    [String] $InterfaceAlias = (Get-NetAdapter| Where-Object InterfaceDescription -Like "Microsoft Hyper-V Network Adapter*" | Select-Object -First 1).Name
     [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
 
