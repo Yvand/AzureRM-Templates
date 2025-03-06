@@ -973,7 +973,7 @@ resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       ]
     }
     licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
-    securityProfile: vmsSettings.vmSharePointSecurityProfile
+    securityProfile: vmsSettings.?vmSharePointSecurityProfile
   }
 }
 
@@ -1216,7 +1216,7 @@ resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
         ]
       }
       licenseType: (enableHybridBenefitServerLicenses ? 'Windows_Server' : null)
-      securityProfile: vmsSettings.vmSharePointSecurityProfile
+      securityProfile: vmsSettings.?vmSharePointSecurityProfile
     }
   }
 ]
