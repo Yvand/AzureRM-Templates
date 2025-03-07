@@ -1,5 +1,17 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Unreleased
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the March 2025 CU for SharePoint Subscription
+  - Enabled accelerated networking on all virtual machines
+- DSC Configuration for all VMs
+  - Updated DSC module ComputerManagementDsc to 10.0.0
+- DSC Configuration for SharePoint
+  - Updated DSC module SharePointDsc to 5.6.1
+
 ## Enhancements & bug-fixes - Published in February 25, 2025
 
 ### Changed

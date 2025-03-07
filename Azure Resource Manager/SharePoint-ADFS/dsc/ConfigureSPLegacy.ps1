@@ -23,7 +23,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.2.0 # Custom
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.0
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
