@@ -7,6 +7,7 @@
 - Template
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the March 2025 CU for SharePoint Subscription
   - Enabled accelerated networking on all virtual machines
+  - Fixed the warnings by using the safe access (.?) operator
 - DSC Configuration for all VMs
   - Updated DSC module ComputerManagementDsc to 10.0.0
 - DSC Configuration for SharePoint
