@@ -418,12 +418,12 @@ configuration ConfigureSQLVM
         #     PsDscRunAsCredential = $DomainAdminCredsQualified
         # }
 
-        $subjectName = "CN=SQL.contoso.local"
-        $sqlServerEncryptionCertThumbprint = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Subject -eq "CN=$ComputerName.$DomainFQDN" } | Select-Object -Expand Thumbprint
+        # $subjectName = "CN=SQL.contoso.local"
+        # $sqlServerEncryptionCertThumbprint = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Subject -eq "CN=$ComputerName.$DomainFQDN" } | Select-Object -Expand Thumbprint
         SqlSecureConnection ForceSecureConnection
         {
             InstanceName    = 'MSSQLSERVER'
-            Thumbprint      = $sqlServerEncryptionCertThumbprint
+            Thumbprint      = "CN=SQL.contoso.local"
             ForceEncryption = $true
             Ensure          = 'Present'
             ServiceAccount  = $SqlSvcCreds.UserName
