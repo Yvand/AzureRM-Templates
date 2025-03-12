@@ -388,35 +388,36 @@ configuration ConfigureSQLVM
             DependsOn           = '[Script]UpdateGPOToTrustRootCACert'
         }
 
-        # Script GrantSqlsvcFullControlToPrivateKey {
-        #     SetScript            = 
-        #     {
-        #         $subjectName = "CN=$($using:ComputerName).$($using:DomainFQDN)"
-        #         $sqlsvcUserName = $using:SqlSvcCreds.UserName
+        $sqlsvcUserName = $SQLCredsQualified.UserName
+        Script GrantSqlsvcFullControlToPrivateKey {
+            SetScript            = 
+            {
+                $subjectName = "CN=$($using:ComputerName).$($using:DomainFQDN)"
+                $sqlsvcUserName = $using:sqlsvcUserName
 
-        #         # Grant access to the certificate private key.
-        #         $cert = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Subject -eq $subjectName }
-        #         $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
-        #         $fileName = $rsaCert.key.UniqueName
-        #         $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
-        #         $permissions = Get-Acl -Path $path
-        #         $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($sqlsvcUserName, 'FullControl', 'None', 'None', 'Allow')
-        #         $permissions.AddAccessRule($access_rule)
-        #         Set-Acl -Path $path -AclObject $permissions
-        #     }
-        #     GetScript            =  
-        #     {
-        #         # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-        #         return @{ "Result" = "false" }
-        #     }
-        #     TestScript           = 
-        #     {
-        #         # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-        #         return $false
-        #     }
-        #     DependsOn            = "[CertReq]GenerateSQLServerCertificate"
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        # }
+                # Grant access to the certificate private key.
+                $cert = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Subject -eq $subjectName }
+                $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
+                $fileName = $rsaCert.key.UniqueName
+                $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
+                $permissions = Get-Acl -Path $path
+                $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($sqlsvcUserName, 'FullControl', 'None', 'None', 'Allow')
+                $permissions.AddAccessRule($access_rule)
+                Set-Acl -Path $path -AclObject $permissions
+            }
+            GetScript            =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript           = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                return $false
+            }
+            DependsOn            = "[CertReq]GenerateSQLServerCertificate"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
 
         # $subjectName = "CN=SQL.contoso.local"
         # $sqlServerEncryptionCertThumbprint = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Subject -eq "CN=$ComputerName.$DomainFQDN" } | Select-Object -Expand Thumbprint
@@ -428,7 +429,7 @@ configuration ConfigureSQLVM
             Ensure          = 'Present'
             ServiceAccount  = $SqlSvcCreds.UserName
             ServerName      = "$ComputerName.$DomainFQDN"
-            # DependsOn       = '[Script]GrantSqlsvcFullControlToPrivateKey'
+            DependsOn       = '[Script]GrantSqlsvcFullControlToPrivateKey'
         }
 
         # Open port on the firewall only when everything is ready, as SharePoint DSC is testing it to start creating the farm
@@ -498,7 +499,7 @@ $SPSetupCreds = New-Object -TypeName System.Management.Automation.PSCredential -
 $DNSServerIP = "10.1.1.4"
 $DomainFQDN = "contoso.local"
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureSQLVM.0"
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureSQLVM.0\ConfigureSQLVM"
 ConfigureSQLVM -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DomainAdminCreds $DomainAdminCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
