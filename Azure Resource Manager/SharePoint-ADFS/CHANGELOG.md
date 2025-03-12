@@ -6,12 +6,18 @@
 
 - Template
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the March 2025 CU for SharePoint Subscription
-  - Enabled accelerated networking on all virtual machines
-  - Fixed the warnings by using the safe access (.?) operator
+  - Added value `Subscription-25H1` to parameter `sharePointVersion`, to install SharePoint Subscription version 25H1
+  - Enabled accelerated networking on all the virtual machines
+  - Fixed the Bicep warnings by using the safe access (.?) operator
 - DSC Configuration for all VMs
   - Updated DSC module ComputerManagementDsc to 10.0.0
 - DSC Configuration for SharePoint
   - Updated DSC module SharePointDsc to 5.6.1
+
+### Fixed
+
+- DSC Configuration for SharePoint 2016
+  - Add a temporary fix to workaround a regression on resource ADObjectPermissionEntry, introduced with module ActiveDirectoryDsc v6.6.0 (https://github.com/dsccommunity/ActiveDirectoryDsc/issues/724)
 
 ## Enhancements & bug-fixes - Published in February 25, 2025
 
