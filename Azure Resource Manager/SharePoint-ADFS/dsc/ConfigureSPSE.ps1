@@ -1418,54 +1418,64 @@ configuration ConfigureSPVM
         Script ConfigureUPAClaimProvider {
             SetScript            = 
             {
-                $spTrustName = $using:DomainFQDN
-                $spSiteUrl = "http://$($using:SharePointSitesAuthority)/"
-                Write-Host "Start configuration for ConfigureUPAClaimProvider using spTrustName '$($spTrustName)' and spSiteUrl '$($spSiteUrl)'"                
+                try {
+                    $spTrustName = $using:DomainFQDN
+                    $spSiteUrl = "http://$($using:SharePointSitesAuthority)/"
+                    Write-Host "Start configuration for ConfigureUPAClaimProvider using spTrustName '$($spTrustName)' and spSiteUrl '$($spSiteUrl)'"                
 
-                # LanguageSynchronizationJob must be executed before updating profile properties, to ensure their property DisplayNameLocalized is set with a localized value
-                # LanguageSynchronizationJob basically populates SQL table [SPDSC_UPA_Profiles].[upa].[PropertyListLoc]
-                # If this job is not run, $property.CoreProperty.Commit() will throw: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property." 
-                $job = Get-SPTimerJob -Type "Microsoft.Office.Server.Administration.UserProfileApplication+LanguageSynchronizationJob"
-                $job.Execute()
-                
-                # Gets the trust
-                $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
-                if ($null -eq $trust) {
-                    Write-Host "Could not get the trust $spTrustName, give up"
-                    return;
-                }
-
-                # Creates the claims provider if it does not already exist
-                $claimsProvider = Get-SPClaimProvider -Identity $spTrustName -ErrorAction SilentlyContinue
-                if ($null -eq $claimsProvider) {
-                    $claimsProviderName = "UPA Claim Provider"
-                    $claimsProvider = New-SPClaimProvider -AssemblyName "Microsoft.SharePoint, Version=16.0.0.0, Culture=neutral, publicKeyToken=71e9bce111e9429c" -Default:$false `
-                        -DisplayName $claimsProviderName -Description $claimsProviderName -Type "Microsoft.SharePoint.Administration.Claims.SPTrustedBackedByUPAClaimProvider" `
-                        -TrustedTokenIssuer $trust
-                }
-
-                # Running this set below would set SPTrustedBackedByUPAClaimProvider as the active claims provider for this trust
-                # But it wouldn't work since properties "SPS-ClaimProviderID" and "SPS-ClaimProviderType" of trusted profiles are not set
-                # Set-SPTrustedIdentityTokenIssuer $trust -ClaimProvider $claimsProvider -IsOpenIDConnect
-
-                # Sets the property IsPeoplePickerSearchable on specific profile properties
-                $site = Get-SPSite -Identity $spSiteUrl -ErrorAction SilentlyContinue
-                $context = Get-SPServiceContext $site -ErrorAction SilentlyContinue
-                $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
-                $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
-                $properties = $ps.Properties
-
-                $propertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
-                foreach ($propertyName in $propertyNames) { 
-                    $property = $properties.GetPropertyByName($propertyName)
-                    if ($property) {
-                        Write-Host "Updating property $($propertyName)"
-                        $property.CoreProperty.IsPeoplePickerSearchable = $true 
-                        $property.CoreProperty.Commit()
-                        Write-Host "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
+                    # LanguageSynchronizationJob must be executed before updating profile properties, to ensure their property DisplayNameLocalized is set with a localized value
+                    # LanguageSynchronizationJob basically populates SQL table [SPDSC_UPA_Profiles].[upa].[PropertyListLoc]
+                    # If this job is not run, $property.CoreProperty.Commit() will throw: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property." 
+                    $job = Get-SPTimerJob -Type "Microsoft.Office.Server.Administration.UserProfileApplication+LanguageSynchronizationJob"
+                    $job.Execute()
+                    
+                    # Gets the trust
+                    $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
+                    if ($null -eq $trust) {
+                        Write-Host "Could not get the trust $spTrustName, give up"
+                        return;
                     }
+
+                    # Creates the claims provider if it does not already exist
+                    $claimsProvider = Get-SPClaimProvider -Identity $spTrustName -ErrorAction SilentlyContinue
+                    if ($null -eq $claimsProvider) {
+                        $claimsProviderName = "UPA Claim Provider"
+                        $claimsProvider = New-SPClaimProvider -AssemblyName "Microsoft.SharePoint, Version=16.0.0.0, Culture=neutral, publicKeyToken=71e9bce111e9429c" -Default:$false `
+                            -DisplayName $claimsProviderName -Description $claimsProviderName -Type "Microsoft.SharePoint.Administration.Claims.SPTrustedBackedByUPAClaimProvider" `
+                            -TrustedTokenIssuer $trust
+                    }
+
+                    # Running this set below would set SPTrustedBackedByUPAClaimProvider as the active claims provider for this trust
+                    # But it wouldn't work since properties "SPS-ClaimProviderID" and "SPS-ClaimProviderType" of trusted profiles are not set
+                    # Set-SPTrustedIdentityTokenIssuer $trust -ClaimProvider $claimsProvider -IsOpenIDConnect
+
+                    # Sets the property IsPeoplePickerSearchable on specific profile properties
+                    $site = Get-SPSite -Identity $spSiteUrl -ErrorAction SilentlyContinue
+                    $context = Get-SPServiceContext $site -ErrorAction SilentlyContinue
+                    $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
+                    $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
+                    $properties = $ps.Properties
+
+                    $propertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
+                    foreach ($propertyName in $propertyNames) { 
+                        $property = $properties.GetPropertyByName($propertyName)
+                        if ($property) {
+                            Write-Host "Updating property $($propertyName)"
+                            $property.CoreProperty.IsPeoplePickerSearchable = $true 
+                            $property.CoreProperty.Commit()
+                            Write-Host "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
+                        }
+                    }
+                    Write-Host "Finished configuration for ConfigureUPAClaimProvider"
+                } catch [ Microsoft.Office.Server.UserProfiles.PartitionNotFoundException ] {
+                    Write-Host "Caught PartitionNotFoundException, likely caused by Execute() on LanguageSynchronizationJob. Started after enforcing SQL connection with Subscription 25H1"
+                    Write-Verbose "Caught PartitionNotFoundException, likely caused by Execute() on LanguageSynchronizationJob. Started after enforcing SQL connection with Subscription 25H1" -Verbose
+                    Write-Host "Exception message: $($_.Exception.Message)"
+                    Write-Host "Exception details: $($_)"
+                    Write-
+                } catch {
+                    Write-Host "An error occurred in ConfigureUPAClaimProvider.Set: $($_)"
                 }
-                Write-Host "Finished configuration for ConfigureUPAClaimProvider"
             }
             GetScript            =  
             {

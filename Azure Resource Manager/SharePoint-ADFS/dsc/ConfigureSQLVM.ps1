@@ -421,11 +421,11 @@ configuration ConfigureSQLVM
 
         # $subjectName = "CN=SQL.contoso.local"
         # $sqlServerEncryptionCertThumbprint = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Subject -eq "CN=$ComputerName.$DomainFQDN" } | Select-Object -Expand Thumbprint
-        SqlSecureConnection ForceSecureConnection
+        SqlSecureConnection EnableSecureConnection
         {
             InstanceName    = 'MSSQLSERVER'
             Thumbprint      = "CN=SQL.contoso.local"
-            ForceEncryption = $true
+            ForceEncryption = $false
             Ensure          = 'Present'
             ServiceAccount  = $SqlSvcCreds.UserName
             ServerName      = "$ComputerName.$DomainFQDN"
