@@ -21,7 +21,7 @@ configuration ConfigureFEVM
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.0 # Custom workaround on ADObjectPermissionEntry
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.6.1
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.6.1 # custom
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.0.0
