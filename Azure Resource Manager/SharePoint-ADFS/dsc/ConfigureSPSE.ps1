@@ -382,15 +382,15 @@ configuration ConfigureSPVM
                         
                         $exitRebootCodes = @(3010, 17022)
                         $needReboot = $false
-                        Write-Host "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
+                        Write-Verbose -Verbose -Message "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
                         Unblock-File -Path $packageFile -Confirm:$false
                         $process = Start-Process $packageFile.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
                         if ($exitRebootCodes.Contains($process.ExitCode)) {
                             $needReboot = $true
                         }
-                        Write-Host "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
+                        Write-Verbose -Verbose -Message "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
                         New-Item -Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)" -Force
-                        Write-Host "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
+                        Write-Verbose -Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
 
                         if ($true -eq $needReboot) {
                             $global:DSCMachineStatus = 1
@@ -453,9 +453,9 @@ configuration ConfigureSPVM
                 # if (!(Get-WmiObject Win32_Share -Filter "name='$sharename'")) {
                 $shares = [WMICLASS]"WIN32_Share"
                 if ($shares.Create($foldername, $sharename, 0).ReturnValue -ne 0) {
-                    Write-Host "Failed to create file share '$sharename' for folder '$foldername'"
+                    Write-Verbose -Verbose -Message "Failed to create file share '$sharename' for folder '$foldername'"
                 } else {
-                    Write-Host "Created file share '$sharename' for folder '$foldername'"
+                    Write-Verbose -Verbose -Message "Created file share '$sharename' for folder '$foldername'"
                 }
                 # }
             }
@@ -500,7 +500,7 @@ configuration ConfigureSPVM
                     }
                     catch [System.Net.Sockets.SocketException] {
                         # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
-                        Write-Host "DNS record '$dnsRecordFQDN' not found yet: $_"
+                        Write-Verbose -Verbose -Message "DNS record '$dnsRecordFQDN' not found yet: $_"
                         Start-Sleep -Seconds $sleepTime
                     }
                 } while ($false -eq $dnsRecordFound)
@@ -575,7 +575,7 @@ configuration ConfigureSPVM
                 # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
                 $domainFQDN = $using:DomainFQDN
                 $computerName = $using:ComputerName
-                Write-Host "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
+                Write-Verbose -Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
                 setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
@@ -801,12 +801,12 @@ configuration ConfigureSPVM
                     $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
                     try {
                         $sqlConnection.Open()
-                        Write-Host "Connection to SQL Server $server succeeded"
+                        Write-Verbose -Verbose -Message "Connection to SQL Server $server succeeded"
                         $sqlConnection.Close()
                         $retry = $false
                     }
                     catch {
-                        Write-Host "SQL connection to $server failed, retry in $retrySleep secs..."
+                        Write-Verbose -Verbose -Message "SQL connection to $server failed, retry in $retrySleep secs..."
                         Start-Sleep -s $retrySleep
                     }
                 }
@@ -1163,7 +1163,7 @@ configuration ConfigureSPVM
                   Add-Type -AssemblyName "Yvand.LDAPCPSE, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
                   [Yvand.LdapClaimsProvider.LDAPCPSE]::CreateConfiguration()
                } catch {
-                  Write-Host "Could not create LDAPCP configuration: $_"
+                  Write-Verbose -Verbose -Message "Could not create LDAPCP configuration: $_"
                }
             }
             GetScript            =  
@@ -1184,7 +1184,7 @@ configuration ConfigureSPVM
                      return $true
                   }
                } catch {
-                  Write-Host "Could not test if LDAPCP configuration exists: $_"
+                  Write-Verbose -Verbose -Message "Could not test if LDAPCP configuration exists: $_"
                   return $true # Skip set if test fails
                }
             }
@@ -1224,7 +1224,7 @@ configuration ConfigureSPVM
                     New-Item -ItemType Directory -Force -Path $setupPath
                 }
 
-                Write-Host "Creating certificate request for CN=$sharePointSitesAuthority.$domainFQDN..."
+                Write-Verbose -Verbose -Message "Creating certificate request for CN=$sharePointSitesAuthority.$domainFQDN..."
                 # Generate CSR
                 New-SPCertificate -FriendlyName "$sharePointSitesAuthority Certificate" -KeySize 2048 -CommonName "$sharePointSitesAuthority.$domainFQDN" -AlternativeNames @("*.$domainFQDN", "*.$appDomainIntranetFQDN") -Organization "$domainNetbiosName" -Exportable -HashAlgorithm SHA256 -Path "$setupPath\$sharePointSitesAuthority.csr"
 
@@ -1243,14 +1243,14 @@ configuration ConfigureSPVM
                 # # Import private key of the certificate into SharePoint
                 # $password = ConvertTo-SecureString -AsPlainText -Force "<superpasse>"
                 # Import-SPCertificate -Path "$setupPath\$sharePointSitesAuthority.pfx" -Password $password -Exportable
-                Write-Host "Adding certificate 'CN=$sharePointSitesAuthority.$domainFQDN' to SharePoint store EndEntity..."
+                Write-Verbose -Verbose -Message "Adding certificate 'CN=$sharePointSitesAuthority.$domainFQDN' to SharePoint store EndEntity..."
                 $spCert = Import-SPCertificate -Path "$setupPath\$sharePointSitesAuthority.cer" -Exportable -Store EndEntity
 
-                Write-Host "Extending web application to HTTPS zone using certificate 'CN=$sharePointSitesAuthority.$domainFQDN'..."
+                Write-Verbose -Verbose -Message "Extending web application to HTTPS zone using certificate 'CN=$sharePointSitesAuthority.$domainFQDN'..."
                 Set-SPWebApplication -Identity "http://$sharePointSitesAuthority" -Zone Intranet -Port 443 -Certificate $spCert `
                     -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url "https://$sharePointSitesAuthority.$domainFQDN"
                 
-                Write-Host "Finished."
+                Write-Verbose -Verbose -Message "Finished."
             }
             GetScript            = { }
             TestScript           = 
@@ -1421,7 +1421,7 @@ configuration ConfigureSPVM
                 try {
                     $spTrustName = $using:DomainFQDN
                     $spSiteUrl = "http://$($using:SharePointSitesAuthority)/"
-                    Write-Host "Start configuration for ConfigureUPAClaimProvider using spTrustName '$($spTrustName)' and spSiteUrl '$($spSiteUrl)'"                
+                    Write-Verbose -Verbose -Message "Start configuration for ConfigureUPAClaimProvider using spTrustName '$($spTrustName)' and spSiteUrl '$($spSiteUrl)'"                
 
                     # LanguageSynchronizationJob must be executed before updating profile properties, to ensure their property DisplayNameLocalized is set with a localized value
                     # LanguageSynchronizationJob basically populates SQL table [SPDSC_UPA_Profiles].[upa].[PropertyListLoc]
@@ -1432,7 +1432,7 @@ configuration ConfigureSPVM
                     # Gets the trust
                     $trust = Get-SPTrustedIdentityTokenIssuer -Identity $spTrustName -ErrorAction SilentlyContinue
                     if ($null -eq $trust) {
-                        Write-Host "Could not get the trust $spTrustName, give up"
+                        Write-Verbose -Verbose -Message "Could not get the trust $spTrustName, give up"
                         return;
                     }
 
@@ -1460,20 +1460,18 @@ configuration ConfigureSPVM
                     foreach ($propertyName in $propertyNames) { 
                         $property = $properties.GetPropertyByName($propertyName)
                         if ($property) {
-                            Write-Host "Updating property $($propertyName)"
+                            Write-Verbose -Verbose -Message "Updating property $($propertyName)"
                             $property.CoreProperty.IsPeoplePickerSearchable = $true 
                             $property.CoreProperty.Commit()
-                            Write-Host "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
+                            Write-Verbose -Verbose -Message "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
                         }
                     }
-                    Write-Host "Finished configuration for ConfigureUPAClaimProvider"
+                    Write-Verbose -Verbose -Message "Finished configuration for ConfigureUPAClaimProvider"
                 } catch [ Microsoft.Office.Server.UserProfiles.PartitionNotFoundException ] {
-                    Write-Host "Caught PartitionNotFoundException, likely caused by Execute() on LanguageSynchronizationJob. Started after enforcing SQL connection with Subscription 25H1"
-                    Write-Verbose "Caught PartitionNotFoundException, likely caused by Execute() on LanguageSynchronizationJob. Started after enforcing SQL connection with Subscription 25H1" -Verbose
-                    Write-Host "Exception message: $($_.Exception.Message)"
-                    Write-Host "Exception details: $($_)"
+                    Write-Verbose -Verbose -Message "Caught PartitionNotFoundException, likely caused by Execute() on LanguageSynchronizationJob. Started after enforcing SQL connection with Subscription 25H1"
+                    Write-Verbose -Verbose -Message "Exception message: $($_.Exception.Message)"
                 } catch {
-                    Write-Host "An error occurred in ConfigureUPAClaimProvider.Set: $($_)"
+                    Write-Verbose -Verbose -Message "An error occurred in ConfigureUPAClaimProvider.Set: $($_.Exception.Message)"
                 }
             }
             GetScript            =  
@@ -1687,11 +1685,11 @@ configuration ConfigureSPVM
                 $certSubject = "HighTrustAddins"
                 $certName = "HighTrustAddins.cer"
                 $certFullPath = [System.IO.Path]::Combine($destinationPath, $certName)
-                Write-Host "Exporting public key of certificate with subject $certSubject to $certFullPath..."
+                Write-Verbose -Verbose -Message "Exporting public key of certificate with subject $certSubject to $certFullPath..."
                 New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
                 $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$certSubject"
                 $signingCert | Export-Certificate -FilePath $certFullPath
-                Write-Host "Public key of certificate with subject $certSubject successfully exported to $certFullPath."
+                Write-Verbose -Verbose -Message "Public key of certificate with subject $certSubject successfully exported to $certFullPath."
             }
             GetScript  =  
             {
@@ -1723,27 +1721,27 @@ configuration ConfigureSPVM
                 $jobBlock = {
                     $uri = $args[0]
                     try {
-                        Write-Host "Connecting to $uri..."
+                        Write-Verbose -Verbose -Message "Connecting to $uri..."
                         # -UseDefaultCredentials: Does NTLM authN
                         # -UseBasicParsing: Avoid exception because IE was not first launched yet
                         # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
                         Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
-                        Write-Host "Connected successfully to $uri"
+                        Write-Verbose -Verbose -Message "Connected successfully to $uri"
                     }
                     catch [System.Exception] {
-                        Write-Host "Unexpected error while connecting to '$uri': $_"
+                        Write-Verbose -Verbose -Message "Unexpected error while connecting to '$uri': $_"
                     }
                     catch {
                         # It may typically be a System.Management.Automation.ErrorRecord, which does not inherit System.Exception
-                        Write-Host "Unexpected error while connecting to '$uri'"
+                        Write-Verbose -Verbose -Message "Unexpected error while connecting to '$uri'"
                     }
                 }
                 [System.Management.Automation.Job[]] $jobs = @()
                 $spsite = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
-                Write-Host "Warming up '$spsite'..."
+                Write-Verbose -Verbose -Message "Warming up '$spsite'..."
                 $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
                 $spsite = "http://$($using:SharePointSitesAuthority)/"
-                Write-Host "Warming up '$spsite'..."
+                Write-Verbose -Verbose -Message "Warming up '$spsite'..."
                 $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
 
                 # Must wait for the jobs to complete, otherwise they do not actually run
@@ -1770,10 +1768,10 @@ configuration ConfigureSPVM
                         $site = Get-SPSite -Identity $uri -ErrorAction SilentlyContinue
                         $context = Get-SPServiceContext $site -ErrorAction SilentlyContinue
                         $upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($context)
-                        Write-Host "Got UserProfileManager"
+                        Write-Verbose -Verbose -Message "Got UserProfileManager"
                     }
                     catch {
-                        Write-Host "Unable to get UserProfileManager: $_"
+                        Write-Verbose -Verbose -Message "Unable to get UserProfileManager: $_"
                         # If Write-Error is called, then the Script resource is going to failed state
                         # Write-Error -Exception $_ -Message "Unable to get UserProfileManager for '$($account.AccountName)'"
                         return
@@ -1808,30 +1806,30 @@ configuration ConfigureSPVM
                         $userProfile = $null
                         try {
                             $userProfile = $upm.GetUserProfile($account.AccountName)
-                            Write-Host "Got existing user profile for '$($account.AccountName)'"
+                            Write-Verbose -Verbose -Message "Got existing user profile for '$($account.AccountName)'"
                         }
                         catch {
                             $userProfile = $upm.CreateUserProfile($account.AccountName, $account.PreferredName);
-                            Write-Host "Successfully created user profile for '$($account.AccountName)'"
+                            Write-Verbose -Verbose -Message "Successfully created user profile for '$($account.AccountName)'"
                         }
                     
                         if ($null -eq $userProfile) {
-                            Write-Host "Unable to get/create the profile for '$($account.AccountName)', give up"
+                            Write-Verbose -Verbose -Message "Unable to get/create the profile for '$($account.AccountName)', give up"
                             continue
                         }
                         
                         if ($null -eq $userProfile.PersonalSite) {
-                            Write-Host "Adding creation of personal site for '$($account.AccountName)' to the queue..."
+                            Write-Verbose -Verbose -Message "Adding creation of personal site for '$($account.AccountName)' to the queue..."
                             try {
                                 $userProfile.CreatePersonalSiteEnque($false)
-                                Write-Host "Successfully enqueued the creation of personal site for '$($account.AccountName)'"
+                                Write-Verbose -Verbose -Message "Successfully enqueued the creation of personal site for '$($account.AccountName)'"
                             }
                             catch {
-                                Write-Host "Could not enqueue creation of personal site for '$($account.AccountName)': $_"
+                                Write-Verbose -Verbose -Message "Could not enqueue creation of personal site for '$($account.AccountName)': $_"
                             }
                         }
                         else {
-                            Write-Host "Personal site for '$($account.AccountName)' already exists, nothing to do"
+                            Write-Verbose -Verbose -Message "Personal site for '$($account.AccountName)' already exists, nothing to do"
                         }
                     }
 
@@ -1850,16 +1848,16 @@ configuration ConfigureSPVM
                     # foreach ($propertyName in $PropertyNames) { 
                     #     $property = $properties.GetPropertyByName($propertyName)
                     #     if ($property) {
-                    #         Write-Host "Checking property $($propertyName)"
+                    #         Write-Verbose -Verbose -Message "Checking property $($propertyName)"
                     #         $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
                     #         $m_DisplayNamesValue = $property.CoreProperty.GetType().GetField("m_DisplayNames", [System.Reflection.BindingFlags]"NonPublic, Instance").GetValue($property.CoreProperty)
                     #         if ($m_DisplayNamesValue) {
-                    #             Write-Host "Property $($propertyName) has m_DisplayNamesValue.DefaultLanguage $($m_DisplayNamesValue.DefaultLanguage) and m_DisplayNamesValue.Count $($m_DisplayNamesValue.Count)"
+                    #             Write-Verbose -Verbose -Message "Property $($propertyName) has m_DisplayNamesValue.DefaultLanguage $($m_DisplayNamesValue.DefaultLanguage) and m_DisplayNamesValue.Count $($m_DisplayNamesValue.Count)"
                     #         }
                     #         $property.CoreProperty.IsPeoplePickerSearchable = $true
                     #         # Somehow this may throw this error: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property."
                     #         $property.CoreProperty.Commit()
-                    #         Write-Host "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
+                    #         Write-Verbose -Verbose -Message "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
                     #     }
                     # }
                 }
@@ -1924,7 +1922,7 @@ configuration ConfigureSPVM
         #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
         #             # Start python script
-        #             Write-Host "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
+        #             Write-Verbose -Verbose -Message "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
         #             #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
         #             #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
         #             python "$localScriptPath" "$fullPathToDscLogs"

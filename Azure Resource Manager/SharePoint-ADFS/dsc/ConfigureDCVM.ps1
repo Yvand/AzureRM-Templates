@@ -465,12 +465,12 @@
                 $destinationPath = $using:SetupPath
                 $adfsSigningCertName = "ADFS Signing.cer"
                 $adfsSigningIssuerCertName = "ADFS Signing issuer.cer"
-                Write-Host "Exporting public key of ADFS signing / signing issuer certificates..."
+                Write-Verbose -Verbose -Message "Exporting public key of ADFS signing / signing issuer certificates..."
                 New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
                 $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$using:ADFSSiteName.Signing"
                 $signingCert | Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningCertName))
                 Get-ChildItem -Path "cert:\LocalMachine\Root\" | Where-Object { $_.Subject -eq $signingCert.Issuer } | Select-Object -First 1 | Export-Certificate -FilePath ([System.IO.Path]::Combine($destinationPath, $adfsSigningIssuerCertName))
-                Write-Host "Public key of ADFS signing / signing issuer certificates successfully exported"
+                Write-Verbose -Verbose -Message "Public key of ADFS signing / signing issuer certificates successfully exported"
             }
             GetScript  =  
             {

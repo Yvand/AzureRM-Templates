@@ -75,7 +75,7 @@ configuration ConfigureSQLVM
                     }
                     catch [System.Net.Sockets.SocketException] {
                         # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
-                        Write-Host "DNS record '$dnsRecordFQDN' not found yet: $_"
+                        Write-Verbose -Verbose -Message "DNS record '$dnsRecordFQDN' not found yet: $_"
                         Start-Sleep -Seconds $sleepTime
                     }
                 } while ($false -eq $dnsRecordFound)
