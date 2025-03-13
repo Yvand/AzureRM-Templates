@@ -1472,7 +1472,6 @@ configuration ConfigureSPVM
                     Write-Verbose "Caught PartitionNotFoundException, likely caused by Execute() on LanguageSynchronizationJob. Started after enforcing SQL connection with Subscription 25H1" -Verbose
                     Write-Host "Exception message: $($_.Exception.Message)"
                     Write-Host "Exception details: $($_)"
-                    Write-
                 } catch {
                     Write-Host "An error occurred in ConfigureUPAClaimProvider.Set: $($_)"
                 }
