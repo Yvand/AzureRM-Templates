@@ -1,11 +1,42 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Enhancements & bug-fixes - 
+## Enhancements & bug-fixes - Published in February 25, 2025
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the February 2025 CU for SharePoint Subscription
+
+### Fixed
+
+- Template
+  - Fixed connecting to VMs through Azure Bastion
+- DSC Configuration for DC
+  - Removed NetConnectionProfile (to set the network interface as private) as it randomly causes errors
+- DSC Configuration for SPSE
+  - Install the LDAPCP solution as domain admin instead of setup account to improve the reliability
+  - Do not generate an error if creating LDAPCP configuration fails
+
+## Enhancements & bug-fixes - Published in January 17, 2024
 
 ### Changed
 
 - Template
   - Enabled [Trusted launch](https://learn.microsoft.com/azure/virtual-machines/trusted-launch-existing-vm), with secure boot and Virtual Trusted Platform Module, on all virtual machines except SharePoint 2016
+  - Added parameter `addNameToPublicIpAddresses`, to set which virtual machines have a public name associated to their public IP address.
+  - [BREAKING CHANGE] With the default value of new parameter `addNameToPublicIpAddresses` set to `SharePointVMsOnly`, now, only SharePoint VMs have a public name by default. Other VMs only have a public IP.
+  - Upgraded the virtual machines DC and SharePoint Subscription to Windows Server 2025.
+  - Changed the network configuration to use a single subnet for all the virtual machines. This avoids potential network issues due to Defender network access policies, which may block some traffic between subnets due to a JIT access configuration.
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the January 2025 CU for SharePoint Subscription
+
+- All DSC configurations
+  - Bumped DSC modules
+
+- DSC Configuration for SPSE
+  - Renamed root site to "root site"
+
+- DSC Configuration for DC
+  - Set the network interface as a private connection
 
 ## Enhancements & bug-fixes - Published in December 18, 2024
 

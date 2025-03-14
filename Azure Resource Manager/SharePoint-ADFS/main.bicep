@@ -65,6 +65,14 @@ IMPORTANT: With AzureFirewallProxy, you need to either enable Azure Bastion, or 
 ])
 param outboundAccessMethod string = 'PublicIPAddress'
 
+@description('Set if the Public IP addresses of virtual machines should have a name label.')
+@allowed([
+  'No'
+  'SharePointVMsOnly'
+  'Yes'
+])
+param addNameToPublicIpAddresses string = 'SharePointVMsOnly'
+
 @description('Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information.')
 param enableAzureBastion bool = false
 
@@ -282,7 +290,7 @@ var resourceGroupNameFormatted = replace(
 var sharePointSettings = {
   isSharePointSubscription: (startsWith(sharePointVersion, 'subscription') ? true : false)
   sharePointImagesList: {
-    Subscription: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition:latest'
+    Subscription: 'MicrosoftWindowsServer:WindowsServer:2025-datacenter-azure-edition:latest'
     sp2019: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2019gen2smalldisk:latest'
     sp2016: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2016:latest'
   }
@@ -348,7 +356,7 @@ var sharePointSettings = {
       Label: 'Latest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/c/e/c/ceca0241-efca-4484-9d76-5661806f16c4/uber-subscription-kb5002658-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/6/d/8/6d81a11e-567d-4527-bfc7-e2cbf890254b/uber-subscription-kb5002681-fullfile-x64-glb.exe'
         }
       ]
     }
@@ -357,13 +365,9 @@ var sharePointSettings = {
 
 var networkSettings = {
   vNetPrivatePrefix: '10.1.0.0/16'
-  subnetDCPrefix: '10.1.1.0/24'
+  mainSubnetName: 'vnet-subnet-main'
+  mainSubnetPrefix: '10.1.1.0/24'
   dcPrivateIPAddress: '10.1.1.4'
-  subnetSQLPrefix: '10.1.2.0/24'
-  subnetSPPrefix: '10.1.3.0/24'
-  subnetDCName: 'vnet-subnet-dc'
-  subnetSQLName: 'vnet-subnet-sql'
-  subnetSPName: 'vnet-subnet-sp'
   nsgRuleAllowIncomingRdp: [
     {
       name: 'nsg-rule-allow-rdp'
@@ -387,7 +391,7 @@ var vmsSettings = {
   vmSQLName: 'SQL'
   vmSPName: 'SP'
   vmFEName: 'FE'
-  vmDCImage: 'MicrosoftWindowsServer:WindowsServer:2022-datacenter-azure-edition-smalldisk:latest'
+  vmDCImage: 'MicrosoftWindowsServer:WindowsServer:2025-datacenter-azure-edition-smalldisk:latest'
   vmSQLImage: 'MicrosoftSQLServer:sql2022-ws2022:sqldev-gen2:latest'
   vmSharePointImage: (sharePointSettings.isSharePointSubscription
     ? sharePointSettings.sharePointImagesList.Subscription
@@ -449,8 +453,8 @@ var deploymentSettings = {
 }
 
 var firewall_proxy_settings = {
-  vNetAzureFirewallPrefix: '10.1.5.0/24'
-  azureFirewallIPAddress: '10.1.5.4'
+  vNetAzureFirewallPrefix: '10.1.3.0/24'
+  azureFirewallIPAddress: '10.1.3.4'
   http_port: 8080
   https_port: 8443
 }
@@ -460,7 +464,7 @@ var set_proxy_script = 'param([string]$proxyIp, [string]$proxyHttpPort, [string]
 
 // Start creating resources
 // Network security groups for each subnet
-resource nsg_subnet_dc 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
+resource nsg_subnet_main 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: 'vnet-subnet-dc-nsg'
   location: location
   properties: {
@@ -468,23 +472,7 @@ resource nsg_subnet_dc 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   }
 }
 
-resource nsg_subnet_sql 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
-  name: 'vnet-subnet-sql-nsg'
-  location: location
-  properties: {
-    securityRules: ((toLower(rdpTrafficRule) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
-  }
-}
-
-resource nsg_subnet_sp 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
-  name: 'vnet-subnet-sp-nsg'
-  location: location
-  properties: {
-    securityRules: ((toLower(rdpTrafficRule) == 'no') ? null : networkSettings.nsgRuleAllowIncomingRdp)
-  }
-}
-
-// Create the virtual network, 3 subnets, and associate each subnet with its Network Security Group
+// Setup the network
 resource virtual_network 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   name: 'vnet-${uniqueString(resourceGroup().id)}'
   location: location
@@ -496,32 +484,12 @@ resource virtual_network 'Microsoft.Network/virtualNetworks@2023-11-01' = {
     }
     subnets: [
       {
-        name: networkSettings.subnetDCName
+        name: networkSettings.mainSubnetName
         properties: {
           defaultOutboundAccess: false
-          addressPrefix: networkSettings.subnetDCPrefix
+          addressPrefix: networkSettings.mainSubnetPrefix
           networkSecurityGroup: {
-            id: nsg_subnet_dc.id
-          }
-        }
-      }
-      {
-        name: networkSettings.subnetSQLName
-        properties: {
-          defaultOutboundAccess: false
-          addressPrefix: networkSettings.subnetSQLPrefix
-          networkSecurityGroup: {
-            id: nsg_subnet_sql.id
-          }
-        }
-      }
-      {
-        name: networkSettings.subnetSPName
-        properties: {
-          defaultOutboundAccess: false
-          addressPrefix: networkSettings.subnetSPPrefix
-          networkSecurityGroup: {
-            id: nsg_subnet_sp.id
+            id: nsg_subnet_main.id
           }
         }
       }
@@ -539,9 +507,11 @@ resource vm_dc_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbou
   }
   properties: {
     publicIPAllocationMethod: 'Static'
-    dnsSettings: {
-      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmDCName}')
-    }
+    dnsSettings: addNameToPublicIpAddresses == 'Yes'
+      ? {
+          domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmDCName}')
+        }
+      : null
   }
 }
 
@@ -559,7 +529,7 @@ resource vm_dc_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
             id: resourceId(
               'Microsoft.Network/virtualNetworks/subnets',
               virtual_network.name,
-              networkSettings.subnetDCName
+              networkSettings.mainSubnetName
             )
           }
           publicIPAddress: ((outboundAccessMethod == 'PublicIPAddress') ? { id: vm_dc_pip.id } : null)
@@ -585,7 +555,7 @@ resource vm_dc_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
         provisionVMAgent: true
         patchSettings: {
-          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByPlatform' : 'Manual')
           assessmentMode: 'ImageDefault'
         }
       }
@@ -728,15 +698,20 @@ resource vm_sql_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbo
   }
   properties: {
     publicIPAllocationMethod: 'Static'
-    dnsSettings: {
-      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSQLName}')
-    }
+    dnsSettings: addNameToPublicIpAddresses == 'Yes'
+      ? {
+          domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSQLName}')
+        }
+      : null
   }
 }
 
 resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
   name: 'vm-sql-nic'
   location: location
+  dependsOn: [
+    vm_dc_nic
+  ]
   properties: {
     ipConfigurations: [
       {
@@ -747,7 +722,7 @@ resource vm_sql_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
             id: resourceId(
               'Microsoft.Network/virtualNetworks/subnets',
               virtual_network.name,
-              networkSettings.subnetSQLName
+              networkSettings.mainSubnetName
             )
           }
           publicIPAddress: ((outboundAccessMethod == 'PublicIPAddress') ? { id: vm_sql_pip.id } : null)
@@ -916,15 +891,20 @@ resource vm_sp_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (outbou
   }
   properties: {
     publicIPAllocationMethod: 'Static'
-    dnsSettings: {
-      domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSPName}')
-    }
+    dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+      ? {
+          domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSPName}')
+        }
+      : null
   }
 }
 
 resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
   name: 'vm-sp-nic'
   location: location
+  dependsOn: [
+    vm_dc_nic
+  ]
   properties: {
     ipConfigurations: [
       {
@@ -935,7 +915,7 @@ resource vm_sp_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
             id: resourceId(
               'Microsoft.Network/virtualNetworks/subnets',
               virtual_network.name,
-              networkSettings.subnetSPName
+              networkSettings.mainSubnetName
             )
           }
           publicIPAddress: ((outboundAccessMethod == 'PublicIPAddress') ? { id: vm_sp_pip.id } : null)
@@ -961,7 +941,9 @@ resource vm_sp_def 'Microsoft.Compute/virtualMachines@2024-07-01' = {
         enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
         provisionVMAgent: true
         patchSettings: {
-          patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+          patchMode: (vmsSettings.enableAutomaticUpdates
+            ? sharePointSettings.isSharePointSubscription ? 'AutomaticByPlatform' : 'AutomaticByOS'
+            : 'Manual')
           assessmentMode: 'ImageDefault'
         }
       }
@@ -1144,9 +1126,11 @@ resource vm_fe_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = [
     }
     properties: {
       publicIPAllocationMethod: 'Static'
-      dnsSettings: {
-        domainNameLabel: '${toLower('${resourceGroupNameFormatted}-${vmsSettings.vmFEName}')}-${i}'
-      }
+      dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+        ? {
+            domainNameLabel: '${toLower('${resourceGroupNameFormatted}-${vmsSettings.vmFEName}')}-${i}'
+          }
+        : null
     }
   }
 ]
@@ -1165,7 +1149,7 @@ resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
               id: resourceId(
                 'Microsoft.Network/virtualNetworks/subnets',
                 virtual_network.name,
-                networkSettings.subnetSPName
+                networkSettings.mainSubnetName
               )
             }
             publicIPAddress: (outboundAccessMethod == 'PublicIPAddress' ? json('{"id": "${vm_fe_pip[i].id}"}') : null)
@@ -1175,6 +1159,7 @@ resource vm_fe_nic 'Microsoft.Network/networkInterfaces@2023-11-01' = [
     }
     dependsOn: [
       vm_fe_pip[i]
+      vm_dc_nic
     ]
   }
 ]
@@ -1199,7 +1184,9 @@ resource vm_fe_def 'Microsoft.Compute/virtualMachines@2024-07-01' = [
           enableAutomaticUpdates: vmsSettings.enableAutomaticUpdates
           provisionVMAgent: true
           patchSettings: {
-            patchMode: (vmsSettings.enableAutomaticUpdates ? 'AutomaticByOS' : 'Manual')
+            patchMode: (vmsSettings.enableAutomaticUpdates
+              ? sharePointSettings.isSharePointSubscription ? 'AutomaticByPlatform' : 'AutomaticByOS'
+              : 'Manual')
             assessmentMode: 'ImageDefault'
           }
         }
@@ -1344,165 +1331,13 @@ resource vm_fe_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = [
 ]
 
 // Resources for Azure Bastion
-resource bastion_subnet_nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = if (enableAzureBastion == true) {
-  name: 'bastion-subnet-nsg'
-  location: location
-  properties: {
-    securityRules: [
-      {
-        name: 'AllowHttpsInBound'
-        properties: {
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          sourceAddressPrefix: 'Internet'
-          destinationPortRange: '443'
-          destinationAddressPrefix: '*'
-          access: 'Allow'
-          priority: 100
-          direction: 'Inbound'
-        }
-      }
-      {
-        name: 'AllowGatewayManagerInBound'
-        properties: {
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          sourceAddressPrefix: 'GatewayManager'
-          destinationPortRange: '443'
-          destinationAddressPrefix: '*'
-          access: 'Allow'
-          priority: 110
-          direction: 'Inbound'
-        }
-      }
-      {
-        name: 'AllowLoadBalancerInBound'
-        properties: {
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          sourceAddressPrefix: 'AzureLoadBalancer'
-          destinationPortRange: '443'
-          destinationAddressPrefix: '*'
-          access: 'Allow'
-          priority: 120
-          direction: 'Inbound'
-        }
-      }
-      {
-        name: 'AllowBastionHostCommunicationInBound'
-        properties: {
-          protocol: '*'
-          sourcePortRange: '*'
-          sourceAddressPrefix: 'VirtualNetwork'
-          destinationPortRanges: [
-            '8080'
-            '5701'
-          ]
-          destinationAddressPrefix: 'VirtualNetwork'
-          access: 'Allow'
-          priority: 130
-          direction: 'Inbound'
-        }
-      }
-      {
-        name: 'DenyAllInBound'
-        properties: {
-          protocol: '*'
-          sourcePortRange: '*'
-          sourceAddressPrefix: '*'
-          destinationPortRange: '*'
-          destinationAddressPrefix: '*'
-          access: 'Deny'
-          priority: 1000
-          direction: 'Inbound'
-        }
-      }
-      {
-        name: 'AllowSshRdpOutBound'
-        properties: {
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          sourceAddressPrefix: '*'
-          destinationPortRanges: [
-            '22'
-            '3389'
-          ]
-          destinationAddressPrefix: 'VirtualNetwork'
-          access: 'Allow'
-          priority: 100
-          direction: 'Outbound'
-        }
-      }
-      {
-        name: 'AllowAzureCloudCommunicationOutBound'
-        properties: {
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          sourceAddressPrefix: '*'
-          destinationPortRange: '443'
-          destinationAddressPrefix: 'AzureCloud'
-          access: 'Allow'
-          priority: 110
-          direction: 'Outbound'
-        }
-      }
-      {
-        name: 'AllowBastionHostCommunicationOutBound'
-        properties: {
-          protocol: '*'
-          sourcePortRange: '*'
-          sourceAddressPrefix: 'VirtualNetwork'
-          destinationPortRanges: [
-            '8080'
-            '5701'
-          ]
-          destinationAddressPrefix: 'VirtualNetwork'
-          access: 'Allow'
-          priority: 120
-          direction: 'Outbound'
-        }
-      }
-      {
-        name: 'AllowGetSessionInformationOutBound'
-        properties: {
-          protocol: '*'
-          sourcePortRange: '*'
-          sourceAddressPrefix: '*'
-          destinationAddressPrefix: 'Internet'
-          destinationPortRanges: [
-            '80'
-            '443'
-          ]
-          access: 'Allow'
-          priority: 130
-          direction: 'Outbound'
-        }
-      }
-      {
-        name: 'DenyAllOutBound'
-        properties: {
-          protocol: '*'
-          sourcePortRange: '*'
-          destinationPortRange: '*'
-          sourceAddressPrefix: '*'
-          destinationAddressPrefix: '*'
-          access: 'Deny'
-          priority: 1000
-          direction: 'Outbound'
-        }
-      }
-    ]
-  }
-}
-
 resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (enableAzureBastion == true) {
   parent: virtual_network
   name: 'AzureBastionSubnet'
   properties: {
-    addressPrefix: '10.1.4.0/24'
-    networkSecurityGroup: {
-      id: bastion_subnet_nsg.id
-    }
+    addressPrefix: '10.1.2.0/26'
+    privateEndpointNetworkPolicies: 'Disabled'
+    privateLinkServiceNetworkPolicies: 'Enabled'
   }
 }
 
@@ -1521,10 +1356,24 @@ resource bastion_pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (enab
   }
 }
 
-resource bastion_def 'Microsoft.Network/bastionHosts@2023-11-01' = if (enableAzureBastion == true) {
+resource bastion_def 'Microsoft.Network/bastionHosts@2024-03-01' = if (enableAzureBastion == true) {
   name: 'bastion'
   location: location
+  sku: {
+    name: 'Basic'
+  }
   properties: {
+    // Preparing for Developer SKU
+    // virtualNetwork: {
+    //   id: virtual_network.id
+    // }
+    scaleUnits: 2
+    enableTunneling: false
+    enableIpConnect: false
+    disableCopyPaste: false
+    enableShareableLink: false
+    enableKerberos: false
+    enableSessionRecording: false    
     ipConfigurations: [
       {
         name: 'IpConf'
@@ -1651,14 +1500,22 @@ resource firewall_def 'Microsoft.Network/azureFirewalls@2023-11-01' = if (outbou
   }
 }
 
-output publicIPAddressDC string = outboundAccessMethod == 'PublicIPAddress' ? vm_dc_pip.properties.dnsSettings.fqdn : ''
-output publicIPAddressSQL string = outboundAccessMethod == 'PublicIPAddress'
-  ? vm_sql_pip.properties.dnsSettings.fqdn
+output publicIPAddressDC string = outboundAccessMethod == 'PublicIPAddress'
+  ? addNameToPublicIpAddresses == 'Yes' ? vm_dc_pip.properties.dnsSettings.fqdn : vm_dc_pip.properties.ipAddress
   : ''
-output publicIPAddressSP string = outboundAccessMethod == 'PublicIPAddress' ? vm_sp_pip.properties.dnsSettings.fqdn : ''
+output publicIPAddressSQL string = outboundAccessMethod == 'PublicIPAddress'
+  ? addNameToPublicIpAddresses == 'Yes' ? vm_sql_pip.properties.dnsSettings.fqdn : vm_sql_pip.properties.ipAddress
+  : ''
+output publicIPAddressSP string = outboundAccessMethod == 'PublicIPAddress'
+  ? addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+      ? vm_sp_pip.properties.dnsSettings.fqdn
+      : vm_sp_pip.properties.ipAddress
+  : ''
 output vm_fe_public_dns array = [
   for i in range(0, frontEndServersCount): (outboundAccessMethod == 'PublicIPAddress')
-    ? vm_fe_pip[i].properties.dnsSettings.fqdn
+    ? addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+        ? vm_fe_pip[i].properties.dnsSettings.fqdn
+        : vm_fe_pip[i].properties.ipAddress
     : null
 ]
 output domainAdminAccount string = '${substring(domainFqdn,0,indexOf(domainFqdn,'.'))}\\${adminUsername}'

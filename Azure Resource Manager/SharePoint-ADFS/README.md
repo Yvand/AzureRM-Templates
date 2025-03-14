@@ -40,7 +40,7 @@ There are some differences in the configuration, depending on the SharePoint ver
 
 ### Specific to SharePoint Subscription
 
-- SharePoint virtual machines are created using the latest disk image of [Windows Server 2022 Azure Edition](https://learn.microsoft.com/windows-server/get-started/editions-comparison-windows-server-2022) available, and SharePoint binaries (install + cumulative updates) are downloaded and installed from scratch.
+- SharePoint virtual machines are created using the latest disk image of [Windows Server 2025 Azure Edition](https://learn.microsoft.com/windows-server/get-started/editions-comparison?pivots=windows-server-2025) available, and SharePoint binaries (install + cumulative updates) are downloaded and installed from scratch.
 - The HTTPS site certificate is managed by SharePoint, which has the private key and sets the binding itself in the IIS site.
 - Federated authentication with ADFS is configured using OpenID Connect.
 
@@ -66,7 +66,7 @@ The remote access to the virtual machines depends on the following parameters:
     - `*` or `Internet`: RDP traffic is allowed from everywhere.
     - CIDR notation (e.g. `192.168.99.0/24` or `2001:1234::/64`) or an IP address (e.g. `192.168.99.0` or `2001:1234::`): RDP traffic is allowed from the IP address / pattern specified.
 - Parameter `enable_azure_bastion`:
-  - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) to allow a secure remote access to virtual machines.
+  - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) with Basic SKU, to allow a secure remote access to virtual machines.
   - if `false` (default): Service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is not created.
 
 IMPORTANT: If you set parameter `outboundAccessMethod` to `AzureFirewallProxy`, you have to either enable Azure Bastion, or manually add a public IP address later, to be able to connect to a virtual machine.
@@ -74,13 +74,13 @@ IMPORTANT: If you set parameter `outboundAccessMethod` to `AzureFirewallProxy`, 
 ## Input parameters
 
 - Parameter `sharePointVersion` lets you choose which version of SharePoint to install:
-  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: December 2024 ([KB5002658](https://support.microsoft.com/help/5002658)).
+  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: February 2025 ([KB5002681](https://support.microsoft.com/help/5002681)).
   - `Subscription-24H2`: Same as `Subscription-RTM`, then installs the [Feature Update 24H2](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-24h2-release) (September 2024 CU / [kb5002640](https://support.microsoft.com/help/5002640)).
   - `Subscription-24H1`: Same as `Subscription-RTM`, then installs the [Feature Update 24H1](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-24h1-release) (March 2024 CU / [KB5002564](https://support.microsoft.com/help/5002564)).
   - `Subscription-23H2`: Same as `Subscription-RTM`, then installs the [Feature Update 23H2](https://learn.microsoft.com/en-us/SharePoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-23h2-release) (September 2023 CU / [KB5002474](https://support.microsoft.com/help/5002474)).
   - `Subscription-23H1`: Same as `Subscription-RTM`, then installs the [Feature Update 23H1](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-23h1-release) (March 2023 CU / [KB5002355](https://support.microsoft.com/help/5002355)).
   - `Subscription-22H2`: Same as `Subscription-RTM`, then installs the [Feature Update 22H2](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-22h2-release) (September 2022 CU / [KB5002270](https://support.microsoft.com/help/5002270) and [KB5002271](https://support.microsoft.com/help/5002271)).
-  - `Subscription-RTM`: Uses a fresh Windows Server 2022 image, on which SharePoint Subscription RTM is downloaded and installed.
+  - `Subscription-RTM`: Uses a fresh Windows Server 2025 image, on which SharePoint Subscription RTM is downloaded and installed.
   - `2019`: Uses an image built and maintained by SharePoint Engineering, with SharePoint 2019 bits already installed.
   - `2016`: Uses an image built and maintained by SharePoint Engineering, with SharePoint 2016 bits already installed.
 - Parameter `frontEndServersCount` lets you add up to 4 additional SharePoint servers to the farm with the [MinRole Front-end](https://learn.microsoft.com/en-us/sharepoint/install/planning-for-a-minrole-server-deployment-in-sharepoint-server).
@@ -99,14 +99,15 @@ Here is the default size and storage type per virtual machine role:
 - SQL Server: Size [Standard_B2as_v2](https://learn.microsoft.com/azure/virtual-machines/sizes/general-purpose/basv2-series) (2 vCPU / 8 GiB RAM) and OS disk is a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds).
 - SharePoint: Size [Standard_B4as_v2](https://learn.microsoft.com/azure/virtual-machines/sizes/general-purpose/basv2-series) (4 vCPU / 16 GiB RAM) and OS disk is a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint Subscription SharePoint 2016), or a 32 GiB [standard SSD E4](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint 2019).
 
-You can visit <https://azure.com/e/85a8cce1b07246df85a16695020854af> to estimate the monthly cost of the template in the region/currency of your choice, assuming it is created using the default settings and runs 24*7.
+You can visit <https://azure.com/e/26eea69e35b04cb884b83ce06feadb5c> to estimate the monthly cost of the template in the region/currency of your choice, assuming it is created using the default settings and runs 24*7.
 
 ## Known issues
 
 - The password for the User Profile directory synchronization connection (value of parameter `otherAccountsPassword`) needs to be re-entered in the "Edit synchronization connection" page, otherwise the import fails (password decryption error).
-- When parameter `outboundAccessMethod` is `AzureFirewallProxy`, most of the softwares installed through Chocolatey failed to download and are not installed.
+- When parameter `outboundAccessMethod` is `AzureFirewallProxy`, most of the softwares installed through Chocolatey fail to download and are not installed.
 - When deploying SharePoint 2016 or 2019, the trial enterprise license has already expired, so you must enter your own in the central administration, then run iisreset and restart the SPTimerV4 service on all the servers.
 - When deploying SharePoint 2016 or 2019, the installation of softwares through Chocolatey fails for most of them.
+- The first time you connect to a SharePoint Subscription VM, it restarts a few seconds later.
 
 ## More information
 

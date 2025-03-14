@@ -21,7 +21,7 @@
             }
         },
         {
-            "label": "deploy template",
+            "label": "deploy bicep template",
             "type": "shell",
             "command": "${workspaceFolder}/DeployTemplate.ps1",
             "args": [
@@ -74,7 +74,6 @@
                 "${input:resourceGrouppName}",
                 "--force-deletion-types",
                 "Microsoft.Compute/virtualMachines",
-                "--no-wait",
                 "--yes"
             ],
             "problemMatcher": []
