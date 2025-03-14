@@ -43,8 +43,7 @@
         {
             "type": "promptString",
             "id": "resourceGrouppName",
-            "description": "Name of the resource group.",
-            "default": "resource-groupp-name"
+            "description": "Name of the resource group."
         }
     ]
 }
