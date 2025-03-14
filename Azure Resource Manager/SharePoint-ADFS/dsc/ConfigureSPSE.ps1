@@ -1468,7 +1468,7 @@ configuration ConfigureSPVM
                     }
                     Write-Verbose -Verbose -Message "Finished configuration for ConfigureUPAClaimProvider"
                 } catch [ Microsoft.Office.Server.UserProfiles.PartitionNotFoundException ] {
-                    Write-Verbose -Verbose -Message "Caught PartitionNotFoundException, likely caused by Execute() on LanguageSynchronizationJob. Started after enforcing SQL connection with Subscription 25H1"
+                    Write-Verbose -Verbose -Message "Caught PartitionNotFoundException, likely caused by Execute() on LanguageSynchronizationJob. Started after enabling secure SQL connection, which became necessary with Subscription 25H1"
                     Write-Verbose -Verbose -Message "Exception message: $($_.Exception.Message)"
                 } catch {
                     Write-Verbose -Verbose -Message "An error occurred in ConfigureUPAClaimProvider.Set: $($_.Exception.Message)"
