@@ -1,6 +1,6 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Enhancements & bug-fixes - Unreleased
+## Enhancements & bug-fixes - Published in March 14, 2025
 
 ### Changed
 
@@ -39,7 +39,7 @@
   - Install the LDAPCP solution as domain admin instead of setup account to improve the reliability
   - Do not generate an error if creating LDAPCP configuration fails
 
-## Enhancements & bug-fixes - Published in January 17, 2024
+## Enhancements & bug-fixes - Published in January 17, 2025
 
 ### Changed
 
