@@ -1,5 +1,12 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Unreleased
+
+### Changed
+
+- DSC Configuration for all VMs
+  - Updated DSC module ADObjectPermissionEntry to 6.6.1 and remove all customizations
+
 ## Enhancements & bug-fixes - Published in March 14, 2025
 
 ### Changed
