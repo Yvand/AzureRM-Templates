@@ -1354,53 +1354,26 @@ resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' =
   }
 }
 
-resource bastion_pip 'Microsoft.Network/publicIPAddresses@2024-05-01' = if (enableAzureBastion == true) {
-  name: 'bastion-pip'
-  location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
-  properties: {
-    publicIPAllocationMethod: 'Static'
-    dnsSettings: {
-      domainNameLabel: toLower(replace('${resourceGroupNameFormatted}-Bastion', '_', '-'))
-    }
-  }
-}
-
-resource bastion_def 'Microsoft.Network/bastionHosts@2024-05-01' = if (enableAzureBastion == true) {
+module bastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = if (enableAzureBastion == true) {
   name: 'bastion'
-  location: location
-  sku: {
-    name: 'Basic'
-  }
-  properties: {
-    // Preparing for Developer SKU
-    // virtualNetwork: {
-    //   id: virtual_network.id
-    // }
+  dependsOn: [
+    bastion_subnet
+  ]
+  params: {
+    // Required parameters
+    name: 'bastion'
+    virtualNetworkResourceId: virtual_network.id
+    // Non-required parameters
+    location: location
+    skuName: 'Basic'
     scaleUnits: 2
-    enableTunneling: false
-    enableIpConnect: false
     disableCopyPaste: false
-    enableShareableLink: false
-    enableKerberos: false
-    enableSessionRecording: false    
-    ipConfigurations: [
-      {
-        name: 'IpConf'
-        properties: {
-          privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: {
-            id: bastion_pip.id
-          }
-          subnet: {
-            id: bastion_subnet.id
-          }
-        }
-      }
-    ]
+    publicIPAddressObject: {
+      allocationMethod: 'Static'
+      name: 'bastion-pip'
+      skuName: 'Standard'
+      skuTier: 'Regional'
+    }
   }
 }
 
