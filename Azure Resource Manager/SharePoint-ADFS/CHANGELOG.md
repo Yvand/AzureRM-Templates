@@ -5,7 +5,7 @@
 ### Changed
 
 - DSC Configuration for all VMs
-  - Updated DSC module ADObjectPermissionEntry to 6.6.1 and remove all customizations on this module
+  - Updated DSC module ActiveDirectoryDsc to 6.6.2 and remove all customizations on this module
 
 ## Enhancements & bug-fixes - Published in March 14, 2025
 
