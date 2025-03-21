@@ -294,6 +294,10 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 param _artifactsLocationSasToken string = ''
 
 // Local variables
+var templateSettings = {}
+
+var environmentSettings = {}
+
 var resourceGroupNameFormatted = replace(
   replace(replace(replace(resourceGroupName, '.', '-'), '(', '-'), ')', '-'),
   '_',
@@ -713,7 +717,7 @@ module virtualNetwork 'virtualNetwork.bicep' = {
     location: location
     virtualNetworkName: 'vnet'
     addressPrefix: networkSettings.vNetPrivatePrefix
-    enableAzureBastion: enableAzureBastion
+    // enableAzureBastion: enableAzureBastion
     networkSecurityRules: toLower(rdpTrafficRule) == 'no'
       ? []
       : [
@@ -745,6 +749,8 @@ module virtualMachines 'virtualMachine.bicep' = [
       adminPassword: adminPassword
       subnetResourceId: virtualNetwork.outputs.mainSubnetResourceId
       licenseType: enableHybridBenefitServerLicenses ? 'Windows_Server' : null
+      timeZone: timeZone
+      autoShutdownTime: autoShutdownTime
       adminUsername: baseVirtualMachine.virtualMachineSettings.adminUsername
       virtualMachineName: baseVirtualMachine.virtualMachineSettings.virtualMachineName
       virtualMachineDiskSizeGB: baseVirtualMachine.virtualMachineSettings.virtualMachineDiskSizeGB
@@ -761,21 +767,11 @@ module virtualMachines 'virtualMachine.bicep' = [
   }
 ]
 
-module bastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = if (enableAzureBastion == true) {
+module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
   scope: resourceGroup
-  name: 'bastion'
+  name: 'bastion-module'
   params: {
-    name: 'bastion'
-    virtualNetworkResourceId: virtualNetwork.outputs.vnetResourceId
-    location: location
-    skuName: 'Basic'
-    scaleUnits: 2
-    disableCopyPaste: false
-    publicIPAddressObject: {
-      allocationMethod: 'Static'
-      name: 'bastion-pip'
-      skuName: 'Standard'
-      skuTier: 'Regional'
-    }
+    virtualNetworkName: virtualNetwork.outputs.vnetName
+    addressPrefix: cidrSubnet(networkSettings.vNetPrivatePrefix, 24, 2)
   }
 }

@@ -6,7 +6,7 @@
       "value": "francecentral"
     },
     "resourceGroupName": {
-      "value": "xxydsp1"
+      "value": "xxydsp3"
     },
     "namePrefix": {
       "value": "_namePrefix_"
@@ -16,12 +16,10 @@
     },
     
     "sharePointVersion": { "value": "Subscription-RTM" },
-    // "sharePointVersion": { "value": "2019" },
     "domainFqdn": { "value": "contoso.local" },
     "adminUsername": { "value": "yvand" },
     "timeZone": { "value": "Romance Standard Time" },
      "outboundAccessMethod": { "value": "PublicIPAddress" },
-     // "outboundAccessMethod": { "value": "AzureFirewallProxy" },
     "rdpTrafficRule": { "value": "No" },
     "addNameToPublicIpAddresses": { "value": "SharePointVMsOnly" },
     "frontEndServersCount": { "value": 0 },
