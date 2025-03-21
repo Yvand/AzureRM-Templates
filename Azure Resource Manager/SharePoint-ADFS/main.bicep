@@ -296,7 +296,9 @@ param _artifactsLocationSasToken string = ''
 // Local variables
 var templateSettings = {}
 
-var environmentSettings = {}
+var environmentSettings = {
+  
+}
 
 var resourceGroupNameFormatted = replace(
   replace(replace(replace(resourceGroupName, '.', '-'), '(', '-'), ')', '-'),

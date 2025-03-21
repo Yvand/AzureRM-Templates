@@ -6,7 +6,7 @@
       "value": "francecentral"
     },
     "resourceGroupName": {
-      "value": "xxydsp3"
+      "value": "xxydsp1"
     },
     "namePrefix": {
       "value": "_namePrefix_"
@@ -24,7 +24,7 @@
     "addNameToPublicIpAddresses": { "value": "SharePointVMsOnly" },
     "frontEndServersCount": { "value": 0 },
     "enableHybridBenefitServerLicenses": { "value": true },
-    "enableAzureBastion": { "value": true },
+    "enableAzureBastion": { "value": false },
     "_artifactsLocation": { "value": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/refs/heads/dev/Azure%20Resource%20Manager/SharePoint-ADFS/" },
     "_artifactsLocationSasToken": { "value": "" },
     "autoShutdownTime": { "value": "1830" },

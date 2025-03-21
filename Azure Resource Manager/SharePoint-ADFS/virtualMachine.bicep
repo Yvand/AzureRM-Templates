@@ -63,16 +63,16 @@ module vm_definition 'br/public:avm/res/compute/virtual-machine:0.12.2' = {
     securityType: virtualMachineSecurityType
     osType: 'Windows'
     licenseType: licenseType
-    // timeZone: timeZone
-    // autoShutdownConfig: autoShutdownTime != '9999'
-    //   ? {
-    //       status: 'Enabled'
-    //       timeZoneId: timeZone
-    //       dailyRecurrence: {
-    //         time: autoShutdownTime
-    //       }
-    //     }
-    //   : null
+    timeZone: timeZone
+    autoShutdownConfig: autoShutdownTime != '9999'
+      ? {
+          status: 'Enabled'
+          timeZoneId: timeZone
+          dailyRecurrence: {
+            time: autoShutdownTime
+          }
+        }
+      : null
     nicConfigurations: [
       {
         ipConfigurations: [
