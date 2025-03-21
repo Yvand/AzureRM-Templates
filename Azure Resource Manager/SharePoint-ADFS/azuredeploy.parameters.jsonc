@@ -7,14 +7,7 @@
     },
     "resourceGroupName": {
       "value": "xxydsp1"
-    },
-    "namePrefix": {
-      "value": "_namePrefix_"
-    },
-    "serviceShort": {
-      "value": "xxx"
-    },
-    
+    },    
     "sharePointVersion": { "value": "Subscription-RTM" },
     "domainFqdn": { "value": "contoso.local" },
     "adminUsername": { "value": "yvand" },
