@@ -294,17 +294,12 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 param _artifactsLocationSasToken string = ''
 
 // Local variables
-var templateSettings = {}
-
-var environmentSettings = {
-  
-}
-
 var resourceGroupNameFormatted = replace(
   replace(replace(replace(resourceGroupName, '.', '-'), '(', '-'), ')', '-'),
   '_',
   '-'
 )
+
 var sharePointSettings = {
   isSharePointSubscription: (startsWith(sharePointVersion, 'subscription') ? true : false)
   sharePointImagesList: {
@@ -389,11 +384,8 @@ var sharePointSettings = {
   ]
 }
 
-var networkSettings = {
+var templateSettings = {
   vNetPrivatePrefix: '10.1.0.0/16'
-  dcPrivateIPAddress: '10.1.1.100'
-}
-var vmsSettings = {
   enableAutomaticUpdates: true
   vmDCName: 'DC'
   vmSQLName: 'SQL'
@@ -408,26 +400,8 @@ var vmsSettings = {
         : sharePointSettings.sharePointImagesList.sp2016))
 }
 
-// var dscSettings = {
-//   forceUpdateTag: '1.0'
-//   vmSQLScriptFileUri: uri(_artifactsLocation, 'dsc/ConfigureSQLVM.zip${_artifactsLocationSasToken}')
-//   vmSQLScript: 'ConfigureSQLVM.ps1'
-//   vmSQLFunction: 'ConfigureSQLVM'
-//   vmSPScriptFileUri: uri(
-//     _artifactsLocation,
-//     '${(sharePointSettings.isSharePointSubscription ? 'dsc/ConfigureSPSE.zip' : 'dsc/ConfigureSPLegacy.zip')}${_artifactsLocationSasToken}'
-//   )
-//   vmSPScript: (sharePointSettings.isSharePointSubscription ? 'ConfigureSPSE.ps1' : 'ConfigureSPLegacy.ps1')
-//   vmSPFunction: 'ConfigureSPVM'
-//   vmFEScriptFileUri: uri(
-//     _artifactsLocation,
-//     '${(sharePointSettings.isSharePointSubscription ? 'dsc/ConfigureFESE.zip' : 'dsc/ConfigureFELegacy.zip')}${_artifactsLocationSasToken}'
-//   )
-//   vmFEScript: (sharePointSettings.isSharePointSubscription ? 'ConfigureFESE.ps1' : 'ConfigureFELegacy.ps1')
-//   vmFEFunction: 'ConfigureFEVM'
-// }
-
-var deploymentSettings = {
+var environmentSettings = {
+  dcPrivateIPAddress: '10.1.1.100'
   sharePointSitesAuthority: 'spsites'
   sharePointCentralAdminPort: 5000
   sharePointBitsSelected: (sharePointSettings.isSharePointSubscription
@@ -448,6 +422,7 @@ var deploymentSettings = {
   spADDirSyncUserName: 'spdirsync'
 }
 
+// Azure Firewall proxy settings
 var firewall_proxy_settings = {
   vNetAzureFirewallPrefix: '10.1.3.0/24'
   azureFirewallIPAddress: '10.1.3.4'
@@ -487,18 +462,18 @@ var baseVirtualMachines = [
   {
     virtualMachineSettings: {
       adminUsername: adminUsername
-      virtualMachineName: vmsSettings.vmDCName
+      virtualMachineName: templateSettings.vmDCName
       virtualMachineSize: vmDcSize
       virtualMachineStorage: vmDcStorage
       virtualMachineDiskSizeGB: 32
       virtualMachineSecurityType: 'TrustedLaunch'
       imageReference: {
-        publisher: split(vmsSettings.vmDCImage, ':')[0]
-        offer: split(vmsSettings.vmDCImage, ':')[1]
-        sku: split(vmsSettings.vmDCImage, ':')[2]
-        version: split(vmsSettings.vmDCImage, ':')[3]
+        publisher: split(templateSettings.vmDCImage, ':')[0]
+        offer: split(templateSettings.vmDCImage, ':')[1]
+        sku: split(templateSettings.vmDCImage, ':')[2]
+        version: split(templateSettings.vmDCImage, ':')[3]
       }
-      privateIPAddress: networkSettings.dcPrivateIPAddress
+      privateIPAddress: environmentSettings.dcPrivateIPAddress
       pipConfiguration: ((outboundAccessMethod == 'PublicIPAddress')
         ? {
             publicIpNameSuffix: '-pip-01'
@@ -507,7 +482,7 @@ var baseVirtualMachines = [
             zones: []
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
-                  domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmDCName}')
+                  domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmDCName}')
                   domainNameLabelScope: 'ResourceGroupReuse'
                 }
               : null
@@ -523,11 +498,11 @@ var baseVirtualMachines = [
       }
       configurationArguments: {
         domainFQDN: domainFqdn
-        PrivateIP: networkSettings.dcPrivateIPAddress
-        SPServerName: vmsSettings.vmSPName
-        SharePointSitesAuthority: deploymentSettings.sharePointSitesAuthority
-        SharePointCentralAdminPort: deploymentSettings.sharePointCentralAdminPort
-        ApplyBrowserPolicies: deploymentSettings.applyBrowserPolicies
+        PrivateIP: environmentSettings.dcPrivateIPAddress
+        SPServerName: templateSettings.vmSPName
+        SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
+        SharePointCentralAdminPort: environmentSettings.sharePointCentralAdminPort
+        ApplyBrowserPolicies: environmentSettings.applyBrowserPolicies
       }
       privacy: {
         dataCollection: 'enable'
@@ -540,7 +515,7 @@ var baseVirtualMachines = [
           Password: adminPassword
         }
         AdfsSvcCreds: {
-          UserName: deploymentSettings.adfsSvcUserName
+          UserName: environmentSettings.adfsSvcUserName
           Password: otherAccountsPassword
         }
       }
@@ -548,17 +523,17 @@ var baseVirtualMachines = [
   }
   {
     virtualMachineSettings: {
-      adminUsername: deploymentSettings.localAdminUserName
-      virtualMachineName: vmsSettings.vmSQLName
+      adminUsername: environmentSettings.localAdminUserName
+      virtualMachineName: templateSettings.vmSQLName
       virtualMachineSize: vmSqlSize
       virtualMachineStorage: vmSqlStorage
       virtualMachineDiskSizeGB: 128
       virtualMachineSecurityType: 'TrustedLaunch'
       imageReference: {
-        publisher: split(vmsSettings.vmSQLImage, ':')[0]
-        offer: split(vmsSettings.vmSQLImage, ':')[1]
-        sku: split(vmsSettings.vmSQLImage, ':')[2]
-        version: split(vmsSettings.vmSQLImage, ':')[3]
+        publisher: split(templateSettings.vmSQLImage, ':')[0]
+        offer: split(templateSettings.vmSQLImage, ':')[1]
+        sku: split(templateSettings.vmSQLImage, ':')[2]
+        version: split(templateSettings.vmSQLImage, ':')[3]
       }
       privateIPAddress: null
       pipConfiguration: ((outboundAccessMethod == 'PublicIPAddress')
@@ -569,7 +544,7 @@ var baseVirtualMachines = [
             zones: []
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
-                  domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSQLName}')
+                  domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSQLName}')
                   domainNameLabelScope: 'ResourceGroupReuse'
                 }
               : null
@@ -584,7 +559,7 @@ var baseVirtualMachines = [
         function: 'ConfigureSQLVM'
       }
       configurationArguments: {
-        DNSServerIP: networkSettings.dcPrivateIPAddress
+        DNSServerIP: environmentSettings.dcPrivateIPAddress
         DomainFQDN: domainFqdn
       }
       privacy: {
@@ -598,11 +573,11 @@ var baseVirtualMachines = [
           Password: adminPassword
         }
         SqlSvcCreds: {
-          UserName: deploymentSettings.sqlSvcUserName
+          UserName: environmentSettings.sqlSvcUserName
           Password: otherAccountsPassword
         }
         SPSetupCreds: {
-          UserName: deploymentSettings.spSetupUserName
+          UserName: environmentSettings.spSetupUserName
           Password: otherAccountsPassword
         }
       }
@@ -610,17 +585,17 @@ var baseVirtualMachines = [
   }
   {
     virtualMachineSettings: {
-      adminUsername: deploymentSettings.localAdminUserName
-      virtualMachineName: vmsSettings.vmSPName
+      adminUsername: environmentSettings.localAdminUserName
+      virtualMachineName: templateSettings.vmSPName
       virtualMachineSize: vmSharePointSize
       virtualMachineStorage: vmSharePointStorage
       virtualMachineDiskSizeGB: 128
       virtualMachineSecurityType: sharePointVersion == '2016' ? null : 'TrustedLaunch'
       imageReference: {
-        publisher: split(vmsSettings.vmSharePointImage, ':')[0]
-        offer: split(vmsSettings.vmSharePointImage, ':')[1]
-        sku: split(vmsSettings.vmSharePointImage, ':')[2]
-        version: split(vmsSettings.vmSharePointImage, ':')[3]
+        publisher: split(templateSettings.vmSharePointImage, ':')[0]
+        offer: split(templateSettings.vmSharePointImage, ':')[1]
+        sku: split(templateSettings.vmSharePointImage, ':')[2]
+        version: split(templateSettings.vmSharePointImage, ':')[3]
       }
       privateIPAddress: null
       pipConfiguration: ((outboundAccessMethod == 'PublicIPAddress')
@@ -631,7 +606,7 @@ var baseVirtualMachines = [
             zones: []
             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
               ? {
-                  domainNameLabel: toLower('${resourceGroupNameFormatted}-${vmsSettings.vmSPName}')
+                  domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSPName}')
                   domainNameLabelScope: 'ResourceGroupReuse'
                 }
               : null
@@ -649,16 +624,16 @@ var baseVirtualMachines = [
         function: 'ConfigureSPVM'
       }
       configurationArguments: {
-        DNSServerIP: networkSettings.dcPrivateIPAddress
+        DNSServerIP: environmentSettings.dcPrivateIPAddress
         DomainFQDN: domainFqdn
-        DCServerName: vmsSettings.vmDCName
-        SQLServerName: vmsSettings.vmSQLName
-        SQLAlias: deploymentSettings.sqlAlias
+        DCServerName: templateSettings.vmDCName
+        SQLServerName: templateSettings.vmSQLName
+        SQLAlias: environmentSettings.sqlAlias
         SharePointVersion: sharePointVersion
-        SharePointSitesAuthority: deploymentSettings.sharePointSitesAuthority
-        SharePointCentralAdminPort: deploymentSettings.sharePointCentralAdminPort
-        EnableAnalysis: deploymentSettings.enableAnalysis
-        SharePointBits: deploymentSettings.sharePointBitsSelected
+        SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
+        SharePointCentralAdminPort: environmentSettings.sharePointCentralAdminPort
+        EnableAnalysis: environmentSettings.enableAnalysis
+        SharePointBits: environmentSettings.sharePointBitsSelected
       }
       privacy: {
         dataCollection: 'enable'
@@ -671,23 +646,23 @@ var baseVirtualMachines = [
           Password: adminPassword
         }
         SPSetupCreds: {
-          UserName: deploymentSettings.spSetupUserName
+          UserName: environmentSettings.spSetupUserName
           Password: otherAccountsPassword
         }
         SPFarmCreds: {
-          UserName: deploymentSettings.spFarmUserName
+          UserName: environmentSettings.spFarmUserName
           Password: otherAccountsPassword
         }
         SPSvcCreds: {
-          UserName: deploymentSettings.spSvcUserName
+          UserName: environmentSettings.spSvcUserName
           Password: otherAccountsPassword
         }
         SPAppPoolCreds: {
-          UserName: deploymentSettings.spAppPoolUserName
+          UserName: environmentSettings.spAppPoolUserName
           Password: otherAccountsPassword
         }
         SPADDirSyncCreds: {
-          UserName: deploymentSettings.spADDirSyncUserName
+          UserName: environmentSettings.spADDirSyncUserName
           Password: otherAccountsPassword
         }
         SPPassphraseCreds: {
@@ -695,17 +670,94 @@ var baseVirtualMachines = [
           Password: otherAccountsPassword
         }
         SPSuperUserCreds: {
-          UserName: deploymentSettings.spSuperUserName
+          UserName: environmentSettings.spSuperUserName
           Password: otherAccountsPassword
         }
         SPSuperReaderCreds: {
-          UserName: deploymentSettings.spSuperReaderName
+          UserName: environmentSettings.spSuperReaderName
           Password: otherAccountsPassword
         }
       }
     }
   }
 ]
+
+var frontendVirtualMachinesSettings = {
+  virtualMachineSettings: {
+    adminUsername: environmentSettings.localAdminUserName
+    virtualMachineName: templateSettings.vmFEName
+    virtualMachineSize: vmSharePointSize
+    virtualMachineStorage: vmSharePointStorage
+    virtualMachineDiskSizeGB: 128
+    virtualMachineSecurityType: sharePointVersion == '2016' ? null : 'TrustedLaunch'
+    imageReference: {
+      publisher: split(templateSettings.vmSharePointImage, ':')[0]
+      offer: split(templateSettings.vmSharePointImage, ':')[1]
+      sku: split(templateSettings.vmSharePointImage, ':')[2]
+      version: split(templateSettings.vmSharePointImage, ':')[3]
+    }
+    privateIPAddress: null
+    pipConfiguration: ((outboundAccessMethod == 'PublicIPAddress')
+      ? {
+          publicIpNameSuffix: '-pip-01'
+          publicIpSku: 'Standard'
+          publicIPAllocationMethod: 'Static'
+          zones: []
+          dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+            ? {
+                domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSPName}')
+                domainNameLabelScope: 'ResourceGroupReuse'
+              }
+            : null
+        }
+      : null)
+  }
+  dscSettings: {
+    wmfVersion: 'latest'
+    configuration: {
+      url: uri(
+        _artifactsLocation,
+        '${(sharePointSettings.isSharePointSubscription ? 'dsc/ConfigureFESE.zip' : 'dsc/ConfigureFELegacy.zip')}${_artifactsLocationSasToken}'
+      )
+      script: (sharePointSettings.isSharePointSubscription ? 'ConfigureFESE.ps1' : 'ConfigureFELegacy.ps1')
+      function: 'ConfigureFEVM'
+    }
+    configurationArguments: {
+      DNSServerIP: environmentSettings.dcPrivateIPAddress
+      DomainFQDN: domainFqdn
+      DCServerName: templateSettings.vmDCName
+      SQLServerName: templateSettings.vmSQLName
+      SQLAlias: environmentSettings.sqlAlias
+      SharePointVersion: sharePointVersion
+      SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
+      EnableAnalysis: environmentSettings.enableAnalysis
+      SharePointBits: environmentSettings.sharePointBitsSelected
+    }
+    privacy: {
+      dataCollection: 'enable'
+    }
+  }
+  dscProtectedSettings: {
+    configurationArguments: {
+      DomainAdminCreds: {
+        UserName: adminUsername
+        Password: adminPassword
+      }
+      SPSetupCreds: {
+        UserName: environmentSettings.spSetupUserName
+        Password: otherAccountsPassword
+      }
+      SPFarmCreds: {
+        UserName: environmentSettings.spFarmUserName
+        Password: otherAccountsPassword
+      }
+      SPPassphraseCreds: {
+        UserName: 'Passphrase'
+        Password: otherAccountsPassword
+      }
+    }
+  }
+}
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-11-01' = {
   name: resourceGroupName
@@ -718,7 +770,7 @@ module virtualNetwork 'virtualNetwork.bicep' = {
   params: {
     location: location
     virtualNetworkName: 'vnet'
-    addressPrefix: networkSettings.vNetPrivatePrefix
+    addressPrefix: templateSettings.vNetPrivatePrefix
     // enableAzureBastion: enableAzureBastion
     networkSecurityRules: toLower(rdpTrafficRule) == 'no'
       ? []
@@ -774,6 +826,6 @@ module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
   name: 'bastion-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName
-    addressPrefix: cidrSubnet(networkSettings.vNetPrivatePrefix, 24, 2)
+    addressPrefix: cidrSubnet(templateSettings.vNetPrivatePrefix, 24, 2)
   }
 }

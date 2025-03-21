@@ -125,7 +125,7 @@ resource runcommand 'Microsoft.Compute/virtualMachines/runCommands@2024-11-01' =
   parent: virtualMachine
   name: '${modulePrefix}-${virtualMachineName}-runcommand'
   location: location
-  properties: runCommandProperties
+  properties: runCommandProperties!
 }
 
 resource extension 'Microsoft.Compute/virtualMachines/extensions@2024-11-01' = if (dscSettings != null) {
