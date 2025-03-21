@@ -22,7 +22,7 @@
      "outboundAccessMethod": { "value": "PublicIPAddress" },
     "rdpTrafficRule": { "value": "No" },
     "addNameToPublicIpAddresses": { "value": "SharePointVMsOnly" },
-    "frontEndServersCount": { "value": 0 },
+    "frontEndServersCount": { "value": 2 },
     "enableHybridBenefitServerLicenses": { "value": true },
     "enableAzureBastion": { "value": false },
     "_artifactsLocation": { "value": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/refs/heads/dev/Azure%20Resource%20Manager/SharePoint-ADFS/" },

@@ -9,11 +9,11 @@ param location string = deployment().location
 @maxLength(90)
 param resourceGroupName string
 
-@description('Optional. A token to inject into the name of each resource.')
-param namePrefix string = '_namePrefix_'
+// @description('Optional. A token to inject into the name of each resource.')
+// param namePrefix string = '_namePrefix_'
 
-@description('Optional. A short identifier for the kind of deployment. Should be kept short to not run into resource-name length-constraints.')
-param serviceShort string = 'cvmwinguest'
+// @description('Optional. A short identifier for the kind of deployment. Should be kept short to not run into resource-name length-constraints.')
+// param serviceShort string = 'cvmwinguest'
 
 @description('Version of the SharePoint farm to create.')
 @allowed([
@@ -422,41 +422,41 @@ var environmentSettings = {
   spADDirSyncUserName: 'spdirsync'
 }
 
-// Azure Firewall proxy settings
-var firewall_proxy_settings = {
-  vNetAzureFirewallPrefix: '10.1.3.0/24'
-  azureFirewallIPAddress: '10.1.3.4'
-  http_port: 8080
-  https_port: 8443
-}
+// // Azure Firewall proxy settings
+// var firewall_proxy_settings = {
+//   vNetAzureFirewallPrefix: '10.1.3.0/24'
+//   azureFirewallIPAddress: '10.1.3.4'
+//   http_port: 8080
+//   https_port: 8443
+// }
 
-// Single-line PowerShell script that runs on the VMs to update their proxy settings, if Azure Firewall is enabled
-var set_proxy_script = 'param([string]$proxyIp, [string]$proxyHttpPort, [string]$proxyHttpsPort, [string]$localDomainFqdn) $proxy = "http={0}:{1};https={0}:{2}" -f $proxyIp, $proxyHttpPort, $proxyHttpsPort; $bypasslist = "*.{0};<local>" -f $localDomainFqdn; netsh winhttp set proxy proxy-server=$proxy bypass-list=$bypasslist; $proxyEnabled = 1; New-ItemProperty -Path "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" -Name "ProxySettingsPerUser" -PropertyType DWORD -Value 0 -Force; $proxyBytes = [system.Text.Encoding]::ASCII.GetBytes($proxy); $bypassBytes = [system.Text.Encoding]::ASCII.GetBytes($bypasslist); $defaultConnectionSettings = [byte[]]@(@(70, 0, 0, 0, 0, 0, 0, 0, $proxyEnabled, 0, 0, 0, $proxyBytes.Length, 0, 0, 0) + $proxyBytes + @($bypassBytes.Length, 0, 0, 0) + $bypassBytes + @(1..36 | % { 0 })); $registryPaths = @("HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"); foreach ($registryPath in $registryPaths) { Set-ItemProperty -Path $registryPath -Name ProxyServer -Value $proxy; Set-ItemProperty -Path $registryPath -Name ProxyEnable -Value $proxyEnabled; Set-ItemProperty -Path $registryPath -Name ProxyOverride -Value $bypasslist; Set-ItemProperty -Path "$registryPath\\Connections" -Name DefaultConnectionSettings -Value $defaultConnectionSettings; } Bitsadmin /util /setieproxy localsystem MANUAL_PROXY $proxy $bypasslist;'
-var runCommandProperties = {
-  source: {
-    script: set_proxy_script
-  }
-  parameters: [
-    {
-      name: 'proxyIp'
-      value: firewall_proxy_settings.azureFirewallIPAddress
-    }
-    {
-      name: 'proxyHttpPort'
-      value: string(firewall_proxy_settings.http_port)
-    }
-    {
-      name: 'proxyHttpsPort'
-      value: string(firewall_proxy_settings.https_port)
-    }
-    {
-      name: 'localDomainFqdn'
-      value: domainFqdn
-    }
-  ]
-  timeoutInSeconds: 90
-  treatFailureAsDeploymentFailure: false
-}
+// // Single-line PowerShell script that runs on the VMs to update their proxy settings, if Azure Firewall is enabled
+// var firewall_set_proxy_script = 'param([string]$proxyIp, [string]$proxyHttpPort, [string]$proxyHttpsPort, [string]$localDomainFqdn) $proxy = "http={0}:{1};https={0}:{2}" -f $proxyIp, $proxyHttpPort, $proxyHttpsPort; $bypasslist = "*.{0};<local>" -f $localDomainFqdn; netsh winhttp set proxy proxy-server=$proxy bypass-list=$bypasslist; $proxyEnabled = 1; New-ItemProperty -Path "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" -Name "ProxySettingsPerUser" -PropertyType DWORD -Value 0 -Force; $proxyBytes = [system.Text.Encoding]::ASCII.GetBytes($proxy); $bypassBytes = [system.Text.Encoding]::ASCII.GetBytes($bypasslist); $defaultConnectionSettings = [byte[]]@(@(70, 0, 0, 0, 0, 0, 0, 0, $proxyEnabled, 0, 0, 0, $proxyBytes.Length, 0, 0, 0) + $proxyBytes + @($bypassBytes.Length, 0, 0, 0) + $bypassBytes + @(1..36 | % { 0 })); $registryPaths = @("HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"); foreach ($registryPath in $registryPaths) { Set-ItemProperty -Path $registryPath -Name ProxyServer -Value $proxy; Set-ItemProperty -Path $registryPath -Name ProxyEnable -Value $proxyEnabled; Set-ItemProperty -Path $registryPath -Name ProxyOverride -Value $bypasslist; Set-ItemProperty -Path "$registryPath\\Connections" -Name DefaultConnectionSettings -Value $defaultConnectionSettings; } Bitsadmin /util /setieproxy localsystem MANUAL_PROXY $proxy $bypasslist;'
+// var firewall_runCommandProperties = {
+//   source: {
+//     script: set_proxy_script
+//   }
+//   parameters: [
+//     {
+//       name: 'proxyIp'
+//       value: firewall_proxy_settings.azureFirewallIPAddress
+//     }
+//     {
+//       name: 'proxyHttpPort'
+//       value: string(firewall_proxy_settings.http_port)
+//     }
+//     {
+//       name: 'proxyHttpsPort'
+//       value: string(firewall_proxy_settings.https_port)
+//     }
+//     {
+//       name: 'localDomainFqdn'
+//       value: domainFqdn
+//     }
+//   ]
+//   timeoutInSeconds: 90
+//   treatFailureAsDeploymentFailure: false
+// }
 
 var baseVirtualMachines = [
   {
@@ -697,20 +697,6 @@ var frontendVirtualMachinesSettings = {
       version: split(templateSettings.vmSharePointImage, ':')[3]
     }
     privateIPAddress: null
-    pipConfiguration: ((outboundAccessMethod == 'PublicIPAddress')
-      ? {
-          publicIpNameSuffix: '-pip-01'
-          publicIpSku: 'Standard'
-          publicIPAllocationMethod: 'Static'
-          zones: []
-          dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
-            ? {
-                domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSPName}')
-                domainNameLabelScope: 'ResourceGroupReuse'
-              }
-            : null
-        }
-      : null)
   }
   dscSettings: {
     wmfVersion: 'latest'
@@ -771,7 +757,6 @@ module virtualNetwork 'virtualNetwork.bicep' = {
     location: location
     virtualNetworkName: 'vnet'
     addressPrefix: templateSettings.vNetPrivatePrefix
-    // enableAzureBastion: enableAzureBastion
     networkSecurityRules: toLower(rdpTrafficRule) == 'no'
       ? []
       : [
@@ -794,7 +779,7 @@ module virtualNetwork 'virtualNetwork.bicep' = {
 }
 
 //@sys.batchSize(3)
-module virtualMachines 'virtualMachine.bicep' = [
+module baseVirtualMachinesModule 'virtualMachine.bicep' = [
   for baseVirtualMachine in baseVirtualMachines: {
     scope: resourceGroup
     name: 'virtualMachine-${baseVirtualMachine.virtualMachineSettings.virtualMachineName}-module'
@@ -816,7 +801,47 @@ module virtualMachines 'virtualMachine.bicep' = [
       privateIPAddress: baseVirtualMachine.virtualMachineSettings.privateIPAddress
       dscSettings: baseVirtualMachine.dscSettings
       dscProtectedSettings: baseVirtualMachine.dscProtectedSettings
-      // runCommandProperties: runCommandProperties
+      // runCommandProperties: firewall_runCommandProperties
+    }
+  }
+]
+
+module frontends 'virtualMachine.bicep' = [
+  for index in range(0, frontEndServersCount): {
+    scope: resourceGroup
+    name: 'virtualMachine-FE-${index}-module'
+    params: {
+      location: location
+      adminPassword: adminPassword
+      subnetResourceId: virtualNetwork.outputs.mainSubnetResourceId
+      licenseType: enableHybridBenefitServerLicenses ? 'Windows_Server' : null
+      timeZone: timeZone
+      autoShutdownTime: autoShutdownTime
+      adminUsername: frontendVirtualMachinesSettings.virtualMachineSettings.adminUsername
+      virtualMachineName: '${frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineName}-${index}'
+      virtualMachineDiskSizeGB: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineDiskSizeGB
+      virtualMachineImageReference: frontendVirtualMachinesSettings.virtualMachineSettings.imageReference
+      virtualMachineSize: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineSize
+      virtualMachineStorageAccountType: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineStorage
+      virtualMachineSecurityType: frontendVirtualMachinesSettings.virtualMachineSettings.?virtualMachineSecurityType
+      pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
+        ? {
+            publicIpNameSuffix: '-pip-01'
+            publicIpSku: 'Standard'
+            publicIPAllocationMethod: 'Static'
+            zones: []
+            dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+              ? {
+                  domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmFEName}-${index}')
+                  domainNameLabelScope: 'ResourceGroupReuse'
+                }
+              : null
+          }
+        : null
+      privateIPAddress: frontendVirtualMachinesSettings.virtualMachineSettings.privateIPAddress
+      dscSettings: frontendVirtualMachinesSettings.dscSettings
+      dscProtectedSettings: frontendVirtualMachinesSettings.dscProtectedSettings
+      // runCommandProperties: firewall_runCommandProperties
     }
   }
 ]
@@ -829,3 +854,23 @@ module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
     addressPrefix: cidrSubnet(templateSettings.vNetPrivatePrefix, 24, 2)
   }
 }
+
+output vm_base_public_dns array = [
+  for i in range(0, 2): (outboundAccessMethod == 'PublicIPAddress')
+    ? baseVirtualMachinesModule[i].outputs.virtualMachinePublicDomainName != null
+        ? baseVirtualMachinesModule[i].outputs.virtualMachinePublicDomainName
+        : baseVirtualMachinesModule[i].outputs.virtualMachinePublicIP
+    : null
+]
+
+output vm_fe_public_dns array = [
+  for i in range(0, frontEndServersCount - 1): (outboundAccessMethod == 'PublicIPAddress')
+    ? addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+        ? frontends[i].outputs.virtualMachinePublicDomainName
+        : frontends[i].outputs.virtualMachinePublicIP
+    : null
+]
+
+output domainAdminAccount string = '${substring(domainFqdn,0,indexOf(domainFqdn,'.'))}\\${adminUsername}'
+output domainAdminAccountFormatForBastion string = '${adminUsername}@${domainFqdn}'
+output localAdminAccount string = environmentSettings.localAdminUserName

@@ -7,6 +7,7 @@ param virtualNetworkName string
 @description('Required. The name of the Virtual Network to create.')
 param addressPrefix string = '10.1.0.0/16'
 
+@description('Optional. The network security rules to use in the network security group associated with the main subnet.')
 param networkSecurityRules array
 
 resource nsg_subnet_main 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
@@ -37,12 +38,9 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.5.4' = {
   }
 }
 
-@description('The resource ID of the virtual networks.')
-// output vnetResourceId string = virtualNetwork.id
-output vnetResourceId string = virtualNetwork.outputs.resourceId
-@description('The name of the virtual networks.')
-// output vnetResourceId string = virtualNetwork.id
+@description('The name of the virtual network.')
 output vnetName string = virtualNetwork.outputs.name
+@description('The resource ID of the virtual network.')
+output vnetResourceId string = virtualNetwork.outputs.resourceId
 @description('The resource ID of the main subnet.')
-// output mainSubnetResourceId string = virtualNetwork.properties.subnets[0].id
 output mainSubnetResourceId string = virtualNetwork.outputs.subnetResourceIds[0]

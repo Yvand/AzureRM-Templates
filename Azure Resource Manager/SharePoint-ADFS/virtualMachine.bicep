@@ -146,3 +146,9 @@ resource extension 'Microsoft.Compute/virtualMachines/extensions@2024-11-01' = i
     protectedSettings: dscProtectedSettings
   }
 }
+
+@description('The name of the virtual machine.')
+output virtualMachineName string = virtualMachine.name
+
+output virtualMachinePublicDomainName string = virtualMachine.properties.dnsSettings.fqdn
+output virtualMachinePublicIP string = virtualMachine.properties.dnsSettings.ipAddress
