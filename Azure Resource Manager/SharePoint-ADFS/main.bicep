@@ -393,11 +393,11 @@ var templateSettings = {
   vmFEName: 'FE'
   vmDCImage: 'MicrosoftWindowsServer:WindowsServer:2025-datacenter-azure-edition-smalldisk:latest'
   vmSQLImage: 'MicrosoftSQLServer:sql2022-ws2022:sqldev-gen2:latest'
-  vmSharePointImage: (sharePointSettings.isSharePointSubscription
+  vmSharePointImage: sharePointSettings.isSharePointSubscription
     ? sharePointSettings.sharePointImagesList.Subscription
-    : ((sharePointVersion == '2019')
+    : sharePointVersion == '2019'
         ? sharePointSettings.sharePointImagesList.sp2019
-        : sharePointSettings.sharePointImagesList.sp2016))
+        : sharePointSettings.sharePointImagesList.sp2016
 }
 
 var environmentSettings = {
@@ -855,22 +855,22 @@ module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
   }
 }
 
-output vm_base_public_dns array = [
-  for i in range(0, 2): (outboundAccessMethod == 'PublicIPAddress')
-    ? baseVirtualMachinesModule[i].outputs.virtualMachinePublicDomainName != null
-        ? baseVirtualMachinesModule[i].outputs.virtualMachinePublicDomainName
-        : baseVirtualMachinesModule[i].outputs.virtualMachinePublicIP
-    : null
-]
-
-output vm_fe_public_dns array = [
-  for i in range(0, frontEndServersCount - 1): (outboundAccessMethod == 'PublicIPAddress')
-    ? addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
-        ? frontends[i].outputs.virtualMachinePublicDomainName
-        : frontends[i].outputs.virtualMachinePublicIP
-    : null
-]
-
 output domainAdminAccount string = '${substring(domainFqdn,0,indexOf(domainFqdn,'.'))}\\${adminUsername}'
 output domainAdminAccountFormatForBastion string = '${adminUsername}@${domainFqdn}'
 output localAdminAccount string = environmentSettings.localAdminUserName
+
+// output vm_base_public_dns array = [
+//   for i in range(0, 2): (outboundAccessMethod == 'PublicIPAddress')
+//     ? baseVirtualMachinesModule[i].outputs.virtualMachinePublicDomainName != null
+//         ? baseVirtualMachinesModule[i].outputs.virtualMachinePublicDomainName
+//         : baseVirtualMachinesModule[i].outputs.virtualMachinePublicIP
+//     : null
+// ]
+
+// output vm_fe_public_dns array = [
+//   for i in range(0, frontEndServersCount - 1): (outboundAccessMethod == 'PublicIPAddress')
+//     ? addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+//         ? frontends[i].outputs.virtualMachinePublicDomainName
+//         : frontends[i].outputs.virtualMachinePublicIP
+//     : null
+// ]
