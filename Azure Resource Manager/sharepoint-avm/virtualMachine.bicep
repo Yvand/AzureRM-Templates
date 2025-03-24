@@ -20,7 +20,13 @@ param virtualMachineImageReference object
   'Windows_Server'
 ])
 param licenseType string?
-param virtualMachineSecurityType string = 'TrustedLaunch'
+
+@allowed([
+  'ConfidentialVM'
+  'TrustedLaunch'
+  ''
+])
+param virtualMachineSecurityType string?
 
 @description('Required. The name of the local administrator.')
 param adminUsername string
