@@ -1,0 +1,101 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "generate azuredeploy.json",
+            "type": "shell",
+            "command": "az",
+            "args": [
+                "bicep",
+                "build",
+                "--file",
+                "main.bicep",
+                "--outfile",
+                "azuredeploy.json"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            }
+        },
+        {
+            "label": "deploy bicep template",
+            "type": "shell",
+            "command": "${workspaceFolder}/DeployTemplate.ps1",
+            "args": [
+                "-resourceGroupName",
+                "${input:resourceGrouppName}",
+                "-password",
+                "${input:accountsPassword}"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true,
+                "focus": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "generate all dsc archives",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/Generate-DSCArchive.ps1",
+            "args": [
+                "-vmName",
+                "*",
+                "-dscFolderRelativePath",
+                "'${workspaceFolder}\\dsc'"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "generate specified dsc archives",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/Generate-DSCArchive.ps1",
+            "args": [
+                "-vmName",
+                "${input:vmName}",
+                "-dscFolderRelativePath",
+                "'${workspaceFolder}\\dsc'"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "remove resource group",
+            "type": "shell",
+            "command": "az",
+            "args": [
+                "group",
+                "delete",
+                "--name",
+                "${input:resourceGrouppName}",
+                "--force-deletion-types",
+                "Microsoft.Compute/virtualMachines",
+                "--yes"
+            ],
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "type": "promptString",
+            "id": "vmName",
+            "description": "Name of the virtual machine.",
+            "default": "SPSE"
+        },
+        {
+            "type": "promptString",
+            "id": "resourceGrouppName",
+            "description": "Name of the resource group."
+        },
+        {
+            "type": "promptString",
+            "id": "accountsPassword",
+            "description": "The password for all the accouts. It requires at least 8 characters.",
+            "password": true
+        }
+    ]
+}
