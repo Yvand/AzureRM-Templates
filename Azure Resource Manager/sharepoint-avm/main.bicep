@@ -386,6 +386,7 @@ var sharePointSettings = {
 
 var templateSettings = {
   vNetPrivatePrefix: '10.1.0.0/16'
+  domainNameLabelScope: 'SubscriptionReuse'
   enableAutomaticUpdates: true
   vmDCName: 'DC'
   vmSQLName: 'SQL'
@@ -423,11 +424,10 @@ var environmentSettings = {
 }
 
 // Azure Firewall proxy settings
-var firewall_proxy_settings = {
-  vNetAzureFirewallPrefix: '10.1.3.0/24'
-  azureFirewallIPAddress: '10.1.3.4'
-  http_port: 8080
-  https_port: 8443
+var firewallProxySettings = {
+  firewallAddressPrefix: cidrSubnet(templateSettings.vNetPrivatePrefix, 24, 3)
+  httpPort: 8080
+  httpsPort: 8443
 }
 
 // Single-line PowerShell script that runs on the VMs to update their proxy settings, if Azure Firewall is enabled
@@ -439,15 +439,15 @@ var firewall_runCommandProperties = {
   parameters: [
     {
       name: 'proxyIp'
-      value: firewall_proxy_settings.azureFirewallIPAddress
+      value: cidrHost(firewallProxySettings.firewallAddressPrefix, 3) // Typically: '10.1.3.4' (based on firewallAddressPrefix 10.1.3.0/24)
     }
     {
       name: 'proxyHttpPort'
-      value: string(firewall_proxy_settings.http_port)
+      value: string(firewallProxySettings.httpPort)
     }
     {
       name: 'proxyHttpsPort'
-      value: string(firewall_proxy_settings.https_port)
+      value: string(firewallProxySettings.httpsPort)
     }
     {
       name: 'localDomainFqdn'
@@ -474,7 +474,7 @@ var baseVirtualMachines = [
         version: split(templateSettings.vmDCImage, ':')[3]
       }
       privateIPAddress: environmentSettings.dcPrivateIPAddress
-      pipConfiguration: ((outboundAccessMethod == 'PublicIPAddress')
+      pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'
             publicIpSku: 'Standard'
@@ -483,11 +483,11 @@ var baseVirtualMachines = [
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmDCName}')
-                  domainNameLabelScope: 'SubscriptionReuse'
+                  domainNameLabelScope: templateSettings.domainNameLabelScope
                 }
               : null
           }
-        : {})
+        : {}
     }
     dscSettings: {
       wmfVersion: 'latest'
@@ -536,7 +536,7 @@ var baseVirtualMachines = [
         version: split(templateSettings.vmSQLImage, ':')[3]
       }
       privateIPAddress: null
-      pipConfiguration: ((outboundAccessMethod == 'PublicIPAddress')
+      pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'
             publicIpSku: 'Standard'
@@ -545,11 +545,11 @@ var baseVirtualMachines = [
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSQLName}')
-                  domainNameLabelScope: 'SubscriptionReuse'
+                  domainNameLabelScope: templateSettings.domainNameLabelScope
                 }
               : null
           }
-        : {})
+        : {}
     }
     dscSettings: {
       wmfVersion: 'latest'
@@ -598,7 +598,7 @@ var baseVirtualMachines = [
         version: split(templateSettings.vmSharePointImage, ':')[3]
       }
       privateIPAddress: null
-      pipConfiguration: ((outboundAccessMethod == 'PublicIPAddress')
+      pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'
             publicIpSku: 'Standard'
@@ -607,11 +607,11 @@ var baseVirtualMachines = [
             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSPName}')
-                  domainNameLabelScope: 'SubscriptionReuse'
+                  domainNameLabelScope: templateSettings.domainNameLabelScope
                 }
               : null
           }
-        : {})
+        : {}
     }
     dscSettings: {
       wmfVersion: 'latest'
@@ -834,7 +834,7 @@ module frontends 'virtualMachine.bicep' = [
             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmFEName}-${index}')
-                  domainNameLabelScope: 'SubscriptionReuse'
+                  domainNameLabelScope: templateSettings.domainNameLabelScope
                 }
               : null
           }
@@ -861,9 +861,9 @@ module firewall 'firewall.bicep' = if (outboundAccessMethod == 'AzureFirewallPro
   name: 'firewall-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName
-    addressPrefix: cidrSubnet(templateSettings.vNetPrivatePrefix, 24, 3)
-    http_port: firewall_proxy_settings.http_port
-    https_port: firewall_proxy_settings.https_port
+    addressPrefix: firewallProxySettings.firewallAddressPrefix
+    http_port: firewallProxySettings.httpPort
+    https_port: firewallProxySettings.httpsPort
   }
 }
 
