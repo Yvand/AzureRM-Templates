@@ -2,22 +2,18 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "location": {
-      "value": "francecentral"
-    },
-    "resourceGroupName": {
-      "value": "xxydsp1"
-    },    
     "sharePointVersion": { "value": "Subscription-RTM" },
     "domainFqdn": { "value": "contoso.local" },
     "adminUsername": { "value": "yvand" },
     "timeZone": { "value": "Romance Standard Time" },
-    "outboundAccessMethod": { "value": "AzureFirewallProxy" },
+    "outboundAccessMethod": { "value": "PublicIPAddress" },
+    // "outboundAccessMethod": { "value": "AzureFirewallProxy" },
     "rdpTrafficRule": { "value": "No" },
-    "addNameToPublicIpAddresses": { "value": "SharePointVMsOnly" },
+    // "addNameToPublicIpAddresses": { "value": "SharePointVMsOnly" },
+    "addNameToPublicIpAddresses": { "value": "Yes" },
     "frontEndServersCount": { "value": 0 },
     "enableHybridBenefitServerLicenses": { "value": true },
-    "enableAzureBastion": { "value": false },
+    "enableAzureBastion": { "value": true },
     "_artifactsLocation": { "value": "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/refs/heads/dev/Azure%20Resource%20Manager/SharePoint-ADFS/" },
     "_artifactsLocationSasToken": { "value": "" },
     "autoShutdownTime": { "value": "1830" },
