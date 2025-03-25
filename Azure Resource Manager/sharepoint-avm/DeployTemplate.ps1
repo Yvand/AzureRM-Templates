@@ -49,6 +49,7 @@ Write-Host "Validating template..." -ForegroundColor Green
 $templateErrors = Test-AzDeployment -Name $deploymentName -Location $resourceGroupLocation `
     -TemplateFile $templateFile `
     -TemplateParameterObject $parameters @passwords
+# -TemplateUri "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/refs/heads/use-avm/Azure%20Resource%20Manager/sharepoint-avm/azuredeploy.json" `
 # -TemplateParameterFile $templateParametersFile `
 # -resourceGroupName $resourceGroupName `
 # -adminPassword $securePassword -otherAccountsPassword $securePassword
@@ -67,6 +68,8 @@ $startTime = $(Get-Date)
 $result = New-AzDeployment -Name $deploymentName -Location $resourceGroupLocation `
     -TemplateFile $templateFile `
     -TemplateParameterObject $parameters @passwords
+# -TemplateParameterFile $templateParametersFile `
+# -TemplateUri "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/refs/heads/use-avm/Azure%20Resource%20Manager/sharepoint-avm/azuredeploy.json" `
 
 $result
 $elapsedTime = New-TimeSpan $startTime $(get-date)
