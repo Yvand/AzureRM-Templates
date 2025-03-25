@@ -483,7 +483,7 @@ var baseVirtualMachines = [
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmDCName}')
-                  domainNameLabelScope: 'ResourceGroupReuse'
+                  domainNameLabelScope: 'SubscriptionReuse'
                 }
               : null
           }
@@ -545,7 +545,7 @@ var baseVirtualMachines = [
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSQLName}')
-                  domainNameLabelScope: 'ResourceGroupReuse'
+                  domainNameLabelScope: 'SubscriptionReuse'
                 }
               : null
           }
@@ -607,7 +607,7 @@ var baseVirtualMachines = [
             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSPName}')
-                  domainNameLabelScope: 'ResourceGroupReuse'
+                  domainNameLabelScope: 'SubscriptionReuse'
                 }
               : null
           }
@@ -834,7 +834,7 @@ module frontends 'virtualMachine.bicep' = [
             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmFEName}-${index}')
-                  domainNameLabelScope: 'ResourceGroupReuse'
+                  domainNameLabelScope: 'SubscriptionReuse'
                 }
               : null
           }
