@@ -13,7 +13,7 @@ $templateFileName = 'main.bicep'
 $templateParametersFileName = 'azuredeploy.parameters.jsonc'
 
 # Set passwords
-$securePassword = $password | ConvertTo-SecureString -AsPlainText -Force
+$securePassword = $password | ConvertTo-SecureString -AsPlainText -Force -ErrorAction SilentlyContinue
 if ($null -eq $securePassword) { $securePassword = Read-Host "Type the password of admin and service accounts" -AsSecureString }
 $passwords = New-Object -TypeName HashTable
 $passwords.adminPassword = $securePassword
@@ -23,9 +23,9 @@ $passwords.otherAccountsPassword = $securePassword
 $scriptRoot = $PSScriptRoot
 $templateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateFileName))
 $templateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($scriptRoot, $templateParametersFileName))
-$parameters = New-Object -TypeName HashTable
-# $parameters.adminPassword = $securePassword
-# $parameters.otherAccountsPassword = $securePassword
+$parameters = @{} #New-Object -TypeName HashTable
+# $parameters.adminPassword = $password
+# $parameters.otherAccountsPassword = $password
 $parameters.resourceGroupName = $resourceGroupName
 $paramFileContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
 $paramFileContent.parameters | Get-Member -MemberType *Property | ForEach-Object { 
@@ -44,6 +44,13 @@ if ($null -eq $azurecontext -or $null -eq $azurecontext.Account -or $null -eq $a
     Write-Host "Unable to get a valid context." -ForegroundColor Red
     return
 }
+
+
+<#
+$paramJSON = ($parameters | ConvertTo-Json -Depth 30 -Compress).Replace('"', '\"') # escape quotes in order to pass the command via pwsh.exe
+az deployment sub create --name $deploymentName --location $resourceGroupLocation --template-file $templateFile --parameters $paramJSON
+#--parameters adminPassword=$password otherAccountsPassword=$password
+#>
 
 Write-Host "Validating template..." -ForegroundColor Green
 $templateErrors = Test-AzDeployment -Name $deploymentName -Location $resourceGroupLocation `
