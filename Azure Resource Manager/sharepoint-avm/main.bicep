@@ -745,9 +745,19 @@ var frontendVirtualMachinesSettings = {
   }
 }
 
-resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-11-01' = {
+module resourceGroupModule 'br/public:avm/res/resources/resource-group:0.4.1' = {
+  name: 'resourceGroupDeployment'
+  params: {
+    name: resourceGroupName
+    location: location
+  }
+}
+
+resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-11-01' existing = {
+  dependsOn: [
+    resourceGroupModule
+  ]
   name: resourceGroupName
-  location: location
 }
 
 module virtualNetwork 'virtualNetwork.bicep' = {
