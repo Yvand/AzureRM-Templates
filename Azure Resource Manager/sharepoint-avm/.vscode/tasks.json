@@ -37,9 +37,7 @@
                 "--parameters",
                 "resourceGroupName=${input:resourceGrouppName}",
                 "adminPassword=${input:accountsPassword}",
-                "otherAccountsPassword=${input:accountsPassword}",
-                "--output",
-                "jsonc"
+                "otherAccountsPassword=${input:accountsPassword}"
             ],
             "presentation": {
                 "reveal": "always",
