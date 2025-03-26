@@ -21,6 +21,35 @@
             }
         },
         {
+            "label": "deploy bicep template inline",
+            "type": "shell",
+            "command": "az",
+            "args": [
+                "deployment",
+                "sub",
+                "create",
+                "--name",
+                "sharepoint-avm",
+                "--location",
+                "francecentral",
+                "--parameters",
+                "main.bicepparam",
+                "--parameters",
+                "resourceGroupName=${input:resourceGrouppName}",
+                "adminPassword=${input:accountsPassword}",
+                "otherAccountsPassword=${input:accountsPassword}",
+                "--output",
+                "jsonc"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true,
+                "focus": true
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "deploy bicep template",
             "type": "shell",
             "command": "${workspaceFolder}/DeployTemplate.ps1",
@@ -28,7 +57,7 @@
                 "-resourceGroupName",
                 "${input:resourceGrouppName}",
                 "-password",
-                "${input:accountsPassword}"
+                "${input:accountsPassword}",
             ],
             "presentation": {
                 "reveal": "always",
