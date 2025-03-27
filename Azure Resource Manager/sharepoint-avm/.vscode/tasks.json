@@ -82,7 +82,7 @@
                 "-resourceGroupName",
                 "${input:resourceGrouppName}",
                 "-password",
-                "${input:accountsPassword}",
+                "${input:accountsPassword}"
             ],
             "presentation": {
                 "reveal": "always",

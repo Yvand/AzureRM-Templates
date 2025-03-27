@@ -21,7 +21,7 @@
             }
         },
         {
-            "label": "deploy bicep template",
+            "label": "deploy bicep template (script)",
             "type": "shell",
             "command": "${workspaceFolder}/DeployTemplate.ps1",
             "args": [
