@@ -887,7 +887,7 @@ configuration ConfigureSPVM
             Name                 = "$DomainFQDN root CA"
             CertificateFilePath  = "$SetupPath\Certificates\ADFS Signing issuer.cer"
             Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[File]CopyCertificatesFromDC"
         }
 
@@ -928,21 +928,21 @@ configuration ConfigureSPVM
         SPManagedAccount CreateSPSvcManagedAccount {
             AccountName          = $SPSvcCredsQualified.UserName
             Account              = $SPSvcCredsQualified
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPManagedAccount CreateSPAppPoolManagedAccount {
             AccountName          = $SPAppPoolCredsQualified.UserName
             Account              = $SPAppPoolCredsQualified
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPStateServiceApp StateServiceApp {
             Name                 = "State Service Application"
             DatabaseName         = $SPDBPrefix + "StateService"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
@@ -953,7 +953,7 @@ configuration ConfigureSPVM
         #     CacheSizeInMB        = 1000 # Default size is 819MB on a server with 16GB of RAM (5%)
         #     CreateFirewallRules  = $true
         #     ServiceAccount       = $SPFarmCredsQualified.UserName
-        #     PsDscRunAsCredential       = $SPSetupCredsQualified
+        #     PsDscRunAsCredential       = $DomainAdminCredsQualified
         #     Ensure               = "Present"
         #     DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         # }
@@ -965,28 +965,28 @@ configuration ConfigureSPVM
         SPServiceInstance UPAServiceInstance {
             Name                 = "User Profile Service"
             Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPServiceInstance StartSubscriptionSettingsServiceInstance {
             Name                 = "Microsoft SharePoint Foundation Subscription Settings Service"
             Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPServiceInstance StartAppManagementServiceInstance {
             Name                 = "App Management Service"
             Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
         SPServiceAppPool MainServiceAppPool {
             Name                 = $ServiceAppPoolName
             ServiceAccount       = $SPSvcCredsQualified.UserName
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPManagedAccount]CreateSPSvcManagedAccount"
         }
 
@@ -999,22 +999,22 @@ configuration ConfigureSPVM
             WebAppUrl              = "http://$SharePointSitesAuthority/"
             Port                   = 80
             Ensure                 = "Present"
-            PsDscRunAsCredential   = $SPSetupCredsQualified
+            PsDscRunAsCredential   = $DomainAdminCredsQualified
             DependsOn              = "[Script]RestartSPTimerAfterCreateSPFarm"
         }
 
-        SPShellAdmins AddShellAdmins {
-            IsSingleInstance     = "Yes"
-            Members              = @($DomainAdminCredsQualified.UserName)
-            Databases            = @(
-                @(MSFT_SPDatabasePermissions {
-                        Name    = $SPDBPrefix + "Content_80"
-                        Members = @($DomainAdminCredsQualified.UserName)
-                    })
-            )
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[SPWebApplication]CreateMainWebApp"
-        }
+        # SPShellAdmins AddShellAdmins {
+        #     IsSingleInstance     = "Yes"
+        #     Members              = @($DomainAdminCredsQualified.UserName)
+        #     Databases            = @(
+        #         @(MSFT_SPDatabasePermissions {
+        #                 Name    = $SPDBPrefix + "Content_80"
+        #                 Members = @($DomainAdminCredsQualified.UserName)
+        #             })
+        #     )
+        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     DependsOn            = "[SPWebApplication]CreateMainWebApp"
+        # }
 
         # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
         Script UpdateGPOToTrustRootCACert {
@@ -1167,7 +1167,7 @@ configuration ConfigureSPVM
             Zone                 = "Intranet"
             Port                 = 443
             Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebApplication]CreateMainWebApp"
         }
 
@@ -1221,7 +1221,7 @@ configuration ConfigureSPVM
                     AuthenticationProvider = $DomainFQDN
                 }
             )
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp", "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
         }
 
@@ -1291,7 +1291,7 @@ configuration ConfigureSPVM
             WebAppUrl            = "http://$SharePointSitesAuthority/"
             SuperUserAlias       = "$DomainNetbiosName\$($SPSuperUserCreds.UserName)"
             SuperReaderAlias     = "$DomainNetbiosName\$($SPSuperReaderCreds.UserName)"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebApplication]CreateMainWebApp"
         }
 
@@ -1302,7 +1302,7 @@ configuration ConfigureSPVM
             Name                 = "root site"
             Template             = $SPTeamSiteTemplate
             CreateDefaultGroups  = $true
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
         }
 
@@ -1313,7 +1313,7 @@ configuration ConfigureSPVM
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "AppCatalog"
             Template             = "APPCATALOG#0"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
         }
 
@@ -1327,14 +1327,14 @@ configuration ConfigureSPVM
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
             Template                 = "SPSMSITEHOST#0"
-            PsDscRunAsCredential     = $SPSetupCredsQualified
+            PsDscRunAsCredential     = $DomainAdminCredsQualified
             DependsOn                = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
         }
 
         SPSiteUrl SetMySiteHostIntranetUrl {
             Url                  = "http://$MySiteHostAlias/"
             Intranet             = "https://$MySiteHostAlias.$DomainFQDN"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateMySiteHost"
         }
 
@@ -1343,7 +1343,7 @@ configuration ConfigureSPVM
             RelativeUrl          = "personal"
             Explicit             = $false
             HostHeader           = $true
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateMySiteHost"
         }
 
@@ -1355,7 +1355,7 @@ configuration ConfigureSPVM
             SocialDBName         = $SPDBPrefix + "UPA_Social"
             SyncDBName           = $SPDBPrefix + "UPA_Sync"
             EnableNetBIOS        = $false
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]CreateMySiteHost"
         }
 
@@ -1367,7 +1367,7 @@ configuration ConfigureSPVM
         #     SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
         #     Name                 = "Developer site"
         #     Template             = "DEV#0"
-        #     PsDscRunAsCredential = $SPSetupCredsQualified
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
         #     DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
         # }
 
@@ -1379,14 +1379,14 @@ configuration ConfigureSPVM
             Name                     = "$HNSC1Alias site"
             Template                 = $SPTeamSiteTemplate
             CreateDefaultGroups      = $true
-            PsDscRunAsCredential     = $SPSetupCredsQualified
+            PsDscRunAsCredential     = $DomainAdminCredsQualified
             DependsOn                = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
         }
 
         SPSiteUrl SetHNSC1IntranetUrl {
             Url                  = "http://$HNSC1Alias/"
             Intranet             = "https://$HNSC1Alias.$DomainFQDN"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateHNSC1"
         }
 
@@ -1394,7 +1394,7 @@ configuration ConfigureSPVM
             Name                 = "Subscription Settings Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)SubscriptionSettings"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSubscriptionSettingsServiceInstance"
         }
 
@@ -1402,7 +1402,7 @@ configuration ConfigureSPVM
             Name                 = "App Management Service Application"
             ApplicationPool      = $ServiceAppPoolName
             DatabaseName         = "$($SPDBPrefix)AppManagement"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartAppManagementServiceInstance"
         }
 
@@ -1420,7 +1420,7 @@ configuration ConfigureSPVM
                     AccessLevels = @("Full Control")
                 }
             )
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             #DependsOn           = "[Script]RefreshLocalConfigCache"
             DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
@@ -1515,7 +1515,7 @@ configuration ConfigureSPVM
             Force                 = $false
             ConnectionType        = "ActiveDirectory"
             UseDisabledFilter     = $true
-            PsDscRunAsCredential  = $SPSetupCredsQualified
+            PsDscRunAsCredential  = $DomainAdminCredsQualified
             DependsOn             = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
         }
 
@@ -1525,7 +1525,7 @@ configuration ConfigureSPVM
             AllowOAuthOverHttp    = $true
             AllowMetadataOverHttp = $true
             IsSingleInstance      = "Yes"
-            PsDscRunAsCredential  = $SPSetupCredsQualified
+            PsDscRunAsCredential  = $DomainAdminCredsQualified
             DependsOn             = "[SPFarm]CreateSPFarm"
         }        
 
@@ -1533,7 +1533,7 @@ configuration ConfigureSPVM
         SPAppDomain ConfigureLocalFarmAppUrls {
             AppDomain            = $AppDomainFQDN
             Prefix               = "addin"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSubscriptionSettingsServiceApp]CreateSubscriptionServiceApp", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }        
 
@@ -1543,7 +1543,7 @@ configuration ConfigureSPVM
             Zone                 = "Default"
             Port                 = 80
             SSL                  = $false
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
 
@@ -1553,13 +1553,13 @@ configuration ConfigureSPVM
             Zone                 = "Intranet"
             Port                 = 443
             SSL                  = $true
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
 
         SPAppCatalog SetAppCatalogUrl {
             SiteUrl              = "http://$SharePointSitesAuthority/sites/AppCatalog"
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateAppCatalog", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }
         
@@ -1572,7 +1572,7 @@ configuration ConfigureSPVM
             Name                 = "Team site"
             Template             = $SPTeamSiteTemplate
             CreateDefaultGroups  = $true
-            PsDscRunAsCredential = $SPSetupCredsQualified
+            PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication", "[SPWebApplicationAppDomain]ConfigureAppDomainDefaultZone", "[SPWebApplicationAppDomain]ConfigureAppDomainIntranetZone", "[SPAppCatalog]SetAppCatalogUrl"
         }
 
@@ -1712,7 +1712,7 @@ configuration ConfigureSPVM
             SigningCertificateFilePath     = "$SetupPath\Certificates\HighTrustAddins.cer"
             Ensure                         = "Present"
             DependsOn                      = "[Script]ExportHighTrustAddinsCert"
-            PsDscRunAsCredential           = $SPSetupCredsQualified
+            PsDscRunAsCredential           = $DomainAdminCredsQualified
         }
 
         Script WarmupSites {
