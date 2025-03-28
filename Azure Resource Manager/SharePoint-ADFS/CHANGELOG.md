@@ -6,6 +6,8 @@
 
 - DSC Configuration for all VMs
   - Updated DSC module ActiveDirectoryDsc to 6.6.2 and remove all customizations on this module
+- DSC Configuration for SharePoint SE
+  - Move script that runs GrantOwnerAccessToDatabaseAccount, to run it just after the farm is created
 
 ## Enhancements & bug-fixes - Published in March 14, 2025
 
