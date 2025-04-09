@@ -1,11 +1,12 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "languageVersion": "2.0",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.33.93.31351",
-      "templateHash": "1388885014600077390"
+      "version": "0.34.44.8038",
+      "templateHash": "13846106417361565486"
     },
     "description": "Create a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).",
     "author": "Yvand"
@@ -453,7 +454,7 @@
           "Label": "Latest",
           "Packages": [
             {
-              "DownloadUrl": "https://download.microsoft.com/download/0b131072-7ee6-41ea-b33a-b3410865f3a0/uber-subscription-kb5002698-fullfile-x64-glb.exe"
+              "DownloadUrl": "https://download.microsoft.com/download/8ae22e05-14eb-401b-b979-ab2d2853c1e5/uber-subscription-kb5002705-fullfile-x64-glb.exe"
             }
           ]
         }
@@ -762,8 +763,17 @@
       }
     }
   },
-  "resources": [
-    {
+  "resources": {
+    "resourceGroup": {
+      "existing": true,
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2024-11-01",
+      "name": "[parameters('resourceGroupName')]",
+      "dependsOn": [
+        "resourceGroupModule"
+      ]
+    },
+    "resourceGroupModule": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "resourceGroupDeployment",
@@ -1251,7 +1261,7 @@
         }
       }
     },
-    {
+    "virtualNetwork": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "vnet-module",
@@ -1282,8 +1292,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "5377383668880099497"
+              "version": "0.34.44.8038",
+              "templateHash": "6989763193847709898"
             }
           },
           "parameters": {
@@ -2918,10 +2928,10 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/deployments', 'resourceGroupDeployment')]"
+        "resourceGroupModule"
       ]
     },
-    {
+    "baseVirtualMachinesModule": {
       "copy": {
         "name": "baseVirtualMachinesModule",
         "count": "[length(variables('baseVirtualMachines'))]"
@@ -2943,7 +2953,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "subnetResourceId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'vnet-module'), '2022-09-01').outputs.mainSubnetResourceId.value]"
+            "value": "[reference('virtualNetwork').outputs.mainSubnetResourceId.value]"
           },
           "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), createObject('value', 'Windows_Server'), createObject('value', null()))]",
           "timeZone": {
@@ -2994,8 +3004,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "4115192631067218302"
+              "version": "0.34.44.8038",
+              "templateHash": "4338418720947843059"
             }
           },
           "parameters": {
@@ -3223,9 +3233,7 @@
                             "subnetResourceId": "[parameters('subnetResourceId')]",
                             "privateIPAllocationMethod": "[if(equals(parameters('privateIPAddress'), null()), 'Dynamic', 'Static')]",
                             "privateIPAddress": "[parameters('privateIPAddress')]",
-                            "pipConfiguration": "[parameters('pipConfiguration')]",
-                            "enablePublicIP": "[if(empty(parameters('pipConfiguration')), false(), true())]",
-                            "publicIPAddressResourceId": "[if(empty(parameters('pipConfiguration')), null(), null())]"
+                            "pipConfiguration": "[parameters('pipConfiguration')]"
                           }
                         ],
                         "nicSuffix": "-nic-01"
@@ -3254,134 +3262,13 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.33.93.31351",
-                      "templateHash": "11863767667256296731"
+                      "version": "0.34.44.8038",
+                      "templateHash": "2262043373836368025"
                     },
                     "name": "Virtual Machines",
                     "description": "This module deploys a Virtual Machine with one or multiple NICs and optionally one or multiple public IPs."
                   },
                   "definitions": {
-                    "managedIdentitiesType": {
-                      "type": "object",
-                      "properties": {
-                        "systemAssigned": {
-                          "type": "bool",
-                          "nullable": true,
-                          "metadata": {
-                            "description": "Optional. Enables system assigned managed identity on the resource."
-                          }
-                        },
-                        "userAssignedResourceIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "nullable": true,
-                          "metadata": {
-                            "description": "Optional. The resource ID(s) to assign to the resource."
-                          }
-                        }
-                      },
-                      "nullable": true
-                    },
-                    "lockType": {
-                      "type": "object",
-                      "properties": {
-                        "name": {
-                          "type": "string",
-                          "nullable": true,
-                          "metadata": {
-                            "description": "Optional. Specify the name of lock."
-                          }
-                        },
-                        "kind": {
-                          "type": "string",
-                          "allowedValues": [
-                            "CanNotDelete",
-                            "None",
-                            "ReadOnly"
-                          ],
-                          "nullable": true,
-                          "metadata": {
-                            "description": "Optional. Specify the type of lock."
-                          }
-                        }
-                      },
-                      "nullable": true
-                    },
-                    "roleAssignmentType": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The name (as GUID) of the role assignment. If not provided, a GUID will be generated."
-                            }
-                          },
-                          "roleDefinitionIdOrName": {
-                            "type": "string",
-                            "metadata": {
-                              "description": "Required. The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."
-                            }
-                          },
-                          "principalId": {
-                            "type": "string",
-                            "metadata": {
-                              "description": "Required. The principal ID of the principal (user/group/identity) to assign the role to."
-                            }
-                          },
-                          "principalType": {
-                            "type": "string",
-                            "allowedValues": [
-                              "Device",
-                              "ForeignGroup",
-                              "Group",
-                              "ServicePrincipal",
-                              "User"
-                            ],
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The principal type of the assigned principal ID."
-                            }
-                          },
-                          "description": {
-                            "type": "string",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The description of the role assignment."
-                            }
-                          },
-                          "condition": {
-                            "type": "string",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase \"foo_storage_container\"."
-                            }
-                          },
-                          "conditionVersion": {
-                            "type": "string",
-                            "allowedValues": [
-                              "2.0"
-                            ],
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. Version of the condition."
-                            }
-                          },
-                          "delegatedManagedIdentityResourceId": {
-                            "type": "string",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The Resource Id of the delegated managed identity resource."
-                            }
-                          }
-                        }
-                      },
-                      "nullable": true
-                    },
                     "osDiskType": {
                       "type": "object",
                       "properties": {
@@ -3465,122 +3352,259 @@
                             "description": "Required. The managed disk parameters."
                           }
                         }
+                      },
+                      "metadata": {
+                        "__bicep_export!": true,
+                        "description": "The type describing an OS disk."
                       }
                     },
-                    "dataDisksType": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The disk name."
-                            }
-                          },
-                          "lun": {
-                            "type": "int",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. Specifies the logical unit number of the data disk."
-                            }
-                          },
-                          "diskSizeGB": {
-                            "type": "int",
-                            "metadata": {
-                              "description": "Required. Specifies the size of an empty data disk in gigabytes."
-                            }
-                          },
-                          "createOption": {
-                            "type": "string",
-                            "allowedValues": [
-                              "Attach",
-                              "Empty",
-                              "FromImage"
-                            ],
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. Specifies how the virtual machine should be created."
-                            }
-                          },
-                          "deleteOption": {
-                            "type": "string",
-                            "allowedValues": [
-                              "Delete",
-                              "Detach"
-                            ],
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. Specifies whether data disk should be deleted or detached upon VM deletion."
-                            }
-                          },
-                          "caching": {
-                            "type": "string",
-                            "allowedValues": [
-                              "None",
-                              "ReadOnly",
-                              "ReadWrite"
-                            ],
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. Specifies the caching requirements."
-                            }
-                          },
-                          "diskIOPSReadWrite": {
-                            "type": "int",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The number of IOPS allowed for this disk; only settable for UltraSSD disks. One operation can transfer between 4k and 256k bytes."
-                            }
-                          },
-                          "diskMBpsReadWrite": {
-                            "type": "int",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The bandwidth allowed for this disk; only settable for UltraSSD disks. MBps means millions of bytes per second - MB here uses the ISO notation, of powers of 10."
-                            }
-                          },
-                          "managedDisk": {
-                            "type": "object",
-                            "properties": {
-                              "storageAccountType": {
-                                "type": "string",
-                                "allowedValues": [
-                                  "PremiumV2_LRS",
-                                  "Premium_LRS",
-                                  "Premium_ZRS",
-                                  "StandardSSD_LRS",
-                                  "StandardSSD_ZRS",
-                                  "Standard_LRS",
-                                  "UltraSSD_LRS"
-                                ],
-                                "metadata": {
-                                  "description": "Required. Specifies the storage account type for the managed disk."
-                                }
-                              },
-                              "diskEncryptionSetResourceId": {
-                                "type": "string",
-                                "nullable": true,
-                                "metadata": {
-                                  "description": "Optional. Specifies the customer managed disk encryption set resource id for the managed disk."
-                                }
-                              },
-                              "id": {
-                                "type": "string",
-                                "nullable": true,
-                                "metadata": {
-                                  "description": "Optional. Specifies the customer managed disk id for the managed disk."
-                                }
+                    "dataDiskType": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The disk name."
+                          }
+                        },
+                        "lun": {
+                          "type": "int",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specifies the logical unit number of the data disk."
+                          }
+                        },
+                        "diskSizeGB": {
+                          "type": "int",
+                          "metadata": {
+                            "description": "Required. Specifies the size of an empty data disk in gigabytes."
+                          }
+                        },
+                        "createOption": {
+                          "type": "string",
+                          "allowedValues": [
+                            "Attach",
+                            "Empty",
+                            "FromImage"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specifies how the virtual machine should be created."
+                          }
+                        },
+                        "deleteOption": {
+                          "type": "string",
+                          "allowedValues": [
+                            "Delete",
+                            "Detach"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specifies whether data disk should be deleted or detached upon VM deletion."
+                          }
+                        },
+                        "caching": {
+                          "type": "string",
+                          "allowedValues": [
+                            "None",
+                            "ReadOnly",
+                            "ReadWrite"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specifies the caching requirements."
+                          }
+                        },
+                        "diskIOPSReadWrite": {
+                          "type": "int",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The number of IOPS allowed for this disk; only settable for UltraSSD disks. One operation can transfer between 4k and 256k bytes."
+                          }
+                        },
+                        "diskMBpsReadWrite": {
+                          "type": "int",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The bandwidth allowed for this disk; only settable for UltraSSD disks. MBps means millions of bytes per second - MB here uses the ISO notation, of powers of 10."
+                          }
+                        },
+                        "managedDisk": {
+                          "type": "object",
+                          "properties": {
+                            "storageAccountType": {
+                              "type": "string",
+                              "allowedValues": [
+                                "PremiumV2_LRS",
+                                "Premium_LRS",
+                                "Premium_ZRS",
+                                "StandardSSD_LRS",
+                                "StandardSSD_ZRS",
+                                "Standard_LRS",
+                                "UltraSSD_LRS"
+                              ],
+                              "metadata": {
+                                "description": "Required. Specifies the storage account type for the managed disk."
                               }
                             },
-                            "metadata": {
-                              "description": "Required. The managed disk parameters."
+                            "diskEncryptionSetResourceId": {
+                              "type": "string",
+                              "nullable": true,
+                              "metadata": {
+                                "description": "Optional. Specifies the customer managed disk encryption set resource id for the managed disk."
+                              }
+                            },
+                            "id": {
+                              "type": "string",
+                              "nullable": true,
+                              "metadata": {
+                                "description": "Optional. Specifies the customer managed disk id for the managed disk."
+                              }
                             }
+                          },
+                          "metadata": {
+                            "description": "Required. The managed disk parameters."
                           }
                         }
                       },
-                      "nullable": true
+                      "metadata": {
+                        "__bicep_export!": true,
+                        "description": "The type describing a data disk."
+                      }
+                    },
+                    "lockType": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specify the name of lock."
+                          }
+                        },
+                        "kind": {
+                          "type": "string",
+                          "allowedValues": [
+                            "CanNotDelete",
+                            "None",
+                            "ReadOnly"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specify the type of lock."
+                          }
+                        }
+                      },
+                      "metadata": {
+                        "description": "An AVM-aligned type for a lock.",
+                        "__bicep_imported_from!": {
+                          "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
+                        }
+                      }
+                    },
+                    "managedIdentityAllType": {
+                      "type": "object",
+                      "properties": {
+                        "systemAssigned": {
+                          "type": "bool",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Enables system assigned managed identity on the resource."
+                          }
+                        },
+                        "userAssignedResourceIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The resource ID(s) to assign to the resource. Required if a user assigned identity is used for encryption."
+                          }
+                        }
+                      },
+                      "metadata": {
+                        "description": "An AVM-aligned type for a managed identity configuration. To be used if both a system-assigned & user-assigned identities are supported by the resource provider.",
+                        "__bicep_imported_from!": {
+                          "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
+                        }
+                      }
+                    },
+                    "roleAssignmentType": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The name (as GUID) of the role assignment. If not provided, a GUID will be generated."
+                          }
+                        },
+                        "roleDefinitionIdOrName": {
+                          "type": "string",
+                          "metadata": {
+                            "description": "Required. The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."
+                          }
+                        },
+                        "principalId": {
+                          "type": "string",
+                          "metadata": {
+                            "description": "Required. The principal ID of the principal (user/group/identity) to assign the role to."
+                          }
+                        },
+                        "principalType": {
+                          "type": "string",
+                          "allowedValues": [
+                            "Device",
+                            "ForeignGroup",
+                            "Group",
+                            "ServicePrincipal",
+                            "User"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The principal type of the assigned principal ID."
+                          }
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The description of the role assignment."
+                          }
+                        },
+                        "condition": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase \"foo_storage_container\"."
+                          }
+                        },
+                        "conditionVersion": {
+                          "type": "string",
+                          "allowedValues": [
+                            "2.0"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Version of the condition."
+                          }
+                        },
+                        "delegatedManagedIdentityResourceId": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The Resource Id of the delegated managed identity resource."
+                          }
+                        }
+                      },
+                      "metadata": {
+                        "description": "An AVM-aligned type for a role assignment.",
+                        "__bicep_imported_from!": {
+                          "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
+                        }
+                      }
                     }
                   },
                   "parameters": {
@@ -3656,7 +3680,11 @@
                       }
                     },
                     "dataDisks": {
-                      "$ref": "#/definitions/dataDisksType",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/dataDiskType"
+                      },
+                      "nullable": true,
                       "metadata": {
                         "description": "Optional. Specifies the data disks. For security reasons, it is recommended to specify DiskEncryptionSet into the dataDisk object. Restrictions: DiskEncryptionSet cannot be enabled if Azure Disk Encryption (guest-VM encryption using bitlocker/DM-Crypt) is enabled on your VMs."
                       }
@@ -3757,7 +3785,8 @@
                       }
                     },
                     "managedIdentities": {
-                      "$ref": "#/definitions/managedIdentitiesType",
+                      "$ref": "#/definitions/managedIdentityAllType",
+                      "nullable": true,
                       "metadata": {
                         "description": "Optional. The managed identity definition for this resource. The system-assigned managed identity will automatically be enabled if extensionAadJoinConfig.enabled = \"True\"."
                       }
@@ -4014,12 +4043,17 @@
                     },
                     "lock": {
                       "$ref": "#/definitions/lockType",
+                      "nullable": true,
                       "metadata": {
                         "description": "Optional. The lock settings of the service."
                       }
                     },
                     "roleAssignments": {
-                      "$ref": "#/definitions/roleAssignmentType",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/roleAssignmentType"
+                      },
+                      "nullable": true,
                       "metadata": {
                         "description": "Optional. Array of role assignments to create."
                       }
@@ -4232,7 +4266,7 @@
                       "condition": "[parameters('enableTelemetry')]",
                       "type": "Microsoft.Resources/deployments",
                       "apiVersion": "2024-03-01",
-                      "name": "[format('46d3xbcp.res.compute-virtualmachine.{0}.{1}', replace('0.12.2', '.', '-'), substring(uniqueString(deployment().name, parameters('location')), 0, 4))]",
+                      "name": "[format('46d3xbcp.res.compute-virtualmachine.{0}.{1}', replace('0.12.3', '.', '-'), substring(uniqueString(deployment().name, parameters('location')), 0, 4))]",
                       "properties": {
                         "mode": "Incremental",
                         "template": {
@@ -4551,11 +4585,133 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "17423406578946107257"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8556043111080362230"
                             }
                           },
                           "definitions": {
+                            "diagnosticSettingFullType": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The name of the diagnostic setting."
+                                  }
+                                },
+                                "logCategoriesAndGroups": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "category": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "metadata": {
+                                          "description": "Optional. Name of a Diagnostic Log category for a resource type this setting is applied to. Set the specific logs to collect here."
+                                        }
+                                      },
+                                      "categoryGroup": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "metadata": {
+                                          "description": "Optional. Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to `allLogs` to collect all logs."
+                                        }
+                                      },
+                                      "enabled": {
+                                        "type": "bool",
+                                        "nullable": true,
+                                        "metadata": {
+                                          "description": "Optional. Enable or disable the category explicitly. Default is `true`."
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The name of logs that will be streamed. \"allLogs\" includes all possible logs for the resource. Set to `[]` to disable log collection."
+                                  }
+                                },
+                                "metricCategories": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "category": {
+                                        "type": "string",
+                                        "metadata": {
+                                          "description": "Required. Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to `AllMetrics` to collect all metrics."
+                                        }
+                                      },
+                                      "enabled": {
+                                        "type": "bool",
+                                        "nullable": true,
+                                        "metadata": {
+                                          "description": "Optional. Enable or disable the category explicitly. Default is `true`."
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The name of metrics that will be streamed. \"allMetrics\" includes all possible metrics for the resource. Set to `[]` to disable metric collection."
+                                  }
+                                },
+                                "logAnalyticsDestinationType": {
+                                  "type": "string",
+                                  "allowedValues": [
+                                    "AzureDiagnostics",
+                                    "Dedicated"
+                                  ],
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."
+                                  }
+                                },
+                                "workspaceResourceId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
+                                  }
+                                },
+                                "storageAccountResourceId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
+                                  }
+                                },
+                                "eventHubAuthorizationRuleResourceId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."
+                                  }
+                                },
+                                "eventHubName": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
+                                  }
+                                },
+                                "marketplacePartnerResourceId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."
+                                  }
+                                }
+                              },
+                              "metadata": {
+                                "description": "An AVM-aligned type for a diagnostic setting. To be used if both logs & metrics are supported by the resource provider.",
+                                "__bicep_imported_from!": {
+                                  "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
+                                }
+                              }
+                            },
                             "lockType": {
                               "type": "object",
                               "properties": {
@@ -4579,193 +4735,87 @@
                                   }
                                 }
                               },
-                              "nullable": true
-                            },
-                            "diagnosticSettingType": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "name": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The name of diagnostic setting."
-                                    }
-                                  },
-                                  "logCategoriesAndGroups": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "category": {
-                                          "type": "string",
-                                          "nullable": true,
-                                          "metadata": {
-                                            "description": "Optional. Name of a Diagnostic Log category for a resource type this setting is applied to. Set the specific logs to collect here."
-                                          }
-                                        },
-                                        "categoryGroup": {
-                                          "type": "string",
-                                          "nullable": true,
-                                          "metadata": {
-                                            "description": "Optional. Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to `allLogs` to collect all logs."
-                                          }
-                                        },
-                                        "enabled": {
-                                          "type": "bool",
-                                          "nullable": true,
-                                          "metadata": {
-                                            "description": "Optional. Enable or disable the category explicitly. Default is `true`."
-                                          }
-                                        }
-                                      }
-                                    },
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The name of logs that will be streamed. \"allLogs\" includes all possible logs for the resource. Set to `[]` to disable log collection."
-                                    }
-                                  },
-                                  "metricCategories": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "category": {
-                                          "type": "string",
-                                          "metadata": {
-                                            "description": "Required. Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to `AllMetrics` to collect all metrics."
-                                          }
-                                        },
-                                        "enabled": {
-                                          "type": "bool",
-                                          "nullable": true,
-                                          "metadata": {
-                                            "description": "Optional. Enable or disable the category explicitly. Default is `true`."
-                                          }
-                                        }
-                                      }
-                                    },
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The name of metrics that will be streamed. \"allMetrics\" includes all possible metrics for the resource. Set to `[]` to disable metric collection."
-                                    }
-                                  },
-                                  "logAnalyticsDestinationType": {
-                                    "type": "string",
-                                    "allowedValues": [
-                                      "AzureDiagnostics",
-                                      "Dedicated"
-                                    ],
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."
-                                    }
-                                  },
-                                  "workspaceResourceId": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
-                                    }
-                                  },
-                                  "storageAccountResourceId": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
-                                    }
-                                  },
-                                  "eventHubAuthorizationRuleResourceId": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."
-                                    }
-                                  },
-                                  "eventHubName": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
-                                    }
-                                  },
-                                  "marketplacePartnerResourceId": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."
-                                    }
-                                  }
+                              "metadata": {
+                                "description": "An AVM-aligned type for a lock.",
+                                "__bicep_imported_from!": {
+                                  "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
                                 }
-                              },
-                              "nullable": true
+                              }
                             },
                             "roleAssignmentType": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "roleDefinitionIdOrName": {
-                                    "type": "string",
-                                    "metadata": {
-                                      "description": "Required. The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."
-                                    }
-                                  },
-                                  "principalId": {
-                                    "type": "string",
-                                    "metadata": {
-                                      "description": "Required. The principal ID of the principal (user/group/identity) to assign the role to."
-                                    }
-                                  },
-                                  "principalType": {
-                                    "type": "string",
-                                    "allowedValues": [
-                                      "Device",
-                                      "ForeignGroup",
-                                      "Group",
-                                      "ServicePrincipal",
-                                      "User"
-                                    ],
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The principal type of the assigned principal ID."
-                                    }
-                                  },
-                                  "description": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The description of the role assignment."
-                                    }
-                                  },
-                                  "condition": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase \"foo_storage_container\"."
-                                    }
-                                  },
-                                  "conditionVersion": {
-                                    "type": "string",
-                                    "allowedValues": [
-                                      "2.0"
-                                    ],
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. Version of the condition."
-                                    }
-                                  },
-                                  "delegatedManagedIdentityResourceId": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The Resource Id of the delegated managed identity resource."
-                                    }
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The name (as GUID) of the role assignment. If not provided, a GUID will be generated."
+                                  }
+                                },
+                                "roleDefinitionIdOrName": {
+                                  "type": "string",
+                                  "metadata": {
+                                    "description": "Required. The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."
+                                  }
+                                },
+                                "principalId": {
+                                  "type": "string",
+                                  "metadata": {
+                                    "description": "Required. The principal ID of the principal (user/group/identity) to assign the role to."
+                                  }
+                                },
+                                "principalType": {
+                                  "type": "string",
+                                  "allowedValues": [
+                                    "Device",
+                                    "ForeignGroup",
+                                    "Group",
+                                    "ServicePrincipal",
+                                    "User"
+                                  ],
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The principal type of the assigned principal ID."
+                                  }
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The description of the role assignment."
+                                  }
+                                },
+                                "condition": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase \"foo_storage_container\"."
+                                  }
+                                },
+                                "conditionVersion": {
+                                  "type": "string",
+                                  "allowedValues": [
+                                    "2.0"
+                                  ],
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. Version of the condition."
+                                  }
+                                },
+                                "delegatedManagedIdentityResourceId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The Resource Id of the delegated managed identity resource."
                                   }
                                 }
                               },
-                              "nullable": true
+                              "metadata": {
+                                "description": "An AVM-aligned type for a role assignment.",
+                                "__bicep_imported_from!": {
+                                  "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
+                                }
+                              }
                             }
                           },
                           "parameters": {
@@ -4818,18 +4868,27 @@
                             },
                             "lock": {
                               "$ref": "#/definitions/lockType",
+                              "nullable": true,
                               "metadata": {
                                 "description": "Optional. The lock settings of the service."
                               }
                             },
                             "diagnosticSettings": {
-                              "$ref": "#/definitions/diagnosticSettingType",
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/definitions/diagnosticSettingFullType"
+                              },
+                              "nullable": true,
                               "metadata": {
-                                "description": "Optional. The diagnostic settings of the Network Interface."
+                                "description": "Optional. The diagnostic settings of the service."
                               }
                             },
                             "roleAssignments": {
-                              "$ref": "#/definitions/roleAssignmentType",
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/definitions/roleAssignmentType"
+                              },
+                              "nullable": true,
                               "metadata": {
                                 "description": "Optional. Array of role assignments to create."
                               }
@@ -6155,8 +6214,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -6366,8 +6425,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -6573,8 +6632,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -6775,8 +6834,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -6982,8 +7041,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -7184,8 +7243,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -7394,8 +7453,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -7608,8 +7667,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -7816,8 +7875,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -8020,8 +8079,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -8233,8 +8292,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -8442,8 +8501,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -8637,8 +8696,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "5910828956272534599"
+                              "version": "0.34.44.8038",
+                              "templateHash": "7743264001610407207"
                             },
                             "name": "Recovery Service Vaults Protection Container Protected Item",
                             "description": "This module deploys a Recovery Services Vault Protection Container Protected Item."
@@ -8798,11 +8857,11 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/deployments', 'resourceGroupDeployment')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'vnet-module')]"
+        "resourceGroupModule",
+        "virtualNetwork"
       ]
     },
-    {
+    "frontends": {
       "copy": {
         "name": "frontends",
         "count": "[length(range(0, parameters('frontEndServersCount')))]"
@@ -8824,7 +8883,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "subnetResourceId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'vnet-module'), '2022-09-01').outputs.mainSubnetResourceId.value]"
+            "value": "[reference('virtualNetwork').outputs.mainSubnetResourceId.value]"
           },
           "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), createObject('value', 'Windows_Server'), createObject('value', null()))]",
           "timeZone": {
@@ -8873,8 +8932,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "4115192631067218302"
+              "version": "0.34.44.8038",
+              "templateHash": "4338418720947843059"
             }
           },
           "parameters": {
@@ -9102,9 +9161,7 @@
                             "subnetResourceId": "[parameters('subnetResourceId')]",
                             "privateIPAllocationMethod": "[if(equals(parameters('privateIPAddress'), null()), 'Dynamic', 'Static')]",
                             "privateIPAddress": "[parameters('privateIPAddress')]",
-                            "pipConfiguration": "[parameters('pipConfiguration')]",
-                            "enablePublicIP": "[if(empty(parameters('pipConfiguration')), false(), true())]",
-                            "publicIPAddressResourceId": "[if(empty(parameters('pipConfiguration')), null(), null())]"
+                            "pipConfiguration": "[parameters('pipConfiguration')]"
                           }
                         ],
                         "nicSuffix": "-nic-01"
@@ -9133,134 +9190,13 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.33.93.31351",
-                      "templateHash": "11863767667256296731"
+                      "version": "0.34.44.8038",
+                      "templateHash": "2262043373836368025"
                     },
                     "name": "Virtual Machines",
                     "description": "This module deploys a Virtual Machine with one or multiple NICs and optionally one or multiple public IPs."
                   },
                   "definitions": {
-                    "managedIdentitiesType": {
-                      "type": "object",
-                      "properties": {
-                        "systemAssigned": {
-                          "type": "bool",
-                          "nullable": true,
-                          "metadata": {
-                            "description": "Optional. Enables system assigned managed identity on the resource."
-                          }
-                        },
-                        "userAssignedResourceIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "nullable": true,
-                          "metadata": {
-                            "description": "Optional. The resource ID(s) to assign to the resource."
-                          }
-                        }
-                      },
-                      "nullable": true
-                    },
-                    "lockType": {
-                      "type": "object",
-                      "properties": {
-                        "name": {
-                          "type": "string",
-                          "nullable": true,
-                          "metadata": {
-                            "description": "Optional. Specify the name of lock."
-                          }
-                        },
-                        "kind": {
-                          "type": "string",
-                          "allowedValues": [
-                            "CanNotDelete",
-                            "None",
-                            "ReadOnly"
-                          ],
-                          "nullable": true,
-                          "metadata": {
-                            "description": "Optional. Specify the type of lock."
-                          }
-                        }
-                      },
-                      "nullable": true
-                    },
-                    "roleAssignmentType": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The name (as GUID) of the role assignment. If not provided, a GUID will be generated."
-                            }
-                          },
-                          "roleDefinitionIdOrName": {
-                            "type": "string",
-                            "metadata": {
-                              "description": "Required. The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."
-                            }
-                          },
-                          "principalId": {
-                            "type": "string",
-                            "metadata": {
-                              "description": "Required. The principal ID of the principal (user/group/identity) to assign the role to."
-                            }
-                          },
-                          "principalType": {
-                            "type": "string",
-                            "allowedValues": [
-                              "Device",
-                              "ForeignGroup",
-                              "Group",
-                              "ServicePrincipal",
-                              "User"
-                            ],
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The principal type of the assigned principal ID."
-                            }
-                          },
-                          "description": {
-                            "type": "string",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The description of the role assignment."
-                            }
-                          },
-                          "condition": {
-                            "type": "string",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase \"foo_storage_container\"."
-                            }
-                          },
-                          "conditionVersion": {
-                            "type": "string",
-                            "allowedValues": [
-                              "2.0"
-                            ],
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. Version of the condition."
-                            }
-                          },
-                          "delegatedManagedIdentityResourceId": {
-                            "type": "string",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The Resource Id of the delegated managed identity resource."
-                            }
-                          }
-                        }
-                      },
-                      "nullable": true
-                    },
                     "osDiskType": {
                       "type": "object",
                       "properties": {
@@ -9344,122 +9280,259 @@
                             "description": "Required. The managed disk parameters."
                           }
                         }
+                      },
+                      "metadata": {
+                        "__bicep_export!": true,
+                        "description": "The type describing an OS disk."
                       }
                     },
-                    "dataDisksType": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The disk name."
-                            }
-                          },
-                          "lun": {
-                            "type": "int",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. Specifies the logical unit number of the data disk."
-                            }
-                          },
-                          "diskSizeGB": {
-                            "type": "int",
-                            "metadata": {
-                              "description": "Required. Specifies the size of an empty data disk in gigabytes."
-                            }
-                          },
-                          "createOption": {
-                            "type": "string",
-                            "allowedValues": [
-                              "Attach",
-                              "Empty",
-                              "FromImage"
-                            ],
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. Specifies how the virtual machine should be created."
-                            }
-                          },
-                          "deleteOption": {
-                            "type": "string",
-                            "allowedValues": [
-                              "Delete",
-                              "Detach"
-                            ],
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. Specifies whether data disk should be deleted or detached upon VM deletion."
-                            }
-                          },
-                          "caching": {
-                            "type": "string",
-                            "allowedValues": [
-                              "None",
-                              "ReadOnly",
-                              "ReadWrite"
-                            ],
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. Specifies the caching requirements."
-                            }
-                          },
-                          "diskIOPSReadWrite": {
-                            "type": "int",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The number of IOPS allowed for this disk; only settable for UltraSSD disks. One operation can transfer between 4k and 256k bytes."
-                            }
-                          },
-                          "diskMBpsReadWrite": {
-                            "type": "int",
-                            "nullable": true,
-                            "metadata": {
-                              "description": "Optional. The bandwidth allowed for this disk; only settable for UltraSSD disks. MBps means millions of bytes per second - MB here uses the ISO notation, of powers of 10."
-                            }
-                          },
-                          "managedDisk": {
-                            "type": "object",
-                            "properties": {
-                              "storageAccountType": {
-                                "type": "string",
-                                "allowedValues": [
-                                  "PremiumV2_LRS",
-                                  "Premium_LRS",
-                                  "Premium_ZRS",
-                                  "StandardSSD_LRS",
-                                  "StandardSSD_ZRS",
-                                  "Standard_LRS",
-                                  "UltraSSD_LRS"
-                                ],
-                                "metadata": {
-                                  "description": "Required. Specifies the storage account type for the managed disk."
-                                }
-                              },
-                              "diskEncryptionSetResourceId": {
-                                "type": "string",
-                                "nullable": true,
-                                "metadata": {
-                                  "description": "Optional. Specifies the customer managed disk encryption set resource id for the managed disk."
-                                }
-                              },
-                              "id": {
-                                "type": "string",
-                                "nullable": true,
-                                "metadata": {
-                                  "description": "Optional. Specifies the customer managed disk id for the managed disk."
-                                }
+                    "dataDiskType": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The disk name."
+                          }
+                        },
+                        "lun": {
+                          "type": "int",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specifies the logical unit number of the data disk."
+                          }
+                        },
+                        "diskSizeGB": {
+                          "type": "int",
+                          "metadata": {
+                            "description": "Required. Specifies the size of an empty data disk in gigabytes."
+                          }
+                        },
+                        "createOption": {
+                          "type": "string",
+                          "allowedValues": [
+                            "Attach",
+                            "Empty",
+                            "FromImage"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specifies how the virtual machine should be created."
+                          }
+                        },
+                        "deleteOption": {
+                          "type": "string",
+                          "allowedValues": [
+                            "Delete",
+                            "Detach"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specifies whether data disk should be deleted or detached upon VM deletion."
+                          }
+                        },
+                        "caching": {
+                          "type": "string",
+                          "allowedValues": [
+                            "None",
+                            "ReadOnly",
+                            "ReadWrite"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specifies the caching requirements."
+                          }
+                        },
+                        "diskIOPSReadWrite": {
+                          "type": "int",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The number of IOPS allowed for this disk; only settable for UltraSSD disks. One operation can transfer between 4k and 256k bytes."
+                          }
+                        },
+                        "diskMBpsReadWrite": {
+                          "type": "int",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The bandwidth allowed for this disk; only settable for UltraSSD disks. MBps means millions of bytes per second - MB here uses the ISO notation, of powers of 10."
+                          }
+                        },
+                        "managedDisk": {
+                          "type": "object",
+                          "properties": {
+                            "storageAccountType": {
+                              "type": "string",
+                              "allowedValues": [
+                                "PremiumV2_LRS",
+                                "Premium_LRS",
+                                "Premium_ZRS",
+                                "StandardSSD_LRS",
+                                "StandardSSD_ZRS",
+                                "Standard_LRS",
+                                "UltraSSD_LRS"
+                              ],
+                              "metadata": {
+                                "description": "Required. Specifies the storage account type for the managed disk."
                               }
                             },
-                            "metadata": {
-                              "description": "Required. The managed disk parameters."
+                            "diskEncryptionSetResourceId": {
+                              "type": "string",
+                              "nullable": true,
+                              "metadata": {
+                                "description": "Optional. Specifies the customer managed disk encryption set resource id for the managed disk."
+                              }
+                            },
+                            "id": {
+                              "type": "string",
+                              "nullable": true,
+                              "metadata": {
+                                "description": "Optional. Specifies the customer managed disk id for the managed disk."
+                              }
                             }
+                          },
+                          "metadata": {
+                            "description": "Required. The managed disk parameters."
                           }
                         }
                       },
-                      "nullable": true
+                      "metadata": {
+                        "__bicep_export!": true,
+                        "description": "The type describing a data disk."
+                      }
+                    },
+                    "lockType": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specify the name of lock."
+                          }
+                        },
+                        "kind": {
+                          "type": "string",
+                          "allowedValues": [
+                            "CanNotDelete",
+                            "None",
+                            "ReadOnly"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specify the type of lock."
+                          }
+                        }
+                      },
+                      "metadata": {
+                        "description": "An AVM-aligned type for a lock.",
+                        "__bicep_imported_from!": {
+                          "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
+                        }
+                      }
+                    },
+                    "managedIdentityAllType": {
+                      "type": "object",
+                      "properties": {
+                        "systemAssigned": {
+                          "type": "bool",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Enables system assigned managed identity on the resource."
+                          }
+                        },
+                        "userAssignedResourceIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The resource ID(s) to assign to the resource. Required if a user assigned identity is used for encryption."
+                          }
+                        }
+                      },
+                      "metadata": {
+                        "description": "An AVM-aligned type for a managed identity configuration. To be used if both a system-assigned & user-assigned identities are supported by the resource provider.",
+                        "__bicep_imported_from!": {
+                          "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
+                        }
+                      }
+                    },
+                    "roleAssignmentType": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The name (as GUID) of the role assignment. If not provided, a GUID will be generated."
+                          }
+                        },
+                        "roleDefinitionIdOrName": {
+                          "type": "string",
+                          "metadata": {
+                            "description": "Required. The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."
+                          }
+                        },
+                        "principalId": {
+                          "type": "string",
+                          "metadata": {
+                            "description": "Required. The principal ID of the principal (user/group/identity) to assign the role to."
+                          }
+                        },
+                        "principalType": {
+                          "type": "string",
+                          "allowedValues": [
+                            "Device",
+                            "ForeignGroup",
+                            "Group",
+                            "ServicePrincipal",
+                            "User"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The principal type of the assigned principal ID."
+                          }
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The description of the role assignment."
+                          }
+                        },
+                        "condition": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase \"foo_storage_container\"."
+                          }
+                        },
+                        "conditionVersion": {
+                          "type": "string",
+                          "allowedValues": [
+                            "2.0"
+                          ],
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Version of the condition."
+                          }
+                        },
+                        "delegatedManagedIdentityResourceId": {
+                          "type": "string",
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. The Resource Id of the delegated managed identity resource."
+                          }
+                        }
+                      },
+                      "metadata": {
+                        "description": "An AVM-aligned type for a role assignment.",
+                        "__bicep_imported_from!": {
+                          "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
+                        }
+                      }
                     }
                   },
                   "parameters": {
@@ -9535,7 +9608,11 @@
                       }
                     },
                     "dataDisks": {
-                      "$ref": "#/definitions/dataDisksType",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/dataDiskType"
+                      },
+                      "nullable": true,
                       "metadata": {
                         "description": "Optional. Specifies the data disks. For security reasons, it is recommended to specify DiskEncryptionSet into the dataDisk object. Restrictions: DiskEncryptionSet cannot be enabled if Azure Disk Encryption (guest-VM encryption using bitlocker/DM-Crypt) is enabled on your VMs."
                       }
@@ -9636,7 +9713,8 @@
                       }
                     },
                     "managedIdentities": {
-                      "$ref": "#/definitions/managedIdentitiesType",
+                      "$ref": "#/definitions/managedIdentityAllType",
+                      "nullable": true,
                       "metadata": {
                         "description": "Optional. The managed identity definition for this resource. The system-assigned managed identity will automatically be enabled if extensionAadJoinConfig.enabled = \"True\"."
                       }
@@ -9893,12 +9971,17 @@
                     },
                     "lock": {
                       "$ref": "#/definitions/lockType",
+                      "nullable": true,
                       "metadata": {
                         "description": "Optional. The lock settings of the service."
                       }
                     },
                     "roleAssignments": {
-                      "$ref": "#/definitions/roleAssignmentType",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/roleAssignmentType"
+                      },
+                      "nullable": true,
                       "metadata": {
                         "description": "Optional. Array of role assignments to create."
                       }
@@ -10111,7 +10194,7 @@
                       "condition": "[parameters('enableTelemetry')]",
                       "type": "Microsoft.Resources/deployments",
                       "apiVersion": "2024-03-01",
-                      "name": "[format('46d3xbcp.res.compute-virtualmachine.{0}.{1}', replace('0.12.2', '.', '-'), substring(uniqueString(deployment().name, parameters('location')), 0, 4))]",
+                      "name": "[format('46d3xbcp.res.compute-virtualmachine.{0}.{1}', replace('0.12.3', '.', '-'), substring(uniqueString(deployment().name, parameters('location')), 0, 4))]",
                       "properties": {
                         "mode": "Incremental",
                         "template": {
@@ -10430,11 +10513,133 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "17423406578946107257"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8556043111080362230"
                             }
                           },
                           "definitions": {
+                            "diagnosticSettingFullType": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The name of the diagnostic setting."
+                                  }
+                                },
+                                "logCategoriesAndGroups": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "category": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "metadata": {
+                                          "description": "Optional. Name of a Diagnostic Log category for a resource type this setting is applied to. Set the specific logs to collect here."
+                                        }
+                                      },
+                                      "categoryGroup": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "metadata": {
+                                          "description": "Optional. Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to `allLogs` to collect all logs."
+                                        }
+                                      },
+                                      "enabled": {
+                                        "type": "bool",
+                                        "nullable": true,
+                                        "metadata": {
+                                          "description": "Optional. Enable or disable the category explicitly. Default is `true`."
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The name of logs that will be streamed. \"allLogs\" includes all possible logs for the resource. Set to `[]` to disable log collection."
+                                  }
+                                },
+                                "metricCategories": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "category": {
+                                        "type": "string",
+                                        "metadata": {
+                                          "description": "Required. Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to `AllMetrics` to collect all metrics."
+                                        }
+                                      },
+                                      "enabled": {
+                                        "type": "bool",
+                                        "nullable": true,
+                                        "metadata": {
+                                          "description": "Optional. Enable or disable the category explicitly. Default is `true`."
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The name of metrics that will be streamed. \"allMetrics\" includes all possible metrics for the resource. Set to `[]` to disable metric collection."
+                                  }
+                                },
+                                "logAnalyticsDestinationType": {
+                                  "type": "string",
+                                  "allowedValues": [
+                                    "AzureDiagnostics",
+                                    "Dedicated"
+                                  ],
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."
+                                  }
+                                },
+                                "workspaceResourceId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
+                                  }
+                                },
+                                "storageAccountResourceId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
+                                  }
+                                },
+                                "eventHubAuthorizationRuleResourceId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."
+                                  }
+                                },
+                                "eventHubName": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
+                                  }
+                                },
+                                "marketplacePartnerResourceId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."
+                                  }
+                                }
+                              },
+                              "metadata": {
+                                "description": "An AVM-aligned type for a diagnostic setting. To be used if both logs & metrics are supported by the resource provider.",
+                                "__bicep_imported_from!": {
+                                  "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
+                                }
+                              }
+                            },
                             "lockType": {
                               "type": "object",
                               "properties": {
@@ -10458,193 +10663,87 @@
                                   }
                                 }
                               },
-                              "nullable": true
-                            },
-                            "diagnosticSettingType": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "name": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The name of diagnostic setting."
-                                    }
-                                  },
-                                  "logCategoriesAndGroups": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "category": {
-                                          "type": "string",
-                                          "nullable": true,
-                                          "metadata": {
-                                            "description": "Optional. Name of a Diagnostic Log category for a resource type this setting is applied to. Set the specific logs to collect here."
-                                          }
-                                        },
-                                        "categoryGroup": {
-                                          "type": "string",
-                                          "nullable": true,
-                                          "metadata": {
-                                            "description": "Optional. Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to `allLogs` to collect all logs."
-                                          }
-                                        },
-                                        "enabled": {
-                                          "type": "bool",
-                                          "nullable": true,
-                                          "metadata": {
-                                            "description": "Optional. Enable or disable the category explicitly. Default is `true`."
-                                          }
-                                        }
-                                      }
-                                    },
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The name of logs that will be streamed. \"allLogs\" includes all possible logs for the resource. Set to `[]` to disable log collection."
-                                    }
-                                  },
-                                  "metricCategories": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "category": {
-                                          "type": "string",
-                                          "metadata": {
-                                            "description": "Required. Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to `AllMetrics` to collect all metrics."
-                                          }
-                                        },
-                                        "enabled": {
-                                          "type": "bool",
-                                          "nullable": true,
-                                          "metadata": {
-                                            "description": "Optional. Enable or disable the category explicitly. Default is `true`."
-                                          }
-                                        }
-                                      }
-                                    },
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The name of metrics that will be streamed. \"allMetrics\" includes all possible metrics for the resource. Set to `[]` to disable metric collection."
-                                    }
-                                  },
-                                  "logAnalyticsDestinationType": {
-                                    "type": "string",
-                                    "allowedValues": [
-                                      "AzureDiagnostics",
-                                      "Dedicated"
-                                    ],
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."
-                                    }
-                                  },
-                                  "workspaceResourceId": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
-                                    }
-                                  },
-                                  "storageAccountResourceId": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
-                                    }
-                                  },
-                                  "eventHubAuthorizationRuleResourceId": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."
-                                    }
-                                  },
-                                  "eventHubName": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."
-                                    }
-                                  },
-                                  "marketplacePartnerResourceId": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."
-                                    }
-                                  }
+                              "metadata": {
+                                "description": "An AVM-aligned type for a lock.",
+                                "__bicep_imported_from!": {
+                                  "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
                                 }
-                              },
-                              "nullable": true
+                              }
                             },
                             "roleAssignmentType": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "roleDefinitionIdOrName": {
-                                    "type": "string",
-                                    "metadata": {
-                                      "description": "Required. The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."
-                                    }
-                                  },
-                                  "principalId": {
-                                    "type": "string",
-                                    "metadata": {
-                                      "description": "Required. The principal ID of the principal (user/group/identity) to assign the role to."
-                                    }
-                                  },
-                                  "principalType": {
-                                    "type": "string",
-                                    "allowedValues": [
-                                      "Device",
-                                      "ForeignGroup",
-                                      "Group",
-                                      "ServicePrincipal",
-                                      "User"
-                                    ],
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The principal type of the assigned principal ID."
-                                    }
-                                  },
-                                  "description": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The description of the role assignment."
-                                    }
-                                  },
-                                  "condition": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase \"foo_storage_container\"."
-                                    }
-                                  },
-                                  "conditionVersion": {
-                                    "type": "string",
-                                    "allowedValues": [
-                                      "2.0"
-                                    ],
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. Version of the condition."
-                                    }
-                                  },
-                                  "delegatedManagedIdentityResourceId": {
-                                    "type": "string",
-                                    "nullable": true,
-                                    "metadata": {
-                                      "description": "Optional. The Resource Id of the delegated managed identity resource."
-                                    }
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The name (as GUID) of the role assignment. If not provided, a GUID will be generated."
+                                  }
+                                },
+                                "roleDefinitionIdOrName": {
+                                  "type": "string",
+                                  "metadata": {
+                                    "description": "Required. The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."
+                                  }
+                                },
+                                "principalId": {
+                                  "type": "string",
+                                  "metadata": {
+                                    "description": "Required. The principal ID of the principal (user/group/identity) to assign the role to."
+                                  }
+                                },
+                                "principalType": {
+                                  "type": "string",
+                                  "allowedValues": [
+                                    "Device",
+                                    "ForeignGroup",
+                                    "Group",
+                                    "ServicePrincipal",
+                                    "User"
+                                  ],
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The principal type of the assigned principal ID."
+                                  }
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The description of the role assignment."
+                                  }
+                                },
+                                "condition": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase \"foo_storage_container\"."
+                                  }
+                                },
+                                "conditionVersion": {
+                                  "type": "string",
+                                  "allowedValues": [
+                                    "2.0"
+                                  ],
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. Version of the condition."
+                                  }
+                                },
+                                "delegatedManagedIdentityResourceId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "metadata": {
+                                    "description": "Optional. The Resource Id of the delegated managed identity resource."
                                   }
                                 }
                               },
-                              "nullable": true
+                              "metadata": {
+                                "description": "An AVM-aligned type for a role assignment.",
+                                "__bicep_imported_from!": {
+                                  "sourceTemplate": "br:mcr.microsoft.com/bicep/avm/utl/types/avm-common-types:0.5.1"
+                                }
+                              }
                             }
                           },
                           "parameters": {
@@ -10697,18 +10796,27 @@
                             },
                             "lock": {
                               "$ref": "#/definitions/lockType",
+                              "nullable": true,
                               "metadata": {
                                 "description": "Optional. The lock settings of the service."
                               }
                             },
                             "diagnosticSettings": {
-                              "$ref": "#/definitions/diagnosticSettingType",
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/definitions/diagnosticSettingFullType"
+                              },
+                              "nullable": true,
                               "metadata": {
-                                "description": "Optional. The diagnostic settings of the Network Interface."
+                                "description": "Optional. The diagnostic settings of the service."
                               }
                             },
                             "roleAssignments": {
-                              "$ref": "#/definitions/roleAssignmentType",
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/definitions/roleAssignmentType"
+                              },
+                              "nullable": true,
                               "metadata": {
                                 "description": "Optional. Array of role assignments to create."
                               }
@@ -12034,8 +12142,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -12245,8 +12353,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -12452,8 +12560,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -12654,8 +12762,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -12861,8 +12969,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -13063,8 +13171,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -13273,8 +13381,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -13487,8 +13595,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -13695,8 +13803,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -13899,8 +14007,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -14112,8 +14220,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -14321,8 +14429,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "2171772621334669730"
+                              "version": "0.34.44.8038",
+                              "templateHash": "8482591295619883067"
                             },
                             "name": "Virtual Machine Extensions",
                             "description": "This module deploys a Virtual Machine Extension."
@@ -14516,8 +14624,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.33.93.31351",
-                              "templateHash": "5910828956272534599"
+                              "version": "0.34.44.8038",
+                              "templateHash": "7743264001610407207"
                             },
                             "name": "Recovery Service Vaults Protection Container Protected Item",
                             "description": "This module deploys a Recovery Services Vault Protection Container Protected Item."
@@ -14677,11 +14785,11 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/deployments', 'resourceGroupDeployment')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'vnet-module')]"
+        "resourceGroupModule",
+        "virtualNetwork"
       ]
     },
-    {
+    "bastion": {
       "condition": "[equals(parameters('enableAzureBastion'), true())]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
@@ -14694,10 +14802,7 @@
         "mode": "Incremental",
         "parameters": {
           "virtualNetworkName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'vnet-module'), '2022-09-01').outputs.vnetName.value]"
-          },
-          "addressPrefix": {
-            "value": "[cidrSubnet(variables('templateSettings').vNetPrivatePrefix, 24, 2)]"
+            "value": "[reference('virtualNetwork').outputs.vnetName.value]"
           }
         },
         "template": {
@@ -14706,40 +14811,20 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "1059085130326215667"
+              "version": "0.34.44.8038",
+              "templateHash": "6705207540704363421"
             }
           },
           "parameters": {
-            "location": {
-              "type": "string",
-              "defaultValue": "[resourceGroup().location]",
-              "metadata": {
-                "description": "Optional. The location to deploy to."
-              }
-            },
             "virtualNetworkName": {
-              "type": "string"
-            },
-            "addressPrefix": {
               "type": "string"
             }
           },
           "resources": [
             {
-              "type": "Microsoft.Network/virtualNetworks/subnets",
-              "apiVersion": "2024-05-01",
-              "name": "[format('{0}/{1}', parameters('virtualNetworkName'), 'AzureBastionSubnet')]",
-              "properties": {
-                "addressPrefix": "[parameters('addressPrefix')]",
-                "privateEndpointNetworkPolicies": "Disabled",
-                "privateLinkServiceNetworkPolicies": "Enabled"
-              }
-            },
-            {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2022-09-01",
-              "name": "bastion",
+              "name": "bastion-module-avm",
               "properties": {
                 "expressionEvaluationOptions": {
                   "scope": "inner"
@@ -14752,25 +14837,8 @@
                   "virtualNetworkResourceId": {
                     "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
                   },
-                  "location": {
-                    "value": "[parameters('location')]"
-                  },
                   "skuName": {
-                    "value": "Basic"
-                  },
-                  "scaleUnits": {
-                    "value": 2
-                  },
-                  "disableCopyPaste": {
-                    "value": false
-                  },
-                  "publicIPAddressObject": {
-                    "value": {
-                      "allocationMethod": "Static",
-                      "name": "bastion-pip",
-                      "skuName": "Standard",
-                      "skuTier": "Regional"
-                    }
+                    "value": "Developer"
                   }
                 },
                 "template": {
@@ -16036,20 +16104,17 @@
                     }
                   }
                 }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'AzureBastionSubnet')]"
-              ]
+              }
             }
           ]
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/deployments', 'resourceGroupDeployment')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'vnet-module')]"
+        "resourceGroupModule",
+        "virtualNetwork"
       ]
     },
-    {
+    "firewall": {
       "condition": "[equals(parameters('outboundAccessMethod'), 'AzureFirewallProxy')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
@@ -16062,7 +16127,7 @@
         "mode": "Incremental",
         "parameters": {
           "virtualNetworkName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'vnet-module'), '2022-09-01').outputs.vnetName.value]"
+            "value": "[reference('virtualNetwork').outputs.vnetName.value]"
           },
           "addressPrefix": {
             "value": "[variables('firewallProxySettings').firewallAddressPrefix]"
@@ -16080,8 +16145,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "269805314411223022"
+              "version": "0.34.44.8038",
+              "templateHash": "8985985637248440210"
             }
           },
           "parameters": {
@@ -18738,11 +18803,11 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/deployments', 'resourceGroupDeployment')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'vnet-module')]"
+        "resourceGroupModule",
+        "virtualNetwork"
       ]
     }
-  ],
+  },
   "outputs": {
     "domainAdminAccount": {
       "type": "string",
