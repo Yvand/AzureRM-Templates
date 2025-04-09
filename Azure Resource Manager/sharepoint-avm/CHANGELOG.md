@@ -4,8 +4,8 @@
 
 ### Changed
 
-- DSC Configuration for all VMs
-  - Updated DSC module ADObjectPermissionEntry to 6.6.1 and remove all customizations on this module
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the April 2025 CU for SharePoint Subscription
 
 ## Enhancements & bug-fixes - Published in March 14, 2025
 
