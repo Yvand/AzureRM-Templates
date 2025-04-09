@@ -862,7 +862,6 @@ module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
   name: 'bastion-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName
-    addressPrefix: cidrSubnet(templateSettings.vNetPrivatePrefix, 24, 2)
   }
 }
 
