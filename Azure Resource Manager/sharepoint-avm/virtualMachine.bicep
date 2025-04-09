@@ -88,8 +88,6 @@ module vm_definition 'br/public:avm/res/compute/virtual-machine:0.12.2' = {
             privateIPAllocationMethod: privateIPAddress == null ? 'Dynamic' : 'Static'
             privateIPAddress: privateIPAddress
             pipConfiguration: pipConfiguration
-            enablePublicIP: empty(pipConfiguration) ? false : true
-            publicIPAddressResourceId: empty(pipConfiguration) ? null : null
           }
         ]
         nicSuffix: '-nic-01'
