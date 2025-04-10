@@ -1,8 +1,8 @@
 using './main.bicep'
 
 param location = 'france central'
-param sharePointVersion = 'Subscription-RTM'
-// param sharePointVersion = '2016'
+// param sharePointVersion = 'Subscription-RTM'
+param sharePointVersion = '2016'
 param frontEndServersCount = 0
 param adminUsername = 'yvand'
 param outboundAccessMethod = 'PublicIPAddress'

@@ -874,10 +874,10 @@ configuration ConfigureSPVM
             Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
             Realm                        = "urn:sharepoint:$($SharePointSitesAuthority)"
-            # MetadataEndPoint = "https://adfs.$DomainFQDN/adfs/.well-known/openid-configuration"
-            SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
-            SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
-            ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
+            MetadataEndPoint = "https://adfs.$DomainFQDN/adfs/.well-known/openid-configuration"
+            # SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
+            # SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
+            # ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
             UseWReplyParameter           = $true
 
             IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
