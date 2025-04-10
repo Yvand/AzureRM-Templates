@@ -1129,9 +1129,11 @@ configuration ConfigureSPVM
         SPTrustedIdentityTokenIssuer CreateSPTrust {
             Name                       = $DomainFQDN
             Description                = "Federation with $DomainFQDN"
-            RegisteredIssuerName       = "https://adfs.$DomainFQDN/adfs"
-            AuthorizationEndPointUri   = "https://adfs.$DomainFQDN/adfs/oauth2/authorize"
-            SignOutUrl                 = "https://adfs.$DomainFQDN/adfs/oauth2/logout"
+            MetadataEndPoint = "https://adfs.$DomainFQDN/adfs/.well-known/openid-configuration"
+
+            # RegisteredIssuerName       = "https://adfs.$DomainFQDN/adfs"
+            # AuthorizationEndPointUri   = "https://adfs.$DomainFQDN/adfs/oauth2/authorize"
+            # SignOutUrl                 = "https://adfs.$DomainFQDN/adfs/oauth2/logout"
             DefaultClientIdentifier    = $AdfsOidcIdentifier
             IdentifierClaim            = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
             ClaimsMappings             = @(
@@ -1148,9 +1150,9 @@ configuration ConfigureSPVM
                     IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/groupsid"
                 }
             )
-            SigningCertificateFilePath = "$SetupPath\Certificates\ADFS Signing.cer"
+            # SigningCertificateFilePath = "$SetupPath\Certificates\ADFS Signing.cer"
             ClaimProviderName          = $LdapcpSolutionName
-            UseWReplyParameter         = $true
+            # UseWReplyParameter         = $true
             Ensure                     = "Present" 
             DependsOn                  = "[Script]SetFarmPropertiesForOIDC", "[Script]InstallLdapcpFeatures"
             PsDscRunAsCredential       = $DomainAdminCredsQualified
