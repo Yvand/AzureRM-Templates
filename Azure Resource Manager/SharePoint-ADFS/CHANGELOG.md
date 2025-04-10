@@ -6,6 +6,7 @@
 
 - Template
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the April 2025 CU for SharePoint Subscription
+  - Parameter `enableAzureBastion` now deploys Azure Bastion Developer, which is available at no extra cost
 - DSC Configuration for all VMs
   - Updated DSC module ActiveDirectoryDsc to 6.6.2 and remove all customizations on this module
 - DSC Configuration for SharePoint SE

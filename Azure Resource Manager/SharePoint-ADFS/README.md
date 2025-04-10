@@ -65,9 +65,9 @@ The remote access to the virtual machines depends on the following parameters:
     - `No` (default): No rule is created, RDP traffic is blocked.
     - `*` or `Internet`: RDP traffic is allowed from everywhere.
     - CIDR notation (e.g. `192.168.99.0/24` or `2001:1234::/64`) or an IP address (e.g. `192.168.99.0` or `2001:1234::`): RDP traffic is allowed from the IP address / pattern specified.
-- Parameter `enable_azure_bastion`:
-  - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) with Basic SKU, to allow a secure remote access to virtual machines.
-  - if `false` (default): Service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is not created.
+- Parameter `enableAzureBastion`:
+  - if `true`: Deploy [Azure Bastion Developer](https://learn.microsoft.com/azure/bastion/quickstart-developer), to allow a secure remote access to virtual machines, at no extra cost.
+  - if `false` (default): [Azure Bastion Developer](https://learn.microsoft.com/azure/bastion/quickstart-developer) is not deployed.
 
 IMPORTANT: If you set parameter `outboundAccessMethod` to `AzureFirewallProxy`, you have to either enable Azure Bastion, or manually add a public IP address later, to be able to connect to a virtual machine.
 

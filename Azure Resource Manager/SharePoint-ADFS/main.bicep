@@ -1343,64 +1343,17 @@ resource vm_fe_autoshutdown 'Microsoft.DevTestLab/schedules@2018-09-15' = [
   }
 ]
 
-// Resources for Azure Bastion
-resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = if (enableAzureBastion == true) {
-  parent: virtual_network
-  name: 'AzureBastionSubnet'
-  properties: {
-    addressPrefix: '10.1.2.0/26'
-    privateEndpointNetworkPolicies: 'Disabled'
-    privateLinkServiceNetworkPolicies: 'Enabled'
-  }
-}
-
-resource bastion_pip 'Microsoft.Network/publicIPAddresses@2024-05-01' = if (enableAzureBastion == true) {
-  name: 'bastion-pip'
-  location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
-  properties: {
-    publicIPAllocationMethod: 'Static'
-    dnsSettings: {
-      domainNameLabel: toLower(replace('${resourceGroupNameFormatted}-Bastion', '_', '-'))
-    }
-  }
-}
-
+// Azure Bastion
 resource bastion_def 'Microsoft.Network/bastionHosts@2024-05-01' = if (enableAzureBastion == true) {
   name: 'bastion'
   location: location
   sku: {
-    name: 'Basic'
+    name: 'Developer'
   }
   properties: {
-    // Preparing for Developer SKU
-    // virtualNetwork: {
-    //   id: virtual_network.id
-    // }
-    scaleUnits: 2
-    enableTunneling: false
-    enableIpConnect: false
-    disableCopyPaste: false
-    enableShareableLink: false
-    enableKerberos: false
-    enableSessionRecording: false    
-    ipConfigurations: [
-      {
-        name: 'IpConf'
-        properties: {
-          privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: {
-            id: bastion_pip.id
-          }
-          subnet: {
-            id: bastion_subnet.id
-          }
-        }
-      }
-    ]
+    virtualNetwork: {
+      id: virtual_network.id
+    }
   }
 }
 
