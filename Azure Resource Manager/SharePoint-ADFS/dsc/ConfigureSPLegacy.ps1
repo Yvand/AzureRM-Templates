@@ -874,7 +874,9 @@ configuration ConfigureSPVM
             Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
             Realm                        = "urn:sharepoint:$($SharePointSitesAuthority)"
-            MetadataEndPoint             = "https://adfs.$DomainFQDN/FederationMetadata/2007-06/FederationMetadata.xml"
+            # MetadataEndPoint not set for SAML because it causes this error when user tries to sign-in: "The issuer of the token is not a trusted issuer."
+            # Most likely because it sets property RegisteredIssuerName to: http://adfs.contoso.local/adfs/services/trust@*
+            # MetadataEndPoint             = "https://adfs.$DomainFQDN/FederationMetadata/2007-06/FederationMetadata.xml"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
             SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
             ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
