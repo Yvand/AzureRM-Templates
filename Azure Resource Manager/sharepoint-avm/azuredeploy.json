@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "13846106417361565486"
+      "templateHash": "1397626462934685250"
     },
     "description": "Create a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).",
     "author": "Yvand"
@@ -3005,7 +3005,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "4338418720947843059"
+              "templateHash": "8657190537054785566"
             }
           },
           "parameters": {
@@ -3263,7 +3263,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.34.44.8038",
-                      "templateHash": "2262043373836368025"
+                      "templateHash": "13105916093025105823"
                     },
                     "name": "Virtual Machines",
                     "description": "This module deploys a Virtual Machine with one or multiple NICs and optionally one or multiple public IPs."
@@ -3319,6 +3319,26 @@
                           "nullable": true,
                           "metadata": {
                             "description": "Optional. Specifies the caching requirements."
+                          }
+                        },
+                        "diffDiskSettings": {
+                          "type": "object",
+                          "properties": {
+                            "placement": {
+                              "type": "string",
+                              "allowedValues": [
+                                "CacheDisk",
+                                "NvmeDisk",
+                                "ResourceDisk"
+                              ],
+                              "metadata": {
+                                "description": "Required. Specifies the ephemeral disk placement for the operating system disk."
+                              }
+                            }
+                          },
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specifies the ephemeral Disk Settings for the operating system disk."
                           }
                         },
                         "managedDisk": {
@@ -3471,6 +3491,23 @@
                       "metadata": {
                         "__bicep_export!": true,
                         "description": "The type describing a data disk."
+                      }
+                    },
+                    "publicKeyType": {
+                      "type": "object",
+                      "properties": {
+                        "keyData": {
+                          "type": "string",
+                          "metadata": {
+                            "description": "Required. Specifies the SSH public key data used to authenticate through ssh."
+                          }
+                        },
+                        "path": {
+                          "type": "string",
+                          "metadata": {
+                            "description": "Required. Specifies the full path on the created VM where ssh public key is stored. If the file already exists, the specified key is appended to the file."
+                          }
+                        }
                       }
                     },
                     "lockType": {
@@ -3742,11 +3779,15 @@
                         "description": "Optional. Specifies the priority for the virtual machine."
                       }
                     },
-                    "enableEvictionPolicy": {
-                      "type": "bool",
-                      "defaultValue": false,
+                    "evictionPolicy": {
+                      "type": "string",
+                      "defaultValue": "Deallocate",
+                      "allowedValues": [
+                        "Deallocate",
+                        "Delete"
+                      ],
                       "metadata": {
-                        "description": "Optional. Specifies the eviction policy for the low priority virtual machine. Will result in 'Deallocate' eviction policy."
+                        "description": "Optional. Specifies the eviction policy for the low priority virtual machine."
                       }
                     },
                     "maxPriceForLowPriorityVm": {
@@ -3779,6 +3820,9 @@
                     },
                     "publicKeys": {
                       "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/publicKeyType"
+                      },
                       "defaultValue": [],
                       "metadata": {
                         "description": "Optional. The list of SSH public keys used to authenticate with linux based VMs."
@@ -4266,7 +4310,7 @@
                       "condition": "[parameters('enableTelemetry')]",
                       "type": "Microsoft.Resources/deployments",
                       "apiVersion": "2024-03-01",
-                      "name": "[format('46d3xbcp.res.compute-virtualmachine.{0}.{1}', replace('0.12.3', '.', '-'), substring(uniqueString(deployment().name, parameters('location')), 0, 4))]",
+                      "name": "[format('46d3xbcp.res.compute-virtualmachine.{0}.{1}', replace('0.13.0', '.', '-'), substring(uniqueString(deployment().name, parameters('location')), 0, 4))]",
                       "properties": {
                         "mode": "Incremental",
                         "template": {
@@ -4349,6 +4393,7 @@
                             "name": "[coalesce(tryGet(parameters('osDisk'), 'name'), format('{0}-disk-os-01', parameters('name')))]",
                             "createOption": "[coalesce(tryGet(parameters('osDisk'), 'createOption'), 'FromImage')]",
                             "deleteOption": "[coalesce(tryGet(parameters('osDisk'), 'deleteOption'), 'Delete')]",
+                            "diffDiskSettings": "[if(empty(coalesce(tryGet(parameters('osDisk'), 'diffDiskSettings'), createObject())), null(), createObject('option', 'Local', 'placement', parameters('osDisk').diffDiskSettings.placement))]",
                             "diskSizeGB": "[parameters('osDisk').diskSizeGB]",
                             "caching": "[coalesce(tryGet(parameters('osDisk'), 'caching'), 'ReadOnly')]",
                             "managedDisk": {
@@ -4398,7 +4443,7 @@
                         "proximityPlacementGroup": "[if(not(empty(parameters('proximityPlacementGroupResourceId'))), createObject('id', parameters('proximityPlacementGroupResourceId')), null())]",
                         "virtualMachineScaleSet": "[if(not(empty(parameters('virtualMachineScaleSetResourceId'))), createObject('id', parameters('virtualMachineScaleSetResourceId')), null())]",
                         "priority": "[parameters('priority')]",
-                        "evictionPolicy": "[if(parameters('enableEvictionPolicy'), 'Deallocate', null())]",
+                        "evictionPolicy": "[if(not(equals('Regular', parameters('priority'))), parameters('evictionPolicy'), null())]",
                         "billingProfile": "[if(and(not(empty(parameters('priority'))), not(empty(parameters('maxPriceForLowPriorityVm')))), createObject('maxPrice', json(parameters('maxPriceForLowPriorityVm'))), null())]",
                         "host": "[if(not(empty(parameters('dedicatedHostId'))), createObject('id', parameters('dedicatedHostId')), null())]",
                         "licenseType": "[if(not(empty(parameters('licenseType'))), parameters('licenseType'), null())]",
@@ -8933,7 +8978,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "4338418720947843059"
+              "templateHash": "8657190537054785566"
             }
           },
           "parameters": {
@@ -9191,7 +9236,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.34.44.8038",
-                      "templateHash": "2262043373836368025"
+                      "templateHash": "13105916093025105823"
                     },
                     "name": "Virtual Machines",
                     "description": "This module deploys a Virtual Machine with one or multiple NICs and optionally one or multiple public IPs."
@@ -9247,6 +9292,26 @@
                           "nullable": true,
                           "metadata": {
                             "description": "Optional. Specifies the caching requirements."
+                          }
+                        },
+                        "diffDiskSettings": {
+                          "type": "object",
+                          "properties": {
+                            "placement": {
+                              "type": "string",
+                              "allowedValues": [
+                                "CacheDisk",
+                                "NvmeDisk",
+                                "ResourceDisk"
+                              ],
+                              "metadata": {
+                                "description": "Required. Specifies the ephemeral disk placement for the operating system disk."
+                              }
+                            }
+                          },
+                          "nullable": true,
+                          "metadata": {
+                            "description": "Optional. Specifies the ephemeral Disk Settings for the operating system disk."
                           }
                         },
                         "managedDisk": {
@@ -9399,6 +9464,23 @@
                       "metadata": {
                         "__bicep_export!": true,
                         "description": "The type describing a data disk."
+                      }
+                    },
+                    "publicKeyType": {
+                      "type": "object",
+                      "properties": {
+                        "keyData": {
+                          "type": "string",
+                          "metadata": {
+                            "description": "Required. Specifies the SSH public key data used to authenticate through ssh."
+                          }
+                        },
+                        "path": {
+                          "type": "string",
+                          "metadata": {
+                            "description": "Required. Specifies the full path on the created VM where ssh public key is stored. If the file already exists, the specified key is appended to the file."
+                          }
+                        }
                       }
                     },
                     "lockType": {
@@ -9670,11 +9752,15 @@
                         "description": "Optional. Specifies the priority for the virtual machine."
                       }
                     },
-                    "enableEvictionPolicy": {
-                      "type": "bool",
-                      "defaultValue": false,
+                    "evictionPolicy": {
+                      "type": "string",
+                      "defaultValue": "Deallocate",
+                      "allowedValues": [
+                        "Deallocate",
+                        "Delete"
+                      ],
                       "metadata": {
-                        "description": "Optional. Specifies the eviction policy for the low priority virtual machine. Will result in 'Deallocate' eviction policy."
+                        "description": "Optional. Specifies the eviction policy for the low priority virtual machine."
                       }
                     },
                     "maxPriceForLowPriorityVm": {
@@ -9707,6 +9793,9 @@
                     },
                     "publicKeys": {
                       "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/publicKeyType"
+                      },
                       "defaultValue": [],
                       "metadata": {
                         "description": "Optional. The list of SSH public keys used to authenticate with linux based VMs."
@@ -10194,7 +10283,7 @@
                       "condition": "[parameters('enableTelemetry')]",
                       "type": "Microsoft.Resources/deployments",
                       "apiVersion": "2024-03-01",
-                      "name": "[format('46d3xbcp.res.compute-virtualmachine.{0}.{1}', replace('0.12.3', '.', '-'), substring(uniqueString(deployment().name, parameters('location')), 0, 4))]",
+                      "name": "[format('46d3xbcp.res.compute-virtualmachine.{0}.{1}', replace('0.13.0', '.', '-'), substring(uniqueString(deployment().name, parameters('location')), 0, 4))]",
                       "properties": {
                         "mode": "Incremental",
                         "template": {
@@ -10277,6 +10366,7 @@
                             "name": "[coalesce(tryGet(parameters('osDisk'), 'name'), format('{0}-disk-os-01', parameters('name')))]",
                             "createOption": "[coalesce(tryGet(parameters('osDisk'), 'createOption'), 'FromImage')]",
                             "deleteOption": "[coalesce(tryGet(parameters('osDisk'), 'deleteOption'), 'Delete')]",
+                            "diffDiskSettings": "[if(empty(coalesce(tryGet(parameters('osDisk'), 'diffDiskSettings'), createObject())), null(), createObject('option', 'Local', 'placement', parameters('osDisk').diffDiskSettings.placement))]",
                             "diskSizeGB": "[parameters('osDisk').diskSizeGB]",
                             "caching": "[coalesce(tryGet(parameters('osDisk'), 'caching'), 'ReadOnly')]",
                             "managedDisk": {
@@ -10326,7 +10416,7 @@
                         "proximityPlacementGroup": "[if(not(empty(parameters('proximityPlacementGroupResourceId'))), createObject('id', parameters('proximityPlacementGroupResourceId')), null())]",
                         "virtualMachineScaleSet": "[if(not(empty(parameters('virtualMachineScaleSetResourceId'))), createObject('id', parameters('virtualMachineScaleSetResourceId')), null())]",
                         "priority": "[parameters('priority')]",
-                        "evictionPolicy": "[if(parameters('enableEvictionPolicy'), 'Deallocate', null())]",
+                        "evictionPolicy": "[if(not(equals('Regular', parameters('priority'))), parameters('evictionPolicy'), null())]",
                         "billingProfile": "[if(and(not(empty(parameters('priority'))), not(empty(parameters('maxPriceForLowPriorityVm')))), createObject('maxPrice', json(parameters('maxPriceForLowPriorityVm'))), null())]",
                         "host": "[if(not(empty(parameters('dedicatedHostId'))), createObject('id', parameters('dedicatedHostId')), null())]",
                         "licenseType": "[if(not(empty(parameters('licenseType'))), parameters('licenseType'), null())]",
