@@ -185,13 +185,13 @@ configuration ConfigureSPVM
         }
 
         Registry StartMenuLeft {
-            Key = "HKLM:\Default\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; ValueName = "TaskbarAl"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
+            Key = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; ValueName = "TaskbarAl"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
         }
         Registry EnableDarkTheme3 {
-            Key = "HKLM:\Default\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "SystemUsesLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
+            Key = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "SystemUsesLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
         }
         Registry EnableDarkTheme4 {
-            Key = "HKLM:\Default\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "AppsUseLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
+            Key = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "AppsUseLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
         }
 
         # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 1 (machine-wide)
