@@ -184,6 +184,16 @@ configuration ConfigureSPVM
             Key = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer"; ValueName = "ExplorerRibbonStartsMinimized"; ValueType = "DWORD"; ValueData = "4"; Force = $true; Ensure = "Present" 
         }
 
+        Registry StartMenuLeft {
+            Key = "HKLM:\Default\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; ValueName = "TaskbarAl"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
+        }
+        Registry EnableDarkTheme3 {
+            Key = "HKLM:\Default\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "SystemUsesLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
+        }
+        Registry EnableDarkTheme4 {
+            Key = "HKLM:\Default\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "AppsUseLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
+        }
+
         # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 1 (machine-wide)
         Registry OneDriveOIDC_PrioritizeOIDCOverLegacyAuthN {
             Key = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremOIDC"; ValueType = "DWORD"; ValueData = "1"; Ensure = "Present" 
@@ -549,12 +559,12 @@ configuration ConfigureSPVM
 
         # Enable dark theme
         Registry EnableDarkTheme1 {
-            Key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'; ValueName = 'AppsUseLightTheme'; ValueType = 'Dword'; ValueData = '0'; Force = $true;
-            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = 'Present' 
+            Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "AppsUseLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true;
+            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present"
         }
         Registry EnableDarkTheme2 {
-            Key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'; ValueName = 'SystemUsesLightTheme'; ValueType = 'Dword'; ValueData = '0'; Force = $true;
-            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = 'Present' 
+            Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "SystemUsesLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true;
+            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present"
         }
 
         # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 2 (user-specific settings)

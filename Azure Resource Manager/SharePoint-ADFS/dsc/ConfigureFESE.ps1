@@ -525,12 +525,12 @@ configuration ConfigureFEVM
 
         # Enable dark theme
         Registry EnableDarkTheme1 {
-            Key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'; ValueName = 'AppsUseLightTheme'; ValueType = 'Dword'; ValueData = '0'; Force = $true;
-            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = 'Present' 
+            Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "AppsUseLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true;
+            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present"
         }
         Registry EnableDarkTheme2 {
-            Key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'; ValueName = 'SystemUsesLightTheme'; ValueType = 'Dword'; ValueData = '0'; Force = $true;
-            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = 'Present' 
+            Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "SystemUsesLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true;
+            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present"
         }
         
         # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 2 (user-specific settings)
