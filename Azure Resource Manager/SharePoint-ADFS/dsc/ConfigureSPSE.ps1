@@ -1128,6 +1128,8 @@ configuration ConfigureSPVM
             Description                = "Federation with $DomainFQDN"
             DefaultClientIdentifier    = $AdfsOidcIdentifier
             MetadataEndPoint = "https://adfs.$DomainFQDN/adfs/.well-known/openid-configuration"
+            UseStateToRedirect = $true
+            OidcScope = "openid profile email groups"
             # RegisteredIssuerName       = "https://adfs.$DomainFQDN/adfs"
             # AuthorizationEndPointUri   = "https://adfs.$DomainFQDN/adfs/oauth2/authorize"
             # SignOutUrl                 = "https://adfs.$DomainFQDN/adfs/oauth2/logout"
