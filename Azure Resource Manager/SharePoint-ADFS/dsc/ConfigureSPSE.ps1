@@ -105,9 +105,6 @@ configuration ConfigureSPVM
         WindowsFeature AddADTools {
             Name = "RSAT-AD-Tools"; Ensure = "Present"; 
         }
-        WindowsFeature AddADPowerShell {
-            Name = "RSAT-AD-PowerShell"; Ensure = "Present"; 
-        }
         WindowsFeature AddDnsTools {
             Name = "RSAT-DNS-Server"; Ensure = "Present"; 
         }
@@ -184,26 +181,16 @@ configuration ConfigureSPVM
             Key = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer"; ValueName = "ExplorerRibbonStartsMinimized"; ValueType = "DWORD"; ValueData = "4"; Force = $true; Ensure = "Present" 
         }
 
-        Registry StartMenuLeft {
-            Key = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; ValueName = "TaskbarAl"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
-        }
-        Registry EnableDarkTheme3 {
-            Key = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "SystemUsesLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
-        }
-        Registry EnableDarkTheme4 {
-            Key = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "AppsUseLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present" 
-        }
-
-        # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 1 (machine-wide)
-        Registry OneDriveOIDC_PrioritizeOIDCOverLegacyAuthN {
-            Key = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremOIDC"; ValueType = "DWORD"; ValueData = "1"; Ensure = "Present" 
-        }
-        Registry OneDriveOIDC_PrioritizeSPSOverSPO {
-            Key = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremPrioritization"; ValueType = "DWORD"; ValueData = "1"; Ensure = "Present" 
-        }
-        Registry OneDriveOIDC_SPSUrl {
-            Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "https://$SharePointSitesAuthority.$DomainFQDN"; Ensure = "Present" 
-        }
+        # # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 1 (machine-wide)
+        # Registry OneDriveOIDC_PrioritizeOIDCOverLegacyAuthN {
+        #     Key = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremOIDC"; ValueType = "DWORD"; ValueData = "1"; Ensure = "Present" 
+        # }
+        # Registry OneDriveOIDC_PrioritizeSPSOverSPO {
+        #     Key = "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremPrioritization"; ValueType = "DWORD"; ValueData = "1"; Ensure = "Present" 
+        # }
+        # Registry OneDriveOIDC_SPSUrl {
+        #     Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "https://$SharePointSitesAuthority.$DomainFQDN"; Ensure = "Present" 
+        # }
         
         SqlAlias AddSqlAlias {
             Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort = 1433 
@@ -557,29 +544,19 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present"
         }
 
-        # Enable dark theme
-        Registry EnableDarkTheme1 {
-            Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "AppsUseLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true;
-            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present"
-        }
-        Registry EnableDarkTheme2 {
-            Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; ValueName = "SystemUsesLightTheme"; ValueType = "DWORD"; ValueData = "0"; Force = $true;
-            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present"
-        }
-
-        # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 2 (user-specific settings)
-        Registry OneDriveOIDC_EnableOIDCForSPS {
-            Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInRampOverrides"; ValueName = "2086"; ValueType = "DWORD"; ValueData = "1"
-            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
-        }
-        Registry OneDriveOIDC_EnableOneAuthorSPS {
-            Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInRampOverrides"; ValueName = "2042"; ValueType = "DWORD"; ValueData = "1"
-            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
-        }
-        Registry OneDriveOIDC_IniFileNamingForEmailAndUpn {
-            Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInSettingsOverrides"; ValueName = "204"; ValueType = "String"; ValueData = "-1835"
-            PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
-        }
+        # # Set registry keys to allow OneDrive NGSC to connect to SPS using OIDC - part 2 (user-specific settings)
+        # Registry OneDriveOIDC_EnableOIDCForSPS {
+        #     Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInRampOverrides"; ValueName = "2086"; ValueType = "DWORD"; ValueData = "1"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
+        # }
+        # Registry OneDriveOIDC_EnableOneAuthorSPS {
+        #     Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInRampOverrides"; ValueName = "2042"; ValueType = "DWORD"; ValueData = "1"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
+        # }
+        # Registry OneDriveOIDC_IniFileNamingForEmailAndUpn {
+        #     Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInSettingsOverrides"; ValueName = "204"; ValueType = "String"; ValueData = "-1835"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
+        # }
 
         # This script is still needed
         Script CreateWSManSPNsIfNeeded {

@@ -626,10 +626,7 @@
 
         WindowsFeature AddADTools {
             Name = "RSAT-AD-Tools"; Ensure = "Present"; 
-        }
-        WindowsFeature AddADPowerShell {
-            Name = "RSAT-AD-PowerShell"; Ensure = "Present"; 
-        }
+        }        
         WindowsFeature AddDnsTools {
             Name = "RSAT-DNS-Server"; Ensure = "Present"; 
         }
