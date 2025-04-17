@@ -53,7 +53,7 @@ param autoShutdownTime string = '1900'
 
 var modulePrefix = 'virtualMachine'
 
-module vm_definition 'br/public:avm/res/compute/virtual-machine:0.13.0' = {
+module vm_definition 'br/public:avm/res/compute/virtual-machine:0.13.1' = {
   name: '${modulePrefix}-${virtualMachineName}-module-avm'
   scope: resourceGroup()
   params: {
