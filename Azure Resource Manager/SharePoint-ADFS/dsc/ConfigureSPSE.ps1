@@ -1127,13 +1127,13 @@ configuration ConfigureSPVM
             Name                       = $DomainFQDN
             Description                = "Federation with $DomainFQDN"
             DefaultClientIdentifier    = $AdfsOidcIdentifier
-            MetadataEndPoint = "https://adfs.$DomainFQDN/adfs/.well-known/openid-configuration"
+            # MetadataEndPoint = "https://adfs.$DomainFQDN/adfs/.well-known/openid-configuration"
             UseStateToRedirect = $true
             OidcScope = "openid profile email groups"
-            # RegisteredIssuerName       = "https://adfs.$DomainFQDN/adfs"
-            # AuthorizationEndPointUri   = "https://adfs.$DomainFQDN/adfs/oauth2/authorize"
-            # SignOutUrl                 = "https://adfs.$DomainFQDN/adfs/oauth2/logout"
-            # SigningCertificateFilePath = "$SetupPath\Certificates\ADFS Signing.cer"
+            RegisteredIssuerName       = "https://adfs.$DomainFQDN/adfs"
+            AuthorizationEndPointUri   = "https://adfs.$DomainFQDN/adfs/oauth2/authorize"
+            SignOutUrl                 = "https://adfs.$DomainFQDN/adfs/oauth2/logout"
+            SigningCertificateFilePath = "$SetupPath\Certificates\ADFS Signing.cer"
 
             IdentifierClaim            = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
             ClaimsMappings             = @(
