@@ -37,7 +37,7 @@ configuration ConfigureSPVM
     Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.2.1
     
     # Init
-    [String] $InterfaceAlias = (Get-NetAdapter| Where-Object InterfaceDescription -Like "Microsoft Hyper-V Network Adapter*" | Select-Object -First 1).Name
+    [String] $InterfaceAlias = (Get-NetAdapter | Where-Object InterfaceDescription -Like "Microsoft Hyper-V Network Adapter*" | Select-Object -First 1).Name
     [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
@@ -451,7 +451,8 @@ configuration ConfigureSPVM
                 $shares = [WMICLASS]"WIN32_Share"
                 if ($shares.Create($foldername, $sharename, 0).ReturnValue -ne 0) {
                     Write-Verbose -Verbose -Message "Failed to create file share '$sharename' for folder '$foldername'"
-                } else {
+                }
+                else {
                     Write-Verbose -Verbose -Message "Created file share '$sharename' for folder '$foldername'"
                 }
                 # }
@@ -462,7 +463,8 @@ configuration ConfigureSPVM
                 $shareName = "SPLOGS"
                 if (!(Get-WmiObject Win32_Share -Filter "name='$sharename'")) {
                     return $false
-                } else {
+                }
+                else {
                     return $true
                 }
             }
@@ -914,7 +916,8 @@ configuration ConfigureSPVM
                 $claimsProviderName = $using:LdapcpSolutionName
                 if ($null -eq (Get-SPClaimProvider -Identity $claimsProviderName -ErrorAction SilentlyContinue)) {
                     return $false
-                } else {
+                }
+                else {
                     return $true
                 }
             }
@@ -1124,19 +1127,17 @@ configuration ConfigureSPVM
         }
 
         SPTrustedIdentityTokenIssuer CreateSPTrust {
-            Name                       = $DomainFQDN
-            Description                = "Federation with $DomainFQDN"
-            DefaultClientIdentifier    = $AdfsOidcIdentifier
-            # MetadataEndPoint = "https://adfs.$DomainFQDN/adfs/.well-known/openid-configuration"
-            UseStateToRedirect = $true
-            OidcScope = "openid profile email groups"
-            RegisteredIssuerName       = "https://adfs.$DomainFQDN/adfs"
-            AuthorizationEndPointUri   = "https://adfs.$DomainFQDN/adfs/oauth2/authorize"
-            SignOutUrl                 = "https://adfs.$DomainFQDN/adfs/oauth2/logout"
-            SigningCertificateFilePath = "$SetupPath\Certificates\ADFS Signing.cer"
+            Name                    = $DomainFQDN
+            Description             = "Federation with $DomainFQDN"
+            DefaultClientIdentifier = $AdfsOidcIdentifier
+            MetadataEndPoint        = "https://adfs.$DomainFQDN/adfs/.well-known/openid-configuration"
+            # RegisteredIssuerName       = "https://adfs.$DomainFQDN/adfs"
+            # AuthorizationEndPointUri   = "https://adfs.$DomainFQDN/adfs/oauth2/authorize"
+            # SignOutUrl                 = "https://adfs.$DomainFQDN/adfs/oauth2/logout"
+            # SigningCertificateFilePath = "$SetupPath\Certificates\ADFS Signing.cer"
 
-            IdentifierClaim            = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
-            ClaimsMappings             = @(
+            IdentifierClaim         = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
+            ClaimsMappings          = @(
                 MSFT_SPClaimTypeMapping {
                     Name              = "upn"
                     IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
@@ -1150,10 +1151,10 @@ configuration ConfigureSPVM
                     IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/groupsid"
                 }
             )
-            ClaimProviderName          = $LdapcpSolutionName
-            Ensure                     = "Present" 
-            DependsOn                  = "[Script]SetFarmPropertiesForOIDC", "[Script]InstallLdapcpFeatures"
-            PsDscRunAsCredential       = $DomainAdminCredsQualified
+            ClaimProviderName       = $LdapcpSolutionName
+            Ensure                  = "Present" 
+            DependsOn               = "[Script]SetFarmPropertiesForOIDC", "[Script]InstallLdapcpFeatures"
+            PsDscRunAsCredential    = $DomainAdminCredsQualified
         }
 
 
@@ -1174,12 +1175,13 @@ configuration ConfigureSPVM
         Script ConfigureLDAPCP {
             SetScript            = 
             {
-               try {
-                  Add-Type -AssemblyName "Yvand.LDAPCPSE, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
-                  [Yvand.LdapClaimsProvider.LDAPCPSE]::CreateConfiguration()
-               } catch {
-                  Write-Verbose -Verbose -Message "Could not create LDAPCP configuration: $_"
-               }
+                try {
+                    Add-Type -AssemblyName "Yvand.LDAPCPSE, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
+                    [Yvand.LdapClaimsProvider.LDAPCPSE]::CreateConfiguration()
+                }
+                catch {
+                    Write-Verbose -Verbose -Message "Could not create LDAPCP configuration: $_"
+                }
             }
             GetScript            =  
             {
@@ -1190,18 +1192,19 @@ configuration ConfigureSPVM
             {
                 # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
                 try {
-                  Add-Type -AssemblyName "Yvand.LDAPCPSE, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
-                  $config = [Yvand.LdapClaimsProvider.LDAPCPSE]::GetConfiguration()
-                  if ($config -eq $null) {
-                     return $false
-                  }
-                  else {
-                     return $true
-                  }
-               } catch {
-                  Write-Verbose -Verbose -Message "Could not test if LDAPCP configuration exists: $_"
-                  return $true # Skip set if test fails
-               }
+                    Add-Type -AssemblyName "Yvand.LDAPCPSE, Version=1.0.0.0, Culture=neutral, PublicKeyToken=80be731bc1a1a740"
+                    $config = [Yvand.LdapClaimsProvider.LDAPCPSE]::GetConfiguration()
+                    if ($config -eq $null) {
+                        return $false
+                    }
+                    else {
+                        return $true
+                    }
+                }
+                catch {
+                    Write-Verbose -Verbose -Message "Could not test if LDAPCP configuration exists: $_"
+                    return $true # Skip set if test fails
+                }
             }
             DependsOn            = "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -1482,10 +1485,12 @@ configuration ConfigureSPVM
                         }
                     }
                     Write-Verbose -Verbose -Message "Finished configuration for ConfigureUPAClaimProvider"
-                } catch [ Microsoft.Office.Server.UserProfiles.PartitionNotFoundException ] {
+                }
+                catch [ Microsoft.Office.Server.UserProfiles.PartitionNotFoundException ] {
                     Write-Verbose -Verbose -Message "Caught PartitionNotFoundException, likely caused by Execute() on LanguageSynchronizationJob. Started after enabling secure SQL connection, which became necessary with Subscription 25H1"
                     Write-Verbose -Verbose -Message "Exception message: $($_.Exception.Message)"
-                } catch {
+                }
+                catch {
                     Write-Verbose -Verbose -Message "An error occurred in ConfigureUPAClaimProvider.Set: $($_.Exception.Message)"
                 }
             }
