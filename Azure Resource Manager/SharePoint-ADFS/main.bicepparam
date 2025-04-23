@@ -1,12 +1,11 @@
 using './main.bicep'
 
-param location = 'france central'
 param sharePointVersion = 'Subscription-Latest'
 // param sharePointVersion = '2016'
 param frontEndServersCount = 0
 param adminUsername = 'yvand'
-// param outboundAccessMethod = 'PublicIPAddress'
-param outboundAccessMethod = 'AzureFirewallProxy'
+param outboundAccessMethod = 'PublicIPAddress'
+// param outboundAccessMethod = 'AzureFirewallProxy'
 param addNameToPublicIpAddresses = 'SharePointVMsOnly'
 param rdpTrafficRule = 'No'
 param enableAzureBastion = true

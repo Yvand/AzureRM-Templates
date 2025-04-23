@@ -1,7 +1,7 @@
 #Requires -Modules @{ ModuleName="Az.Resources"; ModuleVersion="7.8.0" } # min version to fix https://github.com/Azure/azure-powershell/issues/26752
 
 param(
-    [string] $resourceGroupLocation = "francecentral",
+    [string] $resourceGroupLocation = "france central",
     [string] $resourceGroupName,
     [string] $password
 )
@@ -21,7 +21,7 @@ if ($null -eq (Get-AzResourceGroup -ResourceGroupName $resourceGroupName -ErrorA
 
 Write-Host "Deploying '$deploymentName' to '$resourceGroupName' in '$resourceGroupLocation'" -ForegroundColor Green
 $startTime = $(Get-Date)
-#az deployment group create --name $deploymentName --resource-group $resourceGroupName --parameters $templateParametersFileName --parameters adminPassword="$password" otherAccountsPassword="$password"
+# az deployment group create --name $deploymentName --resource-group $resourceGroupName --parameters $templateParametersFileName --parameters adminPassword="$password" otherAccountsPassword="$password"
 New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroupName -TemplateParameterFile $templateParametersFileName -Verbose `
     -adminPassword $securePassword -otherAccountsPassword $securePassword
 $elapsedTime = New-TimeSpan $startTime $(get-date)
