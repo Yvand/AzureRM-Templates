@@ -20,7 +20,6 @@
 - Template
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the March 2025 CU for SharePoint Subscription
   - Added value `Subscription-25H1` to parameter `sharePointVersion`, to install SharePoint Subscription version 25H1
-  - Enabled accelerated networking on all the virtual machines
   - Fixed the Bicep warnings by using the safe access (.?) operator
 - DSC Configuration for all VMs
   - Replace Write-Host with Write-Verbose, to print the log nessage in both the log file and the console
@@ -660,7 +659,7 @@
 
 ## March 2017.3 update
 
-- Azure key vault and its secrets are now created by the deployment script itself, removing the dependency to the PowerShell deployment script
+- Azure Key Vault and its secrets are now created by the deployment script itself, removing the dependency to the PowerShell deployment script
 - Removed nested templates
 
 ## March 2017.2 update

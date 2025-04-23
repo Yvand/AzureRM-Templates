@@ -10,10 +10,19 @@ $deploymentName = "sharepoint-{0:yyMMdd-HHmm}" -f (Get-Date)
 $templateParametersFileName = 'main.bicepparam'
 $securePassword = $password | ConvertTo-SecureString -AsPlainText -Force
 
+# Create the resource group if needed
+if ($null -eq (Get-AzResourceGroup -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue)) {
+    New-AzResourceGroup `
+        -Name $resourceGroupName `
+        -Location $resourceGroupLocation `
+        -Verbose -Force
+    Write-Host "Created resource group $resourceGroupName." -ForegroundColor Green
+}
+
 Write-Host "Deploying '$deploymentName' to '$resourceGroupName' in '$resourceGroupLocation'" -ForegroundColor Green
 $startTime = $(Get-Date)
-#az deployment sub create --name $deploymentName --location $resourceGroupLocation --parameters $templateParametersFileName --parameters resourceGroupName="$resourceGroupName" adminPassword="$password" otherAccountsPassword="$password"
-New-AzDeployment -Name $deploymentName -Location $resourceGroupLocation -TemplateParameterFile $templateParametersFileName -Verbose `
-    -resourceGroupName $resourceGroupName -adminPassword $securePassword -otherAccountsPassword $securePassword
+#az deployment group create --name $deploymentName --resource-group $resourceGroupName --parameters $templateParametersFileName --parameters adminPassword="$password" otherAccountsPassword="$password"
+New-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroupName -TemplateParameterFile $templateParametersFileName -Verbose `
+    -adminPassword $securePassword -otherAccountsPassword $securePassword
 $elapsedTime = New-TimeSpan $startTime $(get-date)
 Write-Host "Deployment completed successfully in $($elapsedTime.ToString("h\hmm\m\n"))." -ForegroundColor Green

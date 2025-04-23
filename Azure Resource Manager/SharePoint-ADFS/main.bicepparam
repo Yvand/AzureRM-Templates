@@ -1,7 +1,6 @@
 using './main.bicep'
 
 param location = 'france central'
-param resourceGroupName = 'PLACEHOLDER'
 param sharePointVersion = 'Subscription-Latest'
 // param sharePointVersion = '2016'
 param frontEndServersCount = 0

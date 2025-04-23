@@ -1,19 +1,9 @@
-targetScope = 'subscription'
+targetScope = 'resourceGroup'
 metadata description = 'Create a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).'
 metadata author = 'Yvand'
 
 @description('Location for all the resources.')
-param location string = deployment().location
-
-@description('Optional. The name of the resource group to deploy for testing purposes.')
-@maxLength(90)
-param resourceGroupName string
-
-// @description('Optional. A token to inject into the name of each resource.')
-// param namePrefix string = '_namePrefix_'
-
-// @description('Optional. A short identifier for the kind of deployment. Should be kept short to not run into resource-name length-constraints.')
-// param serviceShort string = 'cvmwinguest'
+param location string = resourceGroup().location
 
 @description('Version of the SharePoint farm to create.')
 @allowed([
@@ -286,16 +276,16 @@ param vmSharePointSize string = 'Standard_B4as_v2'
 ])
 param vmSharePointStorage string = 'StandardSSD_LRS'
 
-@description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
+@description('The base URI where artifacts required by this template are located including a trailing \'/\'')
 param _artifactsLocation string = deployment().properties.templateLink.uri
 
-@description('The sasToken required to access _artifactsLocation. When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.')
 @secure()
+@description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
 param _artifactsLocationSasToken string = ''
 
 // Local variables
 var resourceGroupNameFormatted = replace(
-  replace(replace(replace(resourceGroupName, '.', '-'), '(', '-'), ')', '-'),
+  replace(replace(replace(resourceGroup().name, '.', '-'), '(', '-'), ')', '-'),
   '_',
   '-'
 )
@@ -745,23 +735,8 @@ var frontendVirtualMachinesSettings = {
   }
 }
 
-module resourceGroupModule 'br/public:avm/res/resources/resource-group:0.4.1' = {
-  name: 'resourceGroupDeployment'
-  params: {
-    name: resourceGroupName
-    location: location
-  }
-}
-
-resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-11-01' existing = {
-  dependsOn: [
-    resourceGroupModule
-  ]
-  name: resourceGroupName
-}
-
 module virtualNetwork 'virtualNetwork.bicep' = {
-  scope: resourceGroup
+  scope: resourceGroup()
   name: 'vnet-module'
   params: {
     location: location
@@ -792,7 +767,7 @@ module virtualNetwork 'virtualNetwork.bicep' = {
 //@sys.batchSize(3)
 module baseVirtualMachinesModule 'virtualMachine.bicep' = [
   for baseVirtualMachine in baseVirtualMachines: {
-    scope: resourceGroup
+    scope: resourceGroup()
     name: 'virtualMachine-${baseVirtualMachine.virtualMachineSettings.virtualMachineName}-module'
     params: {
       location: location
@@ -819,7 +794,7 @@ module baseVirtualMachinesModule 'virtualMachine.bicep' = [
 
 module frontends 'virtualMachine.bicep' = [
   for index in range(0, frontEndServersCount): {
-    scope: resourceGroup
+    scope: resourceGroup()
     name: 'virtualMachine-FE-${index}-module'
     params: {
       location: location
@@ -858,7 +833,7 @@ module frontends 'virtualMachine.bicep' = [
 ]
 
 module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
-  scope: resourceGroup
+  scope: resourceGroup()
   name: 'bastion-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName
@@ -866,7 +841,7 @@ module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
 }
 
 module firewall 'firewall.bicep' = if (outboundAccessMethod == 'AzureFirewallProxy') {
-  scope: resourceGroup
+  scope: resourceGroup()
   name: 'firewall-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName
