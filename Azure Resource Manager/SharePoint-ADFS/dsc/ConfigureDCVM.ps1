@@ -12,8 +12,8 @@
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds
     )
 
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.2
-    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.0
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.1.0
     Import-DscResource -ModuleName ActiveDirectoryCSDsc -ModuleVersion 5.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
