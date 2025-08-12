@@ -50,6 +50,8 @@ param increaseDscQuota bool = true
 
 param timeZone string = 'Romance Standard Time'
 param autoShutdownTime string = '1900'
+@description('Tags to apply on the resources.')
+param tags object
 
 var modulePrefix = 'virtualMachine'
 
@@ -57,6 +59,7 @@ module vm_definition 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
   name: '${modulePrefix}-${virtualMachineName}-module-avm'
   scope: resourceGroup()
   params: {
+    tags: tags
     location: resourceGroup().location
     name: 'vm-${virtualMachineName}'
     computerName: virtualMachineName
@@ -65,8 +68,10 @@ module vm_definition 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
     imageReference: virtualMachineImageReference
     vmSize: virtualMachineSize
     zone: 0
-    encryptionAtHost: false
     securityType: virtualMachineSecurityType
+    encryptionAtHost: false
+    secureBootEnabled: virtualMachineSecurityType == 'TrustedLaunch' ? true : false
+    vTpmEnabled: virtualMachineSecurityType == 'TrustedLaunch' ? true : false
     osType: 'Windows'
     licenseType: licenseType
     timeZone: timeZone

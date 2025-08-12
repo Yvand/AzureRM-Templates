@@ -5,6 +5,8 @@ param virtualNetworkName string
 param addressPrefix string
 param http_port int = 8080
 param https_port int = 8443
+@description('Tags to apply on the resources.')
+param tags object
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' existing = {
   scope: resourceGroup()
@@ -23,6 +25,7 @@ resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2024-07-01' =
 resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2024-07-01' = {
   name: 'firewall-policy-proxy'
   location: location
+  tags: tags
   properties: {
     sku: {
       tier: 'Standard'

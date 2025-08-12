@@ -283,6 +283,16 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
 param _artifactsLocationSasToken string = ''
 
+@description('Tags to apply on the resources.')
+param tags object = {}
+
+@description('Default tags applied on the resources. Default tags are: \'source\', \'createdOn\', and \'sharePointVersion\'.')
+param defaultTags object = {
+  source: 'azure-quickstart-templates:sharepoint-adfs'
+  createdOn: utcNow('yyyy-MM-dd')
+  sharePointVersion: sharePointVersion
+}
+
 // Local variables
 var resourceGroupNameFormatted = replace(
   replace(replace(replace(resourceGroup().name, '.', '-'), '(', '-'), ')', '-'),
@@ -419,6 +429,8 @@ var firewallProxySettings = {
   httpPort: 8080
   httpsPort: 8443
 }
+
+var allTags = union(tags, defaultTags)
 
 // Single-line PowerShell script that runs on the VMs to update their proxy settings, if Azure Firewall is enabled
 var firewall_set_proxy_script = 'param([string]$proxyIp, [string]$proxyHttpPort, [string]$proxyHttpsPort, [string]$localDomainFqdn) $proxy = "http={0}:{1};https={0}:{2}" -f $proxyIp, $proxyHttpPort, $proxyHttpsPort; $bypasslist = "*.{0};<local>" -f $localDomainFqdn; netsh winhttp set proxy proxy-server=$proxy bypass-list=$bypasslist; $proxyEnabled = 1; New-ItemProperty -Path "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" -Name "ProxySettingsPerUser" -PropertyType DWORD -Value 0 -Force; $proxyBytes = [system.Text.Encoding]::ASCII.GetBytes($proxy); $bypassBytes = [system.Text.Encoding]::ASCII.GetBytes($bypasslist); $defaultConnectionSettings = [byte[]]@(@(70, 0, 0, 0, 0, 0, 0, 0, $proxyEnabled, 0, 0, 0, $proxyBytes.Length, 0, 0, 0) + $proxyBytes + @($bypassBytes.Length, 0, 0, 0) + $bypassBytes + @(1..36 | % { 0 })); $registryPaths = @("HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"); foreach ($registryPath in $registryPaths) { Set-ItemProperty -Path $registryPath -Name ProxyServer -Value $proxy; Set-ItemProperty -Path $registryPath -Name ProxyEnable -Value $proxyEnabled; Set-ItemProperty -Path $registryPath -Name ProxyOverride -Value $bypasslist; Set-ItemProperty -Path "$registryPath\\Connections" -Name DefaultConnectionSettings -Value $defaultConnectionSettings; } Bitsadmin /util /setieproxy localsystem MANUAL_PROXY $proxy $bypasslist;'
@@ -740,6 +752,7 @@ module virtualNetwork 'virtualNetwork.bicep' = {
   name: 'vnet-module'
   params: {
     location: location
+    tags: allTags
     virtualNetworkName: 'vnet'
     addressPrefix: templateSettings.vNetPrivatePrefix
     mainSubnetAddressPrefix: cidrSubnet(templateSettings.vNetPrivatePrefix, 24, 1)
@@ -771,6 +784,7 @@ module baseVirtualMachinesModule 'virtualMachine.bicep' = [
     name: 'virtualMachine-${baseVirtualMachine.virtualMachineSettings.virtualMachineName}-module'
     params: {
       location: location
+      tags: allTags
       adminPassword: adminPassword
       subnetResourceId: virtualNetwork.outputs.mainSubnetResourceId
       licenseType: enableHybridBenefitServerLicenses ? 'Windows_Server' : null
@@ -798,6 +812,7 @@ module frontends 'virtualMachine.bicep' = [
     name: 'virtualMachine-FE-${index}-module'
     params: {
       location: location
+      tags: allTags
       adminPassword: adminPassword
       subnetResourceId: virtualNetwork.outputs.mainSubnetResourceId
       licenseType: enableHybridBenefitServerLicenses ? 'Windows_Server' : null
@@ -837,6 +852,7 @@ module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
   name: 'bastion-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName
+    tags: allTags
   }
 }
 
@@ -845,6 +861,7 @@ module firewall 'firewall.bicep' = if (outboundAccessMethod == 'AzureFirewallPro
   name: 'firewall-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName
+    tags: allTags
     addressPrefix: firewallProxySettings.firewallAddressPrefix
     http_port: firewallProxySettings.httpPort
     https_port: firewallProxySettings.httpsPort
