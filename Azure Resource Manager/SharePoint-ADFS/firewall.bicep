@@ -79,7 +79,7 @@ resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollection
   }
 }
 
-module firewall 'br/public:avm/res/network/azure-firewall:0.6.1' = {
+module firewall 'br/public:avm/res/network/azure-firewall:0.8.0' = {
   name: 'firewall'
   params: {
     name: 'firewall'

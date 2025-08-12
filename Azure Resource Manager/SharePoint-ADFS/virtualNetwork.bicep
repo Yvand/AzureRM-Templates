@@ -15,16 +15,16 @@ param networkSecurityRules array
 @description('Tags to apply on the resources.')
 param tags object
 
-resource nsg_subnet_main 'Microsoft.Network/networkSecurityGroups@2024-07-01' = {
-  name: 'nsg-subnet-main'
-  location: location
-  properties: {
+module nsg_subnet_main 'br/public:avm/res/network/network-security-group:0.5.1' = {
+  name: 'nsg-subnet-main-deployment'
+  params: {
+    name: 'nsg-subnet-main'
+    location: location
     securityRules: networkSecurityRules
   }
 }
 
 module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' = {
-  scope: resourceGroup()
   name: '${virtualNetworkName}-module-avm'
   params: {
     addressPrefixes: [
@@ -38,7 +38,7 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' = {
         addressPrefix: mainSubnetAddressPrefix
         name: 'mainSubnet'
         defaultOutboundAccess: false
-        networkSecurityGroupResourceId: nsg_subnet_main.id
+        networkSecurityGroupResourceId: nsg_subnet_main.outputs.resourceId
       }
     ]
   }

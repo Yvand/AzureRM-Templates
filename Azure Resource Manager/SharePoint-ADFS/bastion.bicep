@@ -7,7 +7,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' existing 
   name: virtualNetworkName
 }
 
-module bastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = {
+module bastionHost 'br/public:avm/res/network/bastion-host:0.7.0' = {
   scope: resourceGroup()
   name: 'bastion-module-avm'
   params: {

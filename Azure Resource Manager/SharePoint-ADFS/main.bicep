@@ -748,7 +748,6 @@ var frontendVirtualMachinesSettings = {
 }
 
 module virtualNetwork 'virtualNetwork.bicep' = {
-  scope: resourceGroup()
   name: 'vnet-module'
   params: {
     location: location
@@ -780,7 +779,6 @@ module virtualNetwork 'virtualNetwork.bicep' = {
 //@sys.batchSize(3)
 module baseVirtualMachinesModule 'virtualMachine.bicep' = [
   for baseVirtualMachine in baseVirtualMachines: {
-    scope: resourceGroup()
     name: 'virtualMachine-${baseVirtualMachine.virtualMachineSettings.virtualMachineName}-module'
     params: {
       location: location
@@ -848,7 +846,6 @@ module frontends 'virtualMachine.bicep' = [
 ]
 
 module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
-  scope: resourceGroup()
   name: 'bastion-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName
@@ -857,7 +854,6 @@ module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
 }
 
 module firewall 'firewall.bicep' = if (outboundAccessMethod == 'AzureFirewallProxy') {
-  scope: resourceGroup()
   name: 'firewall-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName

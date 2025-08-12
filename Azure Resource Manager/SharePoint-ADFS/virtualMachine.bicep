@@ -55,7 +55,7 @@ param tags object
 
 var modulePrefix = 'virtualMachine'
 
-module vm_definition 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
+module vm_definition 'br/public:avm/res/compute/virtual-machine:0.17.0' = {
   name: '${modulePrefix}-${virtualMachineName}-module-avm'
   scope: resourceGroup()
   params: {
@@ -67,7 +67,7 @@ module vm_definition 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
     adminPassword: adminPassword
     imageReference: virtualMachineImageReference
     vmSize: virtualMachineSize
-    zone: 0
+    availabilityZone: -1
     securityType: virtualMachineSecurityType
     encryptionAtHost: false
     secureBootEnabled: virtualMachineSecurityType == 'TrustedLaunch' ? true : false
