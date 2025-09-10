@@ -8,6 +8,7 @@ param location string = resourceGroup().location
 @description('Version of the SharePoint farm to create.')
 @allowed([
   'Subscription-Latest'
+  'Subscription-25H2'
   'Subscription-25H1'
   'Subscription-24H2'
   'Subscription-24H1'
@@ -374,10 +375,18 @@ var sharePointSettings = {
       ]
     }
     {
+      Label: '25H2'
+      Packages: [
+        {
+          DownloadUrl: 'https://download.microsoft.com/download/0ae39b29-890d-428c-bcee-c93eeca2053b/uber-subscription-kb5002784-fullfile-x64-glb.exe'
+        }
+      ]
+    }
+    {
       Label: 'Latest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/0d0fac81-9f1b-4f9f-9269-0798f9e0666c/uber-subscription-kb5002709-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/0ae39b29-890d-428c-bcee-c93eeca2053b/uber-subscription-kb5002784-fullfile-x64-glb.exe'
         }
       ]
     }
@@ -875,6 +884,10 @@ output localAdminAccount string = environmentSettings.localAdminUserName
 //         : baseVirtualMachinesModule[i].outputs.virtualMachinePublicIP
 //     : null
 // ]
+
+// output vm_base_public_dns array = [for i in range(0, length(baseVirtualMachines)): {
+//   id: baseVirtualMachinesModule[i].outputs.id
+// }]
 
 // output vm_fe_public_dns array = [
 //   for i in range(0, frontEndServersCount - 1): (outboundAccessMethod == 'PublicIPAddress')
