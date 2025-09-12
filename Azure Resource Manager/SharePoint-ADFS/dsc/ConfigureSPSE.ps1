@@ -844,21 +844,6 @@ configuration ConfigureSPVM
             DependsOn                          = "[Script]WaitForSQL", "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[ADObjectPermissionEntry]GrantReplicatingDirectoryChanges", "[Script]CreateWSManSPNsIfNeeded"
         }
 
-        Script AddRequiredDatabasesPermissions {
-            SetScript            =
-            {
-                # https://learn.microsoft.com/en-us/sharepoint/security-for-sharepoint-server/plan-for-least-privileged-administration
-                # Required for slipstream installs with 2022-10 CU or greated
-                foreach ($db in Get-SPDatabase) {
-                    $db.GrantOwnerAccessToDatabaseAccount()
-                }
-            }
-            GetScript            = { }
-            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
-        }
-
         Script RestartSPTimerAfterCreateSPFarm {
             SetScript            =
             {
@@ -1566,6 +1551,22 @@ configuration ConfigureSPVM
             SiteUrl              = "http://$SharePointSitesAuthority/sites/AppCatalog"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateAppCatalog", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
+        }
+
+        # Move this op after all databases were created (instead of just after psconfig.exe as documented), but before other servers can join, to fix SQL permission errors thrown at step 10/10 in SPS config wizard, when installing a CU post-provisionning
+        Script AddRequiredDatabasesPermissions {
+            SetScript            =
+            {
+                # https://learn.microsoft.com/en-us/sharepoint/security-for-sharepoint-server/plan-for-least-privileged-administration
+                # Required for slipstream installs with 2022-10 CU or greater (and does not hurt to also do it in earlier versions)
+                foreach ($db in Get-SPDatabase) {
+                    $db.GrantOwnerAccessToDatabaseAccount()
+                }
+            }
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
         
         # This team site is tested by VM FE to wait before joining the farm, so it acts as a milestone and it should be created only when all SharePoint services are created
