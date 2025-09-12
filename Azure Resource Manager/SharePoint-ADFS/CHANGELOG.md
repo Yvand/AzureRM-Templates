@@ -8,6 +8,9 @@
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the September 2025 CU for SharePoint Subscription
   - Added value `Subscription-25H2` to parameter `sharePointVersion`, to install SharePoint Subscription version 25H2 (September 2025 CU)
 
+- All DSC configurations
+  - Updated DSC module **DnsServerDsc** from 3.0.0 to 3.0.1
+
 ## Enhancements & bug-fixes - Published in June 2, 2025
 
 ### Changed
