@@ -119,13 +119,13 @@ configuration ConfigureSPVM
         }
         
 
-        # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
-        xCredSSP CredSSPServer {
-            Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" 
-        }
-        xCredSSP CredSSPClient {
-            Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" 
-        }
+        # # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
+        # xCredSSP CredSSPServer {
+        #     Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" 
+        # }
+        # xCredSSP CredSSPClient {
+        #     Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" 
+        # }
 
         # Allow NTLM on HTTPS sites when site host name is different than the machine name - https://docs.microsoft.com/en-US/troubleshoot/windows-server/networking/accessing-server-locally-with-fqdn-cname-alias-denied
         Registry DisableLoopBackCheck {
