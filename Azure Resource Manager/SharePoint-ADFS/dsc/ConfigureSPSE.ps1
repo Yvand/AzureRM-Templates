@@ -132,35 +132,6 @@ configuration ConfigureSPVM
             Key = "HKLM:\System\CurrentControlSet\Control\Lsa"; ValueName = "DisableLoopbackCheck"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" 
         }
 
-        # # Enable TLS 1.2 - https://learn.microsoft.com/en-us/azure/active-directory/app-proxy/application-proxy-add-on-premises-application#tls-requirements
-        # # This allows xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405
-        # Registry EnableTLS12RegKey1 {
-        #     Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' 
-        # }
-        # Registry EnableTLS12RegKey2 {
-        #     Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'Enabled'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        # }
-        # Registry EnableTLS12RegKey3 {
-        #     Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' 
-        # }
-        # Registry EnableTLS12RegKey4 {
-        #     Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'Enabled'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        # }
-
-        # # Enable strong crypto by default for .NET Framework 4 applications - https://docs.microsoft.com/en-us/dotnet/framework/network-programming/tls#configuring-security-via-the-windows-registry
-        # Registry SchUseStrongCrypto {
-        #     Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        # }
-        # Registry SchUseStrongCrypto32 {
-        #     Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        # }
-        # Registry SystemDefaultTlsVersions {
-        #     Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        # }
-        # Registry SystemDefaultTlsVersions32 {
-        #     Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        # }
-
         Registry DisableIESecurityRegKey1 {
             Key = 'HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}'; ValueName = 'IsInstalled'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' 
         }
@@ -370,6 +341,7 @@ configuration ConfigureSPVM
                     Checksum        = if ($null -ne $package.Checksum) { $package.Checksum } else { $null }
                     MatchSource     = $false
                     DependsOn       = "[SPInstall]InstallBinaries"
+                    PsDscRunAsCredential = $DomainAdminCredsQualified;
                 }
 
                 Script "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename" {
@@ -402,6 +374,7 @@ configuration ConfigureSPVM
                     }
                     GetScript  = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                     DependsOn  = "[SPInstall]InstallBinaries"
+                    PsDscRunAsCredential = $DomainAdminCredsQualified;
                 }
 
                 # SPProductUpdate "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"

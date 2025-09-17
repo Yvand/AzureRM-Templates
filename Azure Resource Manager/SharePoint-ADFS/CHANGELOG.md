@@ -11,6 +11,12 @@
 - All DSC configurations
   - Updated DSC module **DnsServerDsc** from 3.0.0 to 3.0.1
 
+### Fixed
+
+- DSC Configuration for SharePoint SE
+  - Move script that runs GrantOwnerAccessToDatabaseAccount after all databases were created, and before any WFE server may connect to the farm, to fix SQL permission errors thrown at step 10/10 in SPS config wizard, when installing a CU post-provisionning
+  - Remove the explicit TLS settings, not required with Windows Server 2025
+
 ## Enhancements & bug-fixes - Published in June 2, 2025
 
 ### Changed
