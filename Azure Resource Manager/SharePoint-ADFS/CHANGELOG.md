@@ -7,10 +7,14 @@
 - Template
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the September 2025 CU for SharePoint Subscription
   - Added value `Subscription-25H2` to parameter `sharePointVersion`, to install SharePoint Subscription version 25H2 (September 2025 CU)
+  - Bumped AVM versions and updated outputs
 
 - All DSC configurations
   - Updated DSC module **DnsServerDsc** from 3.0.0 to 3.0.1
+
+- DSC Configurations for SharePoint
   - Removed Azure Data Studio (deprecated)
+  - Updated DSC module **SharePointDsc** from 5.6.0 to 5.7.0
 
 ### Fixed
 
