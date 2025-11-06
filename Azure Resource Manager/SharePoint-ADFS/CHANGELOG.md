@@ -10,6 +10,7 @@
 
 - All DSC configurations
   - Updated DSC module **DnsServerDsc** from 3.0.0 to 3.0.1
+  - Removed Azure Data Studio (deprecated)
 
 ### Fixed
 

@@ -264,13 +264,6 @@ configuration ConfigureSPVM
             DependsOn = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller InstallAzureDataStudio {
-            # Install takes about 40 secs
-            Name      = "azure-data-studio"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
-        }
-
         # if ($EnableAnalysis) {
         #     # This resource is only for analyzing dsc logs using a custom Python script
         #     cChocoPackageInstaller InstallPython
