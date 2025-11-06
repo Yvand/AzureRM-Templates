@@ -877,22 +877,12 @@ output domainAdminAccount string = '${substring(domainFqdn,0,indexOf(domainFqdn,
 output domainAdminAccountFormatForBastion string = '${adminUsername}@${domainFqdn}'
 output localAdminAccount string = environmentSettings.localAdminUserName
 
-// output vm_base_public_dns array = [
-//   for i in range(0, 2): (outboundAccessMethod == 'PublicIPAddress')
-//     ? baseVirtualMachinesModule[i].outputs.virtualMachinePublicDomainName != null
-//         ? baseVirtualMachinesModule[i].outputs.virtualMachinePublicDomainName
-//         : baseVirtualMachinesModule[i].outputs.virtualMachinePublicIP
-//     : null
-// ]
+output baseVirtualMachines_data array = [for i in range(0, 3): {
+  name: baseVirtualMachinesModule[i].outputs.name
+  publicIP: baseVirtualMachinesModule[i].outputs.publicIP
+}]
 
-// output vm_base_public_dns array = [for i in range(0, length(baseVirtualMachines)): {
-//   id: baseVirtualMachinesModule[i].outputs.id
-// }]
-
-// output vm_fe_public_dns array = [
-//   for i in range(0, frontEndServersCount - 1): (outboundAccessMethod == 'PublicIPAddress')
-//     ? addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
-//         ? frontends[i].outputs.virtualMachinePublicDomainName
-//         : frontends[i].outputs.virtualMachinePublicIP
-//     : null
-// ]
+output frontEnds_data array = [for i in range(0, frontEndServersCount): {
+  name: frontends[i].outputs.name
+  publicIP: frontends[i].outputs.publicIP
+}]
