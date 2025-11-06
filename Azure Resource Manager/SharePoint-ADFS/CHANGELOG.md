@@ -7,7 +7,9 @@
 - Template
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the September 2025 CU for SharePoint Subscription
   - Added value `Subscription-25H2` to parameter `sharePointVersion`, to install SharePoint Subscription version 25H2 (September 2025 CU)
-  - Bumped AVM versions and updated outputs
+  - Bumped versions of Bicep resources and [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/)
+  - Updated bicep module for virtual machines
+  - Updated outputs
 
 - All DSC configurations
   - Updated DSC module **DnsServerDsc** from 3.0.0 to 3.0.1
