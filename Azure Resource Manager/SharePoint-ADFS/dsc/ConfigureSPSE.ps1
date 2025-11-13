@@ -807,6 +807,7 @@ configuration ConfigureSPVM
             RunCentralAdmin                    = $true
             IsSingleInstance                   = "Yes"
             SkipRegisterAsDistributedCacheHost = $false
+            DatabaseConnectionEncryption       = "Optional" # required with 2025-08 PU+
             Ensure                             = "Present"
             DependsOn                          = "[Script]WaitForSQL", "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[ADObjectPermissionEntry]GrantReplicatingDirectoryChanges", "[Script]CreateWSManSPNsIfNeeded"
         }

@@ -20,13 +20,13 @@
 
 - DSC Configuration for SharePoint SE
   - Re-enabled setting property IsPeoplePickerSearchable on selected profile properties, for use by UPA claims provider
-  - Removed explicit TLS settings
+  - Remove the explicit TLS settings, not required with Windows Server 2025
+  - Added parameter DatabaseConnectionEncryption for resource SPFarm, required with  **SharePointDsc** 5.7.0 + 2025-08 PU+
 
 ### Fixed
 
 - DSC Configuration for SharePoint SE
   - Move script that runs GrantOwnerAccessToDatabaseAccount after all databases were created, and before any WFE server may connect to the farm, to fix SQL permission errors thrown at step 10/10 in SPS config wizard, when installing a CU post-provisionning
-  - Remove the explicit TLS settings, not required with Windows Server 2025
 
 ## Enhancements & bug-fixes - Published in June 2, 2025
 
