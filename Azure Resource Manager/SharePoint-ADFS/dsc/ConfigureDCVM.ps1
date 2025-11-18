@@ -252,10 +252,11 @@
         DnsServerAddress SetDNS {
             Address = '127.0.0.1' ; InterfaceAlias = $InterfaceAlias; AddressFamily = 'IPv4' 
         }
-        # IPAddress NewIPv4Address
-        # {
-        #     IPAddress = '10.1.1.4'; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPV4'
-        # }
+
+        PendingReboot CheckRebootBeforeCreateADForest {
+            Name      = "CheckRebootBeforeCreateADForest"
+            DependsOn = "[WindowsFeature]AddGroupPolicyPowerShellModule"
+        }
 
         ADDomain CreateADForest {
             DomainName                    = $DomainFQDN

@@ -21,7 +21,7 @@ configuration ConfigureFEVM
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.1.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.0 # Custom workaround on SPInstall
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.1
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.1.0 # Custom workaround on SqlSecureConnection
@@ -655,6 +655,7 @@ configuration ConfigureFEVM
             IsSingleInstance                   = "Yes"
             ServerRole                         = "WebFrontEnd"
             SkipRegisterAsDistributedCacheHost = $true
+            DatabaseConnectionEncryption       = "Optional" # required with 2025-08 PU+
             Ensure                             = "Present"
             DependsOn                          = "[Script]WaitToAvoidServersJoiningFarmSimultaneously"
         }

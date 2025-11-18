@@ -28,6 +28,10 @@
 - DSC Configuration for SharePoint SE
   - Move script that runs GrantOwnerAccessToDatabaseAccount after all databases were created, and before any WFE server may connect to the farm, to fix SQL permission errors thrown at step 10/10 in SPS config wizard, when installing a CU post-provisionning
 
+- DSC Configuration for DC
+  - Explicitly install the Windows feature "Group Policy Management Console (GPMC)", to ensure cmdlets *-GPO are installed
+  - Allow a reboot before running ADDomain, as it became necessary after installing the Windows feature "Group Policy Management Console (GPMC)"
+
 ## Enhancements & bug-fixes - Published in June 2, 2025
 
 ### Changed
