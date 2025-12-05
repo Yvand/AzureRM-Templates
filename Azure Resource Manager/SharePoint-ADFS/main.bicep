@@ -490,7 +490,7 @@ var baseVirtualMachines = [
             publicIpNameSuffix: '-pip-01'
             skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            availabilityZones: null
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmDCName}')
@@ -552,7 +552,7 @@ var baseVirtualMachines = [
             publicIpNameSuffix: '-pip-01'
             skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            availabilityZones: null
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSQLName}')
@@ -614,7 +614,7 @@ var baseVirtualMachines = [
             publicIpNameSuffix: '-pip-01'
             skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            availabilityZones: null
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSPName}')
@@ -837,7 +837,7 @@ module frontends 'virtualMachine.bicep' = [
             publicIpNameSuffix: '-pip-01'
             skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            availabilityZones: null
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmFEName}-${index}')
