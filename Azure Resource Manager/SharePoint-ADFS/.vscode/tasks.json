@@ -55,8 +55,8 @@
                 "sharepoint-avm",
                 "--parameters",
                 "main.bicepparam",
-                "adminPassword=${input:accountsPassword}",
-                "otherAccountsPassword=${input:accountsPassword}"
+                "adminPassword='${input:accountsPassword}'",
+                "otherAccountsPassword='${input:accountsPassword}'"
             ],
             "presentation": {
                 "reveal": "always",
@@ -82,11 +82,11 @@
                 "-TemplateParameterFile",
                 "main.bicepparam",
                 "-resourceGroupName",
-                "${input:resourceGroupName}",
+                "'${input:resourceGroupName}'",
                 "-adminPassword",
-                "${input:accountsPassword}",
+                "'${input:accountsPassword}'",
                 "-otherAccountsPassword",
-                "${input:accountsPassword}"
+                "'${input:accountsPassword}'"
             ],
             "presentation": {
                 "reveal": "always",
@@ -106,7 +106,7 @@
                 "-resourceGroupLocation",
                 "${input:resourceGroupLocation}",
                 "-password",
-                "${input:accountsPassword}"
+                "'${input:accountsPassword}'"
             ],
             "presentation": {
                 "reveal": "always",
