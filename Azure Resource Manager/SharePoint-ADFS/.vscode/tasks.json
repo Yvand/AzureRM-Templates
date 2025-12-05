@@ -4,6 +4,27 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "create resource group",
+            "type": "shell",
+            "command": "az",
+            "hide": true,
+            "args": [
+                "group",
+                "create",
+                "--name",
+                "'${input:resourceGroupName}'",
+                "--location",
+                "'${input:resourceGroupLocation}'"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true,
+                "focus": true
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "generate azuredeploy.json",
             "type": "shell",
             "command": "az",
@@ -26,18 +47,16 @@
             "command": "az",
             "args": [
                 "deployment",
-                "sub",
+                "group",
                 "create",
+                "--resource-group",
+                "'${input:resourceGroupName}'",
                 "--name",
                 "sharepoint-avm",
-                "--location",
-                "francecentral",
                 "--parameters",
                 "main.bicepparam",
-                "--parameters",
-                "resourceGroupName=${input:resourceGrouppName}",
-                "adminPassword=${input:accountsPassword}",
-                "otherAccountsPassword=${input:accountsPassword}"
+                "adminPassword='${input:accountsPassword}'",
+                "otherAccountsPassword='${input:accountsPassword}'"
             ],
             "presentation": {
                 "reveal": "always",
@@ -45,7 +64,10 @@
                 "clear": true,
                 "focus": true
             },
-            "problemMatcher": []
+            "problemMatcher": [],
+            "dependsOn": [
+                "create resource group"
+            ],
         },
         {
             "label": "deploy bicep template (PowerShell)",
@@ -60,11 +82,11 @@
                 "-TemplateParameterFile",
                 "main.bicepparam",
                 "-resourceGroupName",
-                "${input:resourceGrouppName}",
+                "'${input:resourceGroupName}'",
                 "-adminPassword",
-                "${input:accountsPassword}",
+                "'${input:accountsPassword}'",
                 "-otherAccountsPassword",
-                "${input:accountsPassword}"
+                "'${input:accountsPassword}'"
             ],
             "presentation": {
                 "reveal": "always",
@@ -80,9 +102,11 @@
             "command": "${workspaceFolder}/DeployTemplate.ps1",
             "args": [
                 "-resourceGroupName",
-                "${input:resourceGrouppName}",
+                "${input:resourceGroupName}",
+                "-resourceGroupLocation",
+                "${input:resourceGroupLocation}",
                 "-password",
-                "${input:accountsPassword}"
+                "'${input:accountsPassword}'"
             ],
             "presentation": {
                 "reveal": "always",
@@ -125,7 +149,7 @@
                 "group",
                 "delete",
                 "--name",
-                "${input:resourceGrouppName}",
+                "${input:resourceGroupName}",
                 "--force-deletion-types",
                 "Microsoft.Compute/virtualMachines",
                 "--yes"
@@ -142,8 +166,14 @@
         },
         {
             "type": "promptString",
-            "id": "resourceGrouppName",
+            "id": "resourceGroupName",
             "description": "Name of the resource group."
+        },
+        {
+            "type": "promptString",
+            "id": "resourceGroupLocation",
+            "description": "Location of the resource group.",
+            "default": "france central"
         },
         {
             "type": "promptString",
