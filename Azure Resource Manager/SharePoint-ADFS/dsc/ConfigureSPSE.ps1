@@ -1847,6 +1847,7 @@ configuration ConfigureSPVM
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
