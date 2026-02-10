@@ -67,6 +67,8 @@ configuration ConfigureSPVM
 
     # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
+    [String] $DefaultZoneProtocol = "http"
+    [String] $IntranetZoneProtocol = "https"
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
     [String] $UpaServiceName = "User Profile Service Application"
     [String] $AppDomainFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps", $DomainFQDN.Split('.')[1]
@@ -949,8 +951,8 @@ configuration ConfigureSPVM
             ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
             AllowAnonymous         = $false
             DatabaseName           = $SPDBPrefix + "Content_main"
-            WebAppUrl              = "http://$SharePointSitesAuthority/"
-            Port                   = 80
+            WebAppUrl              = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/"
+            Port                   = if ($DefaultZoneProtocol -eq "https") { 443 } else { 80 }
             Ensure                 = "Present"
             PsDscRunAsCredential   = $DomainAdminCredsQualified
             DependsOn              = "[Script]RestartSPTimerAfterCreateSPFarm"
@@ -1114,7 +1116,7 @@ configuration ConfigureSPVM
         # ExtendMainWebApp might fail with error: "The web.config could not be saved on this IIS Web Site: C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config.\r\nThe process cannot access the file 'C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config' because it is being used by another process."
         # So I added resources between it and CreateMainWebApp to avoid it
         SPWebApplicationExtension ExtendMainWebApp {
-            WebAppUrl            = "http://$SharePointSitesAuthority/"
+            WebAppUrl            = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/"
             Name                 = "SharePoint - 443"
             AllowAnonymous       = $false
             Url                  = "https://$SharePointSitesAuthority.$DomainFQDN"
@@ -1164,7 +1166,7 @@ configuration ConfigureSPVM
         }
 
         SPWebAppAuthentication ConfigureMainWebAppAuthentication {
-            WebAppUrl            = "http://$SharePointSitesAuthority/"
+            WebAppUrl            = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/"
             Default              = @(
                 MSFT_SPWebAppAuthenticationMode {
                     AuthenticationMethod = "WindowsAuthentication"
@@ -1218,7 +1220,7 @@ configuration ConfigureSPVM
                 $spCert = Import-SPCertificate -Path "$setupPath\$sharePointSitesAuthority.cer" -Exportable -Store EndEntity
 
                 Write-Verbose -Verbose -Message "Extending web application to HTTPS zone using certificate 'CN=$sharePointSitesAuthority.$domainFQDN'..."
-                Set-SPWebApplication -Identity "http://$sharePointSitesAuthority" -Zone Intranet -Port 443 -Certificate $spCert `
+                Set-SPWebApplication -Identity "$($DefaultZoneProtocol)://$sharePointSitesAuthority" -Zone Intranet -Port 443 -Certificate $spCert `
                     -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url "https://$sharePointSitesAuthority.$domainFQDN"
                 
                 Write-Verbose -Verbose -Message "Finished."
@@ -1244,7 +1246,7 @@ configuration ConfigureSPVM
         }
 
         SPCacheAccounts SetCacheAccounts {
-            WebAppUrl            = "http://$SharePointSitesAuthority/"
+            WebAppUrl            = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/"
             SuperUserAlias       = "$DomainNetbiosName\$($SPSuperUserCreds.UserName)"
             SuperReaderAlias     = "$DomainNetbiosName\$($SPSuperReaderCreds.UserName)"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -1252,7 +1254,7 @@ configuration ConfigureSPVM
         }
 
         SPSite CreateRootSite {
-            Url                  = "http://$SharePointSitesAuthority/"
+            Url                  = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "root site"
@@ -1262,9 +1264,9 @@ configuration ConfigureSPVM
             DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
         }
 
-        # Create this site early, otherwise [SPAppCatalog]SetAppCatalogUrl may throw error "Cannot find an SPSite object with Id or Url: http://SPSites/sites/AppCatalog"
+        # Create this site early, otherwise [SPAppCatalog]SetAppCatalogUrl may throw error "Cannot find an SPSite object with Id or Url: $($DefaultZoneProtocol)://SPSites/sites/AppCatalog"
         SPSite CreateAppCatalog {
-            Url                  = "http://$SharePointSitesAuthority/sites/AppCatalog"
+            Url                  = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/sites/AppCatalog"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "AppCatalog"
@@ -1277,8 +1279,8 @@ configuration ConfigureSPVM
         # Additional configuration
         #**********************************************************
         SPSite CreateMySiteHost {
-            Url                      = "http://$MySiteHostAlias/"
-            HostHeaderWebApplication = "http://$SharePointSitesAuthority/"
+            Url                      = "$($DefaultZoneProtocol)://$MySiteHostAlias/"
+            HostHeaderWebApplication = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
@@ -1288,14 +1290,14 @@ configuration ConfigureSPVM
         }
 
         SPSiteUrl SetMySiteHostIntranetUrl {
-            Url                  = "http://$MySiteHostAlias/"
+            Url                  = "$($DefaultZoneProtocol)://$MySiteHostAlias/"
             Intranet             = "https://$MySiteHostAlias.$DomainFQDN"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateMySiteHost"
         }
 
         SPManagedPath CreateMySiteManagedPath {
-            WebAppUrl            = "http://$SharePointSitesAuthority/"
+            WebAppUrl            = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/"
             RelativeUrl          = "personal"
             Explicit             = $false
             HostHeader           = $true
@@ -1306,7 +1308,7 @@ configuration ConfigureSPVM
         SPUserProfileServiceApp CreateUserProfileServiceApp {
             Name                 = $UpaServiceName
             ApplicationPool      = $ServiceAppPoolName
-            MySiteHostLocation   = "http://$MySiteHostAlias/"
+            MySiteHostLocation   = "$($DefaultZoneProtocol)://$MySiteHostAlias/"
             ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
             SocialDBName         = $SPDBPrefix + "UPA_Social"
             SyncDBName           = $SPDBPrefix + "UPA_Sync"
@@ -1318,7 +1320,7 @@ configuration ConfigureSPVM
         # Creating this site takes about 1 min but it is not so useful, skip it
         # SPSite CreateDevSite
         # {
-        #     Url                  = "http://$SharePointSitesAuthority/sites/dev"
+        #     Url                  = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/sites/dev"
         #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
         #     SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
         #     Name                 = "Developer site"
@@ -1328,8 +1330,8 @@ configuration ConfigureSPVM
         # }
 
         SPSite CreateHNSC1 {
-            Url                      = "http://$HNSC1Alias/"
-            HostHeaderWebApplication = "http://$SharePointSitesAuthority/"
+            Url                      = "$($DefaultZoneProtocol)://$HNSC1Alias/"
+            HostHeaderWebApplication = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/"
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "$HNSC1Alias site"
@@ -1340,7 +1342,7 @@ configuration ConfigureSPVM
         }
 
         SPSiteUrl SetHNSC1IntranetUrl {
-            Url                  = "http://$HNSC1Alias/"
+            Url                  = "$($DefaultZoneProtocol)://$HNSC1Alias/"
             Intranet             = "https://$HNSC1Alias.$DomainFQDN"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateHNSC1"
@@ -1391,7 +1393,7 @@ configuration ConfigureSPVM
             {
                 try {
                     $spTrustName = $using:DomainFQDN
-                    $spSiteUrl = "http://$($using:SharePointSitesAuthority)/"
+                    $spSiteUrl = "$($DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/"
                     Write-Verbose -Verbose -Message "Start configuration for ConfigureUPAClaimProvider using spTrustName '$($spTrustName)' and spSiteUrl '$($spSiteUrl)'"                
 
                     # LanguageSynchronizationJob must be executed before updating profile properties, to ensure their property DisplayNameLocalized is set with a localized value
@@ -1496,7 +1498,7 @@ configuration ConfigureSPVM
         }        
 
         SPWebApplicationAppDomain ConfigureAppDomainDefaultZone {
-            WebAppUrl            = "http://$SharePointSitesAuthority"
+            WebAppUrl            = "$($DefaultZoneProtocol)://$SharePointSitesAuthority"
             AppDomain            = $AppDomainFQDN
             Zone                 = "Default"
             Port                 = 80
@@ -1506,7 +1508,7 @@ configuration ConfigureSPVM
         }
 
         SPWebApplicationAppDomain ConfigureAppDomainIntranetZone {
-            WebAppUrl            = "http://$SharePointSitesAuthority"
+            WebAppUrl            = "$($DefaultZoneProtocol)://$SharePointSitesAuthority"
             AppDomain            = $AppDomainIntranetFQDN
             Zone                 = "Intranet"
             Port                 = 443
@@ -1516,7 +1518,7 @@ configuration ConfigureSPVM
         }
 
         SPAppCatalog SetAppCatalogUrl {
-            SiteUrl              = "http://$SharePointSitesAuthority/sites/AppCatalog"
+            SiteUrl              = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/sites/AppCatalog"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateAppCatalog", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }
@@ -1540,7 +1542,7 @@ configuration ConfigureSPVM
         # This team site is tested by VM FE to wait before joining the farm, so it acts as a milestone and it should be created only when all SharePoint services are created
         # If VM FE joins the farm while a SharePoint service is creating here, it may block its creation forever.
         SPSite CreateTeamSite {
-            Url                  = "http://$SharePointSitesAuthority/sites/team"
+            Url                  = "$($DefaultZoneProtocol)://$SharePointSitesAuthority/sites/team"
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
@@ -1714,7 +1716,7 @@ configuration ConfigureSPVM
                 $spsite = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
                 Write-Verbose -Verbose -Message "Warming up '$spsite'..."
                 $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
-                $spsite = "http://$($using:SharePointSitesAuthority)/"
+                $spsite = "$($DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/"
                 Write-Verbose -Verbose -Message "Warming up '$spsite'..."
                 $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
 
@@ -1839,7 +1841,7 @@ configuration ConfigureSPVM
                         Write-Verbose -Verbose -Message "Could not execute LanguageSynchronizationJob or update profile properties: $_"
                     }
                 }
-                $uri = "http://$($using:SharePointSitesAuthority)/"
+                $uri = "$($DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/"
                 $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"
                 $accountPattern_Trusted = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|{0}@$($using:DomainFQDN)"
                 $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountPattern_WinClaims, $accountPattern_Trusted, $using:AdditionalUsersPath)
