@@ -944,11 +944,11 @@ configuration ConfigureSPVM
         }
 
         SPWebApplication CreateMainWebApp {
-            Name                   = "SharePoint - 80"
-            ApplicationPool        = "SharePoint - 80"
+            Name                   = "SharePoint - main"
+            ApplicationPool        = "SharePoint - main"
             ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
             AllowAnonymous         = $false
-            DatabaseName           = $SPDBPrefix + "Content_80"
+            DatabaseName           = $SPDBPrefix + "Content_main"
             WebAppUrl              = "http://$SharePointSitesAuthority/"
             Port                   = 80
             Ensure                 = "Present"
