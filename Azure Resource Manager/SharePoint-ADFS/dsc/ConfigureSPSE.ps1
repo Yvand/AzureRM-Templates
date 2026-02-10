@@ -1394,7 +1394,8 @@ configuration ConfigureSPVM
             {
                 try {
                     $spTrustName = $using:DomainFQDN
-                    $spSiteUrl = "$($DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/"
+                    $defaultZoneProtocol = $using:DefaultZoneProtocol
+                    $spSiteUrl = "$($defaultZoneProtocol)://$($using:SharePointSitesAuthority)/"
                     Write-Verbose -Verbose -Message "Start configuration for ConfigureUPAClaimProvider using spTrustName '$($spTrustName)' and spSiteUrl '$($spSiteUrl)'"                
 
                     # LanguageSynchronizationJob must be executed before updating profile properties, to ensure their property DisplayNameLocalized is set with a localized value
