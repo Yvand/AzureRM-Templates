@@ -1192,7 +1192,7 @@ configuration ConfigureSPVM
                 $domainNetbiosName = $using:DomainNetbiosName
                 $sharePointSitesAuthority = $using:SharePointSitesAuthority
                 $appDomainIntranetFQDN = $using:AppDomainIntranetFQDN
-                $setupPath = Join-Path -Path $using:SetupPath -ChildPath "Certificates"                
+                $setupPath = Join-Path -Path $using:SetupPath -ChildPath "Certificates"
                 if (!(Test-Path $setupPath -PathType Container)) {
                     New-Item -ItemType Directory -Force -Path $setupPath
                 }
@@ -1220,7 +1220,7 @@ configuration ConfigureSPVM
                 $spCert = Import-SPCertificate -Path "$setupPath\$sharePointSitesAuthority.cer" -Exportable -Store EndEntity
 
                 Write-Verbose -Verbose -Message "Extending web application to HTTPS zone using certificate 'CN=$sharePointSitesAuthority.$domainFQDN'..."
-                Set-SPWebApplication -Identity "$($DefaultZoneProtocol)://$sharePointSitesAuthority" -Zone Intranet -Port 443 -Certificate $spCert `
+                Set-SPWebApplication -Identity "https://$sharePointSitesAuthority" -Zone Intranet -Port 443 -Certificate $spCert `
                     -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url "https://$sharePointSitesAuthority.$domainFQDN"
                 
                 Write-Verbose -Verbose -Message "Finished."
