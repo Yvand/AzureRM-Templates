@@ -752,6 +752,9 @@ configuration ConfigureSPVM
         Script WingetConfig {
             SetScript            =
             {
+                $wingetFound = (Get-Command winget -ErrorAction SilentlyContinue) -ne $null
+                Write-Verbose -Verbose -Message "whoami: $(whoami); wingetFound: $wingetFound"
+
                 $downloader = New-Object -TypeName System.Net.WebClient
                 $localFolderPath = "C:\YvanData"
                 if (-not (Test-Path -Path $localFolderPath)) {
@@ -772,11 +775,18 @@ configuration ConfigureSPVM
                     if (-not (Test-Path -Path $localScriptPath)) {
                         $url = "$baseUrl/$fileName"
                         $downloader.DownloadFile($url, $localScriptPath)
-                        Write-Host "Downloaded: $fileName"
+                        Write-Verbose -Verbose -Message "Downloaded: $($fileName)"
                     }
                     
-                    Write-Host "Applying configuration: $($fileName)..."
-                    winget configure --file $localScriptPath --accept-configuration-agreements
+                    Write-Verbose -Verbose -Message "Applying configuration: $($fileName)..."
+                    if ((Get-Command winget -ErrorAction SilentlyContinue) -ne $null) {
+                        winget configure --file $localScriptPath --accept-configuration-agreements
+                    }
+                    else {
+                        $wingetPath = Get-ChildItem -Path (Join-Path -Path $env:USERPROFILE -ChildPath "AppData\Local\Microsoft\WindowsApps\winget.exe")
+                        #$wingetPath.FullName
+                        & $wingetPath.FullName configure --file $localScriptPath --accept-configuration-agreements
+                    }
                 }
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
