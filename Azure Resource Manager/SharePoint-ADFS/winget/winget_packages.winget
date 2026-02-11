@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+
+###########################################################################
+# This configuration will install various packages.                       #
+# PowerShell module: Microsoft.WinGet.DSC                                 #
+###########################################################################
+
+properties:
+  resources:
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install Notepad++
+        securityContext: elevated
+      settings:
+        id: Notepad++.Notepad++
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install Fiddler Classic
+        securityContext: current
+      settings:
+        id: Telerik.Fiddler.Classic
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install DevProxy
+        securityContext: elevated
+      settings:
+        id: DevProxy.DevProxy
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install 7zip
+        securityContext: elevated
+      settings:
+        id: 7zip.7zip
+        source: winget
+  configurationVersion: 0.2.0
