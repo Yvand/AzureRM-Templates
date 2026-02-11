@@ -247,24 +247,24 @@ configuration ConfigureSPVM
             InstallDir = "C:\Chocolatey"
         }
 
-        cChocoPackageInstaller InstallNotepadpp {
-            Name      = "notepadplusplus.install"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
-        }
+        # cChocoPackageInstaller InstallNotepadpp {
+        #     Name      = "notepadplusplus.install"
+        #     Ensure    = "Present"
+        #     DependsOn = "[cChocoInstaller]InstallChoco"
+        # }
 
-        cChocoPackageInstaller Install7zip {
-            Name      = "7zip.install"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
-        }
+        # cChocoPackageInstaller Install7zip {
+        #     Name      = "7zip.install"
+        #     Ensure    = "Present"
+        #     DependsOn = "[cChocoInstaller]InstallChoco"
+        # }
 
-        cChocoPackageInstaller InstallVscode {
-            # Install takes about 30 secs
-            Name      = "vscode"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
-        }
+        # cChocoPackageInstaller InstallVscode {
+        #     # Install takes about 30 secs
+        #     Name      = "vscode"
+        #     Ensure    = "Present"
+        #     DependsOn = "[cChocoInstaller]InstallChoco"
+        # }
 
         # if ($EnableAnalysis) {
         #     # This resource is only for analyzing dsc logs using a custom Python script
@@ -733,13 +733,13 @@ configuration ConfigureSPVM
             DependsOn                          = "[ADUser]CreateSPADDirSyncAccount"
         }
         
-        # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
-        cChocoPackageInstaller InstallFiddler {
-            Name                 = "fiddler"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
-        }
+        # # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
+        # cChocoPackageInstaller InstallFiddler {
+        #     Name                 = "fiddler"
+        #     Ensure               = "Present"
+        #     PsDscRunAsCredential = $DomainAdminCredsQualified
+        #     DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
+        # }
 
         # Install ULSViewer as $DomainAdminCredsQualified to ensure that the shortcut is visible on the desktop
         cChocoPackageInstaller InstallUlsViewer {
@@ -1843,7 +1843,7 @@ configuration ConfigureSPVM
                         Write-Verbose -Verbose -Message "Could not execute LanguageSynchronizationJob or update profile properties: $_"
                     }
                 }
-                $uri = "$($DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/"
+                $uri = "$($using:DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/"
                 $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"
                 $accountPattern_Trusted = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|{0}@$($using:DomainFQDN)"
                 $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountPattern_WinClaims, $accountPattern_Trusted, $using:AdditionalUsersPath)
