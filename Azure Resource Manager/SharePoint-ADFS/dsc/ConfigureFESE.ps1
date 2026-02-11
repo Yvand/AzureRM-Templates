@@ -51,6 +51,7 @@ configuration ConfigureFEVM
 
     # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
+    [String] $DefaultZoneProtocol = "http"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
 
@@ -538,7 +539,7 @@ configuration ConfigureFEVM
         Script WaitForSPFarmReadyToJoin {
             SetScript            =
             {
-                $uri = "http://$($using:SharePointSitesAuthority)/sites/team"
+                $uri = "$($using:DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/sites/team"
                 $sleepTime = 30
                 $currentStatusCode = 0
                 $expectedStatusCode = 200
@@ -712,7 +713,7 @@ configuration ConfigureFEVM
                     }
                 }
                 [System.Management.Automation.Job[]] $jobs = @()
-                $spsite = "http://$($using:SharePointSitesAuthority)/"
+                $spsite = "$($using:DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/"
                 Write-Verbose -Verbose -Message "Warming up '$spsite'..."
                 $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
 
@@ -738,7 +739,7 @@ configuration ConfigureFEVM
                 $cert = Import-PfxCertificate -FilePath $cookieCertificateFilePath -CertStoreLocation Cert:\localMachine\My -Exportable
 
                 # Grant the application pool access to the private key of the cookie certificate
-                $wa = Get-SPWebApplication "http://$spTrustedSitesName"
+                $wa = Get-SPWebApplication "$($using:DefaultZoneProtocol)://$spTrustedSitesName"
                 $apppoolUserName = $wa.ApplicationPool.Username
                 $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
                 $fileName = $rsaCert.key.UniqueName
