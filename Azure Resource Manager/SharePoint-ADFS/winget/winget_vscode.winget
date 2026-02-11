@@ -7,13 +7,17 @@
 
 properties:
   resources:
-    - resource: Microsoft.WinGet.DSC/WinGetPackage
-      directives:
-        description: Install Visual Studio Code
-        securityContext: elevated
-      settings:
-        id: Microsoft.VisualStudioCode
-        source: winget
+    # Currently, WinGetPackage does not support installing machine scoped packages. Once this is supported, the following resource can be uncommented to install Visual Studio Code using winget.
+    # For now, Visual Studio Code can be installed using Chocolatey as shown in ConfigureSPSE.ps1.
+    # Reference: https://github.com/microsoft/winget-cli/issues/3401
+    # - resource: Microsoft.WinGet.DSC/WinGetPackage
+    #   directives:
+    #     description: Install Visual Studio Code
+    #     securityContext: elevated
+    #   settings:
+    #     id: Microsoft.VisualStudioCode
+    #     source: winget
+    #     # scope: machine
     - resource: Microsoft.VSCode.Dsc/VSCodeExtension
       directives:
         description: Install Powershell extension

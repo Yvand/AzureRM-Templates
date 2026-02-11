@@ -17,7 +17,7 @@ properties:
         SearchBoxMode: ShowIconOnly # [KeepCurrentValue, ShowIconOnly, SearchBox, Hide]
         TaskViewButton: Hide # [KeepCurrentValue, Hide]
         WidgetsButton: Hide # [KeepCurrentValue, Hide]
-        RestartExplorer: True # Use caution when setting `RestartExplorer: true` as this will force explorer to close. Required for `HideLabelsMode`.
+        RestartExplorer: false # Use caution when setting `RestartExplorer: true` as this will force explorer to close. Required for `HideLabelsMode`.
     - resource: Microsoft.Windows.Developer/WindowsExplorer
       directives:
         description: Modify Windows Explorer settings
@@ -26,5 +26,5 @@ properties:
         FileExtensions: Show  # [KeepCurrentValue, Hide]
         HiddenFiles: Show # [KeepCurrentValue, Hide]
         ItemCheckBoxes: Show  # [KeepCurrentValue, Hide]
-        RestartExplorer: True # Use caution when setting `RestartExplorer: true` as this will force explorer to close. Required for all WindowsExplorer settings.
+        RestartExplorer: false # Use caution when setting `RestartExplorer: true` as this will force explorer to close. Required for all WindowsExplorer settings.
   configurationVersion: 0.2.0

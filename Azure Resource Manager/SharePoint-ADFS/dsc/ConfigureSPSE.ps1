@@ -259,12 +259,12 @@ configuration ConfigureSPVM
         #     DependsOn = "[cChocoInstaller]InstallChoco"
         # }
 
-        # cChocoPackageInstaller InstallVscode {
-        #     # Install takes about 30 secs
-        #     Name      = "vscode"
-        #     Ensure    = "Present"
-        #     DependsOn = "[cChocoInstaller]InstallChoco"
-        # }
+        cChocoPackageInstaller InstallVscode {
+            # Install takes about 30 secs
+            Name      = "vscode"
+            Ensure    = "Present"
+            DependsOn = "[cChocoInstaller]InstallChoco"
+        }
 
         # if ($EnableAnalysis) {
         #     # This resource is only for analyzing dsc logs using a custom Python script
@@ -747,6 +747,41 @@ configuration ConfigureSPVM
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[cChocoInstaller]InstallChoco"
+        }
+
+        Script WingetConfig {
+            SetScript            =
+            {
+                $downloader = New-Object -TypeName System.Net.WebClient
+                $localFolderPath = "C:\YvanData"
+                if (-not (Test-Path -Path $localFolderPath)) {
+                    New-Item -ItemType Directory -Path $localFolderPath | Out-Null
+                }
+
+                $baseUrl = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/refs/heads/winget/Azure%20Resource%20Manager/SharePoint-ADFS/winget"
+                $files = @(
+                    "winget_windows_settings.winget",
+                    "winget_windows_developer.winget",
+                    "winget_packages.winget",
+                    "winget_vscode.winget"
+                )
+
+                foreach ($fileName in $files) {
+                    $localScriptPath = Join-Path -Path $localFolderPath -ChildPath $fileName
+                    
+                    if (-not (Test-Path -Path $localScriptPath)) {
+                        $url = "$baseUrl/$fileName"
+                        $downloader.DownloadFile($url, $localScriptPath)
+                        Write-Host "Downloaded: $fileName"
+                    }
+                    
+                    Write-Host "Applying configuration: $($fileName)..."
+                    winget configure --file $localScriptPath --accept-configuration-agreements
+                }
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
         Script DscStatus_WaitForSQL {
@@ -1991,7 +2026,7 @@ $SPADDirSyncCreds = New-Object -TypeName System.Management.Automation.PSCredenti
 $SPPassphraseCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "Passphrase", $password
 $SPSuperUserCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperUser", $password
 $SPSuperReaderCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperReader", $password
-$DNSServerIP = "10.1.1.4"
+$DNSServerIP = "10.1.1.100"
 $DomainFQDN = "contoso.local"
 $DCServerName = "DC"
 $SQLServerName = "SQL"
