@@ -1843,7 +1843,7 @@ configuration ConfigureSPVM
                         Write-Verbose -Verbose -Message "Could not execute LanguageSynchronizationJob or update profile properties: $_"
                     }
                 }
-                $uri = "$($DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/"
+                $uri = "$($using:DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/"
                 $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"
                 $accountPattern_Trusted = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|{0}@$($using:DomainFQDN)"
                 $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountPattern_WinClaims, $accountPattern_Trusted, $using:AdditionalUsersPath)
