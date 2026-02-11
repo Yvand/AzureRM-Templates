@@ -1,5 +1,15 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Unreleased
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the February 2026 PU for SharePoint Subscription
+
+- DSC Configuration for all SharePoint SE
+  - Renamed main web application to "SharePoint - main"
+
 ## Enhancements & bug-fixes - Published in December 5, 2025
 
 ### Changed
