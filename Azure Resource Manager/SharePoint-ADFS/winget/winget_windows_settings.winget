@@ -31,4 +31,26 @@ properties:
         # TaskbarGroupingMode: Control how taskbar buttons are grouped
         # Valid values: Always, WhenFull, Never
         #TaskbarGroupingMode: WhenFull
+
+    - resource: Microsoft.Windows.Developer/Taskbar
+      directives:
+        description: Modify taskbar settings
+        allowPrerelease: true
+      settings:
+        Alignment: Left # [KeepCurrentValue, Middle]
+        HideLabelsMode: Never # [KeepCurrentValue, WhenFull, Always]
+        SearchBoxMode: ShowIconOnly # [KeepCurrentValue, ShowIconOnly, SearchBox, Hide]
+        TaskViewButton: Hide # [KeepCurrentValue, Hide]
+        WidgetsButton: Hide # [KeepCurrentValue, Hide]
+        RestartExplorer: false # Use caution when setting `RestartExplorer: true` as this will force explorer to close. Required for `HideLabelsMode`.
+    - resource: Microsoft.Windows.Developer/WindowsExplorer
+      directives:
+        description: Modify Windows Explorer settings
+        allowPrerelease: true
+      settings:
+        FileExtensions: Show  # [KeepCurrentValue, Hide]
+        HiddenFiles: Show # [KeepCurrentValue, Hide]
+        ItemCheckBoxes: Show  # [KeepCurrentValue, Hide]
+        RestartExplorer: false # Use caution when setting `RestartExplorer: true` as this will force explorer to close. Required for all WindowsExplorer settings.
+  
   configurationVersion: 0.2.0

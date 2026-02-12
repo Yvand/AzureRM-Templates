@@ -753,6 +753,14 @@ configuration ConfigureSPVM
             SetScript            =
             {
                 $wingetFound = (Get-Command winget -ErrorAction SilentlyContinue) -ne $null
+                if (-not $wingetFound) {
+                    Write-Verbose -Verbose -Message "winget not found in PATH. Attempting to locate winget.exe in known installation folders..."
+                    # https://github.com/microsoft/winget-cli/issues/995#issuecomment-1681712097
+                    $wingetPath = Get-ChildItem -Path (Join-Path -Path $env:USERPROFILE -ChildPath "AppData\Local\Microsoft\WindowsApps\winget.exe")
+                    $wingetPath = Get-ChildItem -Path (Join-Path -Path $env:ProgramFiles -ChildPath "WindowsApps") -Filter winget.exe -Recurse
+                    #$wingetPath.FullName
+                    Write-Verbose -Verbose -Message "use winget in '$($wingetPath.FullName)'"
+                }
                 Write-Verbose -Verbose -Message "whoami: $(whoami); wingetFound: $wingetFound"
 
                 $downloader = New-Object -TypeName System.Net.WebClient
@@ -764,7 +772,7 @@ configuration ConfigureSPVM
                 $baseUrl = "https://raw.githubusercontent.com/Yvand/AzureRM-Templates/refs/heads/winget/Azure%20Resource%20Manager/SharePoint-ADFS/winget"
                 $files = @(
                     "winget_windows_settings.winget",
-                    "winget_windows_developer.winget",
+                    # "winget_windows_developer.winget",
                     "winget_packages.winget",
                     "winget_vscode.winget"
                 )
@@ -779,12 +787,10 @@ configuration ConfigureSPVM
                     }
                     
                     Write-Verbose -Verbose -Message "Applying configuration: $($fileName)..."
-                    if ((Get-Command winget -ErrorAction SilentlyContinue) -ne $null) {
+                    if ($wingetFound) {
                         winget configure --file $localScriptPath --accept-configuration-agreements
                     }
                     else {
-                        $wingetPath = Get-ChildItem -Path (Join-Path -Path $env:USERPROFILE -ChildPath "AppData\Local\Microsoft\WindowsApps\winget.exe")
-                        #$wingetPath.FullName
                         & $wingetPath.FullName configure --file $localScriptPath --accept-configuration-agreements
                     }
                 }

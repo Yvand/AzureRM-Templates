@@ -1,8 +1,8 @@
 using './main.bicep'
 
-param sharePointVersion = 'Subscription-Latest'
+param sharePointVersion = 'Subscription-RTM'
 // param sharePointVersion = '2016'
-param frontEndServersCount = 1
+param frontEndServersCount = 0
 param adminUsername = 'yvand'
 param outboundAccessMethod = 'PublicIPAddress'
 // param outboundAccessMethod = 'AzureFirewallProxy'
@@ -10,7 +10,7 @@ param addNameToPublicIpAddresses = 'SharePointVMsOnly'
 param rdpTrafficRule = 'No'
 param enableAzureBastion = true
 param enableHybridBenefitServerLicenses = true
-param _artifactsLocation = 'https://raw.githubusercontent.com/Yvand/AzureRM-Templates/refs/heads/dev/Azure%20Resource%20Manager/SharePoint-ADFS/'
+param _artifactsLocation = 'https://raw.githubusercontent.com/Yvand/AzureRM-Templates/refs/heads/winget/Azure%20Resource%20Manager/SharePoint-ADFS/'
 param domainFqdn = 'contoso.local'
 param timeZone = 'Romance Standard Time'
 param autoShutdownTime = '1900'
