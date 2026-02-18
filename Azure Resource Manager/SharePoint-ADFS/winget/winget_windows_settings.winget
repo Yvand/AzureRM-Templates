@@ -51,6 +51,6 @@ properties:
         FileExtensions: Show  # [KeepCurrentValue, Hide]
         HiddenFiles: Show # [KeepCurrentValue, Hide]
         ItemCheckBoxes: Show  # [KeepCurrentValue, Hide]
-        RestartExplorer: false # Use caution when setting `RestartExplorer: true` as this will force explorer to close. Required for all WindowsExplorer settings.
+        RestartExplorer: true # Use caution when setting `RestartExplorer: true` as this will force explorer to close. Required for all WindowsExplorer settings.
   
   configurationVersion: 0.2.0

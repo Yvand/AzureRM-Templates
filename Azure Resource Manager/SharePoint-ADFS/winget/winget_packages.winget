@@ -24,7 +24,7 @@ properties:
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install DevProxy
-        securityContext: elevated
+        securityContext: current
       settings:
         id: DevProxy.DevProxy
         source: winget
@@ -34,5 +34,12 @@ properties:
         securityContext: elevated
       settings:
         id: 7zip.7zip
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install SQL Server Management Studio
+        securityContext: elevated
+      settings:
+        id: Microsoft.SQLServerManagementStudio.22
         source: winget
   configurationVersion: 0.2.0
