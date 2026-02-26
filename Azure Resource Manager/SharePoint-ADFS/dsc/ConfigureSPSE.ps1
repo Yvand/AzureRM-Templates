@@ -67,7 +67,7 @@ configuration ConfigureSPVM
 
     # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
-    [bool] $DefaultZoneIsHttps = $true
+    [bool] $DefaultZoneIsHttps = $false
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
     [String] $UpaServiceName = "User Profile Service Application"
     [String] $AppDomainFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps", $DomainFQDN.Split('.')[1]
@@ -950,7 +950,7 @@ configuration ConfigureSPVM
             ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
             AllowAnonymous         = $false
             DatabaseName           = $SPDBPrefix + "Content_main"
-            WebAppUrl              = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+            WebAppUrl              = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             Port                   = if ($DefaultZoneIsHttps) { 443 } else { 80 }
             Ensure                 = "Present"
             PsDscRunAsCredential   = $DomainAdminCredsQualified
@@ -1115,9 +1115,9 @@ configuration ConfigureSPVM
         # ExtendMainWebApp might fail with error: "The web.config could not be saved on this IIS Web Site: C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config.\r\nThe process cannot access the file 'C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config' because it is being used by another process."
         # So I added resources between it and CreateMainWebApp to avoid it
         SPWebApplicationExtension ExtendMainWebApp {
-            WebAppUrl            = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             Zone                 = "Intranet"
-            Name                 = if ($DefaultZoneIsHttps) { "SharePoint - Intranet - HTTP" } else { "SharePoint - Intranet - HTTPS" }
+            Name                 = if ($DefaultZoneIsHttps) { "SharePoint -  main - Intranet HTTP" } else { "SharePoint - main - Intranet HTTPS" }
             Url                  = if ($DefaultZoneIsHttps) { "http://$SharePointSitesAuthority/" } else { "https://$SharePointSitesAuthority.$DomainFQDN/" }
             Port                 = if ($DefaultZoneIsHttps) { 80 } else { 443 }
             AllowAnonymous       = $false
@@ -1165,7 +1165,7 @@ configuration ConfigureSPVM
         }
 
         SPWebAppAuthentication ConfigureMainWebAppAuthentication {
-            WebAppUrl            = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             Default              = if ($DefaultZoneIsHttps) {
                 @(
                     MSFT_SPWebAppAuthenticationMode {
@@ -1217,7 +1217,7 @@ configuration ConfigureSPVM
                 $sharePointSitesAuthority = $using:SharePointSitesAuthority
                 $appDomainIntranetFQDN = $using:AppDomainIntranetFQDN
                 $setupPath = Join-Path -Path $using:SetupPath -ChildPath "Certificates"
-                $defaultZoneIsHttps =  $using:DefaultZoneIsHttps
+                $defaultZoneIsHttps = $using:DefaultZoneIsHttps
                 if (!(Test-Path $setupPath -PathType Container)) {
                     New-Item -ItemType Directory -Force -Path $setupPath
                 }
@@ -1274,7 +1274,7 @@ configuration ConfigureSPVM
         }
 
         SPCacheAccounts SetCacheAccounts {
-            WebAppUrl            = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             SuperUserAlias       = "$DomainNetbiosName\$($SPSuperUserCreds.UserName)"
             SuperReaderAlias     = "$DomainNetbiosName\$($SPSuperReaderCreds.UserName)"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -1282,7 +1282,7 @@ configuration ConfigureSPVM
         }
 
         SPSite CreateRootSite {
-            Url                  = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+            Url                  = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "root site"
@@ -1308,7 +1308,7 @@ configuration ConfigureSPVM
         #**********************************************************
         SPSite CreateMySiteHost {
             Url                      = if ($DefaultZoneIsHttps) { "https://$MySiteHostAlias.$DomainFQDN/" } else { "http://$MySiteHostAlias/" }
-            HostHeaderWebApplication = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+            HostHeaderWebApplication = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
@@ -1325,7 +1325,7 @@ configuration ConfigureSPVM
         }
 
         SPManagedPath CreateMySiteManagedPath {
-            WebAppUrl            = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             RelativeUrl          = "personal"
             Explicit             = $false
             HostHeader           = $true
@@ -1359,7 +1359,7 @@ configuration ConfigureSPVM
 
         SPSite CreateHNSC1 {
             Url                      = if ($DefaultZoneIsHttps) { "https://$HNSC1Alias.$DomainFQDN/" } else { "http://$HNSC1Alias/" }
-            HostHeaderWebApplication = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+            HostHeaderWebApplication = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "$HNSC1Alias site"
@@ -1421,7 +1421,7 @@ configuration ConfigureSPVM
             {
                 try {
                     $spTrustName = $using:DomainFQDN
-                    $defaultZoneIsHttps =  $using:DefaultZoneIsHttps
+                    $defaultZoneIsHttps = $using:DefaultZoneIsHttps
                     $webAppUrl = if ($defaultZoneIsHttps) { "https://$sharePointSitesAuthority.$DomainFQDN/" } else { "http://$sharePointSitesAuthority/" }
                     Write-Verbose -Verbose -Message "Start configuration for ConfigureUPAClaimProvider using spTrustName '$($spTrustName)' and spSiteUrl '$($spSiteUrl)'"                
 
@@ -1527,7 +1527,7 @@ configuration ConfigureSPVM
         }        
 
         SPWebApplicationAppDomain ConfigureAppDomainDefaultZone {
-            WebAppUrl            = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             AppDomain            = $AppDomainFQDN
             Zone                 = "Default"
             Port                 = if ($DefaultZoneIsHttps) { 443 } else { 80 }
@@ -1537,7 +1537,7 @@ configuration ConfigureSPVM
         }
 
         SPWebApplicationAppDomain ConfigureAppDomainIntranetZone {
-            WebAppUrl            = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             AppDomain            = $AppDomainIntranetFQDN
             Zone                 = "Intranet"
             Port                 = if ($DefaultZoneIsHttps) { 80 } else { 443 }
@@ -2004,6 +2004,16 @@ function Get-NetBIOSName {
             return $DomainFQDN
         }
     }
+}
+
+function Get-WebAppUrl {
+    [OutputType([string])]
+    param(
+        [bool] $DefaultZoneIsHttps = $true,
+        [string] $SharePointSitesAuthority,
+        [string] $DomainFQDN
+    )
+    return if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
 }
 
 <#
