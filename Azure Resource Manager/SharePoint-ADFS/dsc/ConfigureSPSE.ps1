@@ -1172,6 +1172,10 @@ configuration ConfigureSPVM
                         AuthenticationMethod   = "Federated"
                         AuthenticationProvider = $DomainFQDN
                     }
+                    MSFT_SPWebAppAuthenticationMode {
+                        AuthenticationMethod = "WindowsAuthentication"
+                        WindowsAuthMethod    = "NTLM"
+                    }
                 )
             }
             else {
@@ -1240,11 +1244,12 @@ configuration ConfigureSPVM
                 Write-Verbose -Verbose -Message "Adding certificate 'CN=$sharePointSitesAuthority.$domainFQDN' to SharePoint store EndEntity..."
                 $spCert = Import-SPCertificate -Path "$setupPath\$sharePointSitesAuthority.cer" -Exportable -Store EndEntity
 
-                Write-Verbose -Verbose -Message "Extending web application to HTTPS zone using certificate 'CN=$sharePointSitesAuthority.$domainFQDN'..."
                 $webAppUrl = if ($defaultZoneIsHttps) { "https://$sharePointSitesAuthority.$DomainFQDN/" } else { "http://$sharePointSitesAuthority/" }
+                $httpsUrl = "https://$sharePointSitesAuthority.$DomainFQDN/"
                 $httpsZoneName = if ($defaultZoneIsHttps) { "Default" } else { "Intranet" }
-                Set-SPWebApplication -Identity "$webAppUrl" -Zone $httpsZoneName -Port 443 -Certificate $spCert `
-                    -SecureSocketsLayer:$true -AllowLegacyEncryption:$false
+                Write-Verbose -Verbose -Message "Setting zone '$httpsZoneName' in web application '$webAppUrl' to HTTPS with certificate '$($spCert.Name)'..."
+                Set-SPWebApplication -Identity $webAppUrl -Zone $httpsZoneName -Port 443 -Certificate $spCert `
+                    -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url $httpsUrl
                 
                 Write-Verbose -Verbose -Message "Finished."
             }
@@ -1566,7 +1571,7 @@ configuration ConfigureSPVM
         # This team site is tested by VM FE to wait before joining the farm, so it acts as a milestone and it should be created only when all SharePoint services are created
         # If VM FE joins the farm while a SharePoint service is creating here, it may block its creation forever.
         SPSite CreateTeamSite {
-            Url                  = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/sites/team/" } else { "http://$SharePointSitesAuthority/sites/team/" }
+            Url                  = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/sites/team" } else { "http://$SharePointSitesAuthority/sites/team" }
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
@@ -2014,7 +2019,7 @@ $SPADDirSyncCreds = New-Object -TypeName System.Management.Automation.PSCredenti
 $SPPassphraseCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "Passphrase", $password
 $SPSuperUserCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperUser", $password
 $SPSuperReaderCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperReader", $password
-$DNSServerIP = "10.1.1.4"
+$DNSServerIP = "10.1.1.100"
 $DomainFQDN = "contoso.local"
 $DCServerName = "DC"
 $SQLServerName = "SQL"
