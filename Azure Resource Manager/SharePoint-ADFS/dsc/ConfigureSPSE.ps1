@@ -21,7 +21,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperUserCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds,
-        [Parameter(Mandatory=$false)] [bool] $DefaultZoneIsHttps = $true
+        [Parameter(Mandatory=$false)] [Boolean] $DefaultZoneIsHttps = $true
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
@@ -68,7 +68,6 @@ configuration ConfigureSPVM
 
     # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
-    [bool] $DefaultZoneIsHttps = $false
     [String] $ServiceAppPoolName = "SharePoint Service Applications"
     [String] $UpaServiceName = "User Profile Service Application"
     [String] $AppDomainFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps", $DomainFQDN.Split('.')[1]
