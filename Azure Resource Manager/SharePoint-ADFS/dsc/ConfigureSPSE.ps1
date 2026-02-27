@@ -1244,8 +1244,8 @@ configuration ConfigureSPVM
                 Write-Verbose -Verbose -Message "Adding certificate 'CN=$sharePointSitesAuthority.$domainFQDN' to SharePoint store EndEntity..."
                 $spCert = Import-SPCertificate -Path "$setupPath\$sharePointSitesAuthority.cer" -Exportable -Store EndEntity
 
-                $webAppUrl = if ($defaultZoneIsHttps) { "https://$sharePointSitesAuthority.$DomainFQDN/" } else { "http://$sharePointSitesAuthority/" }
-                $httpsUrl = "https://$sharePointSitesAuthority.$DomainFQDN/"
+                $webAppUrl = if ($defaultZoneIsHttps) { "https://$sharePointSitesAuthority.$domainFQDN/" } else { "http://$sharePointSitesAuthority/" }
+                $httpsUrl = "https://$sharePointSitesAuthority.$domainFQDN/"
                 $httpsZoneName = if ($defaultZoneIsHttps) { "Default" } else { "Intranet" }
                 Write-Verbose -Verbose -Message "Setting zone '$httpsZoneName' in web application '$webAppUrl' to HTTPS with certificate '$($spCert.Name)'..."
                 Set-SPWebApplication -Identity $webAppUrl -Zone $httpsZoneName -Port 443 -Certificate $spCert `
@@ -2013,7 +2013,8 @@ function Get-WebAppUrl {
         [string] $SharePointSitesAuthority,
         [string] $DomainFQDN
     )
-    return if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+    $ret = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+    return $ret
 }
 
 <#
