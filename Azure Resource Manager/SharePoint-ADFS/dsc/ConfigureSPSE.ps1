@@ -21,7 +21,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperUserCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds,
-        [Parameter(Mandatory=$false)] [Boolean] $DefaultZoneIsHttps = $true
+        [Parameter(Mandatory=$false)] [Boolean] $DefaultZoneIsHttps = $false
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom

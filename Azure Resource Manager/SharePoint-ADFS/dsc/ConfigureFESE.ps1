@@ -15,7 +15,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
-        [Parameter(Mandatory=$false)] [Boolean] $DefaultZoneIsHttps = $true
+        [Parameter(Mandatory=$false)] [Boolean] $DefaultZoneIsHttps = $false
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
