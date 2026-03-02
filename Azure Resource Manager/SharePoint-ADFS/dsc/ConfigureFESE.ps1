@@ -14,7 +14,8 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
+        [Parameter(Mandatory=$false)] [Boolean] $DefaultZoneIsHttps = $true
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
@@ -51,7 +52,6 @@ configuration ConfigureFEVM
 
     # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
-    [String] $DefaultZoneProtocol = "http"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
 
@@ -539,7 +539,7 @@ configuration ConfigureFEVM
         Script WaitForSPFarmReadyToJoin {
             SetScript            =
             {
-                $uri = "$($using:DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/sites/team"
+                $uri = if ($using:DefaultZoneIsHttps) { "https://$($using:SharePointSitesAuthority).$($using:DomainFQDN)/sites/team/" } else { "http://$($using:SharePointSitesAuthority)/sites/team/" }
                 $sleepTime = 30
                 $currentStatusCode = 0
                 $expectedStatusCode = 200
@@ -713,9 +713,9 @@ configuration ConfigureFEVM
                     }
                 }
                 [System.Management.Automation.Job[]] $jobs = @()
-                $spsite = "$($using:DefaultZoneProtocol)://$($using:SharePointSitesAuthority)/"
-                Write-Verbose -Verbose -Message "Warming up '$spsite'..."
-                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
+                $uri = if ($using:DefaultZoneIsHttps) { "https://$($using:SharePointSitesAuthority).$($using:DomainFQDN)/" } else { "http://$($using:SharePointSitesAuthority)/" }
+                Write-Verbose -Verbose -Message "Warming up '$uri'..."
+                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri)
 
                 # Must wait for the jobs to complete, otherwise they do not actually run
                 Receive-Job -Job $jobs -AutoRemoveJob -Wait
@@ -739,7 +739,8 @@ configuration ConfigureFEVM
                 $cert = Import-PfxCertificate -FilePath $cookieCertificateFilePath -CertStoreLocation Cert:\localMachine\My -Exportable
 
                 # Grant the application pool access to the private key of the cookie certificate
-                $wa = Get-SPWebApplication "$($using:DefaultZoneProtocol)://$spTrustedSitesName"
+                $uri = if ($using:DefaultZoneIsHttps) { "https://$($using:SharePointSitesAuthority).$($using:DomainFQDN)/" } else { "http://$($using:SharePointSitesAuthority)/" }
+                $wa = Get-SPWebApplication $uri
                 $apppoolUserName = $wa.ApplicationPool.Username
                 $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
                 $fileName = $rsaCert.key.UniqueName
