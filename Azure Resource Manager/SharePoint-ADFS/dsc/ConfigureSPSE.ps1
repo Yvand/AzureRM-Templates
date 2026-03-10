@@ -20,7 +20,8 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPADDirSyncCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperUserCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds,
+        [Parameter(Mandatory=$false)] [Boolean] $DefaultZoneIsHttps = $false
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
@@ -328,17 +329,17 @@ configuration ConfigureSPVM
                 $packageFilePath = Join-Path -Path $SharePointBitsPath -ChildPath $packageFilename
                 
                 xRemoteFile "DownloadSharePointUpdate_$($SharePointBuildLabel)_$packageFilename" {
-                    DestinationPath = $packageFilePath
-                    Uri             = $packageUrl
-                    ChecksumType    = if ($null -ne $package.ChecksumType) { $package.ChecksumType } else { "None" }
-                    Checksum        = if ($null -ne $package.Checksum) { $package.Checksum } else { $null }
-                    MatchSource     = $false
-                    DependsOn       = "[SPInstall]InstallBinaries"
+                    DestinationPath      = $packageFilePath
+                    Uri                  = $packageUrl
+                    ChecksumType         = if ($null -ne $package.ChecksumType) { $package.ChecksumType } else { "None" }
+                    Checksum             = if ($null -ne $package.Checksum) { $package.Checksum } else { $null }
+                    MatchSource          = $false
+                    DependsOn            = "[SPInstall]InstallBinaries"
                     PsDscRunAsCredential = $DomainAdminCredsQualified;
                 }
 
                 Script "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename" {
-                    SetScript  = {
+                    SetScript            = {
                         $SharePointBuildLabel = $using:SharePointBuildLabel
                         $packageFilePath = $using:packageFilePath
                         $packageFile = Get-ChildItem -Path $packageFilePath
@@ -359,14 +360,14 @@ configuration ConfigureSPVM
                             $global:DSCMachineStatus = 1
                         }
                     }
-                    TestScript = {
+                    TestScript           = {
                         $SharePointBuildLabel = $using:SharePointBuildLabel
                         $packageFilePath = $using:packageFilePath
                         $packageFile = Get-ChildItem -Path $packageFilePath
                         return (Test-Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)")
                     }
-                    GetScript  = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                    DependsOn  = "[SPInstall]InstallBinaries"
+                    GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                    DependsOn            = "[SPInstall]InstallBinaries"
                     PsDscRunAsCredential = $DomainAdminCredsQualified;
                 }
 
@@ -944,13 +945,13 @@ configuration ConfigureSPVM
         }
 
         SPWebApplication CreateMainWebApp {
-            Name                   = "SharePoint - 80"
-            ApplicationPool        = "SharePoint - 80"
+            Name                   = "SharePoint - main"
+            ApplicationPool        = "SharePoint - main"
             ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
             AllowAnonymous         = $false
-            DatabaseName           = $SPDBPrefix + "Content_80"
-            WebAppUrl              = "http://$SharePointSitesAuthority/"
-            Port                   = 80
+            DatabaseName           = $SPDBPrefix + "Content_main"
+            WebAppUrl              = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
+            Port                   = if ($DefaultZoneIsHttps) { 443 } else { 80 }
             Ensure                 = "Present"
             PsDscRunAsCredential   = $DomainAdminCredsQualified
             DependsOn              = "[Script]RestartSPTimerAfterCreateSPFarm"
@@ -1114,12 +1115,12 @@ configuration ConfigureSPVM
         # ExtendMainWebApp might fail with error: "The web.config could not be saved on this IIS Web Site: C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config.\r\nThe process cannot access the file 'C:\\inetpub\\wwwroot\\wss\\VirtualDirectories\\80\\web.config' because it is being used by another process."
         # So I added resources between it and CreateMainWebApp to avoid it
         SPWebApplicationExtension ExtendMainWebApp {
-            WebAppUrl            = "http://$SharePointSitesAuthority/"
-            Name                 = "SharePoint - 443"
-            AllowAnonymous       = $false
-            Url                  = "https://$SharePointSitesAuthority.$DomainFQDN"
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             Zone                 = "Intranet"
-            Port                 = 443
+            Name                 = if ($DefaultZoneIsHttps) { "SharePoint -  main - Intranet HTTP" } else { "SharePoint - main - Intranet HTTPS" }
+            Url                  = if ($DefaultZoneIsHttps) { "http://$SharePointSitesAuthority/" } else { "https://$SharePointSitesAuthority.$DomainFQDN/" }
+            Port                 = if ($DefaultZoneIsHttps) { 80 } else { 443 }
+            AllowAnonymous       = $false
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebApplication]CreateMainWebApp"
@@ -1164,19 +1165,44 @@ configuration ConfigureSPVM
         }
 
         SPWebAppAuthentication ConfigureMainWebAppAuthentication {
-            WebAppUrl            = "http://$SharePointSitesAuthority/"
-            Default              = @(
-                MSFT_SPWebAppAuthenticationMode {
-                    AuthenticationMethod = "WindowsAuthentication"
-                    WindowsAuthMethod    = "NTLM"
-                }
-            )
-            Intranet             = @(
-                MSFT_SPWebAppAuthenticationMode {
-                    AuthenticationMethod   = "Federated"
-                    AuthenticationProvider = $DomainFQDN
-                }
-            )
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
+            Default              = if ($DefaultZoneIsHttps) {
+                @(
+                    MSFT_SPWebAppAuthenticationMode {
+                        AuthenticationMethod   = "Federated"
+                        AuthenticationProvider = $DomainFQDN
+                    }
+                    MSFT_SPWebAppAuthenticationMode {
+                        AuthenticationMethod = "WindowsAuthentication"
+                        WindowsAuthMethod    = "NTLM"
+                    }
+                )
+            }
+            else {
+                @(
+                    MSFT_SPWebAppAuthenticationMode {
+                        AuthenticationMethod = "WindowsAuthentication"
+                        WindowsAuthMethod    = "NTLM"
+                    }
+                )
+            }
+
+            Intranet             = if ($DefaultZoneIsHttps) {
+                @(
+                    MSFT_SPWebAppAuthenticationMode {
+                        AuthenticationMethod = "WindowsAuthentication"
+                        WindowsAuthMethod    = "NTLM"
+                    }
+                )
+            }
+            else {
+                @(
+                    MSFT_SPWebAppAuthenticationMode {
+                        AuthenticationMethod   = "Federated"
+                        AuthenticationProvider = $DomainFQDN
+                    }
+                )
+            }
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebApplicationExtension]ExtendMainWebApp", "[SPTrustedIdentityTokenIssuer]CreateSPTrust"
         }
@@ -1190,7 +1216,8 @@ configuration ConfigureSPVM
                 $domainNetbiosName = $using:DomainNetbiosName
                 $sharePointSitesAuthority = $using:SharePointSitesAuthority
                 $appDomainIntranetFQDN = $using:AppDomainIntranetFQDN
-                $setupPath = Join-Path -Path $using:SetupPath -ChildPath "Certificates"                
+                $setupPath = Join-Path -Path $using:SetupPath -ChildPath "Certificates"
+                $defaultZoneIsHttps = $using:DefaultZoneIsHttps
                 if (!(Test-Path $setupPath -PathType Container)) {
                     New-Item -ItemType Directory -Force -Path $setupPath
                 }
@@ -1217,9 +1244,12 @@ configuration ConfigureSPVM
                 Write-Verbose -Verbose -Message "Adding certificate 'CN=$sharePointSitesAuthority.$domainFQDN' to SharePoint store EndEntity..."
                 $spCert = Import-SPCertificate -Path "$setupPath\$sharePointSitesAuthority.cer" -Exportable -Store EndEntity
 
-                Write-Verbose -Verbose -Message "Extending web application to HTTPS zone using certificate 'CN=$sharePointSitesAuthority.$domainFQDN'..."
-                Set-SPWebApplication -Identity "http://$sharePointSitesAuthority" -Zone Intranet -Port 443 -Certificate $spCert `
-                    -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url "https://$sharePointSitesAuthority.$domainFQDN"
+                $webAppUrl = if ($defaultZoneIsHttps) { "https://$sharePointSitesAuthority.$domainFQDN/" } else { "http://$sharePointSitesAuthority/" }
+                $httpsUrl = "https://$sharePointSitesAuthority.$domainFQDN/"
+                $httpsZoneName = if ($defaultZoneIsHttps) { "Default" } else { "Intranet" }
+                Write-Verbose -Verbose -Message "Setting zone '$httpsZoneName' in web application '$webAppUrl' to HTTPS with certificate '$($spCert.Name)'..."
+                Set-SPWebApplication -Identity $webAppUrl -Zone $httpsZoneName -Port 443 -Certificate $spCert `
+                    -SecureSocketsLayer:$true -AllowLegacyEncryption:$false -Url $httpsUrl
                 
                 Write-Verbose -Verbose -Message "Finished."
             }
@@ -1244,7 +1274,7 @@ configuration ConfigureSPVM
         }
 
         SPCacheAccounts SetCacheAccounts {
-            WebAppUrl            = "http://$SharePointSitesAuthority/"
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             SuperUserAlias       = "$DomainNetbiosName\$($SPSuperUserCreds.UserName)"
             SuperReaderAlias     = "$DomainNetbiosName\$($SPSuperReaderCreds.UserName)"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -1252,7 +1282,7 @@ configuration ConfigureSPVM
         }
 
         SPSite CreateRootSite {
-            Url                  = "http://$SharePointSitesAuthority/"
+            Url                  = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "root site"
@@ -1264,7 +1294,7 @@ configuration ConfigureSPVM
 
         # Create this site early, otherwise [SPAppCatalog]SetAppCatalogUrl may throw error "Cannot find an SPSite object with Id or Url: http://SPSites/sites/AppCatalog"
         SPSite CreateAppCatalog {
-            Url                  = "http://$SharePointSitesAuthority/sites/AppCatalog"
+            Url                  = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/sites/AppCatalog" } else { "http://$SharePointSitesAuthority/sites/AppCatalog" }
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "AppCatalog"
@@ -1277,8 +1307,8 @@ configuration ConfigureSPVM
         # Additional configuration
         #**********************************************************
         SPSite CreateMySiteHost {
-            Url                      = "http://$MySiteHostAlias/"
-            HostHeaderWebApplication = "http://$SharePointSitesAuthority/"
+            Url                      = if ($DefaultZoneIsHttps) { "https://$MySiteHostAlias.$DomainFQDN/" } else { "http://$MySiteHostAlias/" }
+            HostHeaderWebApplication = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "MySite host"
@@ -1288,14 +1318,14 @@ configuration ConfigureSPVM
         }
 
         SPSiteUrl SetMySiteHostIntranetUrl {
-            Url                  = "http://$MySiteHostAlias/"
-            Intranet             = "https://$MySiteHostAlias.$DomainFQDN"
+            Url                  = if ($DefaultZoneIsHttps) { "https://$MySiteHostAlias.$DomainFQDN/" } else { "http://$MySiteHostAlias/" }
+            Intranet             = if ($DefaultZoneIsHttps) { "http://$MySiteHostAlias/" } else { "https://$MySiteHostAlias.$DomainFQDN/" }
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateMySiteHost"
         }
 
         SPManagedPath CreateMySiteManagedPath {
-            WebAppUrl            = "http://$SharePointSitesAuthority/"
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             RelativeUrl          = "personal"
             Explicit             = $false
             HostHeader           = $true
@@ -1306,7 +1336,7 @@ configuration ConfigureSPVM
         SPUserProfileServiceApp CreateUserProfileServiceApp {
             Name                 = $UpaServiceName
             ApplicationPool      = $ServiceAppPoolName
-            MySiteHostLocation   = "http://$MySiteHostAlias/"
+            MySiteHostLocation   = if ($DefaultZoneIsHttps) { "https://$MySiteHostAlias.$DomainFQDN/" } else { "http://$MySiteHostAlias/" }
             ProfileDBName        = $SPDBPrefix + "UPA_Profiles"
             SocialDBName         = $SPDBPrefix + "UPA_Social"
             SyncDBName           = $SPDBPrefix + "UPA_Sync"
@@ -1315,10 +1345,10 @@ configuration ConfigureSPVM
             DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]UPAServiceInstance", "[SPSite]CreateMySiteHost"
         }
 
-        # Creating this site takes about 1 min but it is not so useful, skip it
+        # Creating this site takes about 1 min and it is not so useful, skip it
         # SPSite CreateDevSite
         # {
-        #     Url                  = "http://$SharePointSitesAuthority/sites/dev"
+        #     Url                  = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/sites/dev" } else { "http://$SharePointSitesAuthority/sites/dev" }
         #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
         #     SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
         #     Name                 = "Developer site"
@@ -1328,8 +1358,8 @@ configuration ConfigureSPVM
         # }
 
         SPSite CreateHNSC1 {
-            Url                      = "http://$HNSC1Alias/"
-            HostHeaderWebApplication = "http://$SharePointSitesAuthority/"
+            Url                      = if ($DefaultZoneIsHttps) { "https://$HNSC1Alias.$DomainFQDN/" } else { "http://$HNSC1Alias/" }
+            HostHeaderWebApplication = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias      = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                     = "$HNSC1Alias site"
@@ -1340,8 +1370,8 @@ configuration ConfigureSPVM
         }
 
         SPSiteUrl SetHNSC1IntranetUrl {
-            Url                  = "http://$HNSC1Alias/"
-            Intranet             = "https://$HNSC1Alias.$DomainFQDN"
+            Url                  = if ($DefaultZoneIsHttps) { "https://$HNSC1Alias.$DomainFQDN/" } else { "http://$HNSC1Alias/" }
+            Intranet             = if ($DefaultZoneIsHttps) { "http://$HNSC1Alias/" } else { "https://$HNSC1Alias.$DomainFQDN/" }
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateHNSC1"
         }
@@ -1391,7 +1421,8 @@ configuration ConfigureSPVM
             {
                 try {
                     $spTrustName = $using:DomainFQDN
-                    $spSiteUrl = "http://$($using:SharePointSitesAuthority)/"
+                    $defaultZoneIsHttps = $using:DefaultZoneIsHttps
+                    $webAppUrl = if ($defaultZoneIsHttps) { "https://$sharePointSitesAuthority.$DomainFQDN/" } else { "http://$sharePointSitesAuthority/" }
                     Write-Verbose -Verbose -Message "Start configuration for ConfigureUPAClaimProvider using spTrustName '$($spTrustName)' and spSiteUrl '$($spSiteUrl)'"                
 
                     # LanguageSynchronizationJob must be executed before updating profile properties, to ensure their property DisplayNameLocalized is set with a localized value
@@ -1421,7 +1452,7 @@ configuration ConfigureSPVM
                     # Set-SPTrustedIdentityTokenIssuer $trust -ClaimProvider $claimsProvider -IsOpenIDConnect
 
                     # Sets the property IsPeoplePickerSearchable on specific profile properties
-                    $site = Get-SPSite -Identity $spSiteUrl -ErrorAction SilentlyContinue
+                    $site = Get-SPSite -Identity $webAppUrl -ErrorAction SilentlyContinue
                     $context = Get-SPServiceContext $site -ErrorAction SilentlyContinue
                     $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
                     $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
@@ -1496,27 +1527,27 @@ configuration ConfigureSPVM
         }        
 
         SPWebApplicationAppDomain ConfigureAppDomainDefaultZone {
-            WebAppUrl            = "http://$SharePointSitesAuthority"
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             AppDomain            = $AppDomainFQDN
             Zone                 = "Default"
-            Port                 = 80
-            SSL                  = $false
+            Port                 = if ($DefaultZoneIsHttps) { 443 } else { 80 }
+            SSL                  = if ($DefaultZoneIsHttps) { $true } else { $false }
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
 
         SPWebApplicationAppDomain ConfigureAppDomainIntranetZone {
-            WebAppUrl            = "http://$SharePointSitesAuthority"
+            WebAppUrl            = Get-WebAppUrl -DefaultZoneIsHttps $DefaultZoneIsHttps -SharePointSitesAuthority $SharePointSitesAuthority -DomainFQDN $DomainFQDN
             AppDomain            = $AppDomainIntranetFQDN
             Zone                 = "Intranet"
-            Port                 = 443
-            SSL                  = $true
+            Port                 = if ($DefaultZoneIsHttps) { 80 } else { 443 }
+            SSL                  = if ($DefaultZoneIsHttps) { $false } else { $true }
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
 
         SPAppCatalog SetAppCatalogUrl {
-            SiteUrl              = "http://$SharePointSitesAuthority/sites/AppCatalog"
+            SiteUrl              = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/sites/AppCatalog/" } else { "http://$SharePointSitesAuthority/sites/AppCatalog/" }
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateAppCatalog", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }
@@ -1540,7 +1571,7 @@ configuration ConfigureSPVM
         # This team site is tested by VM FE to wait before joining the farm, so it acts as a milestone and it should be created only when all SharePoint services are created
         # If VM FE joins the farm while a SharePoint service is creating here, it may block its creation forever.
         SPSite CreateTeamSite {
-            Url                  = "http://$SharePointSitesAuthority/sites/team"
+            Url                  = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/sites/team" } else { "http://$SharePointSitesAuthority/sites/team" }
             OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
             SecondaryOwnerAlias  = "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"
             Name                 = "Team site"
@@ -1711,12 +1742,13 @@ configuration ConfigureSPVM
                     }
                 }
                 [System.Management.Automation.Job[]] $jobs = @()
-                $spsite = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
-                Write-Verbose -Verbose -Message "Warming up '$spsite'..."
-                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
-                $spsite = "http://$($using:SharePointSitesAuthority)/"
-                Write-Verbose -Verbose -Message "Warming up '$spsite'..."
-                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
+                $uri = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
+                Write-Verbose -Verbose -Message "Warming up '$uri'..."
+                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri)
+                
+                $uri = if ($using:DefaultZoneIsHttps) { "https://$($using:SharePointSitesAuthority).$($using:DomainFQDN)/" } else { "http://$($using:SharePointSitesAuthority)/" }
+                Write-Verbose -Verbose -Message "Warming up '$uri'..."
+                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri)
 
                 # Must wait for the jobs to complete, otherwise they do not actually run
                 Receive-Job -Job $jobs -AutoRemoveJob -Wait
@@ -1733,13 +1765,13 @@ configuration ConfigureSPVM
                 # Need to wrap the creation of personal sites in a job to avoid the error below when calling CreatePersonalSiteEnque($false):
                 # Could not enqueue creation of personal site for 'i:0#.w|contoso\yvand': Exception calling "CreatePersonalSiteEnque" with "1" argument(s): "Attempted to perform an unauthorized operation."
                 $jobBlock = {
-                    $uri = $args[0]
+                    $webAppUrl = $args[0]
                     $accountPattern_WinClaims = $args[1]
                     $accountPattern_Trusted = $args[2]
                     $directoryBase = $args[3]
 
                     try {
-                        $site = Get-SPSite -Identity $uri -ErrorAction SilentlyContinue
+                        $site = Get-SPSite -Identity $webAppUrl -ErrorAction SilentlyContinue
                         $context = Get-SPServiceContext $site -ErrorAction SilentlyContinue
                         $upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($context)
                         Write-Verbose -Verbose -Message "Got UserProfileManager"
@@ -1839,14 +1871,15 @@ configuration ConfigureSPVM
                         Write-Verbose -Verbose -Message "Could not execute LanguageSynchronizationJob or update profile properties: $_"
                     }
                 }
-                $uri = "http://$($using:SharePointSitesAuthority)/"
+                $webAppUrl = if ($using:DefaultZoneIsHttps) { "https://$($using:SharePointSitesAuthority).$($using:DomainFQDN)/" } else { "http://$($using:SharePointSitesAuthority)/" }
                 $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"
                 $accountPattern_Trusted = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|{0}@$($using:DomainFQDN)"
-                $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri, $accountPattern_WinClaims, $accountPattern_Trusted, $using:AdditionalUsersPath)
+                $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($webAppUrl, $accountPattern_WinClaims, $accountPattern_Trusted, $using:AdditionalUsersPath)
                 Receive-Job -Job $job -AutoRemoveJob -Wait
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            DependsOn            = "[SPUserProfileServiceApp]CreateUserProfileServiceApp"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
@@ -1973,6 +2006,17 @@ function Get-NetBIOSName {
     }
 }
 
+function Get-WebAppUrl {
+    [OutputType([string])]
+    param(
+        [bool] $DefaultZoneIsHttps = $true,
+        [string] $SharePointSitesAuthority,
+        [string] $DomainFQDN
+    )
+    $ret = if ($DefaultZoneIsHttps) { "https://$SharePointSitesAuthority.$DomainFQDN/" } else { "http://$SharePointSitesAuthority/" }
+    return $ret
+}
+
 <#
 help ConfigureSPVM
 
@@ -1986,7 +2030,7 @@ $SPADDirSyncCreds = New-Object -TypeName System.Management.Automation.PSCredenti
 $SPPassphraseCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "Passphrase", $password
 $SPSuperUserCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperUser", $password
 $SPSuperReaderCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spSuperReader", $password
-$DNSServerIP = "10.1.1.4"
+$DNSServerIP = "10.1.1.100"
 $DomainFQDN = "contoso.local"
 $DCServerName = "DC"
 $SQLServerName = "SQL"

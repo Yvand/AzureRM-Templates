@@ -39,8 +39,8 @@
     
     # SharePoint settings
     [String] $centralAdminUrl = "http://{0}:{1}/" -f $SPServerName, $SharePointCentralAdminPort
-    [String] $rootSiteDefaultZone = "http://{0}/" -f $SharePointSitesAuthority
-    [String] $rootSiteIntranetZone = "https://{0}.{1}/" -f $SharePointSitesAuthority, $DomainFQDN
+    [String] $urlMainWebAppHttp = "http://{0}/" -f $SharePointSitesAuthority
+    [String] $urlMainWebAppSsl = "https://{0}.{1}/" -f $SharePointSitesAuthority, $DomainFQDN
     [String] $AppDomainFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps", $DomainFQDN.Split('.')[1]
     [String] $AppDomainIntranetFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps-Intranet", $DomainFQDN.Split('.')[1]
 
@@ -140,12 +140,12 @@
         @{
             policyValueName        = "ManagedFavorites";
             policyCanBeRecommended = $false;
-            policyValueValue       = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue       = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Main web app - HTTP"", ""url"": ""$urlMainWebAppHttp"" }, { ""name"": ""Main web app - SSL"", ""url"": ""$urlMainWebAppSsl"" }]";
         },
         @{
             policyValueName        = "NewTabPageManagedQuickLinks";
             policyCanBeRecommended = $true;
-            policyValueValue       = "[{""pinned"": true, ""title"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""pinned"": true, ""title"": ""Root site - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""pinned"": true, ""title"": ""Root site - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue       = "[{""pinned"": true, ""title"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""pinned"": true, ""title"": ""Main web app - HTTP"", ""url"": ""$urlMainWebAppHttp"" }, { ""pinned"": true, ""title"": ""Main web app - SSL"", ""url"": ""$urlMainWebAppSsl"" }]";
         }
     )
 
@@ -198,7 +198,7 @@
         @{
             policyValueName        = "ManagedBookmarks";
             policyCanBeRecommended = $false;
-            policyValueValue       = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue       = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Main web app - HTTP"", ""url"": ""$urlMainWebAppHttp"" }, { ""name"": ""Main web app - SSL"", ""url"": ""$urlMainWebAppSsl"" }]";
         }
     )
 

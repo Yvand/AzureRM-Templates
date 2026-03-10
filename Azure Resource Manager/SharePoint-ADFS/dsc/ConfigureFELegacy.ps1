@@ -14,7 +14,8 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
+        [Parameter(Mandatory=$false)] [Boolean] $DefaultZoneIsHttps = $false #not used in ConfigureFELegacy, but used in ConfigureFESE and ConfigureSPSE (and must be set to the same value in both configurations)
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom

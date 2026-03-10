@@ -20,7 +20,8 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPADDirSyncCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperUserCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds,
+        [Parameter(Mandatory=$false)] [Boolean] $DefaultZoneIsHttps = $false #not used in ConfigureFELegacy, but used in ConfigureFESE and ConfigureSPSE (and must be set to the same value in both configurations)
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom

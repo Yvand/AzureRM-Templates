@@ -386,7 +386,7 @@ var sharePointSettings = {
       Label: 'Latest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/2ac104e1-555a-4186-9f83-ffca3ec88258/uber-subscription-kb5002800-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/893696ea-60b1-443b-9794-a303597e6c12/uber-subscription-kb5002833-fullfile-x64-glb.exe'
         }
       ]
     }

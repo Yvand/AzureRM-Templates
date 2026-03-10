@@ -1,5 +1,19 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Unreleased
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the February 2026 PU for SharePoint Subscription
+
+- DSC Configuration for SharePoint SE
+  - Added optional parameter `DefaultZoneIsHttps`, to decide if the default zone should use HTTP (default) or HTTPS
+  - Renamed main web application to "SharePoint - main"
+
+- DSC Configuration for DC
+  - Renamed favourites
+
 ## Enhancements & bug-fixes - Published in December 5, 2025
 
 ### Changed
